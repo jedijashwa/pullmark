@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Blame annotations: a toolbar toggle on rendered documents (local files, a
+  PR file's Result view, and repo files browsed from a PR) shows who last
+  touched each block — GitHub avatar, author name, relative date, and a
+  short-SHA chip that opens the commit on GitHub (hover for the commit
+  headline). Up to three contributors stack per block. Uses GitHub's GraphQL
+  blame whenever the repo lives on github.com; local files fall back to
+  `git blame` with initials avatars when no GitHub data is available.
+
 ## 0.2.0 - 2026-07-18
 
 - Reading themes: choose between GitHub (the classic look), Editorial (serif

@@ -30,6 +30,11 @@ enum HTMLBuilder {
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
+        /// Per-block blame annotations (document mode). When present the page
+        /// renders block-by-block with an annotation strip under each block.
+        var blame: [BlockBlamePayload]?
+        /// One-line note shown when blame was requested but unavailable.
+        var blameNote: String?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -50,13 +55,17 @@ enum HTMLBuilder {
                              localResources: Bool = false,
                              remote: RemoteAssets? = nil,
                              theme: String = "github",
-                             preview: Bool = false) -> String {
+                             preview: Bool = false,
+                             blame: [BlockBlamePayload]? = nil,
+                             blameNote: String? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
                                     theme: theme,
-                                    preview: preview ? true : nil),
+                                    preview: preview ? true : nil,
+                                    blame: blame,
+                                    blameNote: blameNote),
              title: title)
     }
 

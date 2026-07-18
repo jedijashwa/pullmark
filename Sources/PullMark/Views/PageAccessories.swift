@@ -116,6 +116,18 @@ struct OutlineToggle: View {
     }
 }
 
+/// Toolbar toggle for per-block blame annotations on rendered documents.
+struct BlameToggle: View {
+    @Binding var visible: Bool
+
+    var body: some View {
+        Toggle(isOn: $visible) {
+            Label("Blame", systemImage: "person.crop.circle.badge.clock")
+        }
+        .help("Show who last changed each block (git blame)")
+    }
+}
+
 /// Banner shown when a newer PullMark release is available on GitHub.
 struct AppUpdateBanner: View {
     @EnvironmentObject private var updates: UpdateChecker
