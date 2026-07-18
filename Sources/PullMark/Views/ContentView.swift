@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var updates: UpdateChecker
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
 
     var body: some View {
@@ -9,7 +10,10 @@ struct ContentView: View {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 220, ideal: 270)
         } detail: {
-            DetailView()
+            VStack(spacing: 0) {
+                AppUpdateBanner()
+                DetailView()
+            }
         }
         .frame(minWidth: 940, minHeight: 620)
         .toolbar {
@@ -43,6 +47,16 @@ struct ContentView: View {
         }
         .sheet(isPresented: $state.showAddPR) {
             AddPRSheet()
+        }
+        .sheet(isPresented: $updates.showReleaseNotes) {
+            ReleaseNotesSheet(
+                title: "What's New in PullMark \(updates.availableVersion ?? "")",
+                markdown: updates.availableNotes
+            )
+        }
+        .sheet(isPresented: $updates.showWhatsNew) {
+            ReleaseNotesSheet(title: "What's New in PullMark",
+                              markdown: updates.whatsNewMarkdown)
         }
         .alert("Something went wrong", isPresented: errorPresented) {
             Button("OK", role: .cancel) {}

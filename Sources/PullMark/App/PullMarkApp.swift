@@ -33,6 +33,7 @@ enum PullMarkLauncher {
 struct PullMarkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
+    @StateObject private var updates = UpdateChecker()
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
 
     private func open(_ urlString: String) {
@@ -45,6 +46,7 @@ struct PullMarkApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(state)
+                .environmentObject(updates)
                 .onChange(of: appearanceRaw) { newValue in
                     (Appearance(rawValue: newValue) ?? .system).apply()
                 }
@@ -53,6 +55,15 @@ struct PullMarkApp: App {
         // spawning a second one.
         .handlesExternalEvents(matching: ["*"])
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    Task {
+                        if let message = await updates.checkManually() {
+                            state.lastError = message
+                        }
+                    }
+                }
+            }
             CommandGroup(after: .newItem) {
                 Button("Open…") { state.openFileOrFolder() }
                     .keyboardShortcut("o")
