@@ -58,7 +58,11 @@ enum HTMLBuilder {
                              preview: Bool = false,
                              blame: [BlockBlamePayload]? = nil,
                              blameNote: String? = nil) -> String {
-        page(payload: RenderPayload(mode: "document", markdown: markdown,
+        // Blame mode renders block-by-block from the annotation payloads
+        // (each carries its block's source), so the full markdown would be
+        // dead weight duplicated in the page.
+        let markdown = (blame?.isEmpty == false) ? nil : markdown
+        return page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
@@ -95,14 +99,17 @@ enum HTMLBuilder {
     }
 
     /// Encodes a value as a JSON literal safe to embed inside a <script> tag.
-    /// JSONEncoder escapes "/" by default, so "</script>" cannot appear; the
-    /// JS line separators U+2028/U+2029 are escaped on top of that.
+    /// JSONEncoder escapes "/" by default, so "</script>" cannot appear; "<"
+    /// is escaped too so "<!--" / "<script" can never flip the HTML parser
+    /// into the script-data-escaped states, and the JS line separators
+    /// U+2028/U+2029 are escaped on top of that.
     static func jsonLiteral<T: Encodable>(_ value: T) -> String {
         guard let data = try? JSONEncoder().encode(value),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
         }
         return json
+            .replacingOccurrences(of: "<", with: "\\u003c")
             .replacingOccurrences(of: "\u{2028}", with: "\\u2028")
             .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
     }
