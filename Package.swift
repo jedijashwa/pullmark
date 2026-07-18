@@ -11,6 +11,16 @@ let package = Package(
             resources: [.copy("Resources")],
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
+        .executableTarget(
+            name: "PullMarkQuickLook",
+            path: "Sources/PullMarkQuickLook",
+            swiftSettings: [.swiftLanguageMode(.v5)],
+            linkerSettings: [
+                .linkedFramework("Quartz"),
+                // App extensions enter through _NSExtensionMain, not main.
+                .unsafeFlags(["-Xlinker", "-e", "-Xlinker", "_NSExtensionMain"]),
+            ]
+        ),
         .testTarget(
             name: "PullMarkTests",
             dependencies: ["PullMark"],

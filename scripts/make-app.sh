@@ -99,5 +99,67 @@ cat > "$APP/Contents/Info.plist" <<EOF
 </plist>
 EOF
 
+# ---- Quick Look preview extension ----
+APPEX="$APP/Contents/PlugIns/PullMarkQuickLook.appex"
+mkdir -p "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
+cp .build/release/PullMarkQuickLook "$APPEX/Contents/MacOS/PullMarkQuickLook"
+cp -R .build/release/PullMark_PullMark.bundle "$APPEX/Contents/Resources/"
+
+cat > "$APPEX/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>PullMark Quick Look</string>
+    <key>CFBundleIdentifier</key>
+    <string>dev.pullmark.PullMark.QuickLook</string>
+    <key>CFBundleExecutable</key>
+    <string>PullMarkQuickLook</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${VERSION}</string>
+    <key>CFBundleVersion</key>
+    <string>${VERSION}</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.quicklook.preview</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>PullMarkQuickLook.PreviewProvider</string>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>QLSupportedContentTypes</key>
+            <array>
+                <string>net.daringfireball.markdown</string>
+            </array>
+            <key>QLSupportsSearchableItems</key>
+            <false/>
+            <key>QLIsDataBasedPreview</key>
+            <true/>
+        </dict>
+    </dict>
+</dict>
+</plist>
+EOF
+
+QL_ENTITLEMENTS="$(mktemp -t ql-entitlements).plist"
+cat > "$QL_ENTITLEMENTS" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+codesign --force --sign - --entitlements "$QL_ENTITLEMENTS" "$APPEX"
+rm -f "$QL_ENTITLEMENTS"
+
 codesign --force --sign - "$APP"
 echo "Built $APP"

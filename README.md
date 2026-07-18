@@ -12,6 +12,11 @@ PullMark renders local Markdown files with GitHub-style formatting, and opens Gi
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
   - **Comment Now** posts a single review comment immediately.
   - **Add to Review** collects drafts locally; submit them together (Comment / Approve / Request Changes) or save them to GitHub as a **pending review** to finish later on github.com.
+  - **Insert Suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
+- **PR images and links** — repo-relative images in PR files render (fetched at the PR's commit, cached in memory only); repo-relative links to Markdown files open in-app at that commit, other repo links open on GitHub.
+- **Stays current** — open PRs are checked every minute; if the branch moves, a banner offers a one-click refresh (your draft comments survive).
+- **Navigation** — outline menu to jump between headings, and **⌘F** find-in-page with match stepping.
+- **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style (Mermaid degrades to a code block in previews).
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.
 
@@ -118,11 +123,15 @@ Use the half-circle toolbar menu or the **View** menu to switch between **System
 
 Markdown files are split into blocks (paragraphs, headings, fenced code, …), old and new versions are aligned with an LCS diff, and each block renders to HTML. Added blocks get a green bar, removed blocks red. A changed block gets a **word-level diff**: changed runs are wrapped in invisible sentinels that survive Markdown rendering and become highlight marks afterward — so a one-word edit shows as one highlighted word in formatted text. When two blocks share too little text (or contain code fences), PullMark falls back to showing old and new in full. Every block keeps its original file line numbers, which is what makes GitHub review comments (`line`/`side`) possible from a rendered view.
 
+## Privacy of fetched content
+
+Nothing fetched from GitHub is written to persistent storage: API calls use an ephemeral session, images are cached in bounded memory only, the web views use non-persistent data stores, and rendered pages live in the system temp directory — which macOS purges on reboot even if the app crashed and never ran again.
+
 ## Notes & limitations
 
 - GitHub allows one pending review per user per PR — if you already have one, "Save as Pending" fails until it's submitted or dismissed on github.com.
 - Editing is not supported yet; PullMark is a viewer/reviewer.
-- Images referenced by PR files (repo-relative) aren't fetched yet; local-file images work.
+- Quick Look previews render statically: code is highlighted, but Mermaid diagrams appear as code blocks.
 
 ## License
 
