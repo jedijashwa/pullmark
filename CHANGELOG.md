@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.3.0 - 2026-07-18
 
 - Blame annotations: a toolbar toggle on rendered documents (local files, a
   PR file's Result view, and repo files browsed from a PR) shows who last
