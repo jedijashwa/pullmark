@@ -83,6 +83,10 @@ struct PullMarkApp: App {
                 Button("Request a Feature…") {
                     open("https://github.com/jedijashwa/pullmark/issues/new?template=2-feature_request.yml")
                 }
+                Divider()
+                Button("Support PullMark ❤️") {
+                    open("https://ko-fi.com/pullmark")
+                }
             }
             CommandGroup(after: .toolbar) {
                 Picker("Appearance", selection: $appearanceRaw) {
