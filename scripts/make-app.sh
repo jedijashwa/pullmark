@@ -3,7 +3,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="0.1.0"
+VERSION="0.1.1"
+
+# Set SIGN_IDENTITY to a Developer ID identity for release builds;
+# defaults to ad-hoc signing for local/CI builds.
+SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+SIGN_FLAGS=()
+if [ "$SIGN_IDENTITY" != "-" ]; then
+  SIGN_FLAGS=(--options runtime --timestamp)
+fi
 
 swift build -c release
 
@@ -158,8 +166,8 @@ cat > "$QL_ENTITLEMENTS" <<'EOF'
 </plist>
 EOF
 
-codesign --force --sign - --entitlements "$QL_ENTITLEMENTS" "$APPEX"
+codesign --force --sign "$SIGN_IDENTITY" "${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"}" --entitlements "$QL_ENTITLEMENTS" "$APPEX"
 rm -f "$QL_ENTITLEMENTS"
 
-codesign --force --sign - "$APP"
+codesign --force --sign "$SIGN_IDENTITY" "${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"}" "$APP"
 echo "Built $APP"
