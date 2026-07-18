@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  background: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #0d1117; }
+}
+
+.markdown-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 28px 72px;
+}
+
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+/* ---- Rendered diff blocks ---- */
+
+.pm-block {
+  position: relative;
+  border-radius: 6px;
+  padding: 2px 14px;
+  margin: 2px -14px;
+}
+.pm-added {
+  background: rgba(46, 160, 67, 0.12);
+  box-shadow: inset 3px 0 0 #2ea043;
+}
+.pm-removed {
+  background: rgba(248, 81, 73, 0.10);
+  box-shadow: inset 3px 0 0 #f85149;
+  opacity: 0.75;
+}
+.pm-modified .pm-old {
+  background: rgba(248, 81, 73, 0.10);
+  box-shadow: inset 3px 0 0 #f85149;
+  opacity: 0.75;
+  border-radius: 6px;
+  padding: 2px 14px;
+  margin: 0 -14px 6px;
+}
+.pm-modified .pm-new {
+  background: rgba(46, 160, 67, 0.12);
+  box-shadow: inset 3px 0 0 #2ea043;
+  border-radius: 6px;
+  padding: 2px 14px;
+  margin: 0 -14px;
+}
+
+.pm-comment-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  display: none;
+  cursor: pointer;
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  background: var(--bgColor-default, #fff);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 7px;
+  z-index: 5;
+}
+.pm-block:hover .pm-comment-btn { display: block; }
+.pm-comment-btn:hover { border-color: rgba(128, 128, 128, 0.9); }
+
+.pm-empty-note {
+  color: #6e7781;
+  font-style: italic;
+}
+
+/* ---- Source (patch) diff ---- */
+
+.pm-patch {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: 12px;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 6px;
+  white-space: pre;
+}
+.pm-line-add { background: rgba(46, 160, 67, 0.18); }
+.pm-line-del { background: rgba(248, 81, 73, 0.18); }
+.pm-line-hunk { color: #8250df; font-weight: 600; }
+@media (prefers-color-scheme: dark) {
+  .pm-line-hunk { color: #d2a8ff; }
+}

@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c3646"/>
+      <stop offset="1" stop-color="#12161d"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#sheen)"/>
+  <!-- Markdown mark (208x128), "M" in white, download arrow in PR green -->
+  <g transform="translate(512,512) scale(3.1) translate(-104,-64)">
+    <path fill="#ffffff" d="M30 98V30h20l20 25 20-25h20v68H90V59L70 84 50 59v39z"/>
+    <path fill="#3fb950" d="M155 98L125 65h20V30h20v35h20z"/>
+  </g>
+</svg>
