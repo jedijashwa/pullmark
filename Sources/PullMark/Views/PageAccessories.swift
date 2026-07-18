@@ -116,6 +116,59 @@ struct OutlineToggle: View {
     }
 }
 
+/// Banner shown when a newer PullMark release is available on GitHub.
+struct AppUpdateBanner: View {
+    @EnvironmentObject private var updates: UpdateChecker
+
+    var body: some View {
+        if let version = updates.availableVersion {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                Text("PullMark \(version) is available.")
+                Button("What's New") { updates.showReleaseNotes = true }
+                Button("Copy brew Command") { updates.copyBrewCommand() }
+                    .help("Copies “brew upgrade --cask pullmark” to the clipboard")
+                Spacer()
+                Button {
+                    updates.dismissAvailableUpdate()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help("Dismiss — this version won't be suggested again")
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.15))
+        }
+    }
+}
+
+/// Sheet rendering release-notes Markdown with the app's own renderer.
+struct ReleaseNotesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let title: String
+    let markdown: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Button("Close") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+            }
+            .padding(12)
+            Divider()
+            MarkdownWebView(html: HTMLBuilder.documentPage(markdown: markdown, title: title))
+                .background(Color(nsColor: .textBackgroundColor))
+        }
+        .frame(width: 640, height: 520)
+    }
+}
+
 /// Banner shown when the PR's head moved on GitHub since it was loaded.
 struct PRUpdateBanner: View {
     @EnvironmentObject private var state: AppState
