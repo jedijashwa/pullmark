@@ -97,6 +97,77 @@ final class GitHubClient {
         return all
     }
 
+    /// Resolution state and GraphQL node id per thread, keyed by the thread's
+    /// root comment id (REST databaseId). Resolution is GraphQL-only.
+    func reviewThreadMeta(_ ref: PullRequestRef) async throws -> [Int: ThreadMeta] {
+        struct Response: Decodable {
+            struct DataBox: Decodable { let repository: Repo? }
+            struct Repo: Decodable { let pullRequest: PR? }
+            struct PR: Decodable { let reviewThreads: Threads }
+            struct Threads: Decodable { let nodes: [Node] }
+            struct Node: Decodable {
+                let id: String
+                let isResolved: Bool
+                let comments: Comments
+            }
+            struct Comments: Decodable { let nodes: [Comment] }
+            struct Comment: Decodable { let databaseId: Int? }
+            let data: DataBox?
+        }
+        let query = """
+        query($owner: String!, $repo: String!, $number: Int!) {
+          repository(owner: $owner, name: $repo) {
+            pullRequest(number: $number) {
+              reviewThreads(first: 100) {
+                nodes { id isResolved comments(first: 1) { nodes { databaseId } } }
+              }
+            }
+          }
+        }
+        """
+        let data = try await graphQL(query, variables: ["owner": ref.owner, "repo": ref.repo, "number": ref.number])
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        var meta: [Int: ThreadMeta] = [:]
+        for node in response.data?.repository?.pullRequest?.reviewThreads.nodes ?? [] {
+            if let rootID = node.comments.nodes.first?.databaseId {
+                meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved)
+            }
+        }
+        return meta
+    }
+
+    func setThreadResolved(nodeID: String, resolved: Bool) async throws {
+        let mutation = resolved
+            ? "mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }"
+            : "mutation($id: ID!) { unresolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }"
+        _ = try await graphQL(mutation, variables: ["id": nodeID])
+    }
+
+    /// Replies within an existing review thread.
+    func replyToReviewComment(_ ref: PullRequestRef, rootID: Int, body: String) async throws {
+        let payload = try JSONSerialization.data(withJSONObject: ["body": body, "in_reply_to": rootID])
+        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
+                              jsonBody: payload)
+    }
+
+    private func graphQL(_ query: String, variables: [String: Any]) async throws -> Data {
+        guard await authToken() != nil else {
+            throw APIError(status: 401, message: "GitHub authentication is required for this action. "
+                + "Sign in with `gh auth login` or configure a git credential helper.")
+        }
+        let body = try JSONSerialization.data(withJSONObject: ["query": query, "variables": variables])
+        let data = try await request("POST", "/graphql", jsonBody: body)
+        struct ErrorEnvelope: Decodable {
+            struct GQLError: Decodable { let message: String }
+            let errors: [GQLError]?
+        }
+        if let envelope = try? JSONDecoder().decode(ErrorEnvelope.self, from: data),
+           let first = envelope.errors?.first {
+            throw APIError(status: 200, message: first.message)
+        }
+        return data
+    }
+
     /// Posts a single review comment immediately (visible right away).
     func createComment(_ ref: PullRequestRef, commitID: String, comment: DraftComment) async throws {
         let body = try Self.commentRequestBody(commitID: commitID, comment: comment)

@@ -25,7 +25,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundleDisplayName</key>
     <string>PullMark</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.pullmark.PullMark</string>
+    <string>app.pullmark.PullMark</string>
     <key>CFBundleExecutable</key>
     <string>PullMark</string>
     <key>CFBundlePackageType</key>
@@ -113,7 +113,7 @@ cat > "$APPEX/Contents/Info.plist" <<EOF
     <key>CFBundleName</key>
     <string>PullMark Quick Look</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.pullmark.PullMark.QuickLook</string>
+    <string>app.pullmark.PullMark.QuickLook</string>
     <key>CFBundleExecutable</key>
     <string>PullMarkQuickLook</string>
     <key>CFBundlePackageType</key>

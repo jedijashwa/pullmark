@@ -22,6 +22,12 @@ struct MarkdownWebView: NSViewRepresentable {
     var onOpenRemoteFile: ((String) -> Void)?
     /// Receives the document's heading outline after each render.
     var onOutline: (([OutlineItem]) -> Void)?
+    /// Scroll-spy: the heading id currently at the top of the viewport.
+    var onActiveSection: ((String) -> Void)?
+    /// Reply requested on an existing review thread (root comment id).
+    var onThreadReply: ((Int) -> Void)?
+    /// Resolve/unresolve requested (root comment id, desired state).
+    var onThreadResolve: ((Int, Bool) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
 
@@ -99,6 +105,19 @@ struct MarkdownWebView: NSViewRepresentable {
                     return OutlineItem(level: level, text: text, id: id)
                 }
                 parent.onOutline?(items)
+            case "activeSection":
+                if let id = dict["id"] as? String {
+                    parent.onActiveSection?(id)
+                }
+            case "threadReply":
+                if let rootID = dict["rootID"] as? Int {
+                    parent.onThreadReply?(rootID)
+                }
+            case "threadResolve":
+                if let rootID = dict["rootID"] as? Int,
+                   let resolved = dict["resolved"] as? Bool {
+                    parent.onThreadResolve?(rootID, resolved)
+                }
             default:
                 break
             }

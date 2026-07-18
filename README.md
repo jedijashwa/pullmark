@@ -1,8 +1,14 @@
 # PullMark
 
-**A lightweight, native macOS app for reading Markdown — locally, and in GitHub pull requests.**
+**A native macOS app for people who think in rendered Markdown — for reading docs locally, and for reviewing documentation-heavy pull requests.**
 
-PullMark renders local Markdown files with GitHub-style formatting, and opens GitHub PRs to show their Markdown changes as **rich rendered diffs** — formatted output with changed words highlighted, not walls of `+`/`-` source lines. You can comment on the diff directly, collect comments into a review, and submit or save it as a pending (draft) review. It authenticates with the GitHub credentials already on your system, so private and organization repos just work.
+## Why PullMark exists
+
+More and more of what flows through pull requests isn't code — it's *documents*: design docs, decision records, agent and skill definitions, runbooks, READMEs. Reviewing those as walls of `+`/`-` source lines is the wrong altitude. A document is meant to be read the way readers will see it: formatted, with tables as tables and diagrams as diagrams. If you're a visual reader, a source diff of prose actively hides what changed.
+
+PullMark shows Markdown changes as **rendered diffs** — formatted output with just the changed words highlighted — and lets you comment, suggest, and submit a review right there. It authenticates with the GitHub credentials already on your system, so private and organization repos just work.
+
+**PullMark is deliberately not a full review client.** It shows only the Markdown files in a PR; for the code parts of a change, your usual review tools remain the right place. Think of it as the reading room next to the workshop.
 
 ## Features
 

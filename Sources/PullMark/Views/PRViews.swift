@@ -190,6 +190,8 @@ struct PRFileView: View {
     @State private var loadError: String?
     @State private var commentTarget: CommentTarget?
     @State private var outline: [OutlineItem] = []
+    @State private var activeSection: String?
+    @State private var replyTarget: ReplyTarget?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
@@ -237,6 +239,11 @@ struct PRFileView: View {
                             state.openRemoteDoc(sessionID: sessionID, path: repoPath)
                         },
                         onOutline: { outline = $0 },
+                        onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
+                        onThreadReply: { replyTarget = ReplyTarget(id: $0) },
+                        onThreadResolve: { rootID, resolved in
+                            setThreadResolved(rootID: rootID, resolved: resolved)
+                        },
                         proxy: proxy
                     )
                     .layoutPriority(1)
@@ -278,6 +285,24 @@ struct PRFileView: View {
         .sheet(item: $commentTarget) { target in
             CommentComposer(sessionID: sessionID, path: path, target: target)
         }
+        .sheet(item: $replyTarget) { target in
+            ThreadReplyComposer(sessionID: sessionID, rootID: target.id)
+        }
+    }
+
+    private func setThreadResolved(rootID: Int, resolved: Bool) {
+        guard let session, let meta = session.threadMeta[rootID] else {
+            state.lastError = "Thread state unavailable — try refreshing the PR."
+            return
+        }
+        Task {
+            do {
+                try await state.client.setThreadResolved(nodeID: meta.nodeID, resolved: resolved)
+                await state.reloadComments(sessionID: sessionID)
+            } catch {
+                state.lastError = error.localizedDescription
+            }
+        }
     }
 
     private var remoteContext: RemoteResourceContext? {
@@ -307,23 +332,18 @@ struct PRFileView: View {
                 title: path
             )
         case .renderedDiff:
-            let old = MarkdownBlocks.split(baseText ?? "")
-            let new = MarkdownBlocks.split(headText ?? "")
-            var segments = BlockDiff.diff(old: old, new: new).map { segment -> DiffSegmentPayload in
-                var payload = segment.payload
-                if case .modified(let oldBlock, let newBlock) = segment {
-                    payload.wordDiff = WordDiff.markup(old: oldBlock.text, new: newBlock.text)
-                }
-                return payload
-            }
+            var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
             let threads = ReviewThreads.group(
                 (session?.reviewComments ?? []).filter { $0.path == path }
             )
-            let placed = ReviewThreads.place(threads, in: segments)
+            let placed = ReviewThreads.place(threads, in: segments,
+                                             meta: session?.threadMeta ?? [:])
             segments = placed.segments
             let outdated = placed.outdated.map { thread in
                 ThreadPayload(lineLabel: thread.lineLabel,
-                              comments: thread.comments.map(CommentPayload.init))
+                              comments: thread.comments.map(CommentPayload.init),
+                              rootID: thread.root.id,
+                              resolved: session?.threadMeta[thread.root.id]?.isResolved)
             }
             return HTMLBuilder.diffPage(segments: segments,
                                         outdatedThreads: outdated,
@@ -491,6 +511,7 @@ struct PRDocView: View {
     @State private var loading = true
     @State private var loadError: String?
     @State private var outline: [OutlineItem] = []
+    @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
@@ -525,11 +546,12 @@ struct PRDocView: View {
                             state.openRemoteDoc(sessionID: sessionID, path: repoPath)
                         },
                         onOutline: { outline = $0 },
+                        onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
                         proxy: proxy
                     )
                     .layoutPriority(1)
                     if outlineVisible {
-                        OutlineSidebar(items: outline, proxy: proxy)
+                        OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
                     }
                 }
                 .background(Color(nsColor: .textBackgroundColor))
@@ -559,6 +581,73 @@ struct PRDocView: View {
             loadError = error.localizedDescription
         }
         loading = false
+    }
+}
+
+// MARK: - Thread reply
+
+struct ReplyTarget: Identifiable {
+    let id: Int
+}
+
+struct ThreadReplyComposer: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    let sessionID: String
+    let rootID: Int
+
+    @State private var text = ""
+    @State private var posting = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Reply to thread")
+                .font(.headline)
+            TextEditor(text: $text)
+                .font(.body)
+                .frame(minHeight: 110)
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.35)))
+            if let error {
+                Text(error)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
+            }
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Reply") { send() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
+                if posting {
+                    ProgressView().controlSize(.small)
+                }
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private func send() {
+        guard let session = state.session(sessionID) else { return }
+        posting = true
+        error = nil
+        Task {
+            do {
+                try await state.client.replyToReviewComment(
+                    session.ref, rootID: rootID,
+                    body: text.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+                await state.reloadComments(sessionID: sessionID)
+                dismiss()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            posting = false
+        }
     }
 }
 

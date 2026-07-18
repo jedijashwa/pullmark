@@ -149,11 +149,31 @@ body {
   margin: 8px 0;
   background: rgba(128, 128, 128, 0.05);
 }
+.pm-thread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
 .pm-thread-line {
   font-size: 12px;
   font-weight: 600;
   color: #6e7781;
-  margin-bottom: 6px;
+}
+.pm-thread-actions button {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0969da;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-thread-actions button { color: #4493f8; }
+}
+.pm-thread-resolved {
+  opacity: 0.65;
 }
 .pm-thread-comment {
   padding: 6px 0;
