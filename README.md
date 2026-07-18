@@ -22,7 +22,7 @@ PullMark renders local Markdown files with GitHub-style formatting, and opens Gi
 Requirements: **macOS 13+** and a Swift 6 toolchain — either Xcode, or just the [Command Line Tools](https://developer.apple.com/download/all/) (`xcode-select --install`). No other dependencies.
 
 ```sh
-git clone https://github.com/joshriesenbach/pullmark.git
+git clone https://github.com/jedijashwa/pullmark.git
 cd pullmark
 make app
 ```
