@@ -29,7 +29,18 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 
 ## Installation
 
-### Build from source (currently the only method)
+### Homebrew (recommended)
+
+```sh
+brew tap jedijashwa/tap
+brew trust jedijashwa/tap    # Homebrew ≥ 6 requires trusting third-party taps
+brew install --cask pullmark
+```
+
+> [!NOTE]
+> The app is ad-hoc signed (not notarized yet), so macOS quarantines the download: on first launch, right-click **PullMark.app** → **Open** → **Open** (or allow it under **System Settings → Privacy & Security**).
+
+### Build from source
 
 Requirements: **macOS 13+** and a Swift 6 toolchain — either Xcode, or just the [Command Line Tools](https://developer.apple.com/download/all/) (`xcode-select --install`). No other dependencies.
 
