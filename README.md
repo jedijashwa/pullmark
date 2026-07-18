@@ -37,8 +37,7 @@ brew trust jedijashwa/tap    # Homebrew ≥ 6 requires trusting third-party taps
 brew install --cask pullmark
 ```
 
-> [!NOTE]
-> The app is ad-hoc signed (not notarized yet), so macOS quarantines the download: on first launch, right-click **PullMark.app** → **Open** → **Open** (or allow it under **System Settings → Privacy & Security**).
+Releases are signed with a Developer ID and notarized by Apple — no Gatekeeper warnings.
 
 ### Build from source
 
