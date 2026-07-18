@@ -27,7 +27,11 @@ final class WebViewProxy: ObservableObject {
         } else {
             js = "__pmFind.\(action)()"
         }
-        webView?.evaluateJavaScript(js) { result, _ in
+        guard let webView else {
+            completion(0, 0)
+            return
+        }
+        webView.evaluateJavaScript(js) { result, _ in
             let pair = (result as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? []
             completion(pair.first ?? 0, pair.count > 1 ? pair[1] : 0)
         }

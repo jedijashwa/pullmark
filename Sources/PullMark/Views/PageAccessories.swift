@@ -40,7 +40,11 @@ struct FindBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background(.bar)
-        .onAppear { focused = true }
+        .onAppear {
+            // Direct assignment in onAppear loses the race against the
+            // WKWebView grabbing first responder; defer one runloop turn.
+            DispatchQueue.main.async { focused = true }
+        }
         .onExitCommand { close() }
     }
 

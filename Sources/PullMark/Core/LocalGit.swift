@@ -157,7 +157,9 @@ enum LocalGit {
         process.environment = env
         let stdout = Pipe()
         process.standardOutput = stdout
-        process.standardError = Pipe()
+        // Discard rather than Pipe(): an undrained pipe can fill and
+        // deadlock git if it writes enough warnings to stderr.
+        process.standardError = FileHandle.nullDevice
         do { try process.run() } catch { return nil }
         let data = stdout.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()

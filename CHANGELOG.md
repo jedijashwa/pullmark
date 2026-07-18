@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Opening a file while PullMark is already running no longer spawns a
+  duplicate window — files now open in the existing window.
+- Find in Page (⌘F) reliably focuses the search field when the bar opens.
+- The outline sidebar now highlights the current section while scrolling a
+  PR file's diff (it already did for local files and browsed docs).
+- Hovering a repo-relative link in PR content shows a readable path in the
+  status pill instead of a raw pullmark-remote URL.
+- Dismissing the update banner fully clears the pending release notes.
+
 ## 0.3.0 - 2026-07-18
 
 - Blame annotations: a toolbar toggle on rendered documents (local files, a

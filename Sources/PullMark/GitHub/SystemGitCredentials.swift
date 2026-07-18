@@ -49,7 +49,9 @@ enum SystemGitCredentials {
 
         let stdoutPipe = Pipe()
         process.standardOutput = stdoutPipe
-        process.standardError = Pipe()
+        // Discard rather than Pipe(): an undrained pipe can fill and
+        // deadlock the child if it writes enough to stderr.
+        process.standardError = FileHandle.nullDevice
 
         if let stdin {
             let stdinPipe = Pipe()

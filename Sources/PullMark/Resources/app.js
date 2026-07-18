@@ -184,9 +184,11 @@
       var href = anchor.getAttribute("href") || "";
       if (!href) { status.style.display = "none"; return; }
       var label = href;
-      if (href.startsWith("pullmark-local:///")) {
-        try { label = decodeURIComponent(href.slice("pullmark-local:///".length)); } catch (e) { /* keep raw */ }
-      }
+      ["pullmark-local:///", "pullmark-remote:///"].forEach(function (scheme) {
+        if (href.startsWith(scheme)) {
+          try { label = decodeURIComponent(href.slice(scheme.length)); } catch (e) { /* keep raw */ }
+        }
+      });
       status.textContent = label;
       status.style.display = "block";
     });

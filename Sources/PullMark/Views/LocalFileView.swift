@@ -9,7 +9,7 @@ struct LocalFileView: View {
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     // Git history / branch comparison
@@ -25,7 +25,7 @@ struct LocalFileView: View {
     @State private var compareText: String?
 
     // Blame annotations
-    @AppStorage("pm.blame") private var blameVisible = false
+    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
     @State private var blamePayloads: [BlockBlamePayload]?
     @State private var blameNote: String?
 

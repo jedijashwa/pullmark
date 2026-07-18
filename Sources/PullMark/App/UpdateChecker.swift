@@ -92,19 +92,21 @@ final class UpdateChecker: ObservableObject {
     let currentVersion: String
 
     private let session = URLSession(configuration: .ephemeral)
+    private let defaults: UserDefaults
     private var timer: Timer?
 
-    private static let dismissedVersionKey = "pm.dismissedUpdateVersion"
-    private static let lastRunVersionKey = "pm.lastRunVersion"
+    private static let dismissedVersionKey = DefaultsKeys.dismissedUpdateVersion
+    private static let lastRunVersionKey = DefaultsKeys.lastRunVersion
     private static let latestReleaseURL =
         URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases/latest")!
     private static let releaseListURL =
         URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases?per_page=20")!
 
-    init(currentVersion: String? = nil) {
+    init(currentVersion: String? = nil, defaults: UserDefaults = .standard) {
         self.currentVersion = currentVersion
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "0.0.0"
+        self.defaults = defaults
         timer = Timer.scheduledTimer(withTimeInterval: 6 * 60 * 60, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.checkAutomatically() }
         }
@@ -147,12 +149,14 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    private func apply(_ release: UpdateRelease, ignoringDismissal: Bool) {
+    /// Raises the banner for a qualifying release. Internal (not private)
+    /// so the dismissal rules stay unit-testable without the network.
+    func apply(_ release: UpdateRelease, ignoringDismissal: Bool) {
         guard release.draft != true, release.prerelease != true,
               SemVer.isNewer(release.tagName, than: currentVersion) else { return }
         let version = SemVer.normalized(release.tagName)
         if !ignoringDismissal,
-           UserDefaults.standard.string(forKey: Self.dismissedVersionKey) == version {
+           defaults.string(forKey: Self.dismissedVersionKey) == version {
             return
         }
         availableVersion = version
@@ -164,9 +168,11 @@ final class UpdateChecker: ObservableObject {
     /// (a manual check can still bring it back).
     func dismissAvailableUpdate() {
         if let availableVersion {
-            UserDefaults.standard.set(availableVersion, forKey: Self.dismissedVersionKey)
+            defaults.set(availableVersion, forKey: Self.dismissedVersionKey)
         }
         availableVersion = nil
+        availableNotes = ""
+        availableURL = nil
     }
 
     func copyBrewCommand() {
@@ -182,7 +188,6 @@ final class UpdateChecker: ObservableObject {
     /// just records the version.
     private func presentWhatsNewIfUpdated() async {
         guard currentVersion != "0.0.0" else { return }
-        let defaults = UserDefaults.standard
         guard let stored = defaults.string(forKey: Self.lastRunVersionKey) else {
             defaults.set(currentVersion, forKey: Self.lastRunVersionKey)
             return

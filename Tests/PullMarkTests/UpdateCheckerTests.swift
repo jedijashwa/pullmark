@@ -37,6 +37,53 @@ import Testing
     }
 }
 
+@Suite struct UpdateBannerTests {
+    @MainActor private func makeChecker() -> UpdateChecker {
+        let suite = "pm.tests.updatechecker"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        // "0.0.0" keeps init's automatic check from touching the network.
+        return UpdateChecker(currentVersion: "0.0.0", defaults: defaults)
+    }
+
+    private func release(_ tag: String, draft: Bool = false,
+                         prerelease: Bool = false) -> UpdateRelease {
+        UpdateRelease(tagName: tag, body: "notes for \(tag)",
+                      htmlUrl: "https://example.com/\(tag)",
+                      prerelease: prerelease, draft: draft)
+    }
+
+    @Test @MainActor func dismissalSuppressesAutomaticButNotManualChecks() {
+        let checker = makeChecker()
+        checker.apply(release("v0.4.0"), ignoringDismissal: false)
+        #expect(checker.availableVersion == "0.4.0")
+        #expect(checker.availableNotes == "notes for v0.4.0")
+
+        checker.dismissAvailableUpdate()
+        #expect(checker.availableVersion == nil)
+        #expect(checker.availableNotes.isEmpty)
+        #expect(checker.availableURL == nil)
+
+        // Automatic re-check of the dismissed version stays quiet…
+        checker.apply(release("v0.4.0"), ignoringDismissal: false)
+        #expect(checker.availableVersion == nil)
+        // …a manual check still surfaces it…
+        checker.apply(release("v0.4.0"), ignoringDismissal: true)
+        #expect(checker.availableVersion == "0.4.0")
+        checker.dismissAvailableUpdate()
+        // …and a newer version breaks through the dismissal.
+        checker.apply(release("v0.5.0"), ignoringDismissal: false)
+        #expect(checker.availableVersion == "0.5.0")
+    }
+
+    @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBanner() {
+        let checker = makeChecker()
+        checker.apply(release("v0.4.0", draft: true), ignoringDismissal: false)
+        checker.apply(release("v0.4.0", prerelease: true), ignoringDismissal: false)
+        #expect(checker.availableVersion == nil)
+    }
+}
+
 @Suite struct UpdateReleaseTests {
     @Test func decodesReleaseJSON() throws {
         let json = """
