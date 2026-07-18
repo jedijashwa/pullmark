@@ -15,7 +15,8 @@ PullMark renders local Markdown files with GitHub-style formatting, and opens Gi
   - **Insert Suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
 - **PR images and links** — repo-relative images in PR files render (fetched at the PR's commit, cached in memory only); repo-relative links to Markdown files open in-app at that commit, other repo links open on GitHub.
 - **Stays current** — open PRs are checked every minute; if the branch moves, a banner offers a one-click refresh (your draft comments survive).
-- **Navigation** — outline menu to jump between headings, and **⌘F** find-in-page with match stepping.
+- **Navigation** — a navigator-style outline sidebar (toolbar toggle) listing the document's headings with level indentation, and **⌘F** find-in-page with match stepping.
+- **Recents** — recently opened files, folders, and pull requests live in **File → Open Recent** and a sidebar section. PR entries show their live status — draft, open, closed, merged, or unavailable (colored GitHub-style icons, kept up to date while you work).
 - **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style (Mermaid degrades to a code block in previews).
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.

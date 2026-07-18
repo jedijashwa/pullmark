@@ -88,8 +88,81 @@ struct SidebarView: View {
                     PRSidebarGroup(session: session)
                 }
             }
+            if !recentItems.isEmpty {
+                Section("Recent") {
+                    ForEach(recentItems) { item in
+                        RecentRow(item: item)
+                    }
+                }
+            }
         }
         .listStyle(.sidebar)
+    }
+
+    /// Recents not already open in the sidebar.
+    private var recentItems: [RecentItem] {
+        state.recents.filter { item in
+            switch item.kind {
+            case .file:
+                return !state.localFiles.contains { $0.url.path == item.path }
+            case .folder:
+                return true
+            case .pr:
+                guard let ref = item.ref else { return false }
+                return !state.prSessions.contains { $0.ref == ref }
+            }
+        }
+    }
+}
+
+private struct RecentRow: View {
+    @EnvironmentObject private var state: AppState
+    let item: RecentItem
+
+    var body: some View {
+        Button {
+            state.openRecent(item)
+        } label: {
+            Label {
+                HStack(spacing: 4) {
+                    Text(item.title)
+                        .lineLimit(1)
+                    if item.kind == .pr, let status = item.prStatus, status != .open {
+                        Text(status.label)
+                            .font(.caption2)
+                            .foregroundStyle(status.color)
+                    }
+                }
+            } icon: {
+                switch item.kind {
+                case .file:
+                    Image(systemName: "doc.text")
+                        .foregroundStyle(.secondary)
+                case .folder:
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                case .pr:
+                    let status = item.prStatus ?? .open
+                    Image(systemName: status.systemImage)
+                        .foregroundStyle(status.color.opacity(0.75))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .help(helpText)
+        .contextMenu {
+            Button("Remove from Recents") { state.removeRecent(id: item.id) }
+        }
+    }
+
+    private var helpText: String {
+        switch item.kind {
+        case .file, .folder:
+            return item.path ?? item.title
+        case .pr:
+            let status = item.prStatus.map { " — \($0.label)" } ?? ""
+            return "\(item.owner ?? "")/\(item.repo ?? "")#\(item.number ?? 0)\(status)"
+        }
     }
 }
 
@@ -126,11 +199,18 @@ private struct PRSidebarGroup: View {
             // Interpolating the Int directly would go through LocalizedStringKey
             // and render with digit grouping ("#45,206").
             let title: String = "\(session.ref.repo) #\(session.ref.number)"
-            Label(title, systemImage: "arrow.triangle.pull")
-                .tag(SidebarSelection.prOverview(session.id))
-                .contextMenu {
-                    Button("Remove from Sidebar") { state.removePR(session.id) }
-                }
+            let status = PRStatus(details: session.details)
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: status.systemImage)
+                    .foregroundStyle(status.color)
+            }
+            .tag(SidebarSelection.prOverview(session.id))
+            .help(status.label)
+            .contextMenu {
+                Button("Remove from Sidebar") { state.removePR(session.id) }
+            }
         }
     }
 

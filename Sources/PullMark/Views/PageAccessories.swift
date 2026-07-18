@@ -54,23 +54,58 @@ struct FindBar: View {
     }
 }
 
-/// Toolbar menu listing the document's headings; clicking scrolls to one.
-struct OutlineMenu: View {
+/// Trailing navigator-style panel listing the document's headings.
+struct OutlineSidebar: View {
     let items: [OutlineItem]
     let proxy: WebViewProxy
 
     var body: some View {
-        Menu {
-            ForEach(items) { item in
-                Button(String(repeating: "    ", count: max(0, item.level - 1)) + item.text) {
-                    proxy.scrollToAnchor(item.id)
+        List {
+            Section("Outline") {
+                if items.isEmpty {
+                    Text("No headings")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(items) { item in
+                    Button {
+                        proxy.scrollToAnchor(item.id)
+                    } label: {
+                        Text(item.text)
+                            .font(font(for: item.level))
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, CGFloat(max(0, item.level - 1)) * 14)
                 }
             }
-        } label: {
-            Label("Outline", systemImage: "list.bullet.indent")
         }
-        .disabled(items.isEmpty)
-        .help("Jump to a section")
+        .listStyle(.sidebar)
+        .frame(minWidth: 170, idealWidth: 230, maxWidth: 340)
+    }
+
+    private func font(for level: Int) -> Font {
+        switch level {
+        case 1: return .callout.weight(.semibold)
+        case 2: return .callout
+        default: return .footnote
+        }
+    }
+}
+
+/// Toolbar toggle for the outline panel.
+struct OutlineToggle: View {
+    @Binding var visible: Bool
+
+    var body: some View {
+        Button {
+            visible.toggle()
+        } label: {
+            Label("Outline", systemImage: "sidebar.right")
+        }
+        .help("Show or hide the document outline")
     }
 }
 

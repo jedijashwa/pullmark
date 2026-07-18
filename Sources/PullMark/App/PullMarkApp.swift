@@ -52,6 +52,15 @@ struct PullMarkApp: App {
                     .keyboardShortcut("o")
                 Button("Open Pull Request…") { state.showAddPR = true }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
+                Menu("Open Recent") {
+                    ForEach(state.recents) { item in
+                        Button(item.title) { state.openRecent(item) }
+                    }
+                    if !state.recents.isEmpty {
+                        Divider()
+                        Button("Clear Menu") { state.clearRecents() }
+                    }
+                }
             }
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state.findBarVisible = true }

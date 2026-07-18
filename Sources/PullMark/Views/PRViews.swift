@@ -44,12 +44,13 @@ struct PROverviewView: View {
             Text(session.details.title)
                 .font(.title2.bold())
             HStack(spacing: 8) {
-                Text(statusLabel(session))
+                let status = PRStatus(details: session.details)
+                Label(status.label, systemImage: status.systemImage)
                     .font(.caption.bold())
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(statusColor(session).opacity(0.18), in: Capsule())
-                    .foregroundStyle(statusColor(session))
+                    .background(status.color.opacity(0.18), in: Capsule())
+                    .foregroundStyle(status.color)
                 if let login = session.details.user?.login {
                     Text("opened by \(login)")
                         .foregroundStyle(.secondary)
@@ -125,19 +126,6 @@ struct PROverviewView: View {
         }
     }
 
-    private func statusLabel(_ session: PRSession) -> String {
-        if session.details.draft == true { return "Draft" }
-        return session.details.state.capitalized
-    }
-
-    private func statusColor(_ session: PRSession) -> Color {
-        switch session.details.state {
-        case "open": return session.details.draft == true ? .gray : .green
-        case "closed": return .red
-        default: return .purple
-        }
-    }
-
     private func filesSummary(_ session: PRSession) -> String {
         let md = session.markdownFiles.count
         var parts = ["\(md) Markdown file\(md == 1 ? "" : "s") changed"]
@@ -203,6 +191,7 @@ struct PRFileView: View {
     @State private var commentTarget: CommentTarget?
     @State private var outline: [OutlineItem] = []
     @StateObject private var proxy = WebViewProxy()
+    @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
     private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
@@ -232,30 +221,36 @@ struct PRFileView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                MarkdownWebView(
-                    html: html,
-                    onCommentRequest: { message in
-                        commentTarget = CommentTarget(
-                            lineStart: message.lineStart,
-                            lineEnd: message.lineEnd,
-                            side: message.side,
-                            suggestionSeed: suggestionSeed(for: message)
-                        )
-                    },
-                    remoteContext: remoteContext,
-                    onOpenRemoteFile: { repoPath in
-                        state.openRemoteDoc(sessionID: sessionID, path: repoPath)
-                    },
-                    onOutline: { outline = $0 },
-                    proxy: proxy
-                )
+                HSplitView {
+                    MarkdownWebView(
+                        html: html,
+                        onCommentRequest: { message in
+                            commentTarget = CommentTarget(
+                                lineStart: message.lineStart,
+                                lineEnd: message.lineEnd,
+                                side: message.side,
+                                suggestionSeed: suggestionSeed(for: message)
+                            )
+                        },
+                        remoteContext: remoteContext,
+                        onOpenRemoteFile: { repoPath in
+                            state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                        },
+                        onOutline: { outline = $0 },
+                        proxy: proxy
+                    )
+                    .layoutPriority(1)
+                    if outlineVisible {
+                        OutlineSidebar(items: outline, proxy: proxy)
+                    }
+                }
                 .background(Color(nsColor: .textBackgroundColor))
             }
         }
         .navigationTitle(path)
         .toolbar {
             ToolbarItem {
-                OutlineMenu(items: outline, proxy: proxy)
+                OutlineToggle(visible: $outlineVisible)
             }
             ToolbarItem(placement: .principal) {
                 Picker("View", selection: $mode) {
@@ -497,6 +492,7 @@ struct PRDocView: View {
     @State private var loadError: String?
     @State private var outline: [OutlineItem] = []
     @StateObject private var proxy = WebViewProxy()
+    @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
     private var session: PRSession? { state.session(sessionID) }
 
@@ -519,24 +515,30 @@ struct PRDocView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                MarkdownWebView(
-                    html: html,
-                    remoteContext: session.map {
-                        RemoteResourceContext(ref: $0.ref, commitSHA: $0.details.head.sha)
-                    },
-                    onOpenRemoteFile: { repoPath in
-                        state.openRemoteDoc(sessionID: sessionID, path: repoPath)
-                    },
-                    onOutline: { outline = $0 },
-                    proxy: proxy
-                )
+                HSplitView {
+                    MarkdownWebView(
+                        html: html,
+                        remoteContext: session.map {
+                            RemoteResourceContext(ref: $0.ref, commitSHA: $0.details.head.sha)
+                        },
+                        onOpenRemoteFile: { repoPath in
+                            state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                        },
+                        onOutline: { outline = $0 },
+                        proxy: proxy
+                    )
+                    .layoutPriority(1)
+                    if outlineVisible {
+                        OutlineSidebar(items: outline, proxy: proxy)
+                    }
+                }
                 .background(Color(nsColor: .textBackgroundColor))
             }
         }
         .navigationTitle(path)
         .toolbar {
             ToolbarItem {
-                OutlineMenu(items: outline, proxy: proxy)
+                OutlineToggle(visible: $outlineVisible)
             }
         }
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {

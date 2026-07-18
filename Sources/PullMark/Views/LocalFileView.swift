@@ -7,26 +7,33 @@ struct LocalFileView: View {
     @State private var watcher: FileWatcher?
     @State private var outline: [OutlineItem] = []
     @StateObject private var proxy = WebViewProxy()
+    @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
     var body: some View {
         VStack(spacing: 0) {
             if state.findBarVisible {
                 FindBar(proxy: proxy)
             }
-            MarkdownWebView(
-                html: html,
-                localResourceRoot: file.resourceRoot,
-                onOpenLocalFile: { url in state.add(url: url) },
-                onOutline: { outline = $0 },
-                proxy: proxy
-            )
+            HSplitView {
+                MarkdownWebView(
+                    html: html,
+                    localResourceRoot: file.resourceRoot,
+                    onOpenLocalFile: { url in state.add(url: url) },
+                    onOutline: { outline = $0 },
+                    proxy: proxy
+                )
+                .layoutPriority(1)
+                if outlineVisible {
+                    OutlineSidebar(items: outline, proxy: proxy)
+                }
+            }
         }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(file.url.deletingLastPathComponent().path)
         .toolbar {
             ToolbarItem {
-                OutlineMenu(items: outline, proxy: proxy)
+                OutlineToggle(visible: $outlineVisible)
             }
             ToolbarItem {
                 Button {

@@ -13,6 +13,7 @@ struct PullRequestDetails: Decodable {
     let body: String?
     let state: String
     let draft: Bool?
+    let merged: Bool?
     let head: CommitRef
     let base: CommitRef
     let htmlUrl: URL

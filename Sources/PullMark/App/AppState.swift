@@ -40,6 +40,38 @@ struct MessageError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+/// A recently opened file, folder, or pull request. Persisted (metadata only)
+/// in UserDefaults.
+struct RecentItem: Codable, Identifiable, Equatable {
+    enum Kind: String, Codable {
+        case file
+        case folder
+        case pr
+    }
+
+    var kind: Kind
+    var path: String?
+    var owner: String?
+    var repo: String?
+    var number: Int?
+    var title: String
+    var prStatus: PRStatus?
+    var lastOpened: Date
+
+    var id: String {
+        switch kind {
+        case .file: return "file:" + (path ?? "")
+        case .folder: return "folder:" + (path ?? "")
+        case .pr: return "pr:\(owner ?? "")/\(repo ?? "")#\(number ?? 0)"
+        }
+    }
+
+    var ref: PullRequestRef? {
+        guard kind == .pr, let owner, let repo, let number else { return nil }
+        return PullRequestRef(owner: owner, repo: repo, number: number)
+    }
+}
+
 @MainActor
 final class AppState: ObservableObject {
     @Published var localFiles: [LocalFile] = []
@@ -48,8 +80,12 @@ final class AppState: ObservableObject {
     @Published var showAddPR = false
     @Published var lastError: String?
     @Published var findBarVisible = false
+    @Published var recents: [RecentItem] = []
 
     let client = GitHubClient.shared
+
+    private static let recentsKey = "pm.recents"
+    private static let recentsLimit = 12
 
     private var openURLsObserver: NSObjectProtocol?
     private var updateTimer: Timer?
@@ -71,6 +107,7 @@ final class AppState: ObservableObject {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.checkForPRUpdates() }
         }
+        loadRecents()
     }
 
     deinit {
@@ -94,9 +131,13 @@ final class AppState: ObservableObject {
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
         if isDirectory.boolValue {
             addFolder(url)
+            noteRecent(RecentItem(kind: .folder, path: url.path,
+                                  title: url.lastPathComponent, lastOpened: Date()))
         } else {
             addFile(url, displayName: url.lastPathComponent,
                     resourceRoot: url.deletingLastPathComponent())
+            noteRecent(RecentItem(kind: .file, path: url.path,
+                                  title: url.lastPathComponent, lastOpened: Date()))
         }
     }
 
@@ -164,7 +205,15 @@ final class AppState: ObservableObject {
             selection = .prOverview(existing.id)
             return
         }
-        let details = try await client.pullRequest(ref)
+        let details: PullRequestDetails
+        do {
+            details = try await client.pullRequest(ref)
+        } catch {
+            if let apiError = error as? GitHubClient.APIError, apiError.status == 404 {
+                updateRecentPRStatus(ref: ref, status: .deleted)
+            }
+            throw error
+        }
         let files = try await client.files(ref)
         var mergeBase = details.base.sha
         do {
@@ -176,6 +225,9 @@ final class AppState: ObservableObject {
         session.reviewComments = (try? await client.reviewComments(ref)) ?? []
         prSessions.append(session)
         selection = .prOverview(session.id)
+        noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
+                              title: details.title, prStatus: PRStatus(details: details),
+                              lastOpened: Date()))
     }
 
     func openRemoteDoc(sessionID: String, path: String) {
@@ -191,6 +243,7 @@ final class AppState: ObservableObject {
     func checkForPRUpdates() async {
         for session in prSessions where !session.updateAvailable {
             guard let details = try? await client.pullRequest(session.ref) else { continue }
+            updateRecentPRStatus(ref: session.ref, status: PRStatus(details: details))
             if details.head.sha != session.details.head.sha,
                let index = prSessions.firstIndex(where: { $0.id == session.id }) {
                 prSessions[index].updateAvailable = true
@@ -213,8 +266,73 @@ final class AppState: ObservableObject {
             prSessions[index].mergeBaseSHA = mergeBase
             prSessions[index].reviewComments = comments
             prSessions[index].updateAvailable = false
+            updateRecentPRStatus(ref: ref, status: PRStatus(details: details))
         } catch {
             lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Recents
+
+    func openRecent(_ item: RecentItem) {
+        switch item.kind {
+        case .file, .folder:
+            guard let path = item.path else { return }
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                lastError = "\(item.title) no longer exists at \(path)."
+                removeRecent(id: item.id)
+                return
+            }
+            add(url: url)
+        case .pr:
+            guard let ref = item.ref else { return }
+            Task {
+                do {
+                    try await addPR("\(ref.owner)/\(ref.repo)#\(ref.number)")
+                } catch {
+                    lastError = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    func removeRecent(id: String) {
+        recents.removeAll { $0.id == id }
+        saveRecents()
+    }
+
+    func clearRecents() {
+        recents.removeAll()
+        saveRecents()
+    }
+
+    private func noteRecent(_ item: RecentItem) {
+        recents.removeAll { $0.id == item.id }
+        recents.insert(item, at: 0)
+        let overflow = recents.filter { $0.kind == item.kind }.dropFirst(Self.recentsLimit)
+        for stale in overflow { recents.removeAll { $0.id == stale.id } }
+        saveRecents()
+    }
+
+    private func updateRecentPRStatus(ref: PullRequestRef, status: PRStatus) {
+        guard let index = recents.firstIndex(where: { $0.ref == ref }) else { return }
+        if recents[index].prStatus != status {
+            recents[index].prStatus = status
+            saveRecents()
+        }
+    }
+
+    private func loadRecents() {
+        guard let data = UserDefaults.standard.data(forKey: Self.recentsKey),
+              let decoded = try? JSONDecoder().decode([RecentItem].self, from: data)
+        else { return }
+        recents = decoded
+    }
+
+    private func saveRecents() {
+        if let data = try? JSONEncoder().encode(recents) {
+            UserDefaults.standard.set(data, forKey: Self.recentsKey)
         }
     }
 
