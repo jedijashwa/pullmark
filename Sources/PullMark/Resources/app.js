@@ -8,6 +8,9 @@
   if (typeof markedAlert === "function") {
     marked.use(markedAlert());
   }
+  if (typeof markedFootnote === "function") {
+    marked.use(markedFootnote());
+  }
   marked.use({ gfm: true });
 
   // Outline speech bubble drawn to match the SF Symbols style used in the

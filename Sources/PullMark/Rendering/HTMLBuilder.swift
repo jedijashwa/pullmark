@@ -79,6 +79,7 @@ enum HTMLBuilder {
         <script>window.__PAYLOAD__ = \(jsonLiteral(payload));</script>
         <script src="vendor/marked.min.js"></script>
         <script src="vendor/marked-alert.min.js"></script>
+        <script src="vendor/marked-footnote.min.js"></script>
         <script src="vendor/highlight.min.js"></script>
         <script src="vendor/mermaid.min.js"></script>
         <script src="app.js"></script>

@@ -7,7 +7,7 @@ PullMark renders local Markdown files with GitHub-style formatting, and opens Gi
 ## Features
 
 - **Local Markdown viewing** — open files or whole folders; files re-render automatically when they change on disk. Relative images render, relative links to other Markdown files open in-app, heading anchors (`#section` links) jump within the page, and external links open in your browser — with a status pill previewing every link destination on hover.
-- **GitHub-flavored rendering** — tables, task lists, strikethrough, alerts/callouts (`> [!NOTE]`), syntax-highlighted code blocks, and Mermaid diagrams.
+- **GitHub-flavored rendering** — tables (with alignment), task lists, nested/numbered lists, strikethrough, footnotes, alerts/callouts (`> [!NOTE]`), syntax-highlighted code blocks, and Mermaid diagrams. The full construct list is exercised by [docs/kitchen-sink.md](docs/kitchen-sink.md) and asserted in CI by `scripts/render-check.sh`.
 - **Rendered PR diffs** — added, removed, and changed blocks highlighted in place. Changed blocks show a **word-level diff** when the edit is small enough to make sense (falling back to old/new stacked when it isn't). Switch between **inline** and **side-by-side** layout, or drop to the raw *Source Diff*, or preview the final *Result*.
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
   - **Comment Now** posts a single review comment immediately.

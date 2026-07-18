@@ -14,5 +14,7 @@ jobs:
         run: make build
       - name: Test
         run: make test
+      - name: Rendering regression check
+        run: ./scripts/render-check.sh
       - name: Package app
         run: make app
