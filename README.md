@@ -44,10 +44,13 @@ make run    # launch without building an app bundle
 make test   # unit tests
 ```
 
-### Command-line launcher
+### Running from the command line
+
+Install the `pullmark` command:
 
 ```sh
-make install-cli    # installs `pullmark` into /opt/homebrew/bin or /usr/local/bin
+make install-cli                     # installs into /opt/homebrew/bin (or /usr/local/bin)
+make install-cli BIN_DIR=~/bin       # or anywhere you like
 ```
 
 Then, from any terminal:
@@ -55,10 +58,19 @@ Then, from any terminal:
 ```sh
 pullmark                  # open the app
 pullmark README.md        # open a file
+pullmark notes.md a.md    # open several files
 pullmark ~/notes docs/    # open folders — adds every Markdown file inside
 ```
 
-(The app binary also accepts paths directly: `PullMark.app/Contents/MacOS/PullMark <file-or-dir>`.)
+Relative and absolute paths both work, and files open in the already-running app if there is one.
+
+Without installing anything, the same is available through `open`:
+
+```sh
+open -a PullMark README.md ~/notes
+```
+
+The app binary itself also accepts paths (`PullMark.app/Contents/MacOS/PullMark <file-or-dir> ...`), so shell aliases pointing at the executable work too.
 
 ### Make PullMark the default app for Markdown
 
