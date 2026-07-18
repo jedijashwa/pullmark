@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.2.0 - 2026-07-18
 
 - Reading themes: choose between GitHub (the classic look), Editorial (serif
   headers on warm paper), and Terminal (monospace with a phosphor-green
