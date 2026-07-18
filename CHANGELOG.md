@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.3.1 - 2026-07-18
 
 - Opening a file while PullMark is already running no longer spawns a
   duplicate window — files now open in the existing window.
