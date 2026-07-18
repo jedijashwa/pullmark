@@ -150,6 +150,14 @@ final class GitHubClient {
                               jsonBody: payload)
     }
 
+    /// Per-line blame ranges for a repo file at a commit (GraphQL; requires auth).
+    func blame(ref: PullRequestRef, path: String, sha: String) async throws -> [BlameRange] {
+        let data = try await graphQL(GitHubBlame.query,
+                                     variables: ["owner": ref.owner, "repo": ref.repo,
+                                                 "expr": sha, "path": path])
+        return try GitHubBlame.parse(data)
+    }
+
     private func graphQL(_ query: String, variables: [String: Any]) async throws -> Data {
         guard await authToken() != nil else {
             throw APIError(status: 401, message: "GitHub authentication is required for this action. "

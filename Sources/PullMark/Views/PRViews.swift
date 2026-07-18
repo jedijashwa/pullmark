@@ -197,6 +197,9 @@ struct PRFileView: View {
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage("pm.blame") private var blameVisible = false
+    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blameNote: String?
 
     private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
@@ -281,10 +284,17 @@ struct PRFileView: View {
                     .help("Inline or side-by-side rendered diff")
                 }
             }
+            ToolbarItem {
+                if mode == .result {
+                    BlameToggle(visible: $blameVisible)
+                }
+            }
         }
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
         }
+        .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
+        .onChange(of: mode) { _ in loadBlameIfNeeded() }
         .sheet(item: $commentTarget) { target in
             CommentComposer(sessionID: sessionID, path: path, target: target)
         }
@@ -330,7 +340,9 @@ struct PRFileView: View {
                 : (headText ?? "")
             return HTMLBuilder.documentPage(markdown: markdown, title: path,
                                             remote: HTMLBuilder.RemoteAssets(filePath: path),
-                                            theme: theme)
+                                            theme: theme,
+                                            blame: blameVisible ? blamePayloads : nil,
+                                            blameNote: blameVisible ? blameNote : nil)
         case .sourceDiff:
             return HTMLBuilder.patchPage(
                 patch: file.patch ?? "No textual diff available for this file.",
@@ -360,10 +372,31 @@ struct PRFileView: View {
         }
     }
 
+    /// Fetches blame once per loaded head content; failures degrade to a
+    /// one-line note in the annotation area.
+    private func loadBlameIfNeeded() {
+        guard blameVisible, mode == .result, let session, let headText,
+              file?.status != "removed",
+              blamePayloads == nil, blameNote == nil else { return }
+        let ref = session.ref
+        let sha = session.details.head.sha
+        let path = path
+        Task {
+            do {
+                blamePayloads = try await BlameService.remotePayloads(
+                    client: state.client, ref: ref, path: path, sha: sha, markdown: headText)
+            } catch {
+                blameNote = "Blame unavailable — \(error.localizedDescription)"
+            }
+        }
+    }
+
     private func load() async {
         guard let session, let file else { return }
         loading = true
         loadError = nil
+        blamePayloads = nil
+        blameNote = nil
         do {
             if file.status == "added" {
                 baseText = ""
@@ -387,6 +420,7 @@ struct PRFileView: View {
             loadError = error.localizedDescription
         }
         loading = false
+        loadBlameIfNeeded()
     }
 }
 
@@ -522,13 +556,18 @@ struct PRDocView: View {
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage("pm.blame") private var blameVisible = false
+    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blameNote: String?
 
     private var session: PRSession? { state.session(sessionID) }
 
     private var html: String {
         HTMLBuilder.documentPage(markdown: markdown, title: path,
                                  remote: HTMLBuilder.RemoteAssets(filePath: path),
-                                 theme: Theme.current(from: themeRaw).rawValue)
+                                 theme: Theme.current(from: themeRaw).rawValue,
+                                 blame: blameVisible ? blamePayloads : nil,
+                                 blameNote: blameVisible ? blameNote : nil)
     }
 
     var body: some View {
@@ -574,11 +613,32 @@ struct PRDocView: View {
         .navigationTitle(path)
         .toolbar {
             ToolbarItem {
+                BlameToggle(visible: $blameVisible)
+            }
+            ToolbarItem {
                 OutlineToggle(visible: $outlineVisible)
             }
         }
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
+        }
+        .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
+    }
+
+    private func loadBlameIfNeeded() {
+        guard blameVisible, let session, !markdown.isEmpty,
+              blamePayloads == nil, blameNote == nil else { return }
+        let ref = session.ref
+        let sha = session.details.head.sha
+        let path = path
+        let text = markdown
+        Task {
+            do {
+                blamePayloads = try await BlameService.remotePayloads(
+                    client: state.client, ref: ref, path: path, sha: sha, markdown: text)
+            } catch {
+                blameNote = "Blame unavailable — \(error.localizedDescription)"
+            }
         }
     }
 
@@ -586,6 +646,8 @@ struct PRDocView: View {
         guard let session else { return }
         loading = true
         loadError = nil
+        blamePayloads = nil
+        blameNote = nil
         do {
             markdown = try await state.client.fileContent(session.ref, path: path,
                                                           at: session.details.head.sha)
@@ -593,6 +655,7 @@ struct PRDocView: View {
             loadError = error.localizedDescription
         }
         loading = false
+        loadBlameIfNeeded()
     }
 }
 

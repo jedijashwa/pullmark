@@ -124,6 +124,12 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let rootID = dict["rootID"] as? Int {
                     parent.onThreadReply?(rootID)
                 }
+            case "copySHA":
+                // Blame chip without a known commit URL: copy the full SHA.
+                if let sha = dict["sha"] as? String {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(sha, forType: .string)
+                }
             case "threadResolve":
                 if let rootID = dict["rootID"] as? Int,
                    let resolved = dict["resolved"] as? Bool {

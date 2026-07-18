@@ -347,6 +347,103 @@
 
   darkQuery.addEventListener("change", renderMermaid);
 
+  // ---- Blame annotations (document mode) ----
+  // Swift computes everything (relative dates, primary commit, extra
+  // contributors); this only builds DOM. Avatars are remote https images in
+  // a non-persistent web view; when no avatar URL exists (local-only blame)
+  // a deterministic initials circle stands in.
+
+  function blameInitialsEl(name) {
+    var span = document.createElement("span");
+    span.className = "pm-blame-avatar pm-blame-initials";
+    var parts = (name || "?").trim().split(/\s+/).filter(Boolean);
+    var initials = parts.length
+      ? (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")) : "?";
+    span.textContent = initials.toUpperCase();
+    var hash = 0;
+    var s = name || "";
+    for (var i = 0; i < s.length; i++) { hash = (hash * 31 + s.charCodeAt(i)) >>> 0; }
+    span.style.background = "hsl(" + (hash % 360) + ", 45%, 42%)";
+    return span;
+  }
+
+  function blameAvatarEl(name, avatarUrl) {
+    if (!avatarUrl) { return blameInitialsEl(name); }
+    var img = document.createElement("img");
+    img.className = "pm-blame-avatar";
+    img.src = avatarUrl;
+    img.alt = name || "";
+    img.addEventListener("error", function () { img.replaceWith(blameInitialsEl(name)); });
+    return img;
+  }
+
+  function blameStripEl(entry) {
+    var strip = document.createElement("div");
+    strip.className = "pm-blame";
+    if (entry.headline) { strip.title = entry.headline; }
+
+    var avatars = document.createElement("span");
+    avatars.className = "pm-blame-avatars";
+    avatars.append(blameAvatarEl(entry.author, entry.avatarUrl));
+    (entry.others || []).forEach(function (other) {
+      avatars.append(blameAvatarEl(other.name, other.avatarUrl));
+    });
+    strip.append(avatars);
+
+    var author = document.createElement("span");
+    author.className = "pm-blame-author";
+    author.textContent = entry.uncommitted ? "Uncommitted changes" : (entry.author || "");
+    strip.append(author);
+
+    if (entry.dateLabel) {
+      var date = document.createElement("span");
+      date.className = "pm-blame-date";
+      date.textContent = entry.dateLabel;
+      strip.append(date);
+    }
+
+    if (entry.shortSHA && !entry.uncommitted) {
+      var sha;
+      if (entry.url) {
+        sha = document.createElement("a");
+        sha.href = entry.url; // opened externally by the navigation delegate
+        sha.title = (entry.headline ? entry.headline + " — " : "") + "View commit on GitHub";
+      } else {
+        sha = document.createElement("button");
+        sha.type = "button";
+        sha.title = (entry.headline ? entry.headline + " — " : "") + "Copy full SHA";
+        sha.addEventListener("click", function () {
+          post({ type: "copySHA", sha: entry.sha });
+          sha.textContent = "copied";
+          setTimeout(function () { sha.textContent = entry.shortSHA; }, 900);
+        });
+      }
+      sha.className = "pm-blame-sha";
+      sha.textContent = entry.shortSHA;
+      strip.append(sha);
+    }
+    return strip;
+  }
+
+  function blameNoteEl(text) {
+    var note = document.createElement("div");
+    note.className = "pm-blame-note";
+    note.textContent = text;
+    return note;
+  }
+
+  function renderBlameDocument(entries) {
+    entries.forEach(function (entry) {
+      var wrap = document.createElement("div");
+      wrap.className = "pm-blame-block";
+      var body = document.createElement("div");
+      body.innerHTML = render(entry.text);
+      wrap.append(body);
+      if (entry.sha) { wrap.append(blameStripEl(entry)); }
+      content.append(wrap);
+    });
+  }
+
   // ---- Diff rendering ----
 
   function commentButton(seg) {
@@ -528,7 +625,12 @@
   setupLinkPreview();
 
   if (payload.mode === "document") {
-    content.innerHTML = render(payload.markdown);
+    if (payload.blame && payload.blame.length) {
+      renderBlameDocument(payload.blame);
+    } else {
+      content.innerHTML = render(payload.markdown);
+    }
+    if (payload.blameNote) { content.prepend(blameNoteEl(payload.blameNote)); }
     rewriteLocalResources(content);
     rewriteRemoteResources(content);
     setupHeadingAnchors(content);

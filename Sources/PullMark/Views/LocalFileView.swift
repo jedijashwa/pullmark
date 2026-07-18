@@ -24,6 +24,11 @@ struct LocalFileView: View {
     @State private var compare: CompareTarget?
     @State private var compareText: String?
 
+    // Blame annotations
+    @AppStorage("pm.blame") private var blameVisible = false
+    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blameNote: String?
+
     var body: some View {
         VStack(spacing: 0) {
             if let compare {
@@ -64,6 +69,10 @@ struct LocalFileView: View {
                 compareMenu
             }
             ToolbarItem {
+                BlameToggle(visible: $blameVisible)
+                    .disabled(!inGitRepo || compare != nil)
+            }
+            ToolbarItem {
                 OutlineToggle(visible: $outlineVisible)
             }
             ToolbarItem {
@@ -83,6 +92,9 @@ struct LocalFileView: View {
         .onDisappear {
             watcher = nil
         }
+        .onChange(of: blameVisible) { _ in loadBlame() }
+        .onChange(of: currentText) { _ in loadBlame() }
+        .onChange(of: inGitRepo) { _ in loadBlame() }
     }
 
     @ViewBuilder
@@ -135,7 +147,9 @@ struct LocalFileView: View {
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
-                                        theme: theme)
+                                        theme: theme,
+                                        blame: blameVisible ? blamePayloads : nil,
+                                        blameNote: blameVisible ? blameNote : nil)
     }
 
     private func load() {
@@ -159,6 +173,21 @@ struct LocalFileView: View {
                 self.branches = branches
                 self.remoteBranches = remotes
             }
+        }
+    }
+
+    private func loadBlame() {
+        guard blameVisible, inGitRepo else { return }
+        let url = file.url
+        let text = currentText
+        Task {
+            let payloads = await BlameService.localPayloads(client: state.client,
+                                                            fileURL: url, markdown: text)
+            // The file may have been edited while blame was computed.
+            guard text == currentText else { return }
+            blamePayloads = payloads
+            blameNote = payloads == nil
+                ? "Blame unavailable — the file is not tracked by git." : nil
         }
     }
 
