@@ -1,0 +1,20 @@
+#!/bin/bash
+# Command-line launcher for PullMark.
+#
+#   pullmark                    open the app
+#   pullmark README.md          open a file
+#   pullmark ~/notes docs/      open folders (adds every Markdown file inside)
+set -euo pipefail
+
+if [ $# -eq 0 ]; then
+  exec open -a PullMark
+fi
+
+args=()
+for arg in "$@"; do
+  case "$arg" in
+    /*) args+=("$arg") ;;
+    *) args+=("$PWD/$arg") ;;
+  esac
+done
+exec open -a PullMark "${args[@]}"

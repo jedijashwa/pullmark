@@ -55,6 +55,11 @@ final class AppState: ObservableObject {
                 for url in urls { self?.add(url: url) }
             }
         }
+        // Command-line arguments, in case this state is created before the
+        // app delegate finished launching (or vice versa).
+        Task { @MainActor [weak self] in
+            for url in LaunchArguments.consumeFileURLs() { self?.add(url: url) }
+        }
     }
 
     // MARK: - Local files

@@ -99,6 +99,44 @@
     });
   }
 
+  // ---- Heading anchors + link previews ----
+
+  // marked v15 no longer emits heading ids; generate GitHub-style slugs so
+  // [table of contents](#like-this) links work.
+  function setupHeadingAnchors(root) {
+    var used = Object.create(null);
+    root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(function (heading) {
+      if (heading.id) { return; }
+      var slug = heading.textContent.trim().toLowerCase()
+        .replace(/[^\p{L}\p{N}\- ]+/gu, "")
+        .replace(/ +/g, "-");
+      var unique = slug || "section";
+      var counter = 1;
+      while (used[unique]) { unique = slug + "-" + counter; counter += 1; }
+      used[unique] = true;
+      heading.id = unique;
+    });
+  }
+
+  // Browser-style status pill showing where a link goes before you click it.
+  function setupLinkPreview() {
+    var status = document.createElement("div");
+    status.className = "pm-link-status";
+    document.body.append(status);
+    document.addEventListener("mouseover", function (event) {
+      var anchor = event.target.closest ? event.target.closest("a[href]") : null;
+      if (!anchor) { status.style.display = "none"; return; }
+      var href = anchor.getAttribute("href") || "";
+      if (!href) { status.style.display = "none"; return; }
+      var label = href;
+      if (href.startsWith("pullmark-local:///")) {
+        try { label = decodeURIComponent(href.slice("pullmark-local:///".length)); } catch (e) { /* keep raw */ }
+      }
+      status.textContent = label;
+      status.style.display = "block";
+    });
+  }
+
   // ---- Code + mermaid enhancement ----
 
   function enhance(root) {
@@ -284,9 +322,12 @@
 
   // ---- Entry point ----
 
+  setupLinkPreview();
+
   if (payload.mode === "document") {
     content.innerHTML = render(payload.markdown);
     rewriteLocalResources(content);
+    setupHeadingAnchors(content);
     enhance(content);
     renderMermaid();
   } else if (payload.mode === "diff") {
@@ -303,6 +344,7 @@
       renderInline(segments);
     }
     appendOutdated();
+    setupHeadingAnchors(content);
     enhance(content);
     renderMermaid();
   } else if (payload.mode === "patch") {

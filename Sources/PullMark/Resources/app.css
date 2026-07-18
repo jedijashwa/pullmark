@@ -181,6 +181,30 @@ body {
   font-style: italic;
 }
 
+/* ---- Link destination preview (browser-style status pill) ---- */
+
+.pm-link-status {
+  display: none;
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 11px -apple-system, sans-serif;
+  color: #57606a;
+  background: var(--bgColor-default, #fff);
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 6px;
+  padding: 3px 9px;
+  z-index: 50;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-link-status { color: #8b949e; }
+}
+
 /* ---- Source (patch) diff ---- */
 
 .pm-patch {

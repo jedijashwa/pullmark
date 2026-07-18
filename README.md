@@ -6,7 +6,7 @@ PullMark renders local Markdown files with GitHub-style formatting, and opens Gi
 
 ## Features
 
-- **Local Markdown viewing** — open files or whole folders; files re-render automatically when they change on disk; relative images and links between local Markdown files work.
+- **Local Markdown viewing** — open files or whole folders; files re-render automatically when they change on disk. Relative images render, relative links to other Markdown files open in-app, heading anchors (`#section` links) jump within the page, and external links open in your browser — with a status pill previewing every link destination on hover.
 - **GitHub-flavored rendering** — tables, task lists, strikethrough, alerts/callouts (`> [!NOTE]`), syntax-highlighted code blocks, and Mermaid diagrams.
 - **Rendered PR diffs** — added, removed, and changed blocks highlighted in place. Changed blocks show a **word-level diff** when the edit is small enough to make sense (falling back to old/new stacked when it isn't). Switch between **inline** and **side-by-side** layout, or drop to the raw *Source Diff*, or preview the final *Result*.
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
@@ -43,6 +43,26 @@ For development:
 make run    # launch without building an app bundle
 make test   # unit tests
 ```
+
+### Command-line launcher
+
+```sh
+make install-cli    # installs `pullmark` into /opt/homebrew/bin or /usr/local/bin
+```
+
+Then, from any terminal:
+
+```sh
+pullmark                  # open the app
+pullmark README.md        # open a file
+pullmark ~/notes docs/    # open folders — adds every Markdown file inside
+```
+
+(The app binary also accepts paths directly: `PullMark.app/Contents/MacOS/PullMark <file-or-dir>`.)
+
+### Make PullMark the default app for Markdown
+
+PullMark registers as a Markdown viewer, so: right-click any `.md` file in Finder → **Get Info** → **Open with:** → choose **PullMark** → **Change All…**. Every Markdown file will now open in PullMark on double-click.
 
 ### Authentication
 

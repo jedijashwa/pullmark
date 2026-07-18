@@ -80,6 +80,11 @@ struct MarkdownWebView: NSViewRepresentable {
                 decisionHandler(.allow)
                 return
             }
+            // In-page anchor links scroll within the rendered document.
+            if url.isFileURL, url.fragment != nil, url.path == webView.url?.path {
+                decisionHandler(.allow)
+                return
+            }
             if url.scheme == LocalResourceSchemeHandler.scheme {
                 if let root = schemeHandler.rootDirectory,
                    let fileURL = LocalResourceSchemeHandler.resolve(url, root: root) {
