@@ -5,7 +5,16 @@ import Testing
     @Test func scriptCloseTagCannotEscapePayload() {
         let page = HTMLBuilder.documentPage(markdown: "hello </script><script>alert(1)</script>")
         #expect(!page.contains("</script><script>alert"))
-        #expect(page.contains("<\\/script>"))
+        #expect(page.contains("\\u003c\\/script>"))
+    }
+
+    @Test func angleBracketsCannotEnterScriptEscapedStates() {
+        // "<!--<script>" would flip the HTML parser into the double-escaped
+        // script state and swallow the real </script>; no "<" from content
+        // may survive in the embedded JSON literal.
+        let literal = HTMLBuilder.jsonLiteral(["markdown": "x <!--<script> y"])
+        #expect(!literal.contains("<"))
+        #expect(literal.contains("\\u003c!--\\u003cscript>"))
     }
 
     @Test func documentPayloadIsEmbedded() {
@@ -74,6 +83,16 @@ import Testing
         #expect(Theme.current(from: "nonsense") == .github)
         #expect(Theme.current(from: "editorial") == .editorial)
         #expect(Theme.current(from: "terminal") == .terminal)
+    }
+
+    @Test func blamePageOmitsDuplicateMarkdown() {
+        let blame = [BlockBlamePayload(text: "# Hi", lineStart: 1, lineEnd: 1)]
+        let page = HTMLBuilder.documentPage(markdown: "# Hi", blame: blame)
+        #expect(page.contains("\"blame\":"))
+        #expect(!page.contains("\"markdown\""))
+        // An empty blame array must fall back to normal markdown rendering.
+        let empty = HTMLBuilder.documentPage(markdown: "# Hi", blame: [])
+        #expect(empty.contains("\"markdown\":\"# Hi\""))
     }
 
     @Test func referencesBundledAssets() {
