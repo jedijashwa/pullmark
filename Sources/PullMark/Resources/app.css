@@ -11,6 +11,9 @@ body {
   margin: 0 auto;
   padding: 32px 28px 72px;
 }
+.markdown-body.pm-wide {
+  max-width: 1500px;
+}
 
 .mermaid {
   display: flex;
@@ -19,7 +22,7 @@ body {
   overflow-x: auto;
 }
 
-/* ---- Rendered diff blocks ---- */
+/* ---- Rendered diff: inline layout ---- */
 
 .pm-block {
   position: relative;
@@ -35,6 +38,10 @@ body {
   background: rgba(248, 81, 73, 0.10);
   box-shadow: inset 3px 0 0 #f85149;
   opacity: 0.75;
+}
+.pm-changed {
+  background: rgba(210, 153, 34, 0.07);
+  box-shadow: inset 3px 0 0 #d29922;
 }
 .pm-modified .pm-old {
   background: rgba(248, 81, 73, 0.10);
@@ -52,22 +59,122 @@ body {
   margin: 0 -14px;
 }
 
+/* ---- Word-level marks ---- */
+
+.pm-word-ins {
+  background: rgba(46, 160, 67, 0.30);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.pm-word-del {
+  background: rgba(248, 81, 73, 0.30);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+/* Strike deletions only in the merged inline view, where old and new text
+   are interleaved. */
+.pm-changed .pm-word-del {
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+/* ---- Rendered diff: side-by-side layout ---- */
+
+.pm-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 4px;
+}
+.pm-cell {
+  position: relative;
+  border-radius: 6px;
+  padding: 2px 14px;
+  min-height: 10px;
+  min-width: 0;
+  overflow-x: auto;
+}
+.pm-cell-added {
+  background: rgba(46, 160, 67, 0.12);
+  box-shadow: inset 3px 0 0 #2ea043;
+}
+.pm-cell-removed {
+  background: rgba(248, 81, 73, 0.10);
+  box-shadow: inset 3px 0 0 #f85149;
+}
+.pm-cell-empty {
+  background: repeating-linear-gradient(45deg,
+    rgba(128, 128, 128, 0.07), rgba(128, 128, 128, 0.07) 6px,
+    transparent 6px, transparent 12px);
+}
+.pm-split-full {
+  grid-column: 1 / -1;
+}
+
+/* ---- Comment button ---- */
+
 .pm-comment-btn {
   position: absolute;
   top: 4px;
   right: 6px;
   display: none;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  color: inherit;
   border: 1px solid rgba(128, 128, 128, 0.45);
   background: var(--bgColor-default, #fff);
   border-radius: 6px;
-  font-size: 13px;
   line-height: 1;
-  padding: 4px 7px;
+  padding: 4px 6px;
   z-index: 5;
 }
-.pm-block:hover .pm-comment-btn { display: block; }
-.pm-comment-btn:hover { border-color: rgba(128, 128, 128, 0.9); }
+.pm-block:hover .pm-comment-btn,
+.pm-cell:hover .pm-comment-btn {
+  display: flex;
+}
+.pm-comment-btn:hover {
+  border-color: rgba(128, 128, 128, 0.9);
+}
+
+/* ---- Review comment threads ---- */
+
+.pm-threads {
+  margin: 4px 0 12px;
+}
+.pm-thread {
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: rgba(128, 128, 128, 0.05);
+}
+.pm-thread-line {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6e7781;
+  margin-bottom: 6px;
+}
+.pm-thread-comment {
+  padding: 6px 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.18);
+}
+.pm-thread-comment:first-of-type {
+  border-top: none;
+}
+.pm-thread-head {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.pm-thread-body {
+  font-size: 13px;
+}
+.pm-thread-body > *:first-child { margin-top: 0; }
+.pm-thread-body > *:last-child { margin-bottom: 0; }
+.pm-outdated-heading {
+  margin-top: 32px;
+}
 
 .pm-empty-note {
   color: #6e7781;

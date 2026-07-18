@@ -4,6 +4,9 @@ import SwiftUI
 struct LocalFile: Identifiable, Equatable {
     let url: URL
     let displayName: String
+    /// Directory that relative images/links in this document resolve against
+    /// (the containing folder, or the opened folder root).
+    let resourceRoot: URL
     var id: URL { url }
 }
 
@@ -12,6 +15,7 @@ struct PRSession: Identifiable {
     var details: PullRequestDetails
     var mergeBaseSHA: String
     var files: [PullRequestFile]
+    var reviewComments: [ReviewComment] = []
     var drafts: [DraftComment] = []
 
     var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
@@ -71,8 +75,13 @@ final class AppState: ObservableObject {
         if isDirectory.boolValue {
             addFolder(url)
         } else {
-            addFile(url, displayName: url.lastPathComponent)
+            addFile(url, displayName: url.lastPathComponent,
+                    resourceRoot: url.deletingLastPathComponent())
         }
+    }
+
+    func localFile(for url: URL) -> LocalFile? {
+        localFiles.first { $0.url == url }
     }
 
     func removeLocalFile(_ file: LocalFile) {
@@ -101,7 +110,7 @@ final class AppState: ObservableObject {
             let relative = url.path.hasPrefix(root.path + "/")
                 ? String(url.path.dropFirst(root.path.count + 1))
                 : url.lastPathComponent
-            addFile(url, displayName: relative)
+            addFile(url, displayName: relative, resourceRoot: root)
             added += 1
             if added >= 500 {
                 lastError = "Stopped after 500 Markdown files in \(root.lastPathComponent)."
@@ -113,9 +122,9 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func addFile(_ url: URL, displayName: String) {
+    private func addFile(_ url: URL, displayName: String, resourceRoot: URL) {
         if !localFiles.contains(where: { $0.url == url }) {
-            localFiles.append(LocalFile(url: url, displayName: displayName))
+            localFiles.append(LocalFile(url: url, displayName: displayName, resourceRoot: resourceRoot))
         }
         selection = .local(url)
     }
@@ -143,9 +152,20 @@ final class AppState: ObservableObject {
         } catch {
             // Fall back to the base tip; only matters when the base branch moved.
         }
-        let session = PRSession(ref: ref, details: details, mergeBaseSHA: mergeBase, files: files)
+        var session = PRSession(ref: ref, details: details, mergeBaseSHA: mergeBase, files: files)
+        session.reviewComments = (try? await client.reviewComments(ref)) ?? []
         prSessions.append(session)
         selection = .prOverview(session.id)
+    }
+
+    /// Refreshes existing review comments, e.g. after posting one.
+    func reloadComments(sessionID: String) async {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        let ref = prSessions[index].ref
+        guard let comments = try? await client.reviewComments(ref) else { return }
+        if let current = prSessions.firstIndex(where: { $0.id == sessionID }) {
+            prSessions[current].reviewComments = comments
+        }
     }
 
     func removePR(_ id: String) {

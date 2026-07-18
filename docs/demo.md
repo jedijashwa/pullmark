@@ -46,3 +46,7 @@ flowchart LR
 > This one is a warning.
 
 ~~Strikethrough~~ and a [link](https://github.com).
+
+## Relative image
+
+![PullMark icon](img/pullmark.png)

@@ -185,12 +185,21 @@ struct PRFileView: View {
         var id: String { rawValue }
     }
 
+    enum DiffLayout: String, CaseIterable, Identifiable {
+        case inline = "Inline"
+        case split = "Side by Side"
+        var id: String { rawValue }
+    }
+
     @State private var mode: Mode = .renderedDiff
+    @AppStorage("pm.diffLayout") private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
     @State private var loading = true
     @State private var loadError: String?
     @State private var commentTarget: CommentTarget?
+
+    private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
     private var session: PRSession? { state.session(sessionID) }
     private var file: PullRequestFile? { session?.files.first { $0.filename == path } }
@@ -232,6 +241,17 @@ struct PRFileView: View {
                 }
                 .pickerStyle(.segmented)
             }
+            ToolbarItem {
+                if mode == .renderedDiff {
+                    Picker("Layout", selection: $layoutRaw) {
+                        ForEach(DiffLayout.allCases) { layout in
+                            Text(layout.rawValue).tag(layout.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .help("Inline or side-by-side rendered diff")
+                }
+            }
         }
         .task(id: sessionID + "|" + path) {
             await load()
@@ -257,8 +277,26 @@ struct PRFileView: View {
         case .renderedDiff:
             let old = MarkdownBlocks.split(baseText ?? "")
             let new = MarkdownBlocks.split(headText ?? "")
-            let segments = BlockDiff.diff(old: old, new: new).map(\.payload)
-            return HTMLBuilder.diffPage(segments: segments, title: path)
+            var segments = BlockDiff.diff(old: old, new: new).map { segment -> DiffSegmentPayload in
+                var payload = segment.payload
+                if case .modified(let oldBlock, let newBlock) = segment {
+                    payload.wordDiff = WordDiff.markup(old: oldBlock.text, new: newBlock.text)
+                }
+                return payload
+            }
+            let threads = ReviewThreads.group(
+                (session?.reviewComments ?? []).filter { $0.path == path }
+            )
+            let placed = ReviewThreads.place(threads, in: segments)
+            segments = placed.segments
+            let outdated = placed.outdated.map { thread in
+                ThreadPayload(lineLabel: thread.lineLabel,
+                              comments: thread.comments.map(CommentPayload.init))
+            }
+            return HTMLBuilder.diffPage(segments: segments,
+                                        outdatedThreads: outdated,
+                                        layout: layout == .split ? "split" : "inline",
+                                        title: path)
         }
     }
 
@@ -380,6 +418,7 @@ struct CommentComposer: View {
                     commitID: session.details.head.sha,
                     comment: draft
                 )
+                await state.reloadComments(sessionID: sessionID)
                 dismiss()
             } catch {
                 self.error = error.localizedDescription

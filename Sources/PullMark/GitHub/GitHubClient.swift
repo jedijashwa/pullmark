@@ -77,6 +77,19 @@ final class GitHubClient {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
+    func reviewComments(_ ref: PullRequestRef) async throws -> [ReviewComment] {
+        var all: [ReviewComment] = []
+        for page in 1...10 {
+            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
+                                         query: [URLQueryItem(name: "per_page", value: "100"),
+                                                 URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decoder.decode([ReviewComment].self, from: data)
+            all.append(contentsOf: batch)
+            if batch.count < 100 { break }
+        }
+        return all
+    }
+
     /// Posts a single review comment immediately (visible right away).
     func createComment(_ ref: PullRequestRef, commitID: String, comment: DraftComment) async throws {
         let body = try Self.commentRequestBody(commitID: commitID, comment: comment)

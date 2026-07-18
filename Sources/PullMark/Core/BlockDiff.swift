@@ -69,6 +69,11 @@ struct DiffSegmentPayload: Encodable, Equatable {
     let lineStart: Int
     let lineEnd: Int
     let side: String
+    /// Existing review threads anchored to this segment (attached later by
+    /// ReviewThreads.place, hence mutable).
+    var threads: [ThreadPayload]? = nil
+    /// Word-level markup for modified segments (attached after diffing).
+    var wordDiff: WordDiff.Markup? = nil
 }
 
 extension DiffSegment {

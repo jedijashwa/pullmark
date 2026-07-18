@@ -10,6 +10,12 @@ enum HTMLBuilder {
         var markdown: String?
         var segments: [DiffSegmentPayload]?
         var patch: String?
+        /// When true, app.js rewrites relative image/link URLs to the
+        /// pullmark-local:// scheme served by LocalResourceSchemeHandler.
+        var localResources: Bool?
+        var outdatedThreads: [ThreadPayload]?
+        /// Diff layout: "inline" (default) or "split" (side by side).
+        var layout: String?
     }
 
     /// Base URL for relative asset references in generated pages.
@@ -17,12 +23,20 @@ enum HTMLBuilder {
         .url(forResource: "app", withExtension: "js", subdirectory: "Resources")?
         .deletingLastPathComponent()
 
-    static func documentPage(markdown: String, title: String = "") -> String {
-        page(payload: RenderPayload(mode: "document", markdown: markdown), title: title)
+    static func documentPage(markdown: String, title: String = "", localResources: Bool = false) -> String {
+        page(payload: RenderPayload(mode: "document", markdown: markdown,
+                                    localResources: localResources ? true : nil),
+             title: title)
     }
 
-    static func diffPage(segments: [DiffSegmentPayload], title: String = "") -> String {
-        page(payload: RenderPayload(mode: "diff", segments: segments), title: title)
+    static func diffPage(segments: [DiffSegmentPayload],
+                         outdatedThreads: [ThreadPayload] = [],
+                         layout: String = "inline",
+                         title: String = "") -> String {
+        page(payload: RenderPayload(mode: "diff", segments: segments,
+                                    outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
+                                    layout: layout),
+             title: title)
     }
 
     static func patchPage(patch: String, title: String = "") -> String {

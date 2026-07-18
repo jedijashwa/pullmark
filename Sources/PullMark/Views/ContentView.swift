@@ -149,8 +149,12 @@ struct DetailView: View {
         case nil:
             placeholder
         case .local(let url):
-            LocalFileView(url: url)
-                .id(url)
+            if let file = state.localFile(for: url) {
+                LocalFileView(file: file)
+                    .id(url)
+            } else {
+                placeholder
+            }
         case .prOverview(let id):
             if state.session(id) != nil {
                 PROverviewView(sessionID: id)

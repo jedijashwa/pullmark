@@ -35,6 +35,36 @@ struct PullRequestFile: Decodable, Identifiable, Equatable {
     }
 }
 
+/// An existing review comment fetched from GitHub. Comments whose `line` is
+/// nil are "outdated": they anchor to a previous version of the diff.
+struct ReviewComment: Decodable, Identifiable, Equatable {
+    struct User: Decodable, Equatable {
+        let login: String
+    }
+    let id: Int
+    let path: String
+    let body: String
+    let line: Int?
+    let side: String?
+    let startLine: Int?
+    let originalLine: Int?
+    let inReplyToId: Int?
+    let user: User?
+    let createdAt: String?
+    let htmlUrl: URL?
+
+    var author: String { user?.login ?? "unknown" }
+
+    /// "Jul 18, 2026" from the ISO-8601 `created_at`, or empty.
+    var dateLabel: String {
+        guard let createdAt, let date = ISO8601DateFormatter().date(from: createdAt) else { return "" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+}
+
 /// A review comment the user has written but not yet sent to GitHub.
 struct DraftComment: Identifiable, Equatable {
     let id: UUID
