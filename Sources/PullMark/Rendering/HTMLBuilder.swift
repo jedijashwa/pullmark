@@ -23,6 +23,13 @@ enum HTMLBuilder {
         var remoteResources: Bool?
         /// Repo directory containing the rendered file ("" for repo root).
         var resourceDir: String?
+        /// Reading theme ("github", "editorial", "terminal"). app.js mirrors
+        /// it onto <html data-theme="..."> before rendering; app.css only
+        /// styles the non-default themes, so "github" stays pixel-identical.
+        var theme: String?
+        /// Miniature non-interactive rendering for the Settings theme cards
+        /// (scaled down via CSS zoom, selection and scrollbars disabled).
+        var preview: Bool?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -41,11 +48,15 @@ enum HTMLBuilder {
 
     static func documentPage(markdown: String, title: String = "",
                              localResources: Bool = false,
-                             remote: RemoteAssets? = nil) -> String {
+                             remote: RemoteAssets? = nil,
+                             theme: String = "github",
+                             preview: Bool = false) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
-                                    resourceDir: remote?.resourceDir),
+                                    resourceDir: remote?.resourceDir,
+                                    theme: theme,
+                                    preview: preview ? true : nil),
              title: title)
     }
 
@@ -54,18 +65,24 @@ enum HTMLBuilder {
                          layout: String = "inline",
                          remote: RemoteAssets? = nil,
                          commentable: Bool = true,
-                         title: String = "") -> String {
+                         title: String = "",
+                         theme: String = "github",
+                         preview: Bool = false) -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
                                     layout: layout,
                                     commentable: commentable ? nil : false,
                                     remoteResources: remote != nil ? true : nil,
-                                    resourceDir: remote?.resourceDir),
+                                    resourceDir: remote?.resourceDir,
+                                    theme: theme,
+                                    preview: preview ? true : nil),
              title: title)
     }
 
-    static func patchPage(patch: String, title: String = "") -> String {
-        page(payload: RenderPayload(mode: "patch", patch: patch), title: title)
+    static func patchPage(patch: String, title: String = "",
+                          theme: String = "github") -> String {
+        page(payload: RenderPayload(mode: "patch", patch: patch, theme: theme),
+             title: title)
     }
 
     /// Encodes a value as a JSON literal safe to embed inside a <script> tag.

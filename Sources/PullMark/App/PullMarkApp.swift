@@ -107,6 +107,10 @@ struct PullMarkApp: App {
                 }
             }
         }
+        Settings {
+            SettingsView()
+                .environmentObject(updates)
+        }
     }
 }
 

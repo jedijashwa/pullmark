@@ -7,6 +7,10 @@ import JavaScriptCore
 /// same marked.js pipeline running in JavaScriptCore (no DOM), and Quick Look
 /// displays the HTML itself. Code blocks are pre-highlighted; Mermaid
 /// diagrams degrade to plain code blocks in previews.
+///
+/// Previews always use the GitHub theme: the QL sandbox cannot read the
+/// app's UserDefaults (separate container), so the reading theme selected
+/// in Settings ("pm.theme") intentionally does not apply here.
 final class PreviewProvider: QLPreviewProvider, QLPreviewingController {
     func providePreview(for request: QLFilePreviewRequest) async throws -> QLPreviewReply {
         StaticRenderer.debugLog("providePreview: \(request.fileURL.lastPathComponent)")

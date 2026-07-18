@@ -9,6 +9,7 @@ struct PROverviewView: View {
     @State private var reviewSummary = ""
     @State private var submitting = false
     @State private var confirmation: String?
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     var body: some View {
         if let session = state.session(sessionID) {
@@ -29,7 +30,8 @@ struct PROverviewView: View {
                     markdown: session.details.body?.isEmpty == false
                         ? session.details.body!
                         : "_No description provided._",
-                    title: session.details.title
+                    title: session.details.title,
+                    theme: Theme.current(from: themeRaw).rawValue
                 ))
                 .background(Color(nsColor: .textBackgroundColor))
             }
@@ -194,6 +196,7 @@ struct PRFileView: View {
     @State private var replyTarget: ReplyTarget?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
@@ -319,17 +322,20 @@ struct PRFileView: View {
 
     private var html: String {
         guard let file else { return "" }
+        let theme = Theme.current(from: themeRaw).rawValue
         switch mode {
         case .result:
             let markdown = file.status == "removed"
                 ? "> [!NOTE]\n> This file was deleted in the pull request."
                 : (headText ?? "")
             return HTMLBuilder.documentPage(markdown: markdown, title: path,
-                                            remote: HTMLBuilder.RemoteAssets(filePath: path))
+                                            remote: HTMLBuilder.RemoteAssets(filePath: path),
+                                            theme: theme)
         case .sourceDiff:
             return HTMLBuilder.patchPage(
                 patch: file.patch ?? "No textual diff available for this file.",
-                title: path
+                title: path,
+                theme: theme
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
@@ -349,7 +355,8 @@ struct PRFileView: View {
                                         outdatedThreads: outdated,
                                         layout: layout == .split ? "split" : "inline",
                                         remote: HTMLBuilder.RemoteAssets(filePath: path),
-                                        title: path)
+                                        title: path,
+                                        theme: theme)
         }
     }
 
@@ -507,15 +514,22 @@ struct PRDocView: View {
     let sessionID: String
     let path: String
 
-    @State private var html = ""
+    @State private var markdown = ""
     @State private var loading = true
     @State private var loadError: String?
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     private var session: PRSession? { state.session(sessionID) }
+
+    private var html: String {
+        HTMLBuilder.documentPage(markdown: markdown, title: path,
+                                 remote: HTMLBuilder.RemoteAssets(filePath: path),
+                                 theme: Theme.current(from: themeRaw).rawValue)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -573,10 +587,8 @@ struct PRDocView: View {
         loading = true
         loadError = nil
         do {
-            let markdown = try await state.client.fileContent(session.ref, path: path,
-                                                              at: session.details.head.sha)
-            html = HTMLBuilder.documentPage(markdown: markdown, title: path,
-                                            remote: HTMLBuilder.RemoteAssets(filePath: path))
+            markdown = try await state.client.fileContent(session.ref, path: path,
+                                                          at: session.details.head.sha)
         } catch {
             loadError = error.localizedDescription
         }
