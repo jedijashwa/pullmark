@@ -78,10 +78,10 @@ struct PullMarkApp: App {
                 }
                 Divider()
                 Button("Report a Bug…") {
-                    open("https://github.com/jedijashwa/pullmark/issues/new?template=bug_report.yml")
+                    open("https://github.com/jedijashwa/pullmark/issues/new?template=1-bug_report.yml")
                 }
                 Button("Request a Feature…") {
-                    open("https://github.com/jedijashwa/pullmark/issues/new?template=feature_request.yml")
+                    open("https://github.com/jedijashwa/pullmark/issues/new?template=2-feature_request.yml")
                 }
             }
             CommandGroup(after: .toolbar) {
