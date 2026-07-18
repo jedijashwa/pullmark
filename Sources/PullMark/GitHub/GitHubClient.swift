@@ -12,7 +12,9 @@ final class GitHubClient {
 
     private var cachedToken: String?
     private var tokenResolved = false
-    private let session: URLSession = .shared
+    /// Ephemeral so no repo content or API response is ever cached to disk —
+    /// everything fetched lives in memory only.
+    private let session = URLSession(configuration: .ephemeral)
 
     private nonisolated static var decoder: JSONDecoder {
         let d = JSONDecoder()
@@ -71,10 +73,15 @@ final class GitHubClient {
     }
 
     func fileContent(_ ref: PullRequestRef, path: String, at sha: String) async throws -> String {
-        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/contents/\(path)",
-                                     query: [URLQueryItem(name: "ref", value: sha)],
-                                     accept: "application/vnd.github.raw+json")
+        let data = try await fileData(ref, path: path, at: sha)
         return String(data: data, encoding: .utf8) ?? ""
+    }
+
+    /// Raw bytes of a repo file (used for images referenced by PR Markdown).
+    func fileData(_ ref: PullRequestRef, path: String, at sha: String) async throws -> Data {
+        try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/contents/\(path)",
+                          query: [URLQueryItem(name: "ref", value: sha)],
+                          accept: "application/vnd.github.raw+json")
     }
 
     func reviewComments(_ ref: PullRequestRef) async throws -> [ReviewComment] {

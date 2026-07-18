@@ -53,6 +53,10 @@ struct PullMarkApp: App {
                 Button("Open Pull Request…") { state.showAddPR = true }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
             }
+            CommandGroup(after: .textEditing) {
+                Button("Find in Page") { state.findBarVisible = true }
+                    .keyboardShortcut("f")
+            }
             CommandGroup(after: .toolbar) {
                 Picker("Appearance", selection: $appearanceRaw) {
                     ForEach(Appearance.allCases) { appearance in

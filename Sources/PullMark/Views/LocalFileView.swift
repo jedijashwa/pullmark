@@ -5,17 +5,29 @@ struct LocalFileView: View {
     let file: LocalFile
     @State private var html = ""
     @State private var watcher: FileWatcher?
+    @State private var outline: [OutlineItem] = []
+    @StateObject private var proxy = WebViewProxy()
 
     var body: some View {
-        MarkdownWebView(
-            html: html,
-            localResourceRoot: file.resourceRoot,
-            onOpenLocalFile: { url in state.add(url: url) }
-        )
+        VStack(spacing: 0) {
+            if state.findBarVisible {
+                FindBar(proxy: proxy)
+            }
+            MarkdownWebView(
+                html: html,
+                localResourceRoot: file.resourceRoot,
+                onOpenLocalFile: { url in state.add(url: url) },
+                onOutline: { outline = $0 },
+                proxy: proxy
+            )
+        }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(file.url.deletingLastPathComponent().path)
         .toolbar {
+            ToolbarItem {
+                OutlineMenu(items: outline, proxy: proxy)
+            }
             ToolbarItem {
                 Button {
                     load()

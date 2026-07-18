@@ -16,6 +16,20 @@ enum HTMLBuilder {
         var outdatedThreads: [ThreadPayload]?
         /// Diff layout: "inline" (default) or "split" (side by side).
         var layout: String?
+        /// Remote (PR) documents: rewrite relative images and links to the
+        /// pullmark-remote scheme (resolved against resourceDir).
+        var remoteResources: Bool?
+        /// Repo directory containing the rendered file ("" for repo root).
+        var resourceDir: String?
+    }
+
+    /// Options for rendering a file that lives in a GitHub repo.
+    struct RemoteAssets {
+        let resourceDir: String
+
+        init(filePath: String) {
+            self.resourceDir = (filePath as NSString).deletingLastPathComponent
+        }
     }
 
     /// Base URL for relative asset references in generated pages.
@@ -23,19 +37,26 @@ enum HTMLBuilder {
         .url(forResource: "app", withExtension: "js", subdirectory: "Resources")?
         .deletingLastPathComponent()
 
-    static func documentPage(markdown: String, title: String = "", localResources: Bool = false) -> String {
+    static func documentPage(markdown: String, title: String = "",
+                             localResources: Bool = false,
+                             remote: RemoteAssets? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
-                                    localResources: localResources ? true : nil),
+                                    localResources: localResources ? true : nil,
+                                    remoteResources: remote != nil ? true : nil,
+                                    resourceDir: remote?.resourceDir),
              title: title)
     }
 
     static func diffPage(segments: [DiffSegmentPayload],
                          outdatedThreads: [ThreadPayload] = [],
                          layout: String = "inline",
+                         remote: RemoteAssets? = nil,
                          title: String = "") -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
-                                    layout: layout),
+                                    layout: layout,
+                                    remoteResources: remote != nil ? true : nil,
+                                    resourceDir: remote?.resourceDir),
              title: title)
     }
 
@@ -54,6 +75,30 @@ enum HTMLBuilder {
         return json
             .replacingOccurrences(of: "\u{2028}", with: "\\u2028")
             .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
+    }
+
+    /// A double-quoted JS string literal with script-safe escaping.
+    static func jsStringLiteral(_ s: String) -> String {
+        var out = "\""
+        for character in s.unicodeScalars {
+            switch character {
+            case "\"": out += "\\\""
+            case "\\": out += "\\\\"
+            case "\n": out += "\\n"
+            case "\r": out += "\\r"
+            case "\t": out += "\\t"
+            case "/": out += "\\/"
+            case "\u{2028}": out += "\\u2028"
+            case "\u{2029}": out += "\\u2029"
+            default:
+                if character.value < 0x20 {
+                    out += String(format: "\\u%04x", character.value)
+                } else {
+                    out.unicodeScalars.append(character)
+                }
+            }
+        }
+        return out + "\""
     }
 
     static func escapeHTML(_ s: String) -> String {

@@ -181,6 +181,37 @@ body {
   font-style: italic;
 }
 
+/* ---- Suggestion blocks ---- */
+
+.pm-suggestion {
+  border: 1px solid rgba(46, 160, 67, 0.5);
+  border-radius: 6px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+.pm-suggestion-label {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: rgba(46, 160, 67, 0.12);
+  border-bottom: 1px solid rgba(46, 160, 67, 0.3);
+}
+.pm-suggestion pre {
+  margin: 0;
+  border-radius: 0;
+}
+
+/* ---- Find in page ---- */
+
+mark.pm-find {
+  background: rgba(255, 208, 0, 0.45);
+  color: inherit;
+  border-radius: 2px;
+}
+mark.pm-find.pm-find-current {
+  background: #ff9f0a;
+}
+
 /* ---- Link destination preview (browser-style status pill) ---- */
 
 .pm-link-status {

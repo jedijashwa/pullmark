@@ -50,6 +50,47 @@
     });
   }
 
+  // ---- Remote resources (PR files: images/links relative to the repo) ----
+
+  function resolveRepoPath(baseDir, relative) {
+    var joined = relative.startsWith("/")
+      ? relative.slice(1)
+      : (baseDir ? baseDir + "/" : "") + relative;
+    var stack = [];
+    var parts = joined.split("/");
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i];
+      if (part === "" || part === ".") { continue; }
+      if (part === "..") {
+        if (!stack.length) { return null; }
+        stack.pop();
+      } else {
+        stack.push(part);
+      }
+    }
+    return stack.length ? stack.join("/") : null;
+  }
+
+  function rewriteRemoteResources(root) {
+    if (!payload.remoteResources) { return; }
+    var absolute = /^([a-z][a-z0-9+.\-]*:|\/\/|#)/i;
+    var baseDir = payload.resourceDir || "";
+    root.querySelectorAll("img[src], a[href]").forEach(function (el) {
+      var attr = el.tagName === "IMG" ? "src" : "href";
+      var value = el.getAttribute(attr);
+      if (!value || absolute.test(value)) { return; }
+      var fragment = "";
+      if (attr === "href") {
+        var hash = value.indexOf("#");
+        if (hash !== -1) { fragment = value.slice(hash); value = value.slice(0, hash); }
+      }
+      var resolved = resolveRepoPath(baseDir, value);
+      if (!resolved) { return; }
+      el.setAttribute(attr, "pullmark-remote:///" +
+        resolved.split("/").map(encodeURIComponent).join("/") + fragment);
+    });
+  }
+
   // ---- Word-level diff marks ----
   // Swift wraps changed runs in private-use sentinels (U+E000-U+E003) that
   // survive Markdown rendering as text; convert them to highlight spans.
@@ -150,10 +191,102 @@
       div.textContent = el.textContent;
       el.closest("pre").replaceWith(div);
     });
+    // GitHub suggestion blocks get a labeled container instead of syntax
+    // highlighting.
+    root.querySelectorAll("pre code.language-suggestion").forEach(function (el) {
+      var pre = el.closest("pre");
+      var wrap = document.createElement("div");
+      wrap.className = "pm-suggestion";
+      var label = document.createElement("div");
+      label.className = "pm-suggestion-label";
+      label.textContent = "Suggested change";
+      pre.replaceWith(wrap);
+      wrap.append(label, pre);
+    });
     root.querySelectorAll("pre code").forEach(function (el) {
+      if (el.classList.contains("language-suggestion")) { return; }
       try { hljs.highlightElement(el); } catch (e) { /* unknown language */ }
     });
   }
+
+  function reportOutline(root) {
+    var items = [];
+    root.querySelectorAll("h1[id], h2[id], h3[id], h4[id]").forEach(function (heading) {
+      if (heading.closest(".pm-thread")) { return; }
+      items.push({
+        level: parseInt(heading.tagName.slice(1), 10),
+        text: heading.textContent.trim(),
+        id: heading.id
+      });
+    });
+    post({ type: "outline", items: items });
+  }
+
+  // ---- Find in page ----
+
+  window.__pmFind = (function () {
+    var matches = [];
+    var index = -1;
+    function clear() {
+      document.querySelectorAll("mark.pm-find").forEach(function (mark) {
+        var parent = mark.parentNode;
+        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+        parent.normalize();
+      });
+      matches = [];
+      index = -1;
+    }
+    function focusCurrent() {
+      matches.forEach(function (mark, i) {
+        mark.classList.toggle("pm-find-current", i === index);
+      });
+      if (matches[index]) {
+        matches[index].scrollIntoView({ block: "center" });
+      }
+    }
+    function set(query) {
+      clear();
+      if (!query) { return [0, 0]; }
+      var lowered = query.toLowerCase();
+      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+      var nodes = [];
+      while (walker.nextNode()) { nodes.push(walker.currentNode); }
+      nodes.forEach(function (node) {
+        var text = node.nodeValue;
+        var lower = text.toLowerCase();
+        var i = lower.indexOf(lowered);
+        if (i === -1) { return; }
+        var frag = document.createDocumentFragment();
+        var pos = 0;
+        while (i !== -1) {
+          frag.append(document.createTextNode(text.slice(pos, i)));
+          var mark = document.createElement("mark");
+          mark.className = "pm-find";
+          mark.textContent = text.slice(i, i + query.length);
+          frag.append(mark);
+          matches.push(mark);
+          pos = i + query.length;
+          i = lower.indexOf(lowered, pos);
+        }
+        frag.append(document.createTextNode(text.slice(pos)));
+        node.parentNode.replaceChild(frag, node);
+      });
+      if (matches.length) { index = 0; focusCurrent(); }
+      return [matches.length ? 1 : 0, matches.length];
+    }
+    function step(delta) {
+      if (!matches.length) { return [0, 0]; }
+      index = (index + delta + matches.length) % matches.length;
+      focusCurrent();
+      return [index + 1, matches.length];
+    }
+    return {
+      set: set,
+      next: function () { return step(1); },
+      prev: function () { return step(-1); },
+      clear: function () { clear(); return [0, 0]; }
+    };
+  })();
 
   function renderMermaid() {
     var nodes = document.querySelectorAll(".mermaid");
@@ -330,7 +463,9 @@
   if (payload.mode === "document") {
     content.innerHTML = render(payload.markdown);
     rewriteLocalResources(content);
+    rewriteRemoteResources(content);
     setupHeadingAnchors(content);
+    reportOutline(content);
     enhance(content);
     renderMermaid();
   } else if (payload.mode === "diff") {
@@ -347,7 +482,9 @@
       renderInline(segments);
     }
     appendOutdated();
+    rewriteRemoteResources(content);
     setupHeadingAnchors(content);
+    reportOutline(content);
     enhance(content);
     renderMermaid();
   } else if (payload.mode === "patch") {

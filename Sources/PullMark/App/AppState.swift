@@ -17,6 +17,10 @@ struct PRSession: Identifiable {
     var files: [PullRequestFile]
     var reviewComments: [ReviewComment] = []
     var drafts: [DraftComment] = []
+    /// Repo Markdown files opened via links from PR content (not part of the diff).
+    var browsedDocs: [String] = []
+    /// Set when the PR's head moved on GitHub since it was loaded.
+    var updateAvailable = false
 
     var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
     var markdownFiles: [PullRequestFile] { files.filter(\.isMarkdown) }
@@ -27,6 +31,8 @@ enum SidebarSelection: Hashable {
     case local(URL)
     case prOverview(String)
     case prFile(String, String)
+    /// A repo document browsed from PR content: (session id, repo path).
+    case prDoc(String, String)
 }
 
 struct MessageError: LocalizedError {
@@ -41,10 +47,12 @@ final class AppState: ObservableObject {
     @Published var selection: SidebarSelection?
     @Published var showAddPR = false
     @Published var lastError: String?
+    @Published var findBarVisible = false
 
     let client = GitHubClient.shared
 
     private var openURLsObserver: NSObjectProtocol?
+    private var updateTimer: Timer?
 
     init() {
         openURLsObserver = NotificationCenter.default.addObserver(
@@ -60,6 +68,13 @@ final class AppState: ObservableObject {
         Task { @MainActor [weak self] in
             for url in LaunchArguments.consumeFileURLs() { self?.add(url: url) }
         }
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in await self?.checkForPRUpdates() }
+        }
+    }
+
+    deinit {
+        updateTimer?.invalidate()
     }
 
     // MARK: - Local files
@@ -161,6 +176,46 @@ final class AppState: ObservableObject {
         session.reviewComments = (try? await client.reviewComments(ref)) ?? []
         prSessions.append(session)
         selection = .prOverview(session.id)
+    }
+
+    func openRemoteDoc(sessionID: String, path: String) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        if !prSessions[index].browsedDocs.contains(path) {
+            prSessions[index].browsedDocs.append(path)
+        }
+        selection = .prDoc(sessionID, path)
+    }
+
+    /// Detects head movement on open PRs; sets a flag rather than reloading
+    /// so an in-progress review is never yanked out from under the user.
+    func checkForPRUpdates() async {
+        for session in prSessions where !session.updateAvailable {
+            guard let details = try? await client.pullRequest(session.ref) else { continue }
+            if details.head.sha != session.details.head.sha,
+               let index = prSessions.firstIndex(where: { $0.id == session.id }) {
+                prSessions[index].updateAvailable = true
+            }
+        }
+    }
+
+    func refreshPR(sessionID: String) async {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        let ref = session.ref
+        do {
+            let details = try await client.pullRequest(ref)
+            let files = try await client.files(ref)
+            let mergeBase = (try? await client.mergeBaseSHA(ref, base: details.base.sha, head: details.head.sha))
+                ?? details.base.sha
+            let comments = (try? await client.reviewComments(ref)) ?? []
+            guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+            prSessions[index].details = details
+            prSessions[index].files = files
+            prSessions[index].mergeBaseSHA = mergeBase
+            prSessions[index].reviewComments = comments
+            prSessions[index].updateAvailable = false
+        } catch {
+            lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
+        }
     }
 
     /// Refreshes existing review comments, e.g. after posting one.

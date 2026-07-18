@@ -15,6 +15,15 @@ struct MarkdownWebView: NSViewRepresentable {
     var localResourceRoot: URL?
     /// Called when the user clicks a relative link to another local file.
     var onOpenLocalFile: ((URL) -> Void)?
+    /// Repo + commit that repo-relative resources resolve against. PR files only.
+    var remoteContext: RemoteResourceContext?
+    /// Called when the user clicks a repo-relative link to a Markdown file;
+    /// receives the repo path (opened in-app at the PR's commit).
+    var onOpenRemoteFile: ((String) -> Void)?
+    /// Receives the document's heading outline after each render.
+    var onOutline: (([OutlineItem]) -> Void)?
+    /// Optional handle for scrolling / find-in-page from SwiftUI.
+    var proxy: WebViewProxy?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -22,9 +31,14 @@ struct MarkdownWebView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
+        // No persistent website data: rendered content is regenerated on
+        // demand and must not outlive a reboot (or even the session).
+        configuration.websiteDataStore = .nonPersistent()
         configuration.userContentController.add(context.coordinator, name: "bridge")
         configuration.setURLSchemeHandler(context.coordinator.schemeHandler,
                                           forURLScheme: LocalResourceSchemeHandler.scheme)
+        configuration.setURLSchemeHandler(context.coordinator.remoteHandler,
+                                          forURLScheme: RemoteResourceSchemeHandler.scheme)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         // Let the SwiftUI background show through so there is no white flash
@@ -36,6 +50,8 @@ struct MarkdownWebView: NSViewRepresentable {
     func updateNSView(_ webView: WKWebView, context: Context) {
         context.coordinator.parent = self
         context.coordinator.schemeHandler.rootDirectory = localResourceRoot
+        context.coordinator.remoteHandler.context = remoteContext
+        proxy?.webView = webView
         if context.coordinator.lastHTML != html {
             context.coordinator.lastHTML = html
             RenderPageStore.removePage(context.coordinator.lastPageURL)
@@ -56,6 +72,7 @@ struct MarkdownWebView: NSViewRepresentable {
         var lastHTML: String?
         var lastPageURL: URL?
         let schemeHandler = LocalResourceSchemeHandler()
+        let remoteHandler = RemoteResourceSchemeHandler()
 
         init(_ parent: MarkdownWebView) {
             self.parent = parent
@@ -64,13 +81,27 @@ struct MarkdownWebView: NSViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController,
                                    didReceive message: WKScriptMessage) {
             guard message.name == "bridge",
-                  let dict = message.body as? [String: Any],
-                  dict["type"] as? String == "comment",
-                  let lineStart = dict["lineStart"] as? Int,
-                  let lineEnd = dict["lineEnd"] as? Int,
-                  let side = dict["side"] as? String
-            else { return }
-            parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side))
+                  let dict = message.body as? [String: Any] else { return }
+            switch dict["type"] as? String {
+            case "comment":
+                guard let lineStart = dict["lineStart"] as? Int,
+                      let lineEnd = dict["lineEnd"] as? Int,
+                      let side = dict["side"] as? String
+                else { return }
+                parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side))
+            case "outline":
+                guard let raw = dict["items"] as? [[String: Any]] else { return }
+                let items = raw.compactMap { item -> OutlineItem? in
+                    guard let level = item["level"] as? Int,
+                          let text = item["text"] as? String,
+                          let id = item["id"] as? String
+                    else { return nil }
+                    return OutlineItem(level: level, text: text, id: id)
+                }
+                parent.onOutline?(items)
+            default:
+                break
+            }
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
@@ -83,6 +114,18 @@ struct MarkdownWebView: NSViewRepresentable {
             // In-page anchor links scroll within the rendered document.
             if url.isFileURL, url.fragment != nil, url.path == webView.url?.path {
                 decisionHandler(.allow)
+                return
+            }
+            if url.scheme == RemoteResourceSchemeHandler.scheme {
+                if let path = RemoteResourceSchemeHandler.repoPath(from: url),
+                   let context = remoteHandler.context {
+                    if ["md", "markdown", "mdown", "mkd", "mdx"].contains((path as NSString).pathExtension.lowercased()) {
+                        parent.onOpenRemoteFile?(path)
+                    } else if let blobURL = URL(string: "https://github.com/\(context.ref.owner)/\(context.ref.repo)/blob/\(context.commitSHA)/\(path)") {
+                        NSWorkspace.shared.open(blobURL)
+                    }
+                }
+                decisionHandler(.cancel)
                 return
             }
             if url.scheme == LocalResourceSchemeHandler.scheme {

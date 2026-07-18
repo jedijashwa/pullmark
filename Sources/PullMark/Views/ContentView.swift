@@ -111,6 +111,17 @@ private struct PRSidebarGroup: View {
                 }
                 .tag(SidebarSelection.prFile(session.id, file.filename))
             }
+            ForEach(session.browsedDocs, id: \.self) { path in
+                Label {
+                    Text(path)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                } icon: {
+                    Image(systemName: "doc.text")
+                        .foregroundStyle(.secondary)
+                }
+                .tag(SidebarSelection.prDoc(session.id, path))
+            }
         } label: {
             // Interpolating the Int directly would go through LocalizedStringKey
             // and render with digit grouping ("#45,206").
@@ -166,6 +177,13 @@ struct DetailView: View {
             if state.session(id) != nil {
                 PRFileView(sessionID: id, path: path)
                     .id(id + "|" + path)
+            } else {
+                placeholder
+            }
+        case .prDoc(let id, let path):
+            if state.session(id) != nil {
+                PRDocView(sessionID: id, path: path)
+                    .id(id + "|doc|" + path)
             } else {
                 placeholder
             }

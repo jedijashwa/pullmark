@@ -13,6 +13,9 @@ struct PROverviewView: View {
     var body: some View {
         if let session = state.session(sessionID) {
             VStack(alignment: .leading, spacing: 0) {
+                if session.updateAvailable {
+                    PRUpdateBanner(sessionID: sessionID)
+                }
                 header(session)
                     .padding([.horizontal, .top], 20)
                     .padding(.bottom, 12)
@@ -198,6 +201,8 @@ struct PRFileView: View {
     @State private var loading = true
     @State private var loadError: String?
     @State private var commentTarget: CommentTarget?
+    @State private var outline: [OutlineItem] = []
+    @StateObject private var proxy = WebViewProxy()
 
     private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
@@ -205,7 +210,13 @@ struct PRFileView: View {
     private var file: PullRequestFile? { session?.files.first { $0.filename == path } }
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            if session?.updateAvailable == true {
+                PRUpdateBanner(sessionID: sessionID)
+            }
+            if state.findBarVisible {
+                FindBar(proxy: proxy)
+            }
             if loading {
                 ProgressView("Loading \(path)…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -221,18 +232,31 @@ struct PRFileView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                MarkdownWebView(html: html) { message in
-                    commentTarget = CommentTarget(
-                        lineStart: message.lineStart,
-                        lineEnd: message.lineEnd,
-                        side: message.side
-                    )
-                }
+                MarkdownWebView(
+                    html: html,
+                    onCommentRequest: { message in
+                        commentTarget = CommentTarget(
+                            lineStart: message.lineStart,
+                            lineEnd: message.lineEnd,
+                            side: message.side,
+                            suggestionSeed: suggestionSeed(for: message)
+                        )
+                    },
+                    remoteContext: remoteContext,
+                    onOpenRemoteFile: { repoPath in
+                        state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                    },
+                    onOutline: { outline = $0 },
+                    proxy: proxy
+                )
                 .background(Color(nsColor: .textBackgroundColor))
             }
         }
         .navigationTitle(path)
         .toolbar {
+            ToolbarItem {
+                OutlineMenu(items: outline, proxy: proxy)
+            }
             ToolbarItem(placement: .principal) {
                 Picker("View", selection: $mode) {
                     ForEach(Mode.allCases) { mode in
@@ -253,12 +277,24 @@ struct PRFileView: View {
                 }
             }
         }
-        .task(id: sessionID + "|" + path) {
+        .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
         }
         .sheet(item: $commentTarget) { target in
             CommentComposer(sessionID: sessionID, path: path, target: target)
         }
+    }
+
+    private var remoteContext: RemoteResourceContext? {
+        guard let session else { return nil }
+        return RemoteResourceContext(ref: session.ref, commitSHA: session.details.head.sha)
+    }
+
+    /// Current content of the targeted new-file lines, used to pre-fill a
+    /// ```suggestion block. Only meaningful on the new side.
+    private func suggestionSeed(for message: BridgeMessage) -> String? {
+        guard message.side == "RIGHT", let headText else { return nil }
+        return TextLines.lines(in: headText, from: message.lineStart, to: message.lineEnd)
     }
 
     private var html: String {
@@ -268,7 +304,8 @@ struct PRFileView: View {
             let markdown = file.status == "removed"
                 ? "> [!NOTE]\n> This file was deleted in the pull request."
                 : (headText ?? "")
-            return HTMLBuilder.documentPage(markdown: markdown, title: path)
+            return HTMLBuilder.documentPage(markdown: markdown, title: path,
+                                            remote: HTMLBuilder.RemoteAssets(filePath: path))
         case .sourceDiff:
             return HTMLBuilder.patchPage(
                 patch: file.patch ?? "No textual diff available for this file.",
@@ -296,6 +333,7 @@ struct PRFileView: View {
             return HTMLBuilder.diffPage(segments: segments,
                                         outdatedThreads: outdated,
                                         layout: layout == .split ? "split" : "inline",
+                                        remote: HTMLBuilder.RemoteAssets(filePath: path),
                                         title: path)
         }
     }
@@ -335,6 +373,7 @@ struct CommentTarget: Identifiable {
     let lineStart: Int
     let lineEnd: Int
     let side: String
+    var suggestionSeed: String?
 }
 
 // MARK: - Comment composer
@@ -375,6 +414,14 @@ struct CommentComposer: View {
             }
 
             HStack {
+                if target.suggestionSeed != nil {
+                    Button {
+                        insertSuggestion()
+                    } label: {
+                        Label("Insert Suggestion", systemImage: "plus.diamond")
+                    }
+                    .help("Insert a ```suggestion block pre-filled with the current lines")
+                }
                 Text("Comments must target lines that are part of the PR diff.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -402,6 +449,14 @@ struct CommentComposer: View {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// GitHub applies the suggestion in place of the commented lines, so the
+    /// block starts as their current content for the user to edit.
+    private func insertSuggestion() {
+        guard let seed = target.suggestionSeed else { return }
+        if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
+        text += "```suggestion\n\(seed)\n```\n"
+    }
+
     private var draft: DraftComment {
         DraftComment(path: path, lineStart: target.lineStart, lineEnd: target.lineEnd,
                      side: target.side, body: trimmed)
@@ -425,6 +480,83 @@ struct CommentComposer: View {
             }
             posting = false
         }
+    }
+}
+
+// MARK: - Browsed repo document
+
+/// A repo Markdown file opened via a link from PR content, rendered at the
+/// PR's head commit.
+struct PRDocView: View {
+    @EnvironmentObject private var state: AppState
+    let sessionID: String
+    let path: String
+
+    @State private var html = ""
+    @State private var loading = true
+    @State private var loadError: String?
+    @State private var outline: [OutlineItem] = []
+    @StateObject private var proxy = WebViewProxy()
+
+    private var session: PRSession? { state.session(sessionID) }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if state.findBarVisible {
+                FindBar(proxy: proxy)
+            }
+            if loading {
+                ProgressView("Loading \(path)…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let loadError {
+                VStack(spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.orange)
+                    Text(loadError)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 480)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                MarkdownWebView(
+                    html: html,
+                    remoteContext: session.map {
+                        RemoteResourceContext(ref: $0.ref, commitSHA: $0.details.head.sha)
+                    },
+                    onOpenRemoteFile: { repoPath in
+                        state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                    },
+                    onOutline: { outline = $0 },
+                    proxy: proxy
+                )
+                .background(Color(nsColor: .textBackgroundColor))
+            }
+        }
+        .navigationTitle(path)
+        .toolbar {
+            ToolbarItem {
+                OutlineMenu(items: outline, proxy: proxy)
+            }
+        }
+        .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
+            await load()
+        }
+    }
+
+    private func load() async {
+        guard let session else { return }
+        loading = true
+        loadError = nil
+        do {
+            let markdown = try await state.client.fileContent(session.ref, path: path,
+                                                              at: session.details.head.sha)
+            html = HTMLBuilder.documentPage(markdown: markdown, title: path,
+                                            remote: HTMLBuilder.RemoteAssets(filePath: path))
+        } catch {
+            loadError = error.localizedDescription
+        }
+        loading = false
     }
 }
 
