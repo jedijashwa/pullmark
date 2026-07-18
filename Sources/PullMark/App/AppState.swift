@@ -16,6 +16,7 @@ struct PRSession: Identifiable {
     var mergeBaseSHA: String
     var files: [PullRequestFile]
     var reviewComments: [ReviewComment] = []
+    var threadMeta: [Int: ThreadMeta] = [:]
     var drafts: [DraftComment] = []
     /// Repo Markdown files opened via links from PR content (not part of the diff).
     var browsedDocs: [String] = []
@@ -223,6 +224,7 @@ final class AppState: ObservableObject {
         }
         var session = PRSession(ref: ref, details: details, mergeBaseSHA: mergeBase, files: files)
         session.reviewComments = (try? await client.reviewComments(ref)) ?? []
+        session.threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
         prSessions.append(session)
         selection = .prOverview(session.id)
         noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
@@ -265,6 +267,7 @@ final class AppState: ObservableObject {
             prSessions[index].files = files
             prSessions[index].mergeBaseSHA = mergeBase
             prSessions[index].reviewComments = comments
+            prSessions[index].threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
             prSessions[index].updateAvailable = false
             updateRecentPRStatus(ref: ref, status: PRStatus(details: details))
         } catch {
@@ -336,13 +339,16 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Refreshes existing review comments, e.g. after posting one.
+    /// Refreshes existing review comments and thread state, e.g. after
+    /// posting, replying, or resolving.
     func reloadComments(sessionID: String) async {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         let ref = prSessions[index].ref
         guard let comments = try? await client.reviewComments(ref) else { return }
+        let meta = (try? await client.reviewThreadMeta(ref)) ?? [:]
         if let current = prSessions.firstIndex(where: { $0.id == sessionID }) {
             prSessions[current].reviewComments = comments
+            prSessions[current].threadMeta = meta
         }
     }
 

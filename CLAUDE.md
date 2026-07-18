@@ -1,6 +1,8 @@
 # PullMark
 
-Native macOS Markdown viewer + GitHub PR Markdown reviewer. SwiftUI + WKWebView, zero package dependencies, plain SwiftPM (no Xcode project).
+Native macOS Markdown viewer + rendered-diff reviewer for documentation-heavy GitHub PRs. SwiftUI + WKWebView, zero package dependencies, plain SwiftPM (no Xcode project).
+
+The project owns the domain **pullmark.app** (registered on Namecheap, July 2026). Bundle ids match it: `app.pullmark.PullMark` (app) and `app.pullmark.PullMark.QuickLook` (QL extension). Don't change them — that resets Launch Services registrations (default-app, Quick Look) and the UserDefaults domain.
 
 ## Commands
 

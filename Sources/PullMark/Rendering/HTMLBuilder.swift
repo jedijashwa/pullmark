@@ -16,6 +16,8 @@ enum HTMLBuilder {
         var outdatedThreads: [ThreadPayload]?
         /// Diff layout: "inline" (default) or "split" (side by side).
         var layout: String?
+        /// False for diffs without a review target (local comparisons).
+        var commentable: Bool?
         /// Remote (PR) documents: rewrite relative images and links to the
         /// pullmark-remote scheme (resolved against resourceDir).
         var remoteResources: Bool?
@@ -51,10 +53,12 @@ enum HTMLBuilder {
                          outdatedThreads: [ThreadPayload] = [],
                          layout: String = "inline",
                          remote: RemoteAssets? = nil,
+                         commentable: Bool = true,
                          title: String = "") -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
                                     layout: layout,
+                                    commentable: commentable ? nil : false,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir),
              title: title)

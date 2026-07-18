@@ -58,6 +58,7 @@ struct FindBar: View {
 struct OutlineSidebar: View {
     let items: [OutlineItem]
     let proxy: WebViewProxy
+    var activeID: String? = nil
 
     var body: some View {
         List {
@@ -79,6 +80,12 @@ struct OutlineSidebar: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.leading, CGFloat(max(0, item.level - 1)) * 14)
+                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
+                    .background(
+                        item.id == activeID ? Color.accentColor.opacity(0.16) : Color.clear,
+                        in: RoundedRectangle(cornerRadius: 5)
+                    )
                 }
             }
         }

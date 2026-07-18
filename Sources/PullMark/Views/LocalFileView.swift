@@ -3,14 +3,40 @@ import SwiftUI
 struct LocalFileView: View {
     @EnvironmentObject private var state: AppState
     let file: LocalFile
-    @State private var html = ""
+
+    @State private var currentText = ""
     @State private var watcher: FileWatcher?
     @State private var outline: [OutlineItem] = []
+    @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
 
+    // Git history / branch comparison
+    struct CompareTarget: Equatable {
+        let ref: String
+        let label: String
+    }
+    @State private var inGitRepo = false
+    @State private var commits: [LocalGit.Commit] = []
+    @State private var branches: [String] = []
+    @State private var remoteBranches: [String] = []
+    @State private var compare: CompareTarget?
+    @State private var compareText: String?
+
     var body: some View {
         VStack(spacing: 0) {
+            if let compare {
+                HStack(spacing: 10) {
+                    Image(systemName: "clock.arrow.circlepath")
+                    Text("Comparing with \(compare.label)")
+                    Spacer()
+                    Button("Done") { stopComparing() }
+                }
+                .font(.callout)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Color.blue.opacity(0.14))
+            }
             if state.findBarVisible {
                 FindBar(proxy: proxy)
             }
@@ -20,11 +46,12 @@ struct LocalFileView: View {
                     localResourceRoot: file.resourceRoot,
                     onOpenLocalFile: { url in state.add(url: url) },
                     onOutline: { outline = $0 },
+                    onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
                     proxy: proxy
                 )
                 .layoutPriority(1)
                 if outlineVisible {
-                    OutlineSidebar(items: outline, proxy: proxy)
+                    OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
                 }
             }
         }
@@ -32,6 +59,9 @@ struct LocalFileView: View {
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(file.url.deletingLastPathComponent().path)
         .toolbar {
+            ToolbarItem {
+                compareMenu
+            }
             ToolbarItem {
                 OutlineToggle(visible: $outlineVisible)
             }
@@ -46,6 +76,7 @@ struct LocalFileView: View {
         }
         .onAppear {
             load()
+            loadGitInfo()
             watcher = FileWatcher(url: file.url) { load() }
         }
         .onDisappear {
@@ -53,15 +84,97 @@ struct LocalFileView: View {
         }
     }
 
-    private func load() {
-        let markdown: String
-        do {
-            markdown = try String(contentsOf: file.url, encoding: .utf8)
-        } catch {
-            markdown = "> [!CAUTION]\n> Could not read `\(file.url.path)`: \(error.localizedDescription)"
+    @ViewBuilder
+    private var compareMenu: some View {
+        Menu {
+            if !commits.isEmpty {
+                Section("History") {
+                    ForEach(commits) { commit in
+                        Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
+                            startComparing(ref: commit.sha,
+                                           label: "\(commit.shortSHA) (\(commit.date))")
+                        }
+                    }
+                }
+            }
+            if !branches.isEmpty {
+                Section("Branches") {
+                    ForEach(branches, id: \.self) { branch in
+                        Button(branch) { startComparing(ref: branch, label: branch) }
+                    }
+                }
+            }
+            if !remoteBranches.isEmpty {
+                Section("Remote Branches") {
+                    ForEach(remoteBranches, id: \.self) { branch in
+                        Button(branch) { startComparing(ref: branch, label: branch) }
+                    }
+                }
+            }
+            if compare != nil {
+                Divider()
+                Button("Stop Comparing") { stopComparing() }
+            }
+        } label: {
+            Label("Compare", systemImage: "clock.arrow.circlepath")
         }
-        html = HTMLBuilder.documentPage(markdown: markdown,
+        .disabled(!inGitRepo)
+        .help(inGitRepo ? "Compare with a previous revision or branch"
+                        : "Not inside a git repository")
+    }
+
+    private var html: String {
+        if compare != nil, let compareText {
+            let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
+            return HTMLBuilder.diffPage(segments: segments, commentable: false,
+                                        title: file.url.lastPathComponent)
+        }
+        return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true)
+    }
+
+    private func load() {
+        do {
+            currentText = try String(contentsOf: file.url, encoding: .utf8)
+        } catch {
+            currentText = "> [!CAUTION]\n> Could not read `\(file.url.path)`: \(error.localizedDescription)"
+        }
+    }
+
+    private func loadGitInfo() {
+        let url = file.url
+        Task.detached(priority: .utility) {
+            guard let root = LocalGit.repoRoot(for: url) else { return }
+            let commits = LocalGit.history(of: url)
+            let branches = LocalGit.branches(in: root, remote: false)
+            let remotes = LocalGit.branches(in: root, remote: true)
+            await MainActor.run {
+                self.inGitRepo = true
+                self.commits = commits
+                self.branches = branches
+                self.remoteBranches = remotes
+            }
+        }
+    }
+
+    private func startComparing(ref: String, label: String) {
+        let url = file.url
+        Task.detached(priority: .userInitiated) {
+            let old = LocalGit.content(of: url, at: ref)
+            await MainActor.run {
+                guard let old else {
+                    state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
+                    return
+                }
+                compareText = old
+                compare = CompareTarget(ref: ref, label: label)
+            }
+        }
+    }
+
+    private func stopComparing() {
+        compare = nil
+        compareText = nil
     }
 }

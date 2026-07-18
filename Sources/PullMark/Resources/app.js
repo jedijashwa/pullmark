@@ -209,10 +209,14 @@
     });
   }
 
+  var __headings = [];
+
   function reportOutline(root) {
     var items = [];
+    __headings = [];
     root.querySelectorAll("h1[id], h2[id], h3[id], h4[id]").forEach(function (heading) {
       if (heading.closest(".pm-thread")) { return; }
+      __headings.push(heading);
       items.push({
         level: parseInt(heading.tagName.slice(1), 10),
         text: heading.textContent.trim(),
@@ -221,6 +225,31 @@
     });
     post({ type: "outline", items: items });
   }
+
+  // Scroll-spy: report which section the viewport is currently in.
+  var __activeSection = null;
+  function updateActiveSection() {
+    var current = "";
+    for (var i = 0; i < __headings.length; i++) {
+      if (__headings[i].getBoundingClientRect().top <= 90) {
+        current = __headings[i].id;
+      } else {
+        break;
+      }
+    }
+    if (current !== __activeSection) {
+      __activeSection = current;
+      post({ type: "activeSection", id: current });
+    }
+  }
+  (function () {
+    var pending = false;
+    window.addEventListener("scroll", function () {
+      if (pending) { return; }
+      pending = true;
+      setTimeout(function () { pending = false; updateActiveSection(); }, 120);
+    }, { passive: true });
+  })();
 
   // ---- Find in page ----
 
@@ -329,12 +358,37 @@
     threads.forEach(function (thread) {
       var box = document.createElement("div");
       box.className = "pm-thread";
+      if (thread.resolved === true) { box.classList.add("pm-thread-resolved"); }
+      var header = document.createElement("div");
+      header.className = "pm-thread-header";
       if (thread.lineLabel) {
         var label = document.createElement("div");
         label.className = "pm-thread-line";
-        label.textContent = thread.lineLabel;
-        box.append(label);
+        label.textContent = thread.lineLabel + (thread.resolved === true ? " · Resolved" : "");
+        header.append(label);
       }
+      if (thread.rootID) {
+        var actions = document.createElement("div");
+        actions.className = "pm-thread-actions";
+        var reply = document.createElement("button");
+        reply.type = "button";
+        reply.textContent = "Reply";
+        reply.addEventListener("click", function () {
+          post({ type: "threadReply", rootID: thread.rootID });
+        });
+        actions.append(reply);
+        if (thread.resolved !== null && thread.resolved !== undefined) {
+          var resolve = document.createElement("button");
+          resolve.type = "button";
+          resolve.textContent = thread.resolved ? "Unresolve" : "Resolve";
+          resolve.addEventListener("click", function () {
+            post({ type: "threadResolve", rootID: thread.rootID, resolved: !thread.resolved });
+          });
+          actions.append(resolve);
+        }
+        header.append(actions);
+      }
+      box.append(header);
       (thread.comments || []).forEach(function (c) {
         var comment = document.createElement("div");
         comment.className = "pm-thread-comment";
@@ -375,7 +429,7 @@
       div.innerHTML = render(seg.text);
       wrap.append(div);
     }
-    wrap.append(commentButton(seg));
+    if (payload.commentable !== false) { wrap.append(commentButton(seg)); }
     return wrap;
   }
 
@@ -421,7 +475,9 @@
           right.innerHTML = render(seg.text);
         }
       }
-      (seg.side === "LEFT" ? left : right).append(commentButton(seg));
+      if (payload.commentable !== false) {
+        (seg.side === "LEFT" ? left : right).append(commentButton(seg));
+      }
       grid.append(left, right);
       if (seg.threads && seg.threads.length) {
         var full = document.createElement("div");
