@@ -5,6 +5,17 @@
   var content = document.getElementById("content");
   var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
+  // Reading theme: app.css scopes the non-default packs to
+  // :root[data-theme="..."], so an absent or "github" theme renders the
+  // stock GitHub look untouched.
+  if (payload.theme) {
+    document.documentElement.dataset.theme = payload.theme;
+  }
+  // Settings theme cards: miniature, non-interactive rendering.
+  if (payload.preview) {
+    document.documentElement.dataset.preview = "1";
+  }
+
   if (typeof markedAlert === "function") {
     marked.use(markedAlert());
   }

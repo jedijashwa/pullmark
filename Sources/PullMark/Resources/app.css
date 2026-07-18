@@ -274,3 +274,137 @@ mark.pm-find.pm-find-current {
 @media (prefers-color-scheme: dark) {
   .pm-line-hunk { color: #d2a8ff; }
 }
+
+/* ==== Reading themes ====================================================
+   Scoped to :root[data-theme="..."] (set by app.js from the payload), so
+   the default GitHub look stays pixel-identical when the attribute is
+   absent or "github". Each pack overrides the primer variables that
+   vendor/github-markdown.css consumes, plus type and rhythm. Light values
+   are the base; dark values follow in a prefers-color-scheme block, which
+   also tracks the app's Appearance override (NSApp.appearance cascades
+   into WKWebView's color scheme). */
+
+/* ---- Editorial: serif display headers, sans body, warm paper ---- */
+
+:root[data-theme="editorial"] body {
+  background: #fbfaf8;
+}
+:root[data-theme="editorial"] .markdown-body {
+  --bgColor-default: #fbfaf8;
+  --bgColor-muted: #f2f1ee;
+  --fgColor-default: #1a212b;
+  --fgColor-muted: #5b6672;
+  --fgColor-accent: #0f62c4;
+  --borderColor-default: #e4e2dd;
+  --borderColor-muted: #efede8;
+  --borderColor-neutral-muted: #e4e2dd;
+  max-width: 740px;
+  line-height: 1.65;
+}
+:root[data-theme="editorial"] .markdown-body h1,
+:root[data-theme="editorial"] .markdown-body h2,
+:root[data-theme="editorial"] .markdown-body h3,
+:root[data-theme="editorial"] .markdown-body h4,
+:root[data-theme="editorial"] .markdown-body h5,
+:root[data-theme="editorial"] .markdown-body h6 {
+  font-family: "New York", ui-serif, "Iowan Old Style", Palatino, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* Bookish: no rules under headers, breathing room above them instead. */
+:root[data-theme="editorial"] .markdown-body h1,
+:root[data-theme="editorial"] .markdown-body h2 {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+:root[data-theme="editorial"] .markdown-body h2 {
+  margin-top: 1.5em;
+}
+:root[data-theme="editorial"] .markdown-body h3 {
+  margin-top: 1.4em;
+}
+:root[data-theme="editorial"] .markdown-body blockquote {
+  font-family: "New York", ui-serif, "Iowan Old Style", Palatino, Georgia, serif;
+  font-style: italic;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="editorial"] body {
+    background: #10151c;
+  }
+  :root[data-theme="editorial"] .markdown-body {
+    --bgColor-default: #10151c;
+    --bgColor-muted: #1b232e;
+    --fgColor-default: #e9edf3;
+    --fgColor-muted: #9aa5b1;
+    --fgColor-accent: #58a6ff;
+    --borderColor-default: #2a333e;
+    --borderColor-muted: #202832;
+    --borderColor-neutral-muted: #2a333e;
+  }
+}
+
+/* ---- Terminal: monospace, tighter rhythm, phosphor-green accent ---- */
+
+:root[data-theme="terminal"] body {
+  background: #f4f6f4;
+}
+:root[data-theme="terminal"] .markdown-body {
+  --bgColor-default: #f4f6f4;
+  --bgColor-muted: #e5ece5;
+  --fgColor-default: #1b211c;
+  --fgColor-muted: #5b675e;
+  --fgColor-accent: #0f7b33;
+  --borderColor-default: #c8d3c8;
+  --borderColor-muted: #d8e0d8;
+  --borderColor-neutral-muted: #c8d3c8;
+  font-family: var(--fontStack-monospace, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 880px;
+}
+/* Monospace headers scale down: 2em mono reads as shouting. */
+:root[data-theme="terminal"] .markdown-body h1 { font-size: 1.6em; }
+:root[data-theme="terminal"] .markdown-body h2 { font-size: 1.3em; }
+:root[data-theme="terminal"] .markdown-body h3 { font-size: 1.1em; }
+:root[data-theme="terminal"] .markdown-body h4 { font-size: 1em; }
+:root[data-theme="terminal"] .markdown-body h1,
+:root[data-theme="terminal"] .markdown-body h2,
+:root[data-theme="terminal"] .markdown-body h3,
+:root[data-theme="terminal"] .markdown-body h4,
+:root[data-theme="terminal"] .markdown-body h5,
+:root[data-theme="terminal"] .markdown-body h6 {
+  color: var(--fgColor-accent);
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="terminal"] body {
+    background: #0a0f0c;
+  }
+  :root[data-theme="terminal"] .markdown-body {
+    --bgColor-default: #0a0f0c;
+    --bgColor-muted: #121a14;
+    --fgColor-default: #cdd6cd;
+    --fgColor-muted: #85937f;
+    --fgColor-accent: #3fb950;
+    --borderColor-default: #26312a;
+    --borderColor-muted: #1c2620;
+    --borderColor-neutral-muted: #26312a;
+  }
+}
+
+/* ---- Settings theme-card previews: miniature, non-interactive ---- */
+
+:root[data-preview="1"] body {
+  overflow: hidden;
+}
+:root[data-preview="1"] .markdown-body {
+  zoom: 0.5;
+  max-width: none;
+  padding: 14px 18px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root[data-preview="1"] .markdown-body pre {
+  padding: 10px 12px;
+}

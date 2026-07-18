@@ -148,6 +148,7 @@ struct AppUpdateBanner: View {
 /// Sheet rendering release-notes Markdown with the app's own renderer.
 struct ReleaseNotesSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
     let title: String
     let markdown: String
 
@@ -162,7 +163,10 @@ struct ReleaseNotesSheet: View {
             }
             .padding(12)
             Divider()
-            MarkdownWebView(html: HTMLBuilder.documentPage(markdown: markdown, title: title))
+            MarkdownWebView(html: HTMLBuilder.documentPage(
+                markdown: markdown, title: title,
+                theme: Theme.current(from: themeRaw).rawValue
+            ))
                 .background(Color(nsColor: .textBackgroundColor))
         }
         .frame(width: 640, height: 520)

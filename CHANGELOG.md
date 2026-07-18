@@ -6,6 +6,13 @@ section current as features land.
 
 ## Unreleased
 
+- Reading themes: choose between GitHub (the classic look), Editorial (serif
+  headers on warm paper), and Terminal (monospace with a phosphor-green
+  accent) for rendered Markdown and diffs — each adapts to Light and Dark
+  appearance. Quick Look previews always use the GitHub theme.
+- Settings window (⌘,): General tab with Appearance, default diff layout,
+  and update checks; Themes tab with live preview cards rendered by the real
+  pipeline — click a card to switch instantly
 - Automatic update checks: a banner appears when a new PullMark release is
   available, with its release notes and a one-click copy of the
   `brew upgrade --cask pullmark` command

@@ -10,6 +10,7 @@ struct LocalFileView: View {
     @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
@@ -124,14 +125,17 @@ struct LocalFileView: View {
     }
 
     private var html: String {
+        let theme = Theme.current(from: themeRaw).rawValue
         if compare != nil, let compareText {
             let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
-                                        title: file.url.lastPathComponent)
+                                        title: file.url.lastPathComponent,
+                                        theme: theme)
         }
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
-                                        localResources: true)
+                                        localResources: true,
+                                        theme: theme)
     }
 
     private func load() {

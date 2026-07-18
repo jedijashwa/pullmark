@@ -30,9 +30,18 @@ struct MarkdownWebView: NSViewRepresentable {
     var onThreadResolve: ((Int, Bool) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
+    /// False for the Settings theme-preview cards: the web view refuses all
+    /// mouse events (AppKit-level, since WKWebView sits above SwiftUI's hit
+    /// testing) so clicks fall through to the enclosing card.
+    var interactive: Bool = true
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
+    }
+
+    /// WKWebView that ignores the mouse entirely (theme preview cards).
+    private final class PassthroughWebView: WKWebView {
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -45,7 +54,9 @@ struct MarkdownWebView: NSViewRepresentable {
                                           forURLScheme: LocalResourceSchemeHandler.scheme)
         configuration.setURLSchemeHandler(context.coordinator.remoteHandler,
                                           forURLScheme: RemoteResourceSchemeHandler.scheme)
-        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let webView = interactive
+            ? WKWebView(frame: .zero, configuration: configuration)
+            : PassthroughWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         // Let the SwiftUI background show through so there is no white flash
         // in dark mode while pages load.
