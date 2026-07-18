@@ -26,6 +26,8 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style (Mermaid degrades to a code block in previews).
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.
+- **Reading themes** — GitHub (default), Editorial (serif headers, warm paper), and Terminal (monospace, phosphor accent), chosen from a Settings window (⌘,) with live preview cards. Each theme adapts to light and dark.
+- **Built-in updates** — PullMark checks for new releases on launch and periodically, offers the `brew upgrade` command when one is available, and shows a "What's New" summary of everything that changed after you update.
 
 ## Installation
 
