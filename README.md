@@ -62,8 +62,9 @@ open /Applications/PullMark.app
 For development:
 
 ```sh
-make run    # launch without building an app bundle
-make test   # unit tests
+make run                    # launch without building an app bundle
+make test                   # unit tests
+make release VERSION=x.y.z  # maintainers: sign, notarize, release, bump the cask
 ```
 
 ### Running from the command line

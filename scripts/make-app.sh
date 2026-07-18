@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="0.1.1"
+VERSION="${VERSION:-0.1.1}"
 
 # Set SIGN_IDENTITY to a Developer ID identity for release builds;
 # defaults to ad-hoc signing for local/CI builds.

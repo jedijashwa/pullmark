@@ -12,7 +12,7 @@ endif
 # Prefer the Homebrew bin (user-writable on Apple Silicon), else /usr/local.
 BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /usr/local/bin)
 
-.PHONY: build test app run clean install-cli
+.PHONY: build test app run clean install-cli release
 
 build:
 	swift build
@@ -32,3 +32,6 @@ install-cli:
 
 clean:
 	rm -rf .build dist
+
+release:
+	./scripts/make-release.sh $(VERSION)
