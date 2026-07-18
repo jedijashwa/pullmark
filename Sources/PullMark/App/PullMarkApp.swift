@@ -50,6 +50,16 @@ struct PullMarkApp: App {
                 .onChange(of: appearanceRaw) { newValue in
                     (Appearance(rawValue: newValue) ?? .system).apply()
                 }
+                // The scene-level modifier alone still spawns a fresh window
+                // per open-file event; an existing window must also declare
+                // that it prefers to handle those events.
+                .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+                // Launch-time open-document events are claimed by the SwiftUI
+                // scene and never reach application(_:open:); without this
+                // handler a document opened while the app is not running
+                // would be silently dropped. (AppState.add is idempotent, so
+                // overlap with the delegate path is harmless.)
+                .onOpenURL { url in state.add(url: url) }
         }
         // Route file-open events into the existing window instead of
         // spawning a second one.
@@ -114,6 +124,35 @@ struct PullMarkApp: App {
     }
 }
 
+/// Routes open-file events (Finder, `open`, drag onto the Dock icon) to
+/// AppState. On a cold launch with a document the event arrives before
+/// SwiftUI has created the AppState, so URLs are buffered until the handler
+/// registers — otherwise the document would be silently dropped.
+@MainActor
+final class OpenURLRouter {
+    static let shared = OpenURLRouter()
+
+    private var pending: [URL] = []
+    private var handler: (([URL]) -> Void)?
+
+    func deliver(_ urls: [URL]) {
+        if let handler {
+            handler(urls)
+        } else {
+            pending.append(contentsOf: urls)
+        }
+    }
+
+    func onOpen(_ handler: @escaping ([URL]) -> Void) {
+        self.handler = handler
+        if !pending.isEmpty {
+            let buffered = pending
+            pending = []
+            handler(buffered)
+        }
+    }
+}
+
 /// Files and folders passed as command-line arguments, so the binary can be
 /// invoked as `PullMark <file-or-directory> ...` from a terminal. Consumed
 /// once: both the app delegate and AppState ask (their initialization order
@@ -143,12 +182,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Appearance.applyCurrent()
         let cliURLs = LaunchArguments.consumeFileURLs()
         if !cliURLs.isEmpty {
-            NotificationCenter.default.post(name: .pullMarkOpenURLs, object: cliURLs)
+            OpenURLRouter.shared.deliver(cliURLs)
         }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        NotificationCenter.default.post(name: .pullMarkOpenURLs, object: urls)
+        OpenURLRouter.shared.deliver(urls)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

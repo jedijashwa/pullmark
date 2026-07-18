@@ -31,8 +31,7 @@ struct PullRequestFile: Decodable, Identifiable, Equatable {
     var id: String { filename }
 
     var isMarkdown: Bool {
-        let ext = (filename as NSString).pathExtension.lowercased()
-        return ["md", "markdown", "mdown", "mkd", "mdx"].contains(ext)
+        MarkdownFileType.matches((filename as NSString).pathExtension)
     }
 }
 
@@ -56,13 +55,18 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
 
     var author: String { user?.login ?? "unknown" }
 
-    /// "Jul 18, 2026" from the ISO-8601 `created_at`, or empty.
-    var dateLabel: String {
-        guard let createdAt, let date = ISO8601DateFormatter().date(from: createdAt) else { return "" }
+    private static let isoParser = ISO8601DateFormatter()
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    /// "Jul 18, 2026" from the ISO-8601 `created_at`, or empty.
+    var dateLabel: String {
+        guard let createdAt, let date = Self.isoParser.date(from: createdAt) else { return "" }
+        return Self.dateFormatter.string(from: date)
     }
 }
 

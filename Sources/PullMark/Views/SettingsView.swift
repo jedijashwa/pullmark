@@ -20,7 +20,7 @@ struct SettingsView: View {
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var updates: UpdateChecker
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
-    @AppStorage("pm.diffLayout") private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @State private var updateStatus: String?
     @State private var checking = false
 

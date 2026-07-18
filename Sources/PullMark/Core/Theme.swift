@@ -9,7 +9,7 @@ enum Theme: String, CaseIterable, Identifiable {
     case editorial
     case terminal
 
-    static let defaultsKey = "pm.theme"
+    static let defaultsKey = DefaultsKeys.theme
 
     var id: String { rawValue }
 

@@ -85,20 +85,16 @@ final class AppState: ObservableObject {
 
     let client = GitHubClient.shared
 
-    private static let recentsKey = "pm.recents"
+    private static let recentsKey = DefaultsKeys.recents
     private static let recentsLimit = 12
 
-    private var openURLsObserver: NSObjectProtocol?
     private var updateTimer: Timer?
 
     init() {
-        openURLsObserver = NotificationCenter.default.addObserver(
-            forName: .pullMarkOpenURLs, object: nil, queue: .main
-        ) { [weak self] note in
-            guard let urls = note.object as? [URL] else { return }
-            Task { @MainActor in
-                for url in urls { self?.add(url: url) }
-            }
+        // Registering also flushes any open-file events that arrived before
+        // this state existed (cold launch with a document).
+        OpenURLRouter.shared.onOpen { [weak self] urls in
+            for url in urls { self?.add(url: url) }
         }
         // Command-line arguments, in case this state is created before the
         // app delegate finished launching (or vice versa).
@@ -167,8 +163,7 @@ final class AppState: ObservableObject {
                 }
                 continue
             }
-            let ext = url.pathExtension.lowercased()
-            guard ["md", "markdown", "mdown", "mkd", "mdx"].contains(ext) else { continue }
+            guard MarkdownFileType.matches(url.pathExtension) else { continue }
             let relative = url.path.hasPrefix(root.path + "/")
                 ? String(url.path.dropFirst(root.path.count + 1))
                 : url.lastPathComponent
@@ -380,8 +375,4 @@ final class AppState: ObservableObject {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].drafts.removeAll()
     }
-}
-
-extension Notification.Name {
-    static let pullMarkOpenURLs = Notification.Name("pullMarkOpenURLs")
 }

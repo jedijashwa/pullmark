@@ -155,7 +155,7 @@ struct MarkdownWebView: NSViewRepresentable {
             if url.scheme == RemoteResourceSchemeHandler.scheme {
                 if let path = RemoteResourceSchemeHandler.repoPath(from: url),
                    let context = remoteHandler.context {
-                    if ["md", "markdown", "mdown", "mkd", "mdx"].contains((path as NSString).pathExtension.lowercased()) {
+                    if MarkdownFileType.matches((path as NSString).pathExtension) {
                         parent.onOpenRemoteFile?(path)
                     } else if let blobURL = URL(string: "https://github.com/\(context.ref.owner)/\(context.ref.repo)/blob/\(context.commitSHA)/\(path)") {
                         NSWorkspace.shared.open(blobURL)
@@ -167,7 +167,7 @@ struct MarkdownWebView: NSViewRepresentable {
             if url.scheme == LocalResourceSchemeHandler.scheme {
                 if let root = schemeHandler.rootDirectory,
                    let fileURL = LocalResourceSchemeHandler.resolve(url, root: root) {
-                    if ["md", "markdown", "mdown", "mkd", "mdx"].contains(fileURL.pathExtension.lowercased()) {
+                    if MarkdownFileType.matches(fileURL.pathExtension) {
                         parent.onOpenLocalFile?(fileURL)
                     } else {
                         NSWorkspace.shared.open(fileURL)

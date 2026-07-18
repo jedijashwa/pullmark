@@ -185,7 +185,7 @@ struct PRFileView: View {
     }
 
     @State private var mode: Mode = .renderedDiff
-    @AppStorage("pm.diffLayout") private var layoutRaw = DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
     @State private var loading = true
@@ -195,9 +195,9 @@ struct PRFileView: View {
     @State private var activeSection: String?
     @State private var replyTarget: ReplyTarget?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
-    @AppStorage("pm.blame") private var blameVisible = false
+    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
     @State private var blamePayloads: [BlockBlamePayload]?
     @State private var blameNote: String?
 
@@ -254,7 +254,7 @@ struct PRFileView: View {
                     )
                     .layoutPriority(1)
                     if outlineVisible {
-                        OutlineSidebar(items: outline, proxy: proxy)
+                        OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
                     }
                 }
                 .background(Color(nsColor: .textBackgroundColor))
@@ -554,9 +554,9 @@ struct PRDocView: View {
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage("pm.outlinePanel") private var outlineVisible = false
+    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
-    @AppStorage("pm.blame") private var blameVisible = false
+    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
     @State private var blamePayloads: [BlockBlamePayload]?
     @State private var blameNote: String?
 

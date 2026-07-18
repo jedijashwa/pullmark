@@ -5,7 +5,7 @@ enum Appearance: String, CaseIterable, Identifiable {
     case light
     case dark
 
-    static let defaultsKey = "pm.appearance"
+    static let defaultsKey = DefaultsKeys.appearance
 
     var id: String { rawValue }
 
