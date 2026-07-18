@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in PullMark isn't working right
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Opened a PR with …
+        2. Clicked …
+        3. Expected … but saw …
+    validations:
+      required: true
+  - type: textarea
+    id: markdown-sample
+    attributes:
+      label: Markdown sample (if rendering-related)
+      description: A minimal Markdown snippet that reproduces the problem.
+      render: markdown
+  - type: input
+    id: version
+    attributes:
+      label: PullMark version
+      placeholder: "0.1.1 (PullMark → About, or `brew list --cask --versions pullmark`)"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "e.g. macOS 26.5"
+    validations:
+      required: true
+  - type: checkboxes
+    id: area
+    attributes:
+      label: Where does it happen?
+      options:
+        - label: Local file viewing
+        - label: PR rendered diff / review
+        - label: Quick Look preview
+        - label: Something else

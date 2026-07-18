@@ -35,6 +35,12 @@ struct PullMarkApp: App {
     @StateObject private var state = AppState()
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
 
+    private func open(_ urlString: String) {
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -65,6 +71,18 @@ struct PullMarkApp: App {
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state.findBarVisible = true }
                     .keyboardShortcut("f")
+            }
+            CommandGroup(replacing: .help) {
+                Button("PullMark Website") {
+                    open("https://pullmark.app")
+                }
+                Divider()
+                Button("Report a Bug…") {
+                    open("https://github.com/jedijashwa/pullmark/issues/new?template=bug_report.yml")
+                }
+                Button("Request a Feature…") {
+                    open("https://github.com/jedijashwa/pullmark/issues/new?template=feature_request.yml")
+                }
             }
             CommandGroup(after: .toolbar) {
                 Picker("Appearance", selection: $appearanceRaw) {

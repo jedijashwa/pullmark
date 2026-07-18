@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an idea for PullMark
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation where you missed this feature.
+      placeholder: "When reviewing a PR with …, I wanted to …"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds or alternatives you've considered
+  - type: markdown
+    attributes:
+      value: |
+        Note: PullMark is deliberately a Markdown-focused reader/reviewer, not a full
+        review client — requests that keep it lightweight have the best odds.

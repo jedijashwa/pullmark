@@ -3,123 +3,633 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PullMark — rendered Markdown, reviewed properly</title>
-<meta name="description" content="A native macOS app for reading Markdown and reviewing documentation-heavy GitHub pull requests as rendered diffs.">
+<title>PullMark — Markdown, at reading altitude</title>
+<meta name="description" content="A native macOS app that renders local Markdown and shows documentation-heavy GitHub pull requests as rendered diffs with word-level highlights.">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<meta property="og:title" content="PullMark — Markdown, at reading altitude">
+<meta property="og:description" content="A native macOS app that renders local Markdown and reviews documentation-heavy GitHub pull requests as rendered diffs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/">
+<meta property="og:image" content="https://pullmark.app/img/app-diff.png">
 <style>
+/* ============ tokens ============ */
 :root {
-  --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
-  --accent: #2ea043; --accent2: #8250df; --code-bg: #f6f8fa;
   color-scheme: light dark;
+  --paper:      #fbfaf8;
+  --panel:      #ffffff;
+  --ink:        #1a212b;
+  --muted:      #5b6672;
+  --faint:      #98a1ab;
+  --line:       #e4e2dd;
+  --line-soft:  #efede8;
+  --green:      #1a7f37;
+  --green-ink:  #116329;
+  --green-bg:   #d6efdc;
+  --red:        #cf222e;
+  --red-bg:     #ffe3e0;
+  --blue:       #0969da;
+  --shadow-sm:  0 1px 2px rgba(26,33,43,.06), 0 4px 12px rgba(26,33,43,.06);
+  --code-bg:    #f2f1ee;
+  --serif: "New York", ui-serif, "Iowan Old Style", "Palatino", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0d1117; --fg: #f0f6fc; --muted: #9198a1; --border: #3d444d;
-          --accent: #3fb950; --accent2: #ab7df8; --code-bg: #161b22; }
+  :root {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+  }
 }
+
+/* ============ base ============ */
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.65 var(--sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-.wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
-header { padding: 72px 0 40px; text-align: center; }
-header img.icon { width: 108px; height: 108px; }
-h1 { font-size: 44px; margin: 16px 0 8px; letter-spacing: -0.02em; }
-.tagline { font-size: 21px; color: var(--muted); max-width: 620px; margin: 0 auto; }
-.tagline strong { color: var(--fg); }
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 3px; }
+::selection { background: var(--green-bg); }
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 0 28px; }
+.wrap-narrow { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+/* ============ nav ============ */
+.nav {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 0 0;
+}
+.nav .brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+}
+.nav .brand img { width: 30px; height: 30px; }
+.nav .links { margin-left: auto; display: flex; gap: 4px; }
+.nav .links a {
+  text-decoration: none; color: var(--muted); font-size: 14px;
+  padding: 6px 12px; border-radius: 7px;
+}
+.nav .links a:hover { color: var(--ink); background: var(--line-soft); }
+
+/* ============ hero ============ */
+.hero { padding: 84px 0 24px; }
+.eyebrow {
+  font: 500 13px/1.6 var(--mono);
+  color: var(--muted);
+  letter-spacing: .02em;
+  margin: 0 0 26px;
+}
+.eyebrow b { color: var(--green); font-weight: 600; }
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(42px, 7vw, 74px);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  margin: 0 0 26px;
+  max-width: 15em;
+  text-wrap: balance;
+}
+/* the hero diff — deletion + insertion, exactly as PullMark marks them */
+h1 del {
+  text-decoration: none;
+  color: var(--red);
+  position: relative;
+  padding: 0 .06em;
+  background: var(--red-bg);
+  border-radius: .08em;
+}
+h1 del::after {
+  content: "";
+  position: absolute; left: -.02em; right: -.02em; top: 54%;
+  height: .055em; min-height: 3px;
+  background: var(--red);
+  border-radius: 2px;
+  transform-origin: left center;
+}
+h1 mark {
+  color: var(--green-ink);
+  background: linear-gradient(var(--green-bg), var(--green-bg)) no-repeat 0 0 / 100% 100%;
+  padding: 0 .08em;
+  border-radius: .08em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+@media (prefers-reduced-motion: no-preference) {
+  h1 del::after { animation: strike .5s cubic-bezier(.7,0,.3,1) .9s backwards; }
+  h1 mark { animation: sweep .6s cubic-bezier(.7,0,.3,1) 1.5s backwards; }
+  @keyframes strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes sweep  { from { background-size: 0 100%; color: inherit; }
+                      to   { background-size: 100% 100%; } }
+}
+.lede {
+  font-size: 19px; line-height: 1.6; color: var(--muted);
+  max-width: 36em; margin: 0 0 40px;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* install card */
 .install {
-  margin: 36px auto 8px; max-width: 560px; text-align: left;
-  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
-  padding: 18px 20px; position: relative;
-  font: 14px/1.9 ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  overflow-x: auto; white-space: pre;
+  display: inline-block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px 14px;
+  max-width: 100%;
 }
-.install .c { color: var(--muted); }
-.copy {
-  position: absolute; top: 10px; right: 10px; border: 1px solid var(--border);
-  background: var(--bg); color: var(--muted); border-radius: 6px;
-  font: 12px -apple-system, sans-serif; padding: 4px 10px; cursor: pointer;
+.install .install-top {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
 }
-.copy:hover { color: var(--fg); }
-.sub { color: var(--muted); font-size: 14px; }
-.sub a { color: var(--muted); }
-section { padding: 40px 0; border-top: 1px solid var(--border); }
-h2 { font-size: 28px; letter-spacing: -0.01em; margin: 0 0 12px; }
-p.lede { font-size: 17px; color: var(--muted); max-width: 700px; }
-p.lede strong, p.lede em { color: var(--fg); }
-.shot { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 24px 0 8px;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.10); }
-.shot img { display: block; width: 100%; height: auto; }
-.caption { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 8px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-top: 24px; }
-.card { border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-.card h3 { margin: 0 0 6px; font-size: 16px; }
-.card p { margin: 0; color: var(--muted); font-size: 14.5px; }
-.card .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
-footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px;
-         display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; }
-footer a { color: var(--muted); }
-@media (max-width: 600px) { h1 { font-size: 34px; } .tagline { font-size: 18px; } }
+.install .install-label {
+  font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint);
+}
+.install pre {
+  margin: 0;
+  font: 13.5px/1.85 var(--mono);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.install pre .p { color: var(--faint); user-select: none; }
+.install pre b { font-weight: 500; color: var(--ink); }
+.install pre .arg { color: var(--green); }
+.copy-btn {
+  margin-left: auto;
+  font: 500 12.5px var(--sans);
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.copy-btn:hover { color: var(--ink); border-color: var(--faint); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+.after-install {
+  margin: 14px 2px 0; font-size: 13.5px; color: var(--muted);
+}
+.after-install a { color: var(--muted); text-underline-offset: 3px; }
+.after-install a:hover { color: var(--ink); }
+
+/* ============ screenshots ============ */
+/* real window captures: chrome, rounded corners and shadow are baked into the
+   PNGs (transparent margins), so they sit directly on the page background */
+.shot { margin: 0; }
+.shot img { width: 100%; height: auto; }
+.shot figcaption {
+  text-align: center;
+  font: 400 13px var(--sans);
+  color: var(--muted);
+  margin-top: 2px;
+}
+.shot figcaption code { font: 92% var(--mono); }
+
+.hero-shot { padding: 30px 0 0; }
+.hero-shot .shot { max-width: 1150px; margin: 0 auto; }
+
+/* ============ sections ============ */
+section { padding: 96px 0 0; }
+.kicker {
+  font: 500 13px/1 var(--mono);
+  color: var(--green);
+  margin: 0 0 14px;
+}
+.kicker::before { content: "## "; color: var(--faint); }
+h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0 0 18px;
+  text-wrap: balance;
+}
+.prose { color: var(--muted); font-size: 16.5px; max-width: 42em; }
+.prose p { margin: 0 0 1.1em; }
+.prose strong, .prose em { color: var(--ink); }
+.prose code {
+  font: 87% var(--mono);
+  background: var(--code-bg);
+  border-radius: 5px;
+  padding: .15em .38em;
+}
+
+/* pull-quote — a real markdown blockquote, change-bar and all */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(21px, 2.6vw, 27px);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink);
+  border-left: 4px solid var(--green);
+  padding: 4px 0 4px 24px;
+  margin: 36px 0;
+  max-width: 24em;
+}
+
+/* GFM alert — the honest disclaimer */
+.gfm-note {
+  border-left: 4px solid var(--blue);
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 30px 0 0;
+  max-width: 46em;
+  font-size: 15.5px;
+}
+.gfm-note .note-label {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 14px; color: var(--blue);
+  margin-bottom: 6px;
+}
+.gfm-note .note-label svg { flex: none; }
+.gfm-note p { margin: 0; color: var(--muted); }
+.gfm-note p strong { color: var(--ink); }
+
+/* ============ review actions ============ */
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.trio .act {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+.trio .act .act-name {
+  font: 600 13px var(--mono);
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.trio .act .act-name::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); flex: none;
+}
+.trio .act:nth-child(2) .act-name::before { background: #bf8700; }
+.trio .act:nth-child(3) .act-name::before { background: var(--blue); }
+.trio .act p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.trio .act p code {
+  font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em;
+}
+
+/* ============ reading section ============ */
+.reading-shot { max-width: 1150px; margin: 34px auto 0; }
+.reading-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px 56px;
+  align-items: start;
+  margin-top: 34px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; align-content: flex-start; }
+.chips span {
+  font: 500 12.5px var(--mono);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.readlist { list-style: none; margin: 0; padding: 0; }
+.readlist li {
+  padding: 13px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 15px; color: var(--muted);
+}
+.readlist li:last-child { border-bottom: 1px solid var(--line-soft); }
+.readlist li strong { color: var(--ink); font-weight: 600; }
+.readlist li kbd {
+  font: 12px var(--mono); background: var(--code-bg);
+  border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 5px; padding: 1px 6px;
+}
+
+/* ============ mac grid ============ */
+.macgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 34px;
+}
+.macgrid .cell {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+}
+.macgrid .cell h3 {
+  margin: 0 0 7px; font-size: 15px; font-weight: 600; letter-spacing: -0.005em;
+}
+.macgrid .cell p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.macgrid .cell p code {
+  font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em;
+}
+
+/* ============ closing ============ */
+.closing {
+  margin-top: 110px;
+  border-top: 1px solid var(--line);
+  padding: 88px 0 20px;
+  text-align: center;
+}
+.closing img.icon { width: 76px; height: 76px; margin: 0 auto 22px; }
+.closing h2 { margin-bottom: 12px; }
+.closing .prose { margin: 0 auto 34px; }
+.closing .install { text-align: left; }
+.closing .also {
+  margin: 26px 0 0; font-size: 14px; color: var(--faint);
+}
+.closing .also a { color: var(--muted); text-underline-offset: 3px; }
+.closing .also a:hover { color: var(--ink); }
+
+/* ============ footer ============ */
+footer {
+  margin-top: 84px;
+  border-top: 1px solid var(--line);
+  padding: 30px 0 46px;
+}
+footer .foot {
+  display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center;
+  color: var(--muted); font-size: 13.5px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+footer .note { margin-left: auto; }
+
+/* ============ responsive ============ */
+@media (max-width: 880px) {
+  .reading-cols { grid-template-columns: 1fr; gap: 26px; }
+  .trio { grid-template-columns: 1fr; }
+  .macgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .wrap, .wrap-narrow { padding: 0 20px; }
+  .hero { padding-top: 60px; }
+  section { padding-top: 72px; }
+  .macgrid { grid-template-columns: 1fr; }
+  .install { display: block; }
+  .install pre { font-size: 12.5px; }
+  footer .note { margin-left: 0; }
+  .closing { margin-top: 80px; padding-top: 64px; }
+}
 </style>
 </head>
 <body>
 
-<header class="wrap">
-  <img class="icon" src="img/icon.svg" alt="PullMark icon" width="108" height="108">
-  <h1>PullMark</h1>
-  <p class="tagline">A native macOS app for people who think in <strong>rendered Markdown</strong> —
-  for reading docs locally, and for reviewing documentation-heavy pull requests.</p>
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="#"><img src="img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+</div>
 
-  <div class="install" id="install"><span class="c"># install with Homebrew</span>
-brew tap jedijashwa/tap
-brew trust jedijashwa/tap
-brew install --cask pullmark<button class="copy" onclick="navigator.clipboard.writeText('brew tap jedijashwa/tap\nbrew trust jedijashwa/tap\nbrew install --cask pullmark').then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button></div>
-  <p class="sub">Signed &amp; notarized · macOS 13+ · free and open source ·
-  <a href="https://github.com/jedijashwa/pullmark/releases/latest">direct download</a></p>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">a native macOS app · <b>free &amp; open source</b> · signed &amp; notarized</p>
+    <h1>Docs are meant to be <del>diffed</del> <mark>read</mark>.</h1>
+    <p class="lede">PullMark renders your local Markdown the way readers will see it — and shows
+    documentation-heavy GitHub pull requests as <strong>rendered diffs</strong>, with just the
+    changed words highlighted. Comment, suggest, and submit your review without ever squinting
+    at a wall of <code>+</code>/<code>−</code> prose.</p>
+
+    <div class="install">
+      <div class="install-top">
+        <span class="install-label">Install with Homebrew</span>
+        <button class="copy-btn" type="button" id="copy1">Copy</button>
+      </div>
+      <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+    </div>
+    <p class="after-install">macOS 13+ · Developer&nbsp;ID signed, notarized by Apple ·
+      or <a href="https://github.com/jedijashwa/pullmark/releases/latest">download the latest release</a></p>
+
+    <div class="hero-shot">
+      <figure class="shot">
+        <img src="img/app-diff.png" width="1392" height="912"
+          alt="PullMark reviewing a real GitHub pull request: the sidebar lists the PR's Markdown files, the toolbar offers Rendered Diff, Source Diff and Result views, and the document shows a removed block in red above its added replacement in green">
+        <figcaption>A real PR from <code>github/docs</code>, rendered — removed and added blocks marked in place.</figcaption>
+      </figure>
+    </div>
+  </div>
 </header>
 
-<section class="wrap">
-  <h2>Documents deserve better than +/− lines</h2>
-  <p class="lede">More and more of what flows through pull requests isn't code — it's
-  <em>documents</em>: design docs, decision records, agent and skill definitions, runbooks,
-  READMEs. Reviewing prose as a wall of <code>+</code>/<code>−</code> source lines is the wrong
-  altitude. PullMark shows Markdown changes the way readers will see them — formatted, with just
-  the changed words highlighted — and lets you comment, suggest, and submit your review right
-  there.</p>
-  <p class="lede"><strong>It's deliberately not a full review client.</strong> PullMark shows the
-  Markdown files in a PR; your usual tools remain the right place for the code. Think of it as the
-  reading room next to the workshop.</p>
-  <div class="shot"><img src="img/rendered-diff.png" alt="A rendered Markdown diff with word-level highlights and a review comment thread"></div>
-  <p class="caption">Word-level rendered diffs, with review threads under the blocks they discuss.</p>
-  <div class="shot"><img src="img/side-by-side.png" alt="Side-by-side rendered diff view"></div>
-  <p class="caption">Or side by side, if that's how you read.</p>
-</section>
+<main>
 
-<section class="wrap">
-  <h2>Everything GitHub renders, rendered</h2>
-  <p class="lede">Tables, task lists, footnotes, alerts, syntax-highlighted code, Mermaid diagrams —
-  verified construct-by-construct in CI. Local files re-render as you save, with relative images
-  and links that work, an outline sidebar that follows your scroll, and ⌘F find-in-page.</p>
-  <div class="shot"><img src="img/rendered-doc.png" alt="A rendered Markdown document with tables, task lists and code"></div>
-  <div class="grid">
-    <div class="card"><h3><span class="dot" style="background:var(--accent)"></span>Review, fully</h3>
-      <p>Comment on rendered blocks, insert one-click-applicable suggestions, reply to and resolve threads, submit or save pending reviews.</p></div>
-    <div class="card"><h3><span class="dot" style="background:var(--accent2)"></span>Stays current</h3>
-      <p>Open PRs are watched for updates; statuses (draft, open, merged, closed) live in the sidebar and recents.</p></div>
-    <div class="card"><h3><span class="dot" style="background:#d29922"></span>Local history</h3>
-      <p>Compare any file against a previous commit or branch — same rendered word-level diff, straight from git.</p></div>
-    <div class="card"><h3><span class="dot" style="background:#f85149"></span>Everywhere on your Mac</h3>
-      <p>Quick Look previews in Finder, default-app support for .md, a <code>pullmark</code> CLI, and your existing gh/git credentials.</p></div>
+<section id="why">
+  <div class="wrap">
+    <p class="kicker">why</p>
+    <h2>Prose isn't code.<br>Stop reviewing it like code.</h2>
+    <div class="prose">
+      <p>More and more of what flows through pull requests isn't code — it's <em>documents</em>:
+      design docs, decision records, agent and skill definitions, runbooks, READMEs. Reviewing
+      those as source lines is the wrong altitude. A document is meant to be read the way readers
+      will see it — tables as tables, diagrams as diagrams. A source diff of prose actively hides
+      what changed.</p>
+      <p>PullMark splits old and new into blocks, aligns them, and renders the result with changed
+      blocks marked in place. When an edit is small, you get a <strong>word-level diff inside
+      formatted text</strong> — a one-word edit shows as one highlighted word. And because every
+      block keeps its original line numbers, review comments land exactly where GitHub expects them.</p>
+    </div>
+    <blockquote class="pull">“The reading room next&nbsp;to the&nbsp;workshop.”</blockquote>
+    <div class="gfm-note" role="note">
+      <div class="note-label">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+        Note
+      </div>
+      <p><strong>PullMark is deliberately not a full review client.</strong> It shows only the
+      Markdown files in a PR — for the code parts of a change, your usual review tools remain the
+      right place.</p>
+    </div>
   </div>
 </section>
 
+<section id="reviewing">
+  <div class="wrap">
+    <p class="kicker">reviewing</p>
+    <h2>The whole review, from the rendered page.</h2>
+    <p class="prose">Switch between <strong>inline</strong> and <strong>side-by-side</strong>
+    layouts, drop to the raw <em>Source Diff</em>, or preview the final <em>Result</em> — all from
+    the toolbar. Existing review threads appear under the blocks they discuss. Hover any block,
+    click the bubble, and reply — or start something new. Open PRs are checked every minute; if
+    the branch moves, one click refreshes and your drafts survive.</p>
+
+    <div class="trio">
+      <div class="act">
+        <div class="act-name">Comment Now</div>
+        <p>Posts a single review comment immediately, anchored to the exact lines behind the
+        rendered block.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">Add to Review</div>
+        <p>Collects drafts locally. Submit them together — Comment, Approve, or Request Changes —
+        or save a pending review to finish on github.com.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">Insert Suggestion</div>
+        <p>Pre-fills a <code>```suggestion</code> block with the targeted lines, so the author
+        applies your edit in one click.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="reading">
+  <div class="wrap">
+    <p class="kicker">reading</p>
+    <h2>A proper reader for the Markdown already on your disk.</h2>
+    <p class="prose">Open files or whole folders; everything re-renders the moment it changes on
+    disk. Relative images resolve, links to other Markdown files open in-app, heading anchors jump
+    within the page — and everything GitHub renders, PullMark renders, verified
+    construct-by-construct in CI.</p>
+
+    <figure class="shot reading-shot">
+      <img src="img/app-doc.png" width="1392" height="912" loading="lazy"
+        alt="PullMark rendering a local Markdown file: the sidebar shows local files and pull requests, and the document displays formatted headings, inline code, footnote references, and nested ordered and task lists">
+      <figcaption>PullMark's own <code>kitchen-sink.md</code> — the file CI uses to verify every construct.</figcaption>
+    </figure>
+
+    <div class="reading-cols">
+      <div class="chips" aria-label="Supported Markdown constructs">
+        <span>tables</span><span>task lists</span><span>footnotes</span>
+        <span>&gt; [!NOTE] alerts</span><span>mermaid</span><span>syntax highlighting</span>
+        <span>strikethrough</span><span>heading anchors</span>
+      </div>
+      <ul class="readlist">
+        <li><strong>Live re-render</strong> — save from any editor, the page updates.</li>
+        <li><strong>Outline sidebar</strong> — a navigator-style heading outline, one toggle away.</li>
+        <li><strong>Find in page</strong> — <kbd>⌘F</kbd> with match stepping.</li>
+        <li><strong>Link previews</strong> — a status pill shows every destination on hover.</li>
+        <li><strong>Light &amp; dark</strong> — follows the system, restyles everything, Mermaid included.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="mac">
+  <div class="wrap">
+    <p class="kicker">at-home-on-your-mac</p>
+    <h2>Native, in all the ways that count.</h2>
+    <div class="macgrid">
+      <div class="cell">
+        <h3>Quick Look</h3>
+        <p>Press space on any Markdown file in Finder and see it rendered PullMark-style,
+        before you ever open an app.</p>
+      </div>
+      <div class="cell">
+        <h3>A real CLI</h3>
+        <p><code>pullmark README.md</code>, <code>pullmark ~/notes docs/</code> — files and
+        folders open in the running app.</p>
+      </div>
+      <div class="cell">
+        <h3>Default app for .md</h3>
+        <p>Registers as a Markdown viewer — make double-click in Finder mean
+        <em>rendered</em>, everywhere.</p>
+      </div>
+      <div class="cell">
+        <h3>Your existing credentials</h3>
+        <p>No separate login. PullMark uses <code>gh auth token</code> or your git credential
+        helper — private and org repos just work.</p>
+      </div>
+      <div class="cell">
+        <h3>Nothing left on disk</h3>
+        <p>Fetched PR content lives in ephemeral sessions and bounded memory caches — nothing
+        from GitHub is written to persistent storage.</p>
+      </div>
+      <div class="cell">
+        <h3>Open source, MIT</h3>
+        <p>Swift, zero package dependencies, and a <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">license</a>
+        that stays out of your way. <a href="https://github.com/jedijashwa/pullmark">Read the source</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="closing">
+  <div class="wrap-narrow">
+    <img class="icon" src="img/icon.svg" alt="" width="76" height="76">
+    <h2>Give your docs a reading room.</h2>
+    <p class="prose" style="max-width: 30em;">Free, open source, signed and notarized.
+    One tap away.</p>
+    <div class="install">
+      <div class="install-top">
+        <span class="install-label">Install with Homebrew</span>
+        <button class="copy-btn" type="button" id="copy2">Copy</button>
+      </div>
+      <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+    </div>
+    <p class="also">or <a href="https://github.com/jedijashwa/pullmark/releases/latest">download the DMG</a> ·
+      <a href="https://github.com/jedijashwa/pullmark">build from source</a></p>
+  </div>
+</div>
+
+</main>
+
 <footer>
-  <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
-  <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
-  <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
-  <span>PullMark is not affiliated with GitHub.</span>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
 </footer>
+
+<script>
+(function () {
+  var cmds = 'brew tap jedijashwa/tap\nbrew trust jedijashwa/tap\nbrew install --cask pullmark';
+  ['copy1', 'copy2'].forEach(function (id) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(cmds).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1600);
+      });
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
