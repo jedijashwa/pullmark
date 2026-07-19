@@ -1146,6 +1146,7 @@
       hint.append(saveBtn, cancelBtn, hintText);
       function cancel() {
         window.__pmCancelInlineEdit = null;
+        post({ type: "editingState", active: false });
         wrap.remove();
         el.style.display = "";
       }
@@ -1153,6 +1154,7 @@
       // write failure) — without it the disabled editor would be stuck,
       // since an unchanged document never re-renders.
       window.__pmCancelInlineEdit = cancel;
+      post({ type: "editingState", active: true });
       function commit() {
         if (ta.value === seed) { cancel(); return; }
         ta.disabled = true;
