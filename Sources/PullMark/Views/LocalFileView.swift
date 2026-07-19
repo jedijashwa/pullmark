@@ -167,8 +167,9 @@ struct LocalFileView: View {
         Menu {
             if !commits.isEmpty {
                 Section("History") {
-                    ForEach(commits) { commit in
+                    ForEach(commits.prefix(25)) { commit in
                         Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
+                            timelineActive = false
                             startComparing(ref: commit.sha,
                                            label: "\(commit.shortSHA) (\(commit.date))")
                         }
@@ -178,14 +179,20 @@ struct LocalFileView: View {
             if !branches.isEmpty {
                 Section("Branches") {
                     ForEach(branches, id: \.self) { branch in
-                        Button(branch) { startComparing(ref: branch, label: branch) }
+                        Button(branch) {
+                            timelineActive = false
+                            startComparing(ref: branch, label: branch)
+                        }
                     }
                 }
             }
             if !remoteBranches.isEmpty {
                 Section("Remote Branches") {
                     ForEach(remoteBranches, id: \.self) { branch in
-                        Button(branch) { startComparing(ref: branch, label: branch) }
+                        Button(branch) {
+                            timelineActive = false
+                            startComparing(ref: branch, label: branch)
+                        }
                     }
                 }
             }
@@ -264,12 +271,16 @@ struct LocalFileView: View {
                 == target.seed else {
             state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
                 + "this block — nothing was saved. Re-open the block to edit the current version."
+            proxy.cancelInlineEdit()
             return
         }
         guard let newText = TextLines.replacing(in: displayText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
-                                                with: replacement) else { return }
+                                                with: replacement) else {
+            proxy.cancelInlineEdit()
+            return
+        }
         if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
             if state.editedText[file.url] != nil {
                 // Manual-mode leftovers plus autosave: route through the
@@ -286,6 +297,7 @@ struct LocalFileView: View {
                 state.editedBase[file.url] = nil
             } catch {
                 state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+                proxy.cancelInlineEdit()
             }
         } else {
             // First overlay for this file: remember the disk text it was
@@ -379,7 +391,7 @@ struct LocalFileView: View {
         let url = file.url
         Task.detached(priority: .utility) {
             guard let root = LocalGit.repoRoot(for: url) else { return }
-            let commits = LocalGit.history(of: url)
+            let commits = LocalGit.history(of: url, limit: 200)
             let branches = LocalGit.branches(in: root, remote: false)
             let remotes = LocalGit.branches(in: root, remote: true)
             let current = LocalGit.currentBranch(in: root)
@@ -422,6 +434,7 @@ struct LocalFileView: View {
                 compareLoading = false
                 guard let old else {
                     state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
+                    stopComparing()
                     return
                 }
                 compareText = old

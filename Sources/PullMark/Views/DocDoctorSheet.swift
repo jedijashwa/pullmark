@@ -122,33 +122,16 @@ struct DocDoctorSheet: View {
         dismiss()
         state.add(url: url)
         if issue.line != nil {
-            // Seed find-in-page with the target so it's highlighted.
-            state.pendingSearchQuery = issue.target
+            // Find-in-page searches rendered text: the link's LABEL is on
+            // the page; the href usually isn't.
+            state.pendingSearchQuery = issue.label.isEmpty ? issue.target : issue.label
         }
     }
 
     private func run() {
         let root = root
         Task.detached(priority: .userInitiated) {
-            let skipped: Set<String> = ["node_modules", "vendor", ".build", "dist", ".git"]
-            var relativePaths: [String] = []
-            if let enumerator = FileManager.default.enumerator(
-                at: root, includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsHiddenFiles, .skipsPackageDescendants]) {
-                for case let url as URL in enumerator {
-                    if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
-                        if skipped.contains(url.lastPathComponent) {
-                            enumerator.skipDescendants()
-                        }
-                        continue
-                    }
-                    let relative = url.path.hasPrefix(root.path + "/")
-                        ? String(url.path.dropFirst(root.path.count + 1))
-                        : url.lastPathComponent
-                    relativePaths.append(relative)
-                    if relativePaths.count >= 4000 { break }
-                }
-            }
+            let relativePaths = Self.enumerate(root)
             let markdownCount = relativePaths.filter { $0.lowercased().hasSuffix(".md") }.count
             let found = DocDoctor.scan(files: relativePaths) { path in
                 try? String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
@@ -158,5 +141,29 @@ struct DocDoctorSheet: View {
                 issues = found
             }
         }
+    }
+
+    /// Synchronous: directory enumerators can't iterate inside async
+    /// contexts (a Swift 6 error).
+    nonisolated private static func enumerate(_ root: URL) -> [String] {
+        let skipped: Set<String> = ["node_modules", "vendor", ".build", "dist", ".git"]
+        var relativePaths: [String] = []
+        guard let enumerator = FileManager.default.enumerator(
+            at: root, includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
+        for case let url as URL in enumerator {
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
+                if skipped.contains(url.lastPathComponent) {
+                    enumerator.skipDescendants()
+                }
+                continue
+            }
+            let relative = url.path.hasPrefix(root.path + "/")
+                ? String(url.path.dropFirst(root.path.count + 1))
+                : url.lastPathComponent
+            relativePaths.append(relative)
+            if relativePaths.count >= 4000 { break }
+        }
+        return relativePaths
     }
 }
