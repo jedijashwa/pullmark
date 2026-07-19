@@ -194,6 +194,20 @@ h1 mark {
 .after-install a { color: var(--muted); text-underline-offset: 3px; }
 .after-install a:hover { color: var(--ink); }
 
+/* two ways in, no favorites */
+.install-row {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch;
+}
+.install-row .install { display: flex; flex-direction: column; }
+.install .dl-body {
+  margin: 0; max-width: 21em;
+  font-size: 14.5px; line-height: 1.7; color: var(--muted);
+}
+.install .dl-body a { color: var(--ink); text-underline-offset: 3px; }
+.install .dl-body code { font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em; }
+.either-way { margin: 14px 2px 0; font-size: 13.5px; color: var(--muted); }
+
 /* ============ screenshots ============ */
 /* real window captures: chrome, rounded corners and shadow are baked into the
    PNGs (transparent margins), so they sit directly on the page background */
@@ -370,6 +384,7 @@ h2 {
 .closing h2 { margin-bottom: 12px; }
 .closing .prose { margin: 0 auto 34px; }
 .closing .install { text-align: left; }
+.closing .either-way { text-align: center; }
 .closing .also {
   margin: 26px 0 0; font-size: 14px; color: var(--faint);
 }
@@ -429,17 +444,28 @@ footer .note { margin-left: auto; }
     changed words highlighted. Comment, suggest, and submit your review without ever squinting
     at a wall of <code>+</code>/<code>−</code> prose.</p>
 
-    <div class="install">
-      <div class="install-top">
-        <span class="install-label">Install with Homebrew</span>
-        <button class="copy-btn" type="button" id="copy1">Copy</button>
-      </div>
-      <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+    <div class="install-row">
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Homebrew</span>
+          <button class="copy-btn" type="button" id="copy1">Copy</button>
+        </div>
+        <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
 <span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
 <span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+      </div>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Direct download</span>
+        </div>
+        <p class="dl-body">Grab <code>PullMark-x.y.z.dmg</code> from the
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">latest release</a>
+          and drag PullMark to Applications.</p>
+      </div>
     </div>
+    <p class="either-way">Either way, PullMark checks for updates and installs them with one click.</p>
     <p class="after-install">macOS 13+ · Developer&nbsp;ID signed, notarized by Apple ·
-      or <a href="https://github.com/jedijashwa/pullmark/releases/latest">download the DMG</a> and drag to Applications</p>
+      or <a href="https://github.com/jedijashwa/pullmark">build from source</a></p>
 
     <div class="hero-shot">
       <figure class="shot">
@@ -531,7 +557,7 @@ footer .note { margin-left: auto; }
 
     <figure class="shot reading-shot">
       <img src="img/app-doc.png" width="1392" height="912" loading="lazy"
-        alt="PullMark rendering a local Markdown file: the sidebar shows local files and pull requests, and the document displays formatted headings, inline code, footnote references, and nested ordered and task lists">
+        alt="PullMark rendering a local Markdown file: the sidebar shows local files and pull requests, and the document displays a collapsed front-matter bar, formatted headings, inline code, footnote references, and nested ordered lists, with a word-count pill in the corner">
       <figcaption>PullMark's own <code>kitchen-sink.md</code> — the file CI uses to verify every construct.</figcaption>
     </figure>
 
@@ -540,6 +566,7 @@ footer .note { margin-left: auto; }
         <span>tables</span><span>task lists</span><span>footnotes</span>
         <span>&gt; [!NOTE] alerts</span><span>mermaid</span><span>front matter</span>
         <span>syntax highlighting</span><span>strikethrough</span><span>heading anchors</span>
+        <span>$…$ math</span><span>[toc]</span>
       </div>
       <ul class="readlist">
         <li><strong>History in the margin</strong> — a quiet blame gutter: one avatar per run of
@@ -548,19 +575,27 @@ footer .note { margin-left: auto; }
         <li><strong>Front matter as metadata</strong> — YAML front matter renders as a collapsed
           key/value table at the top of the page, not a wall of bold prose.</li>
         <li><strong>Live re-render</strong> — save from any editor, the page updates.</li>
+        <li><strong>Math &amp; <code>[toc]</code></strong> — <code>$…$</code> and <code>$$…$$</code>
+          render through bundled KaTeX, fully offline; a lone <code>[toc]</code> becomes a linked
+          table of contents.</li>
         <li><strong>Outline sidebar</strong> — a navigator-style heading outline, one toggle away.</li>
-        <li><strong>Find in page</strong> — <kbd>⌘F</kbd> with match stepping.</li>
+        <li><strong>Find in page</strong> — <kbd>⌘F</kbd> with match stepping; <kbd>⇧⌘F</kbd>
+          searches every file in the sidebar, results grouped with context.</li>
+        <li><strong>Export &amp; copy</strong> — Export as PDF or a self-contained HTML file;
+          <kbd>⌘C</kbd> copies rich text that pastes formatted, <kbd>⌥⌘C</kbd> copies the original
+          Markdown source.</li>
+        <li><strong>Word count</strong> — a quiet words · minutes pill on every rendered document.</li>
         <li><strong>Link previews</strong> — a status pill shows every destination on hover.</li>
         <li><strong>Light &amp; dark</strong> — follows the system, restyles everything, Mermaid included.</li>
-        <li><strong>Reading themes</strong> — GitHub, Editorial (serif headers on warm paper), or Terminal (monospace, phosphor accent), with live previews in Settings.</li>
+        <li><strong>Reading themes</strong> — Editorial (serif headers on warm paper), GitHub (the classic github.com look), or Terminal (monospace, phosphor accent), with live previews in Settings — or drop <code>.css</code> files into the Themes folder to add your own.</li>
         <li><strong>Update Now</strong> — when a release ships, brew-managed installs upgrade and
           relaunch from a single banner button, and a What's New sheet catches you up after.</li>
       </ul>
     </div>
 
     <figure class="shot shot-narrow">
-      <img src="img/app-themes.png" width="792" height="489" loading="lazy"
-        alt="PullMark's Settings window on the Themes tab: three live preview cards — GitHub, Editorial, and Terminal — each rendering the same sample document through the real pipeline, with GitHub selected">
+      <img src="img/app-themes.png" width="792" height="740" loading="lazy"
+        alt="PullMark's Settings window on the Themes tab: three live preview cards — GitHub, Editorial, and Terminal — each rendering the same sample document through the real pipeline, with Editorial selected, above buttons for opening the custom Themes folder">
       <figcaption>Settings → Themes: three live previews, rendered by the real pipeline — click a card to switch.</figcaption>
     </figure>
   </div>
@@ -611,17 +646,27 @@ footer .note { margin-left: auto; }
     <h2>Give your docs a reading room.</h2>
     <p class="prose" style="max-width: 30em;">Free, open source, signed and notarized.
     One tap away.</p>
-    <div class="install">
-      <div class="install-top">
-        <span class="install-label">Install with Homebrew</span>
-        <button class="copy-btn" type="button" id="copy2">Copy</button>
-      </div>
-      <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+    <div class="install-row" style="justify-content: center;">
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Homebrew</span>
+          <button class="copy-btn" type="button" id="copy2">Copy</button>
+        </div>
+        <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
 <span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
 <span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+      </div>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Direct download</span>
+        </div>
+        <p class="dl-body">Grab <code>PullMark-x.y.z.dmg</code> from the
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">latest release</a>
+          and drag PullMark to Applications.</p>
+      </div>
     </div>
-    <p class="also">or <a href="https://github.com/jedijashwa/pullmark/releases/latest">download the DMG</a> ·
-      <a href="https://github.com/jedijashwa/pullmark">build from source</a></p>
+    <p class="either-way">Either way, PullMark checks for updates and installs them with one click.</p>
+    <p class="also"><a href="https://github.com/jedijashwa/pullmark">or build from source</a></p>
   </div>
 </div>
 
