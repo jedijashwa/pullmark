@@ -12,7 +12,7 @@
 <meta property="og:description" content="A native macOS app that renders local Markdown and reviews documentation-heavy GitHub pull requests as rendered diffs.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/">
-<meta property="og:image" content="https://pullmark.app/img/app-blame.png">
+<meta property="og:image" content="https://pullmark.app/img/app-blame.png?v=2">
 <style>
 /* ============ tokens ============ */
 :root {
@@ -188,6 +188,20 @@ h1 mark {
 }
 .copy-btn:hover { color: var(--ink); border-color: var(--faint); }
 .copy-btn.copied { color: var(--green); border-color: var(--green); }
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--green); color: #fff;
+  font: 600 14.5px/1 var(--sans);
+  padding: 12px 20px; border-radius: 9px;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: filter .15s;
+}
+.dl-btn:hover { filter: brightness(1.08); }
+.dl-btn svg { flex: none; }
+.dl-sub { margin: 12px 2px 0; max-width: 24em; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.dl-sub a { color: var(--muted); text-underline-offset: 3px; }
+.dl-sub a:hover { color: var(--ink); }
 .after-install {
   margin: 14px 2px 0; font-size: 13.5px; color: var(--muted);
 }
@@ -321,29 +335,40 @@ h2 {
 
 /* ============ reading section ============ */
 .reading-shot { max-width: 1150px; margin: 34px auto 0; }
-.reading-cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px 56px;
-  align-items: start;
-  margin-top: 34px;
-}
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; align-content: flex-start; }
-.chips span {
-  font: 500 12.5px var(--mono);
-  color: var(--muted);
-  border: 1px solid var(--line);
+/* the specimen: constructs shown rendered, because that's the whole point */
+.specimen {
+  margin: 34px 0 0;
   background: var(--panel);
-  border-radius: 999px;
-  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px 26px;
+  font-size: 16px; line-height: 2.05;
+  color: var(--ink);
 }
-.readlist { list-style: none; margin: 0; padding: 0; }
+.specimen code { font: 86% var(--mono); background: var(--code-bg); border-radius: 5px; padding: .12em .38em; }
+.specimen mark { background: var(--green-bg); color: var(--green-ink); border-radius: .15em; padding: 0 .18em; }
+.specimen del { color: var(--muted); }
+.specimen .link { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.specimen .fn { color: var(--blue); font-size: 68%; }
+.specimen .math { font-family: var(--serif); font-style: italic; }
+.specimen .task { white-space: nowrap; }
+.specimen .task::before {
+  content: "✓"; display: inline-block; width: 1.05em; height: 1.05em;
+  margin-right: .35em; vertical-align: -12%;
+  background: var(--blue); color: #fff; border-radius: 3px;
+  font: 700 10.5px/1.5 var(--sans); text-align: center;
+}
+.readlist {
+  list-style: none; margin: 26px 0 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 56px;
+}
 .readlist li {
   padding: 13px 0;
   border-top: 1px solid var(--line-soft);
   font-size: 15px; color: var(--muted);
 }
-.readlist li:last-child { border-bottom: 1px solid var(--line-soft); }
 .readlist li strong { color: var(--ink); font-weight: 600; }
 .readlist li kbd {
   font: 12px var(--mono); background: var(--code-bg);
@@ -407,7 +432,7 @@ footer .note { margin-left: auto; }
 
 /* ============ responsive ============ */
 @media (max-width: 880px) {
-  .reading-cols { grid-template-columns: 1fr; gap: 26px; }
+  .readlist { grid-template-columns: 1fr; }
   .trio { grid-template-columns: 1fr; }
   .macgrid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -458,9 +483,12 @@ footer .note { margin-left: auto; }
         <div class="install-top">
           <span class="install-label">Direct download</span>
         </div>
-        <p class="dl-body">Grab <code>PullMark-x.y.z.dmg</code> from the
-          <a href="https://github.com/jedijashwa/pullmark/releases/latest">latest release</a>
-          and drag PullMark to Applications.</p>
+        <a class="dl-btn" href="https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v6.69l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V1.75ZM2.5 12.25a.75.75 0 0 1 .75.75v.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 12.5 15.5h-9a1.75 1.75 0 0 1-1.75-1.75v-.5a.75.75 0 0 1 .75-.75Z"/></svg>
+          Download PullMark</a>
+        <p class="dl-sub">The latest DMG — open it, drag to Applications, and PullMark
+          even tidies the disk image away.
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">All releases&nbsp;→</a></p>
       </div>
     </div>
     <p class="either-way">Either way, PullMark checks for updates and installs them with one click.</p>
@@ -469,7 +497,7 @@ footer .note { margin-left: auto; }
 
     <div class="hero-shot">
       <figure class="shot">
-        <img src="img/app-blame.png" width="1392" height="912"
+        <img src="img/app-blame.png?v=2" width="1392" height="912"
           alt="PullMark rendering its own README as a formatted document, with the blame gutter on: author avatars sit in the left margin, one per run of blocks last touched by the same commit">
         <figcaption>PullMark reading its own README — formatted, with history in the margin: one avatar per run of blocks, each one a doorway to its commit.</figcaption>
       </figure>
@@ -484,15 +512,15 @@ footer .note { margin-left: auto; }
     <p class="kicker">why</p>
     <h2>Prose isn't code.<br>Stop reviewing it like code.</h2>
     <div class="prose">
-      <p>More and more of what flows through pull requests isn't code — it's <em>documents</em>:
-      design docs, decision records, agent and skill definitions, runbooks, READMEs. Reviewing
-      those as source lines is the wrong altitude. A document is meant to be read the way readers
-      will see it — tables as tables, diagrams as diagrams. A source diff of prose actively hides
-      what changed.</p>
-      <p>PullMark splits old and new into blocks, aligns them, and renders the result with changed
-      blocks marked in place. When an edit is small, you get a <strong>word-level diff inside
-      formatted text</strong> — a one-word edit shows as one highlighted word. And because every
-      block keeps its original line numbers, review comments land exactly where GitHub expects them.</p>
+      <p>You know the moment: a forty-line green wall in a README diff, and somewhere inside it,
+      the one sentence that actually changed. Design docs, decision records, runbooks, agent
+      definitions — more of what crosses your review queue every week is prose, and a source
+      diff of prose hides exactly the thing you're there to judge.</p>
+      <p>PullMark shows you the change the way readers will meet it: <strong>rendered, with just
+      the changed words highlighted</strong>. Tables stay tables, diagrams stay diagrams, and a
+      one-word edit is one highlighted word. Comment on any block and it lands on the exact
+      lines GitHub expects — approve, request changes, or leave suggestions the author can
+      apply in one click.</p>
     </div>
     <blockquote class="pull">“The reading room next&nbsp;to the&nbsp;workshop.”</blockquote>
     <div class="gfm-note" role="note">
@@ -520,10 +548,11 @@ footer .note { margin-left: auto; }
     drafts survive.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-diff.png" width="1392" height="912" loading="lazy"
+      <img src="img/app-diff.png?v=2" width="1392" height="912" loading="lazy"
         alt="PullMark reviewing a real GitHub pull request: the removed front matter renders as a red metadata table of keys and values, while the added version below it renders as a green wall of bold prose — showing the patch accidentally broke the front matter">
-      <figcaption>A real (since-closed) patch to <code>github/docs</code>: the old front matter is a tidy
-      metadata table — and the rendered diff makes it obvious the patch accidentally broke it.</figcaption>
+      <figcaption>A real patch to <code>github/docs</code>, in PullMark: the rendered diff makes it
+      obvious at a glance that the edit broke the front matter — invisible in a
+      <code>+</code>/<code>−</code> view.</figcaption>
     </figure>
 
     <div class="trio">
@@ -550,51 +579,50 @@ footer .note { margin-left: auto; }
   <div class="wrap">
     <p class="kicker">reading</p>
     <h2>A proper reader for the Markdown already on your disk.</h2>
-    <p class="prose">Open files or whole folders; everything re-renders the moment it changes on
-    disk. Relative images resolve, links to other Markdown files open in-app, heading anchors jump
-    within the page — and everything GitHub renders, PullMark renders, verified
-    construct-by-construct in CI.</p>
+    <p class="prose">Your notes, your READMEs, your team's docs folder — open a file or a whole
+    directory and read it the way it was meant to look. Everything re-renders the moment it
+    changes on disk, relative images and links just resolve, and if GitHub renders it,
+    PullMark renders it:</p>
+
+    <p class="specimen" aria-label="Markdown constructs, shown rendered">
+      <strong>Bold</strong>, <em>italic</em>, <del>strikethrough</del>, <code>inline code</code>,
+      <mark>highlight</mark>, H<sub>2</sub>O, mc<sup>2</sup>,
+      <span class="math">e<sup>iπ</sup>&hairsp;+&hairsp;1&hairsp;=&hairsp;0</span>,
+      <span class="link">links with hover previews</span>, footnotes<span class="fn">[1]</span>,
+      <span class="task">task lists</span> — plus tables, Mermaid diagrams,
+      syntax-highlighted code, <code>&gt; [!NOTE]</code> alerts, offline KaTeX math,
+      <code>[toc]</code>, and YAML front matter folded into a tidy metadata table.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-doc.png" width="1392" height="912" loading="lazy"
+      <img src="img/app-doc.png?v=2" width="1392" height="912" loading="lazy"
         alt="PullMark rendering a local Markdown file: the sidebar shows local files and pull requests, and the document displays a collapsed front-matter bar, formatted headings, inline code, footnote references, and nested ordered lists, with a word-count pill in the corner">
-      <figcaption>PullMark's own <code>kitchen-sink.md</code> — the file CI uses to verify every construct.</figcaption>
+      <figcaption>Front matter folds into a quiet bar, footnotes link, lists nest — and a
+      words&nbsp;·&nbsp;minutes pill keeps score in the corner.</figcaption>
     </figure>
 
-    <div class="reading-cols">
-      <div class="chips" aria-label="Supported Markdown constructs">
-        <span>tables</span><span>task lists</span><span>footnotes</span>
-        <span>&gt; [!NOTE] alerts</span><span>mermaid</span><span>front matter</span>
-        <span>syntax highlighting</span><span>strikethrough</span><span>heading anchors</span>
-        <span>$…$ math</span><span>[toc]</span>
-      </div>
-      <ul class="readlist">
-        <li><strong>History in the margin</strong> — a quiet blame gutter: one avatar per run of
-          blocks, hover for the author, date, and commit, click for the line history — for local
-          files and PR docs alike.</li>
-        <li><strong>Front matter as metadata</strong> — YAML front matter renders as a collapsed
-          key/value table at the top of the page, not a wall of bold prose.</li>
-        <li><strong>Live re-render</strong> — save from any editor, the page updates.</li>
-        <li><strong>Math &amp; <code>[toc]</code></strong> — <code>$…$</code> and <code>$$…$$</code>
-          render through bundled KaTeX, fully offline; a lone <code>[toc]</code> becomes a linked
-          table of contents.</li>
-        <li><strong>Outline sidebar</strong> — a navigator-style heading outline, one toggle away.</li>
-        <li><strong>Find in page</strong> — <kbd>⌘F</kbd> with match stepping; <kbd>⇧⌘F</kbd>
-          searches every file in the sidebar, results grouped with context.</li>
-        <li><strong>Export &amp; copy</strong> — Export as PDF or a self-contained HTML file;
-          <kbd>⌘C</kbd> copies rich text that pastes formatted, <kbd>⌥⌘C</kbd> copies the original
-          Markdown source.</li>
-        <li><strong>Word count</strong> — a quiet words · minutes pill on every rendered document.</li>
-        <li><strong>Link previews</strong> — a status pill shows every destination on hover.</li>
-        <li><strong>Light &amp; dark</strong> — follows the system, restyles everything, Mermaid included.</li>
-        <li><strong>Reading themes</strong> — Editorial (serif headers on warm paper), GitHub (the classic github.com look), or Terminal (monospace, phosphor accent), with live previews in Settings — or drop <code>.css</code> files into the Themes folder to add your own.</li>
-        <li><strong>Update Now</strong> — when a release ships, brew-managed installs upgrade and
-          relaunch from a single banner button, and a What's New sheet catches you up after.</li>
-      </ul>
-    </div>
+    <ul class="readlist">
+      <li><strong>History in the margin</strong> — a quiet blame gutter: one avatar per run of
+        blocks; hover for author, date, and commit; click for the full line history.</li>
+      <li><strong>Always current</strong> — save from any editor and the page has already
+        re-rendered.</li>
+      <li><strong>Outline sidebar</strong> — a navigator-style map of your headings, one
+        toggle away.</li>
+      <li><strong>Find anything</strong> — <kbd>⌘F</kbd> steps through matches on the page;
+        <kbd>⇧⌘F</kbd> searches every file in the sidebar at once.</li>
+      <li><strong>Take it anywhere</strong> — export as PDF or a single self-contained
+        HTML file.</li>
+      <li><strong>Copy that pastes right</strong> — <kbd>⌘C</kbd> gives rich text for Docs and
+        Slack; <kbd>⌥⌘C</kbd> gives the original Markdown source.</li>
+      <li><strong>Three reading themes</strong> — Editorial, GitHub, and Terminal, with live
+        previews in Settings — or drop in your own CSS.</li>
+      <li><strong>Light &amp; dark</strong> — follows the system and restyles everything,
+        Mermaid included.</li>
+      <li><strong>Painless updates</strong> — one banner button upgrades and relaunches, and a
+        What's New sheet catches you up after.</li>
+    </ul>
 
     <figure class="shot shot-narrow">
-      <img src="img/app-themes.png" width="792" height="740" loading="lazy"
+      <img src="img/app-themes.png?v=2" width="792" height="740" loading="lazy"
         alt="PullMark's Settings window on the Themes tab: three live preview cards — GitHub, Editorial, and Terminal — each rendering the same sample document through the real pipeline, with Editorial selected, above buttons for opening the custom Themes folder">
       <figcaption>Settings → Themes: three live previews, rendered by the real pipeline — click a card to switch.</figcaption>
     </figure>
@@ -603,7 +631,7 @@ footer .note { margin-left: auto; }
 
 <section id="mac">
   <div class="wrap">
-    <p class="kicker">at-home-on-your-mac</p>
+    <p class="kicker">native</p>
     <h2>Native, in all the ways that count.</h2>
     <div class="macgrid">
       <div class="cell">
@@ -645,7 +673,7 @@ footer .note { margin-left: auto; }
     <img class="icon" src="img/icon.svg" alt="" width="76" height="76">
     <h2>Give your docs a reading room.</h2>
     <p class="prose" style="max-width: 30em;">Free, open source, signed and notarized.
-    One tap away.</p>
+    One download away.</p>
     <div class="install-row" style="justify-content: center;">
       <div class="install">
         <div class="install-top">
@@ -660,9 +688,12 @@ footer .note { margin-left: auto; }
         <div class="install-top">
           <span class="install-label">Direct download</span>
         </div>
-        <p class="dl-body">Grab <code>PullMark-x.y.z.dmg</code> from the
-          <a href="https://github.com/jedijashwa/pullmark/releases/latest">latest release</a>
-          and drag PullMark to Applications.</p>
+        <a class="dl-btn" href="https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v6.69l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V1.75ZM2.5 12.25a.75.75 0 0 1 .75.75v.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 12.5 15.5h-9a1.75 1.75 0 0 1-1.75-1.75v-.5a.75.75 0 0 1 .75-.75Z"/></svg>
+          Download PullMark</a>
+        <p class="dl-sub">The latest DMG — open it, drag to Applications, and PullMark
+          even tidies the disk image away.
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">All releases&nbsp;→</a></p>
       </div>
     </div>
     <p class="either-way">Either way, PullMark checks for updates and installs them with one click.</p>
