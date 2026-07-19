@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.12.0 - 2026-07-19
 
 - Multiple windows, really: ⌘N opens an independent window — its own
   sidebar, PRs, selection, and unsaved edits — and windows merge into
