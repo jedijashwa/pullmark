@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject private var state: AppState
+    /// Each window owns its state — sidebar, sessions, selection, edits —
+    /// which is what makes ⌘N windows and native tabs independent.
+    @StateObject private var state = AppState()
     @EnvironmentObject private var updates: UpdateChecker
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
+    @Environment(\.controlActiveState) private var controlActiveState
 
     var body: some View {
         NavigationSplitView {
@@ -73,6 +76,14 @@ struct ContentView: View {
         .alert(state.lastNotice ?? "", isPresented: noticePresented) {
             Button("OK", role: .cancel) {}
         }
+        .environmentObject(state)
+        // Menu commands act on the focused window's state.
+        .focusedSceneObject(state)
+        // External opens land in the key window.
+        .onChange(of: controlActiveState) { active in
+            if active == .key { AppState.keyInstance = state }
+        }
+        .onOpenURL { url in state.add(url: url) }
     }
 
     private var errorPresented: Binding<Bool> {

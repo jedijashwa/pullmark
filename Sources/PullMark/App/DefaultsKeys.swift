@@ -34,4 +34,6 @@ enum DefaultsKeys {
     /// Repo roots where the commit sheet should stop asking about
     /// committing directly to main/master.
     static let commitToMainAllowed = "pm.commitToMainAllowed"
+    /// Commit sheet: also push to origin after a successful commit.
+    static let pushAfterCommit = "pm.pushAfterCommit"
 }
