@@ -136,6 +136,8 @@ body {
 .pm-comment-btn:hover {
   border-color: rgba(128, 128, 128, 0.9);
 }
+/* Edit-as-suggestion pencil: same treatment, sitting left of the bubble. */
+.pm-edit-btn { right: 40px; }
 
 /* ---- Review comment threads ---- */
 

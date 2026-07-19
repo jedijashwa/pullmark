@@ -5,6 +5,8 @@ struct BridgeMessage {
     let lineStart: Int
     let lineEnd: Int
     let side: String
+    /// The pencil button: open the composer in edit-as-suggestion mode.
+    var edit = false
 }
 
 /// Word count / reading time of a rendered document, computed in the page.
@@ -125,7 +127,8 @@ struct MarkdownWebView: NSViewRepresentable {
                       let lineEnd = dict["lineEnd"] as? Int,
                       let side = dict["side"] as? String
                 else { return }
-                parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side))
+                parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side,
+                                                       edit: dict["edit"] as? Bool ?? false))
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in

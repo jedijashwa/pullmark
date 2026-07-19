@@ -869,9 +869,35 @@
     btn.innerHTML = COMMENT_ICON;
     btn.title = "Comment on " + (seg.side === "LEFT" ? "old" : "new") +
       " lines " + seg.lineStart + "–" + seg.lineEnd;
+    btn.setAttribute("aria-label", btn.title);
     btn.addEventListener("click", function (event) {
       event.stopPropagation();
       post({ type: "comment", lineStart: seg.lineStart, lineEnd: seg.lineEnd, side: seg.side });
+    });
+    return btn;
+  }
+
+  // Pencil in the SF-Symbols outline style of COMMENT_ICON.
+  var EDIT_ICON =
+    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"' +
+    ' stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">' +
+    '<path d="M11.1 2.4a1.55 1.55 0 0 1 2.2 2.2l-7.6 7.6-3 .8.8-3z"/>' +
+    '<path d="M9.7 3.8l2.2 2.2"/>' +
+    "</svg>";
+
+  /// Edit-as-suggestion: only new-side lines can carry a ```suggestion
+  /// (GitHub applies it in place of the commented RIGHT-side lines).
+  function editButton(seg) {
+    var btn = document.createElement("button");
+    btn.className = "pm-comment-btn pm-edit-btn";
+    btn.type = "button";
+    btn.innerHTML = EDIT_ICON;
+    btn.title = "Suggest an edit to lines " + seg.lineStart + "–" + seg.lineEnd;
+    btn.setAttribute("aria-label", btn.title);
+    btn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      post({ type: "comment", edit: true,
+             lineStart: seg.lineStart, lineEnd: seg.lineEnd, side: seg.side });
     });
     return btn;
   }
@@ -954,7 +980,10 @@
       if (seg.kind === "added" || seg.kind === "removed") { markEmptyBlock(div); }
       wrap.append(div);
     }
-    if (payload.commentable !== false) { wrap.append(commentButton(seg)); }
+    if (payload.commentable !== false) {
+      wrap.append(commentButton(seg));
+      if (seg.side === "RIGHT") { wrap.append(editButton(seg)); }
+    }
     return wrap;
   }
 
@@ -1004,6 +1033,7 @@
       }
       if (payload.commentable !== false) {
         (seg.side === "LEFT" ? left : right).append(commentButton(seg));
+        if (seg.side === "RIGHT") { right.append(editButton(seg)); }
       }
       grid.append(left, right);
       if (seg.threads && seg.threads.length) {
