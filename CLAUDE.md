@@ -24,3 +24,4 @@ The project owns the domain **pullmark.app** (registered on Namecheap, July 2026
 - Keep core logic (diffing, parsing, request-body building) in pure, non-UI types so it stays unit-testable.
 - GitHub review comment positions use file line numbers + side (`RIGHT` = new file, `LEFT` = old); blocks carry their source line ranges through the diff for this.
 - Language mode is Swift 5 (set in Package.swift) — don't introduce strict-concurrency-only patterns.
+- After any verification that launched `dist/PullMark.app`, run `make unregister-dist` so the dev copy never steals Launch Services bindings (default app, Quick Look) from /Applications.

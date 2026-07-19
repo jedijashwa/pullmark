@@ -193,6 +193,45 @@ struct AppUpdateBanner: View {
     }
 }
 
+/// Banner shown when the user had made PullMark the default Markdown app and
+/// Launch Services lost the binding (typically after a brew upgrade replaced
+/// the bundle on disk). Dismissing clears the claim so it never nags.
+struct DefaultAppBanner: View {
+    @EnvironmentObject private var defaultApp: DefaultAppManager
+
+    var body: some View {
+        if defaultApp.showLossBanner {
+            HStack(spacing: 10) {
+                Image(systemName: "doc.badge.arrow.up")
+                Text("PullMark is no longer your default Markdown app.")
+                Button("Make Default Again") { defaultApp.makeDefault() }
+                    .disabled(defaultApp.claiming)
+                if defaultApp.claiming {
+                    ProgressView().controlSize(.small)
+                }
+                if let error = defaultApp.lastError {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                Spacer()
+                Button {
+                    defaultApp.dismissLossBanner()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help("Dismiss — PullMark won't ask again unless you make it the default")
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.15))
+        }
+    }
+}
+
 /// Sheet rendering release-notes Markdown with the app's own renderer.
 struct ReleaseNotesSheet: View {
     @Environment(\.dismiss) private var dismiss

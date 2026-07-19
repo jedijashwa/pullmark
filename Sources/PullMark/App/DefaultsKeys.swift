@@ -20,4 +20,7 @@ enum DefaultsKeys {
     static let dismissedUpdateVersion = "pm.dismissedUpdateVersion"
     /// Last app version that ran (drives the post-update What's New sheet).
     static let lastRunVersion = "pm.lastRunVersion"
+    /// The user made PullMark the default Markdown app (drives the
+    /// "no longer your default" banner when Launch Services loses the binding).
+    static let claimedDefaultHandler = "pm.claimedDefaultHandler"
 }

@@ -19,6 +19,7 @@ struct SettingsView: View {
 
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var updates: UpdateChecker
+    @EnvironmentObject private var defaultApp: DefaultAppManager
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @State private var updateStatus: String?
@@ -40,6 +41,41 @@ struct GeneralSettingsTab: View {
             }
             .pickerStyle(.segmented)
 
+            LabeledContent("Default Markdown app:") {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 7) {
+                        if let icon = defaultApp.currentHandlerIcon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 19, height: 19)
+                        }
+                        Text(defaultApp.currentHandlerName ?? "No app is set")
+                        if defaultApp.isPullMarkDefault {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .help("Markdown files open in PullMark")
+                        }
+                    }
+                    // Never offered from `swift run` — a dev binary must not
+                    // grab the Launch Services binding.
+                    if defaultApp.isAppBundle && !defaultApp.isPullMarkDefault {
+                        HStack(spacing: 8) {
+                            Button("Make PullMark the Default") { defaultApp.makeDefault() }
+                                .disabled(defaultApp.claiming)
+                            if defaultApp.claiming {
+                                ProgressView().controlSize(.small)
+                            }
+                        }
+                    }
+                    if let error = defaultApp.lastError {
+                        Text(error)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
             LabeledContent("Updates:") {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
@@ -59,7 +95,10 @@ struct GeneralSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .frame(height: 220)
+        .frame(height: 300)
+        // The binding can change behind our back (Finder's "Change All…",
+        // another app claiming it) — re-resolve whenever the tab shows.
+        .onAppear { defaultApp.refresh() }
     }
 
     private func check() {

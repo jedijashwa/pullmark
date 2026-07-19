@@ -12,7 +12,7 @@ endif
 # Prefer the Homebrew bin (user-writable on Apple Silicon), else /usr/local.
 BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /usr/local/bin)
 
-.PHONY: build test app run clean install-cli release
+.PHONY: build test app run clean install-cli release unregister-dist
 
 build:
 	swift build
@@ -35,3 +35,9 @@ clean:
 
 release:
 	./scripts/make-release.sh $(VERSION)
+
+# Remove the dev build from Launch Services so it never steals the default-app
+# or Quick Look bindings from the installed /Applications copy. Run after any
+# verification that launched dist/PullMark.app.
+unregister-dist:
+	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$(CURDIR)/dist/PullMark.app" || true
