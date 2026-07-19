@@ -101,6 +101,9 @@ final class AppState: ObservableObject {
     @Published var selection: SidebarSelection?
     @Published var showAddPR = false
     @Published var lastError: String?
+    /// Informational, non-error messages ("no Markdown files here") — shown
+    /// as a plain notice, never behind the "Something went wrong" title.
+    @Published var lastNotice: String?
     @Published var findBarVisible = false
     @Published var recents: [RecentItem] = []
     @Published var searchPaletteVisible = false
@@ -190,14 +193,36 @@ final class AppState: ObservableObject {
     }
 
     private func addFolder(_ root: URL) {
+        // Enumeration walks the whole tree — off the main thread so a huge
+        // folder can't freeze the UI; results land back on the main actor.
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let scan = Self.scanForMarkdown(in: root)
+            guard let self else { return }
+            await MainActor.run {
+                for (url, relative) in scan.files {
+                    self.addFile(url, displayName: relative, resourceRoot: root)
+                }
+                if scan.files.isEmpty {
+                    self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
+                } else if scan.truncated {
+                    self.lastNotice = "Showing the first \(Self.folderFileLimit) Markdown files in "
+                        + "\(root.lastPathComponent) — open a subfolder to see the rest."
+                }
+            }
+        }
+    }
+
+    nonisolated private static let folderFileLimit = 500
+
+    nonisolated private static func scanForMarkdown(in root: URL) -> (files: [(URL, String)], truncated: Bool) {
         let skippedDirectories: Set<String> = ["node_modules", "vendor", ".build", "dist"]
         guard let enumerator = FileManager.default.enumerator(
             at: root,
             includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey],
             options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return }
+        ) else { return ([], false) }
 
-        var added = 0
+        var files: [(URL, String)] = []
         for case let url as URL in enumerator {
             if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
                 if skippedDirectories.contains(url.lastPathComponent) {
@@ -209,16 +234,10 @@ final class AppState: ObservableObject {
             let relative = url.path.hasPrefix(root.path + "/")
                 ? String(url.path.dropFirst(root.path.count + 1))
                 : url.lastPathComponent
-            addFile(url, displayName: relative, resourceRoot: root)
-            added += 1
-            if added >= 500 {
-                lastError = "Stopped after 500 Markdown files in \(root.lastPathComponent)."
-                break
-            }
+            files.append((url, relative))
+            if files.count >= folderFileLimit { return (files, true) }
         }
-        if added == 0 {
-            lastError = "No Markdown files found in \(root.lastPathComponent)."
-        }
+        return (files, false)
     }
 
     private func addFile(_ url: URL, displayName: String, resourceRoot: URL) {

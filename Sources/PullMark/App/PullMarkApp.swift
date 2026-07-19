@@ -222,6 +222,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         Appearance.applyCurrent()
+        SharedTheme.startMirroring()
         let cliURLs = LaunchArguments.consumeFileURLs()
         if !cliURLs.isEmpty {
             OpenURLRouter.shared.deliver(cliURLs)

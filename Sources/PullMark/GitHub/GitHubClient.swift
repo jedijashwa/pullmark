@@ -50,8 +50,10 @@ final class GitHubClient {
     }
 
     func files(_ ref: PullRequestRef) async throws -> [PullRequestFile] {
+        // 30 pages × 100 = 3,000 files — the PR files API's own hard limit,
+        // so pagination can never silently drop anything the API would list.
         var all: [PullRequestFile] = []
-        for page in 1...10 {
+        for page in 1...30 {
             let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/files",
                                          query: [URLQueryItem(name: "per_page", value: "100"),
                                                  URLQueryItem(name: "page", value: "\(page)")])
@@ -88,7 +90,7 @@ final class GitHubClient {
 
     func reviewComments(_ ref: PullRequestRef) async throws -> [ReviewComment] {
         var all: [ReviewComment] = []
-        for page in 1...10 {
+        for page in 1...30 {
             let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
                                          query: [URLQueryItem(name: "per_page", value: "100"),
                                                  URLQueryItem(name: "page", value: "\(page)")])
@@ -106,7 +108,14 @@ final class GitHubClient {
             struct DataBox: Decodable { let repository: Repo? }
             struct Repo: Decodable { let pullRequest: PR? }
             struct PR: Decodable { let reviewThreads: Threads }
-            struct Threads: Decodable { let nodes: [Node] }
+            struct Threads: Decodable {
+                let pageInfo: PageInfo
+                let nodes: [Node]
+            }
+            struct PageInfo: Decodable {
+                let hasNextPage: Bool
+                let endCursor: String?
+            }
             struct Node: Decodable {
                 let id: String
                 let isResolved: Bool
@@ -117,23 +126,34 @@ final class GitHubClient {
             let data: DataBox?
         }
         let query = """
-        query($owner: String!, $repo: String!, $number: Int!) {
+        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
           repository(owner: $owner, name: $repo) {
             pullRequest(number: $number) {
-              reviewThreads(first: 100) {
+              reviewThreads(first: 100, after: $after) {
+                pageInfo { hasNextPage endCursor }
                 nodes { id isResolved comments(first: 1) { nodes { databaseId } } }
               }
             }
           }
         }
         """
-        let data = try await graphQL(query, variables: ["owner": ref.owner, "repo": ref.repo, "number": ref.number])
-        let response = try JSONDecoder().decode(Response.self, from: data)
         var meta: [Int: ThreadMeta] = [:]
-        for node in response.data?.repository?.pullRequest?.reviewThreads.nodes ?? [] {
-            if let rootID = node.comments.nodes.first?.databaseId {
-                meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved)
+        var cursor: String?
+        // Cursor pagination so PRs with more than 100 review threads keep
+        // their resolution state; 30 pages bounds a pathological PR.
+        for _ in 1...30 {
+            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo, "number": ref.number]
+            if let cursor { variables["after"] = cursor }
+            let data = try await graphQL(query, variables: variables)
+            let response = try JSONDecoder().decode(Response.self, from: data)
+            guard let threads = response.data?.repository?.pullRequest?.reviewThreads else { break }
+            for node in threads.nodes {
+                if let rootID = node.comments.nodes.first?.databaseId {
+                    meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved)
+                }
             }
+            guard threads.pageInfo.hasNextPage, let next = threads.pageInfo.endCursor else { break }
+            cursor = next
         }
         return meta
     }

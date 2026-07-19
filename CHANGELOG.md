@@ -4,6 +4,25 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Quick Look previews now follow your reading theme: the app shares the
+  choice with the (sandboxed) preview extension through an app group, so
+  pressing space in Finder shows Editorial, GitHub, or Terminal — whichever
+  you read in. Custom `.css` themes can't cross the sandbox boundary and
+  fall back to their GitHub base in previews.
+- Review-thread resolution state now loads for PRs with more than 100
+  threads (cursor pagination), and the changed-file and comment lists
+  paginate to the API's own 3,000-item maximum instead of stopping at 1,000.
+- Opening a folder scans it off the main thread — a huge directory tree can
+  no longer freeze the UI — and the "no Markdown files here" / "showing the
+  first 500 files" messages are now plain notices instead of appearing
+  under a "Something went wrong" error title.
+- ⌘F (Find in Page) now works on the PR overview page, not just file views.
+- Fixed the Settings theme-preview cards occasionally painting blank until
+  clicked, and hardened the web view's transparent-background setup against
+  future WebKit changes.
+
 ## 0.7.1 - 2026-07-19
 
 - Rendering huge documents is dramatically faster: two quadratic paths in the

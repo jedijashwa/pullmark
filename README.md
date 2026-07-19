@@ -27,7 +27,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Copy in two flavors** — **⌘C** copies the selection as rich text that pastes formatted into Google Docs, Slack, and friends; **⌥⌘C** (Copy as Markdown) copies the original Markdown source behind the selection (the whole document when nothing is selected).
 - **Word count** — a quiet words · reading-time pill in the corner of rendered documents.
 - **Recents** — recently opened files, folders, and pull requests live in **File → Open Recent** and a sidebar section. PR entries show their live status — draft, open, closed, merged, or unavailable (colored GitHub-style icons, kept up to date while you work).
-- **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style (Mermaid degrades to a code block in previews).
+- **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style, in your chosen reading theme (Mermaid degrades to a code block in previews; custom CSS themes fall back to their GitHub base).
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.
 - **Reading themes** — Editorial (default; serif headers, warm paper), GitHub (the classic github.com look), and Terminal (monospace, phosphor accent), chosen from a Settings window (⌘,) with live preview cards. Each theme adapts to light and dark. Drop `.css` files into the Themes folder (button in Settings) to add your own — they appear as extra preview cards.
