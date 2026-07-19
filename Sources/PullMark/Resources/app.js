@@ -1109,26 +1109,76 @@
     // passes mutate the DOM: the blame gutter positions its runs from them,
     // and Copy as Markdown maps the selection back to source lines.
     var linesAnnotated = annotateBlockLines(docBody, fm ? fm.endLine : 0);
-    // Local editing: every line-annotated block grows a hover pencil that
-    // opens the block editor in Swift.
+    // Local editing, in place: the pencil (or a double-click) swaps the
+    // rendered block for an editor right in the page. ⌘↩ commits through
+    // the bridge (Swift applies it with the same guarded, versioned write
+    // path as ever), Esc restores the rendered block untouched.
+    function beginInlineEdit(el, lo, hi) {
+      if (document.querySelector(".pm-inline-edit")) { return; } // one at a time
+      var seed = (payload.markdown || "").split("\n").slice(lo - 1, hi).join("\n");
+      var wrap = document.createElement("div");
+      wrap.className = "pm-inline-edit";
+      var ta = document.createElement("textarea");
+      ta.value = seed;
+      ta.spellcheck = false;
+      ta.rows = Math.min(24, seed.split("\n").length + 1);
+      var hint = document.createElement("div");
+      hint.className = "pm-inline-edit-hint";
+      hint.textContent = "⌘↩ save · esc cancel"
+        + (payload.autosaveEdits === false ? " · saves in the window, ⌘S writes" : "");
+      function cancel() {
+        wrap.remove();
+        el.style.display = "";
+      }
+      function commit() {
+        if (ta.value === seed) { cancel(); return; }
+        ta.disabled = true;
+        hint.textContent = "saving…";
+        post({ type: "editLocal", lineStart: lo, lineEnd: hi,
+               replacement: ta.value, seed: seed });
+        // The page re-renders from the new text momentarily; if the write
+        // was refused (file changed underneath), Swift re-renders too and
+        // shows the notice — either way this page instance is replaced.
+      }
+      ta.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") { event.preventDefault(); cancel(); }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          commit();
+        }
+      });
+      wrap.append(ta, hint);
+      el.style.display = "none";
+      el.after(wrap);
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+    }
+
     if (payload.editable && linesAnnotated) {
       for (var ec = content.firstElementChild; ec; ec = ec.nextElementSibling) {
         var range = (ec.getAttribute("data-pm-lines") || "").split("-");
         if (range.length !== 2) { continue; }
         ec.classList.add("pm-editable");
-        (function (lo, hi) {
+        (function (element, lo, hi) {
           var btn = document.createElement("button");
           btn.className = "pm-comment-btn pm-edit-btn pm-edit-local";
           btn.type = "button";
           btn.innerHTML = EDIT_ICON;
-          btn.title = "Edit this block (lines " + lo + "–" + hi + ")";
+          btn.title = "Edit this block in place (lines " + lo + "–" + hi + ")";
           btn.setAttribute("aria-label", btn.title);
           btn.addEventListener("click", function (event) {
             event.stopPropagation();
-            post({ type: "editLocal", lineStart: lo, lineEnd: hi });
+            beginInlineEdit(element, lo, hi);
           });
-          ec.append(btn);
-        })(parseInt(range[0], 10), parseInt(range[1], 10));
+          element.addEventListener("dblclick", function (event) {
+            // Double-click anywhere in a block edits it — unless the user
+            // is double-clicking to select inside an existing editor or on
+            // a link they mean to follow.
+            if (event.target.closest("a, textarea, button")) { return; }
+            beginInlineEdit(element, lo, hi);
+          });
+          element.append(btn);
+        })(ec, parseInt(range[0], 10), parseInt(range[1], 10));
       }
     }
     var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;

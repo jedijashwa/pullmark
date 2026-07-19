@@ -23,7 +23,6 @@ struct LocalFileView: View {
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
     @State private var currentBranch: String?
-    @State private var editTarget: BlockEditTarget?
     @State private var didRestorePosition = false
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
@@ -96,11 +95,6 @@ struct LocalFileView: View {
         // read ActiveDocument.markdown, and line ranges shift with edits.
         .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
-        .sheet(item: $editTarget) { target in
-            BlockEditSheet(fileName: file.url.lastPathComponent, target: target) { replacement in
-                applyBlockEdit(target, replacement: replacement)
-            }
-        }
         .toolbar {
             ToolbarItem {
                 compareMenu
@@ -205,10 +199,12 @@ struct LocalFileView: View {
         return parts
     }
 
-    private func handleEditLocal(_ start: Int, _ end: Int) {
-        if let seed = TextLines.lines(in: displayText, from: start, to: end) {
-            editTarget = BlockEditTarget(lineStart: start, lineEnd: end, seed: seed)
-        }
+    /// In-place editor commit from the page. The seed is the text the
+    /// editor was opened with — applyBlockEdit's guard compares it against
+    /// the current lines, so a file changed underneath still aborts.
+    private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
+        applyBlockEdit(BlockEditTarget(lineStart: start, lineEnd: end, seed: seed),
+                       replacement: replacement)
     }
 
     private var html: String {
@@ -232,6 +228,8 @@ struct LocalFileView: View {
                                         theme: style.theme,
                                         customCSS: style.customCSS,
                                         editable: true,
+                                        autosave: UserDefaults.standard
+                                            .object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
     }

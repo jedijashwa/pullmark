@@ -710,3 +710,27 @@ mark.pm-find.pm-find-current {
 @media (prefers-color-scheme: dark) {
   .pm-moved-chip { color: #a371f7; border-color: rgba(163, 113, 247, 0.5); }
 }
+
+/* ---- In-place block editor ---- */
+.pm-inline-edit {
+  margin: 4px -14px;
+  padding: 2px 14px;
+}
+.pm-inline-edit textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font: 13px/1.6 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  color: inherit;
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
+  border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline-offset: -1px;
+}
+.pm-inline-edit-hint {
+  font: 11px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  padding: 3px 2px 0;
+  user-select: none;
+}
