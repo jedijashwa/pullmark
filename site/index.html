@@ -12,7 +12,7 @@
 <meta property="og:description" content="A native macOS app that renders local Markdown and reviews documentation-heavy GitHub pull requests as rendered diffs.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/">
-<meta property="og:image" content="https://pullmark.app/img/app-diff.png">
+<meta property="og:image" content="https://pullmark.app/img/app-blame.png">
 <style>
 /* ============ tokens ============ */
 :root {
@@ -209,6 +209,8 @@ h1 mark {
 
 .hero-shot { padding: 30px 0 0; }
 .hero-shot .shot { max-width: 1150px; margin: 0 auto; }
+/* smaller window captures (the Settings window) sit at their natural scale */
+.shot-narrow { max-width: 660px; margin: 34px auto 0; }
 
 /* ============ sections ============ */
 section { padding: 96px 0 0; }
@@ -441,9 +443,9 @@ footer .note { margin-left: auto; }
 
     <div class="hero-shot">
       <figure class="shot">
-        <img src="img/app-diff.png" width="1392" height="912"
-          alt="PullMark reviewing a real GitHub pull request: the sidebar lists the PR's Markdown files, the toolbar offers Rendered Diff, Source Diff and Result views, and the document shows a removed block in red above its added replacement in green">
-        <figcaption>A real PR from <code>github/docs</code>, rendered — removed and added blocks marked in place.</figcaption>
+        <img src="img/app-blame.png" width="1392" height="912"
+          alt="PullMark rendering its own README as a formatted document, with the blame gutter on: author avatars sit in the left margin, one per run of blocks last touched by the same commit">
+        <figcaption>PullMark reading its own README — formatted, with history in the margin: one avatar per run of blocks, each one a doorway to its commit.</figcaption>
       </figure>
     </div>
   </div>
@@ -485,9 +487,18 @@ footer .note { margin-left: auto; }
     <h2>The whole review, from the rendered page.</h2>
     <p class="prose">Switch between <strong>inline</strong> and <strong>side-by-side</strong>
     layouts, drop to the raw <em>Source Diff</em>, or preview the final <em>Result</em> — all from
-    the toolbar. Existing review threads appear under the blocks they discuss. Hover any block,
-    click the bubble, and reply — or start something new. Open PRs are checked every minute; if
-    the branch moves, one click refreshes and your drafts survive.</p>
+    the toolbar. YAML front matter renders as a <strong>quiet metadata table</strong>, not a wall
+    of bold prose — so config-heavy docs diff cleanly too. Existing review threads appear under
+    the blocks they discuss. Hover any block, click the bubble, and reply — or start something
+    new. Open PRs are checked every minute; if the branch moves, one click refreshes and your
+    drafts survive.</p>
+
+    <figure class="shot reading-shot">
+      <img src="img/app-diff.png" width="1392" height="912" loading="lazy"
+        alt="PullMark reviewing a real GitHub pull request: the removed front matter renders as a red metadata table of keys and values, while the added version below it renders as a green wall of bold prose — showing the patch accidentally broke the front matter">
+      <figcaption>A real (since-closed) patch to <code>github/docs</code>: the old front matter is a tidy
+      metadata table — and the rendered diff makes it obvious the patch accidentally broke it.</figcaption>
+    </figure>
 
     <div class="trio">
       <div class="act">
@@ -527,20 +538,31 @@ footer .note { margin-left: auto; }
     <div class="reading-cols">
       <div class="chips" aria-label="Supported Markdown constructs">
         <span>tables</span><span>task lists</span><span>footnotes</span>
-        <span>&gt; [!NOTE] alerts</span><span>mermaid</span><span>syntax highlighting</span>
-        <span>strikethrough</span><span>heading anchors</span>
+        <span>&gt; [!NOTE] alerts</span><span>mermaid</span><span>front matter</span>
+        <span>syntax highlighting</span><span>strikethrough</span><span>heading anchors</span>
       </div>
       <ul class="readlist">
+        <li><strong>History in the margin</strong> — a quiet blame gutter: one avatar per run of
+          blocks, hover for the author, date, and commit, click for the line history — for local
+          files and PR docs alike.</li>
+        <li><strong>Front matter as metadata</strong> — YAML front matter renders as a collapsed
+          key/value table at the top of the page, not a wall of bold prose.</li>
         <li><strong>Live re-render</strong> — save from any editor, the page updates.</li>
         <li><strong>Outline sidebar</strong> — a navigator-style heading outline, one toggle away.</li>
         <li><strong>Find in page</strong> — <kbd>⌘F</kbd> with match stepping.</li>
         <li><strong>Link previews</strong> — a status pill shows every destination on hover.</li>
         <li><strong>Light &amp; dark</strong> — follows the system, restyles everything, Mermaid included.</li>
         <li><strong>Reading themes</strong> — GitHub, Editorial (serif headers on warm paper), or Terminal (monospace, phosphor accent), with live previews in Settings.</li>
-        <li><strong>Built-in updates</strong> — PullMark checks for new releases and shows you what's new after upgrading.</li>
-        <li><strong>Blame, rendered</strong> — toggle author avatars, dates, and commit links onto every block, for local files and PR docs alike.</li>
+        <li><strong>Update Now</strong> — when a release ships, brew-managed installs upgrade and
+          relaunch from a single banner button, and a What's New sheet catches you up after.</li>
       </ul>
     </div>
+
+    <figure class="shot shot-narrow">
+      <img src="img/app-themes.png" width="792" height="489" loading="lazy"
+        alt="PullMark's Settings window on the Themes tab: three live preview cards — GitHub, Editorial, and Terminal — each rendering the same sample document through the real pipeline, with GitHub selected">
+      <figcaption>Settings → Themes: three live previews, rendered by the real pipeline — click a card to switch.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -561,8 +583,8 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>Default app for .md</h3>
-        <p>Registers as a Markdown viewer — make double-click in Finder mean
-        <em>rendered</em>, everywhere.</p>
+        <p>One click in Settings makes double-click in Finder mean <em>rendered</em>, everywhere —
+        and if an upgrade ever drops the binding, PullMark notices and offers it back.</p>
       </div>
       <div class="cell">
         <h3>Your existing credentials</h3>
