@@ -112,6 +112,8 @@ final class AppState: ObservableObject {
     /// view to the raw text. Deliberately not persisted — reading stays the
     /// default on every launch.
     @Published var sourceViewVisible = false
+    /// ⌘K Open Quickly palette.
+    @Published var openQuicklyVisible = false
     /// Manual-save mode: unsaved block edits per file URL. The rendered
     /// view prefers this overlay over the on-disk text; File → Save (⌘S)
     /// writes it out and clears the entry.

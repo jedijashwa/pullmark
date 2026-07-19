@@ -58,6 +58,9 @@ struct ContentView: View {
         .sheet(item: $state.commitRequest) { request in
             CommitSheet(root: request.root)
         }
+        .sheet(isPresented: $state.openQuicklyVisible) {
+            OpenQuicklyPalette()
+        }
         .sheet(isPresented: $updates.showReleaseNotes) {
             ReleaseNotesSheet(
                 title: "What's New in PullMark \(updates.availableVersion ?? "")",
