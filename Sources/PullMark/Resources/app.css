@@ -746,3 +746,30 @@ mark.pm-find.pm-find-current {
 }
 .pm-inline-edit-btn:hover { border-color: rgba(128, 128, 128, 0.9); }
 .pm-inline-edit-save { font-weight: 600; }
+
+/* ---- Edit mode: source reveal ---- */
+.pm-reveal {
+  margin: 2px -14px;
+  padding: 2px 14px;
+}
+.pm-reveal textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
+  border-radius: 6px;
+  box-shadow: inset 3px 0 0 rgba(9, 105, 218, 0.45);
+  font: 14px/1.7 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  color: inherit;
+  padding: 6px 10px;
+}
+/* A quiet cue that the page is writable in edit mode. */
+:root.pm-edit-mode .pm-editable:hover {
+  background: rgba(128, 128, 128, 0.05);
+  border-radius: 6px;
+  cursor: text;
+}

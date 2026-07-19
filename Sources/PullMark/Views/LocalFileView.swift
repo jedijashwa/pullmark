@@ -24,6 +24,9 @@ struct LocalFileView: View {
     @State private var branches: [String] = []
     @State private var currentBranch: String?
     @State private var didRestorePosition = false
+    /// in-place edit mode: reading is the default; the toolbar pencil
+    /// (⌘E) makes the page writable — click any block to reveal its source.
+    @State private var editMode = false
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
@@ -111,6 +114,15 @@ struct LocalFileView: View {
         .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
         .toolbar {
+            ToolbarItem {
+                Toggle(isOn: $editMode) {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .keyboardShortcut("e")
+                .help(editMode ? "Done editing (⌘E)"
+                               : "Edit this document (⌘E) — then click any block")
+                .disabled(compare != nil || state.sourceViewVisible)
+            }
             ToolbarItem {
                 compareMenu
             }
@@ -247,7 +259,7 @@ struct LocalFileView: View {
                                         localResources: true,
                                         theme: style.theme,
                                         customCSS: style.customCSS,
-                                        editable: true,
+                                        editable: editMode,
                                         autosave: UserDefaults.standard
                                             .object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true,
                                         blame: blameVisible ? blamePayloads : nil,
