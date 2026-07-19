@@ -963,6 +963,18 @@
     return wrap;
   }
 
+  // "moved" marker: the diff engine recognized this block as relocated
+  // verbatim, so it renders once — here — instead of as red + green noise.
+  function movedChip(seg) {
+    var chip = document.createElement("span");
+    chip.className = "pm-moved-chip";
+    chip.textContent = "moved";
+    if (seg.movedFromLine) {
+      chip.title = "Moved from line " + seg.movedFromLine + " — content unchanged";
+    }
+    return chip;
+  }
+
   function inlineSegmentEl(seg) {
     var wrap = document.createElement("div");
     if (seg.kind === "modified" && seg.wordDiff) {
@@ -983,9 +995,11 @@
     } else {
       wrap.className = "pm-block pm-" + seg.kind;
       var div = document.createElement("div");
-      renderSegmentText(div, seg.text, seg.fmText, seg.kind !== "unchanged");
+      renderSegmentText(div, seg.text, seg.fmText,
+                        seg.kind === "added" || seg.kind === "removed");
       if (seg.kind === "added" || seg.kind === "removed") { markEmptyBlock(div); }
       wrap.append(div);
+      if (seg.kind === "moved") { wrap.append(movedChip(seg)); }
     }
     if (payload.commentable !== false) {
       wrap.append(commentButton(seg));
@@ -1025,6 +1039,11 @@
         renderSegmentText(left, seg.text, seg.fmText, true);
         markEmptyBlock(left);
         right.classList.add("pm-cell-empty");
+      } else if (seg.kind === "moved") {
+        renderSegmentText(left, seg.text, seg.fmText, false);
+        renderSegmentText(right, seg.text, seg.fmText, false);
+        right.classList.add("pm-cell-moved");
+        right.append(movedChip(seg));
       } else {
         left.classList.add("pm-cell-removed");
         right.classList.add("pm-cell-added");
