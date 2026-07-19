@@ -30,6 +30,9 @@ enum HTMLBuilder {
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
+        /// Local documents: blocks grow a hover pencil that opens the
+        /// block editor (bridge "editLocal").
+        var editable: Bool?
         /// Blame gutter runs (document mode). The page renders the whole
         /// markdown normally (footnotes and reference links intact), then
         /// annotates block positions and draws a left gutter from these runs.
@@ -58,6 +61,7 @@ enum HTMLBuilder {
                              theme: String = "github",
                              customCSS: String? = nil,
                              preview: Bool = false,
+                             editable: Bool = false,
                              blame: [BlameRunPayload]? = nil,
                              blameNote: String? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
@@ -66,6 +70,7 @@ enum HTMLBuilder {
                                     resourceDir: remote?.resourceDir,
                                     theme: theme,
                                     preview: preview ? true : nil,
+                                    editable: editable ? true : nil,
                                     blame: blame,
                                     blameNote: blameNote),
              title: title, customCSS: customCSS)

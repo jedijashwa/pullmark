@@ -23,6 +23,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
+    @AppStorage(DefaultsKeys.autosaveEdits) private var autosaveEdits = true
     @State private var updateStatus: String?
     @State private var checking = false
 
@@ -48,6 +49,13 @@ struct GeneralSettingsTab: View {
             }
             .pickerStyle(.segmented)
             .help("What pressing space in Finder shows for Markdown files")
+
+            Picker("Block edits:", selection: $autosaveEdits) {
+                Text("Save automatically").tag(true)
+                Text("Save manually (⌘S)").tag(false)
+            }
+            .pickerStyle(.segmented)
+            .help("Whether editing a block writes to the file immediately or waits for File → Save")
 
             LabeledContent("Default Markdown app:") {
                 VStack(alignment: .leading, spacing: 6) {

@@ -22,6 +22,8 @@ struct LocalFileView: View {
     @State private var inGitRepo = false
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
+    @State private var currentBranch: String?
+    @State private var editTarget: BlockEditTarget?
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
@@ -52,6 +54,7 @@ struct LocalFileView: View {
             HSplitView {
                 MarkdownWebView(
                     html: html,
+                    onEditLocal: handleEditLocal,
                     localResourceRoot: file.resourceRoot,
                     onOpenLocalFile: { url in state.add(url: url) },
                     onOutline: { outline = $0 },
@@ -76,7 +79,12 @@ struct LocalFileView: View {
         }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
-        .navigationSubtitle(PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path))
+        .navigationSubtitle(subtitle)
+        .sheet(item: $editTarget) { target in
+            BlockEditSheet(fileName: file.url.lastPathComponent, target: target) { replacement in
+                applyBlockEdit(target, replacement: replacement)
+            }
+        }
         .toolbar {
             ToolbarItem {
                 compareMenu
@@ -168,28 +176,82 @@ struct LocalFileView: View {
                         : "Not inside a git repository")
     }
 
+    /// Unsaved manual-mode edits win over the on-disk text everywhere the
+    /// document is shown, exported, or copied.
+    private var displayText: String { state.editedText[file.url] ?? currentText }
+
+    /// "~/Code/pullmark · main · edited" — folder, branch, and unsaved-edit
+    /// state in the titlebar, where the eye already goes for context.
+    private var subtitle: String {
+        var parts = PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path)
+        if let currentBranch { parts += " · \(currentBranch)" }
+        if state.editedText[file.url] != nil { parts += " · edited" }
+        return parts
+    }
+
+    private func handleEditLocal(_ start: Int, _ end: Int) {
+        if let seed = TextLines.lines(in: displayText, from: start, to: end) {
+            editTarget = BlockEditTarget(lineStart: start, lineEnd: end, seed: seed)
+        }
+    }
+
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
-            let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
+            let segments = DiffPageBuilder.segments(old: compareText, new: displayText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
                                         title: file.url.lastPathComponent,
                                         theme: style.theme,
                                         customCSS: style.customCSS)
         }
         if state.sourceViewVisible {
-            return HTMLBuilder.sourcePage(markdown: currentText,
+            return HTMLBuilder.sourcePage(markdown: displayText,
                                           title: file.url.lastPathComponent,
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
-        return HTMLBuilder.documentPage(markdown: currentText,
+        return HTMLBuilder.documentPage(markdown: displayText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
                                         theme: style.theme,
                                         customCSS: style.customCSS,
+                                        editable: true,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
+    }
+
+    /// Block-editor apply: autosave writes straight to disk (the watcher
+    /// re-renders); manual mode parks the result in the AppState overlay
+    /// until ⌘S.
+    private func applyBlockEdit(_ target: BlockEditTarget, replacement: String) {
+        // Optimistic concurrency: if the file changed underneath the open
+        // editor (another editor, an agent), the seed no longer matches its
+        // line range — abort rather than splice into the wrong lines.
+        guard TextLines.lines(in: displayText, from: target.lineStart, to: target.lineEnd)
+                == target.seed else {
+            state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
+                + "this block — nothing was saved. Re-open the block to edit the current version."
+            return
+        }
+        guard let newText = TextLines.replacing(in: displayText,
+                                                from: target.lineStart,
+                                                to: target.lineEnd,
+                                                with: replacement) else { return }
+        if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
+            do {
+                try newText.write(to: file.url, atomically: true, encoding: .utf8)
+                state.editedText[file.url] = nil
+            } catch {
+                state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+            }
+        } else {
+            // First overlay for this file: remember the disk text it was
+            // based on, so ⌘S can detect a collision before overwriting.
+            if state.editedText[file.url] == nil {
+                state.editedBase[file.url] = currentText
+            }
+            state.editedText[file.url] = newText
+        }
     }
 
     private var activeDocumentID: String { "local:" + file.url.path }
@@ -235,6 +297,14 @@ struct LocalFileView: View {
         } catch {
             currentText = "> [!CAUTION]\n> Could not read `\(PathAbbreviator.abbreviate(file.url.path))`: \(error.localizedDescription)"
         }
+        // Heads-up the moment the underlying file diverges from what an
+        // unsaved overlay was based on (another editor, an agent) — ⌘S
+        // will also require explicit confirmation before overwriting.
+        if state.editedText[file.url] != nil,
+           let base = state.editedBase[file.url], currentText != base {
+            state.lastNotice = "\(file.url.lastPathComponent) changed on disk while you have "
+                + "unsaved edits. Saving (⌘S) will ask before overwriting."
+        }
     }
 
     private func loadGitInfo() {
@@ -244,11 +314,13 @@ struct LocalFileView: View {
             let commits = LocalGit.history(of: url)
             let branches = LocalGit.branches(in: root, remote: false)
             let remotes = LocalGit.branches(in: root, remote: true)
+            let current = LocalGit.currentBranch(in: root)
             await MainActor.run {
                 self.inGitRepo = true
                 self.commits = commits
                 self.branches = branches
                 self.remoteBranches = remotes
+                self.currentBranch = current
             }
         }
     }

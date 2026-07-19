@@ -138,6 +138,11 @@ body {
 }
 /* Edit-as-suggestion pencil: same treatment, sitting left of the bubble. */
 .pm-edit-btn { right: 40px; }
+/* Local-document block editing: the pencil is the only button, flush right;
+   blocks anchor it and reveal on hover. */
+.pm-editable { position: relative; }
+.pm-editable > .pm-edit-local { right: 6px; }
+.pm-editable:hover > .pm-edit-local { display: flex; }
 
 /* ---- Review comment threads ---- */
 

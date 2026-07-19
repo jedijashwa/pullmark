@@ -108,6 +108,39 @@ final class AppState: ObservableObject {
     /// view to the raw text. Deliberately not persisted — reading stays the
     /// default on every launch.
     @Published var sourceViewVisible = false
+    /// Manual-save mode: unsaved block edits per file URL. The rendered
+    /// view prefers this overlay over the on-disk text; File → Save (⌘S)
+    /// writes it out and clears the entry.
+    @Published var editedText: [URL: String] = [:]
+    /// The on-disk text each overlay was based on — ⌘S compares against it
+    /// to catch the file changing underneath (another editor, an agent).
+    var editedBase: [URL: String] = [:]
+
+    /// Writes the pending overlay for `url` to disk; the file watcher's
+    /// re-read then converges the view. If the file changed on disk since
+    /// the overlay was created, asks before overwriting the other writer's
+    /// version. Errors surface in lastError.
+    func saveEdits(for url: URL) {
+        guard let text = editedText[url] else { return }
+        if let base = editedBase[url],
+           let diskNow = try? String(contentsOf: url, encoding: .utf8),
+           diskNow != base {
+            let alert = NSAlert()
+            alert.messageText = "“\(url.lastPathComponent)” changed on disk"
+            alert.informativeText = "The file was modified while you were editing "
+                + "(another app or agent?). Saving will overwrite that version."
+            alert.addButton(withTitle: "Overwrite")
+            alert.addButton(withTitle: "Cancel")
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+        }
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            editedText[url] = nil
+            editedBase[url] = nil
+        } catch {
+            lastError = "Couldn't save \(url.lastPathComponent): \(error.localizedDescription)"
+        }
+    }
     @Published var findBarVisible = false
     @Published var recents: [RecentItem] = []
     @Published var searchPaletteVisible = false

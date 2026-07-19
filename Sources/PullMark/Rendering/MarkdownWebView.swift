@@ -18,6 +18,9 @@ struct DocumentStats: Equatable {
 struct MarkdownWebView: NSViewRepresentable {
     let html: String
     var onCommentRequest: ((BridgeMessage) -> Void)?
+    /// Local block editing: pencil on a rendered block (1-based inclusive
+    /// source lines).
+    var onEditLocal: ((Int, Int) -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -129,6 +132,11 @@ struct MarkdownWebView: NSViewRepresentable {
                 else { return }
                 parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side,
                                                        edit: dict["edit"] as? Bool ?? false))
+            case "editLocal":
+                guard let lineStart = dict["lineStart"] as? Int,
+                      let lineEnd = dict["lineEnd"] as? Int
+                else { return }
+                parent.onEditLocal?(lineStart, lineEnd)
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in
