@@ -228,6 +228,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             OpenURLRouter.shared.deliver(cliURLs)
         }
         DMGGreeter.runAtLaunch()
+        registerQuickLookExtension()
+    }
+
+    /// Brew's delete-and-replace upgrade can drop the Quick Look appex's
+    /// pluginkit registration (previews silently fall back to raw text
+    /// until something re-registers). Idempotent and cheap, so it runs on
+    /// every launch; the cask's postflight covers upgrades where the app
+    /// is never launched.
+    private func registerQuickLookExtension() {
+        let appex = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/PlugIns/PullMarkQuickLook.appex")
+        guard FileManager.default.fileExists(atPath: appex.path) else { return }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+        process.arguments = ["-a", appex.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
