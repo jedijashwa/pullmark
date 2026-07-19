@@ -96,8 +96,12 @@ struct RecentItem: Codable, Identifiable, Equatable {
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var localFiles: [LocalFile] = []
-    @Published var prSessions: [PRSession] = []
+    @Published var localFiles: [LocalFile] = [] {
+        didSet { if Self.keyInstance === self { snapshotSession() } }
+    }
+    @Published var prSessions: [PRSession] = [] {
+        didSet { if Self.keyInstance === self { snapshotSession() } }
+    }
     @Published var selection: SidebarSelection?
     @Published var showAddPR = false
     @Published var lastError: String?
@@ -207,9 +211,101 @@ final class AppState: ObservableObject {
             for url in LaunchArguments.consumeFileURLs() { self?.add(url: url) }
         }
         updateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            Task { @MainActor in await self?.checkForPRUpdates() }
+            Task { @MainActor in
+                await self?.checkForPRUpdates()
+                await self?.refreshInboxIfDue()
+            }
         }
         loadRecents()
+        Task { @MainActor [weak self] in
+            self?.restoreSessionIfWanted()
+            await self?.refreshInboxIfDue()
+        }
+    }
+
+    // MARK: - Review-request inbox
+
+    @Published var inbox: [GitHubClient.InboxPR] = []
+    /// Markdown-file counts per inbox id, cached per update stamp.
+    @Published var inboxMDCounts: [String: Int] = [:]
+    private var lastInboxRefresh: Date?
+
+    var inboxEnabled: Bool {
+        UserDefaults.standard.object(forKey: DefaultsKeys.inboxEnabled) as? Bool ?? true
+    }
+
+    /// Search-API rate limits are tight (30/min): refresh at most every
+    /// five minutes, quietly — an inbox should never produce error alerts.
+    func refreshInboxIfDue() async {
+        guard inboxEnabled else { return }
+        if let last = lastInboxRefresh, Date().timeIntervalSince(last) < 300 { return }
+        lastInboxRefresh = Date()
+        guard let items = try? await client.reviewRequests() else { return }
+        inbox = items
+        for item in items {
+            let cacheKey = item.id + "@" + item.updatedAt
+            if inboxMDCounts[cacheKey] == nil,
+               let count = try? await client.markdownFileCount(item.ref) {
+                inboxMDCounts[cacheKey] = count
+            }
+        }
+    }
+
+    func inboxMDCount(_ item: GitHubClient.InboxPR) -> Int? {
+        inboxMDCounts[item.id + "@" + item.updatedAt]
+    }
+
+    func inboxIsUnread(_ item: GitHubClient.InboxPR) -> Bool {
+        let seen = UserDefaults.standard.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String]
+        return seen?[item.id] != item.updatedAt
+    }
+
+    func openInboxItem(_ item: GitHubClient.InboxPR) {
+        var seen = UserDefaults.standard.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
+        seen[item.id] = item.updatedAt
+        // Bounded: forget entries no longer in the inbox.
+        let live = Set(inbox.map(\.id))
+        seen = seen.filter { live.contains($0.key) }
+        UserDefaults.standard.set(seen, forKey: DefaultsKeys.inboxSeen)
+        objectWillChange.send()
+        Task {
+            do {
+                try await addPR("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)")
+            } catch {
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Session restore
+
+    /// Files and PRs reopen where you left off (Settings-controlled,
+    /// default on). Snapshots are written on every sidebar change; restore
+    /// is skipped when the app was launched to open something specific.
+    func snapshotSession() {
+        let snapshot: [String: [String]] = [
+            "files": localFiles.map(\.url.path),
+            "prs": prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" },
+        ]
+        UserDefaults.standard.set(snapshot, forKey: DefaultsKeys.sessionSnapshot)
+    }
+
+    private func restoreSessionIfWanted() {
+        // Only the first window restores — ⌘N must open EMPTY windows,
+        // not clones of the last session.
+        guard Self.keyInstance === self,
+              UserDefaults.standard.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
+              localFiles.isEmpty, prSessions.isEmpty,
+              let snapshot = UserDefaults.standard.dictionary(forKey: DefaultsKeys.sessionSnapshot)
+                  as? [String: [String]]
+        else { return }
+        for path in snapshot["files"] ?? [] where FileManager.default.fileExists(atPath: path) {
+            add(url: URL(fileURLWithPath: path))
+        }
+        selection = nil
+        for pr in snapshot["prs"] ?? [] {
+            Task { try? await addPR(pr) }
+        }
     }
 
     deinit {

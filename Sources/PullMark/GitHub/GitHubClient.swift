@@ -182,6 +182,63 @@ final class GitHubClient {
 
     /// The signed-in user's identity, fetched once per session (GraphQL).
     /// Nil without credentials — avatar tiering then skips the viewer tier.
+    struct InboxPR: Identifiable, Equatable {
+        let ref: PullRequestRef
+        let title: String
+        let author: String?
+        let draft: Bool
+        /// ISO timestamp from the search API — drives unread state.
+        let updatedAt: String
+        var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
+    }
+
+    /// Open PRs where the viewer's review is requested, newest first.
+    /// Returns [] when unauthenticated (the inbox simply stays hidden).
+    func reviewRequests() async throws -> [InboxPR] {
+        guard let viewer = await viewerIdentity()?.login else { return [] }
+        struct Response: Decodable {
+            struct Item: Decodable {
+                struct User: Decodable { let login: String }
+                let number: Int
+                let title: String
+                let repositoryUrl: String
+                let updatedAt: String
+                let user: User?
+                let draft: Bool?
+            }
+            let items: [Item]
+        }
+        let data = try await request(
+            "GET", "/search/issues",
+            query: [URLQueryItem(name: "q",
+                                 value: "is:open is:pr review-requested:\(viewer) archived:false"),
+                    URLQueryItem(name: "sort", value: "updated"),
+                    URLQueryItem(name: "per_page", value: "25")])
+        let response = try Self.decoder.decode(Response.self, from: data)
+        return response.items.compactMap { item in
+            // repository_url: https://api.github.com/repos/{owner}/{repo}
+            let parts = item.repositoryUrl.components(separatedBy: "/repos/").last?
+                .components(separatedBy: "/") ?? []
+            guard parts.count == 2 else { return nil }
+            return InboxPR(ref: PullRequestRef(owner: parts[0], repo: parts[1], number: item.number),
+                           title: item.title,
+                           author: item.user?.login,
+                           draft: item.draft ?? false,
+                           updatedAt: item.updatedAt)
+        }
+    }
+
+    /// How many Markdown files a PR touches — the inbox badge. Cheap-ish
+    /// (one files page is enough for a badge; capped at 100).
+    func markdownFileCount(_ ref: PullRequestRef) async throws -> Int {
+        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/files",
+                                     query: [URLQueryItem(name: "per_page", value: "100")])
+        let files = try Self.decoder.decode([PullRequestFile].self, from: data)
+        return files.filter {
+            MarkdownFileType.matches(($0.filename as NSString).pathExtension)
+        }.count
+    }
+
     func viewerIdentity() async -> ViewerIdentity? {
         if viewerResolved { return cachedViewer }
         viewerResolved = true

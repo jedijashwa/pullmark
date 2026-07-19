@@ -77,6 +77,18 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         }
         .environmentObject(state)
+        // Drop .md files or folders anywhere on the window.
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            var accepted = false
+            for provider in providers where provider.canLoadObject(ofClass: URL.self) {
+                accepted = true
+                _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                    guard let url else { return }
+                    Task { @MainActor in state.add(url: url) }
+                }
+            }
+            return accepted
+        }
         // Menu commands act on the focused window's state.
         .focusedSceneObject(state)
         // External opens land in the key window.
@@ -106,8 +118,17 @@ struct ContentView: View {
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
 
+    @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
+
     var body: some View {
         List(selection: $state.selection) {
+            if inboxEnabled, !state.inbox.isEmpty {
+                Section("Review Requests") {
+                    ForEach(state.inbox) { item in
+                        InboxRow(item: item)
+                    }
+                }
+            }
             Section("Local Files") {
                 if state.localFiles.isEmpty {
                     Text("Open a file or folder to get started.")
@@ -156,6 +177,48 @@ struct SidebarView: View {
                 return !state.prSessions.contains { $0.ref == ref }
             }
         }
+    }
+}
+
+/// A review-requested PR: unread dot, title over repo#number, and a
+/// Markdown-file badge (dimmed when the PR touches no Markdown — PullMark
+/// can open it, but the reading room has nothing to show).
+private struct InboxRow: View {
+    @EnvironmentObject private var state: AppState
+    let item: GitHubClient.InboxPR
+
+    var body: some View {
+        Button {
+            state.openInboxItem(item)
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.accentColor)
+                    .frame(width: 6, height: 6)
+                    .opacity(state.inboxIsUnread(item) ? 1 : 0)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.title)
+                        .lineLimit(1)
+                        .fontWeight(state.inboxIsUnread(item) ? .semibold : .regular)
+                    Text("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"
+                        + (item.draft ? " · draft" : ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let count = state.inboxMDCount(item) {
+                    Label("\(count)", systemImage: "doc.text")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(.titleAndIcon)
+                        .help(count == 1 ? "1 Markdown file" : "\(count) Markdown files")
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .opacity(state.inboxMDCount(item) == 0 ? 0.55 : 1)
+        .help(state.inboxMDCount(item) == 0
+            ? "No Markdown files in this pull request" : item.title)
     }
 }
 

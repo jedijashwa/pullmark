@@ -24,6 +24,8 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
     @AppStorage(DefaultsKeys.autosaveEdits) private var autosaveEdits = true
+    @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
+    @AppStorage(DefaultsKeys.restoreSession) private var restoreSession = true
     @State private var updateStatus: String?
     @State private var checking = false
 
@@ -49,6 +51,10 @@ struct GeneralSettingsTab: View {
             }
             .pickerStyle(.segmented)
             .help("What pressing space in Finder shows for Markdown files")
+
+            Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
+                .help("Open pull requests where your review is requested")
+            Toggle("Restore files and PRs from the last session", isOn: $restoreSession)
 
             Picker("Saving edits:", selection: $autosaveEdits) {
                 Text("Automatically").tag(true)
