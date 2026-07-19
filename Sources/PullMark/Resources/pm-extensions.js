@@ -189,9 +189,77 @@
     }
   };
 
+  // marked calls every extension's start() with the entire remaining source
+  // for each token it lexes, so an unbounded scan there makes lexing
+  // quadratic in document size (10k paragraphs: ~4.4s instead of ~0.3s).
+  // start() only exists to interrupt the current text run early — anything
+  // past a 4KB lookahead is tokenized normally once the lexer reaches it,
+  // so bounding the window restores linear lexing with no practical
+  // semantic change (a text run would have to span >4KB unbroken for the
+  // interruption point to be missed, and even then the construct still
+  // renders — from its own block — rather than being lost).
+  var START_WINDOW = 4096;
+  function boundStart(ext) {
+    var original = ext.start;
+    if (!original) { return ext; }
+    ext.start = function (src) {
+      return original.call(this, src.length > START_WINDOW ? src.slice(0, START_WINDOW) : src);
+    };
+    return ext;
+  }
+
   global.pmExtensions = {
     extensions: function () {
-      return [mathBlock, mathInline, highlight, subscript, superscript, toc];
+      return [mathBlock, mathInline, highlight, subscript, superscript, toc].map(boundStart);
+    },
+    /// Applies the same start() bounding to a third-party marked config
+    /// (marked-alert, marked-footnote) before it is passed to marked.use.
+    boundStarts: function (config) {
+      (config.extensions || []).forEach(boundStart);
+      return config;
+    },
+    /// Replaces the instance's walkTokens with a linear traversal. marked's
+    /// own implementation accumulates with repeated Array.concat — one copy
+    /// of the accumulator per visited token — which is quadratic in token
+    /// count and dominates parse time once any extension registers a
+    /// walkTokens (alert and footnote both do). Same depth-first pre-order,
+    /// same childTokens handling; only the accumulation is different. Call
+    /// after all marked.use registrations.
+    fixWalkTokens: function (markedInstance) {
+      markedInstance.walkTokens = function (tokens, callback) {
+        var values = [];
+        var self = this;
+        function walk(list) {
+          if (!list) { return; }
+          for (var i = 0; i < list.length; i++) {
+            var token = list[i];
+            var result = callback.call(self, token);
+            if (result !== undefined) { values.push(result); }
+            switch (token.type) {
+              case "table":
+                (token.header || []).forEach(function (cell) { walk(cell.tokens); });
+                (token.rows || []).forEach(function (row) {
+                  (row || []).forEach(function (cell) { walk(cell.tokens); });
+                });
+                break;
+              case "list":
+                walk(token.items);
+                break;
+              default:
+                var childKeys = self.defaults && self.defaults.extensions
+                  && self.defaults.extensions.childTokens
+                  && self.defaults.extensions.childTokens[token.type];
+                if (childKeys) {
+                  childKeys.forEach(function (key) { walk(token[key]); });
+                } else if (token.tokens) {
+                  walk(token.tokens);
+                }
+            }
+          }
+        }
+        walk(tokens);
+        return values;
+      };
     },
     slugify: slugify,
     escapeHtml: escapeHtml,
