@@ -43,6 +43,20 @@ struct PullMarkApp: App {
         }
     }
 
+    /// Copy as Markdown (⌥⌘C): the page maps the selection to covered
+    /// source lines (whole-block granularity via data-pm-lines), Swift
+    /// slices the original markdown and puts plain text on the pasteboard.
+    /// No selection copies the whole document source.
+    private func copyAsMarkdown() {
+        guard let document = state.activeDocument else { return }
+        document.proxy.selectionSourceLineRange { range in
+            let source = MarkdownCopy.source(of: document.markdown, lineRange: range)
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(source, forType: .string)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -104,6 +118,15 @@ struct PullMarkApp: App {
                 }
                 .disabled(state.activeDocument == nil)
                 .help("Save the rendered document as a self-contained HTML file")
+            }
+            // The system Copy item (⌘C) stays: WKWebView's native copy puts
+            // rich HTML + plain text on the pasteboard for the selection.
+            CommandGroup(after: .pasteboard) {
+                Button("Copy as Markdown") { copyAsMarkdown() }
+                    .keyboardShortcut("c", modifiers: [.command, .option])
+                    .disabled(state.activeDocument == nil)
+                    .help("Copies the Markdown source of the selected blocks "
+                        + "(whole blocks — or the whole document when nothing is selected)")
             }
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state.findBarVisible = true }

@@ -505,6 +505,33 @@
     };
   })();
 
+  // ---- Copy as Markdown ----
+  // Maps the current selection back to source lines using the data-pm-lines
+  // annotations (document mode). Whole-block granularity: any block the
+  // selection touches contributes its full line range. Returns
+  // [startLine, endLine] (1-based, inclusive) or null when nothing usable
+  // is selected — Swift then copies the whole document source.
+
+  window.__pmSelectionLines = function () {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { return null; }
+    var range = sel.getRangeAt(0);
+    var start = null;
+    var end = null;
+    content.querySelectorAll("[data-pm-lines]").forEach(function (el) {
+      var m = /^(\d+)-(\d+)$/.exec(el.getAttribute("data-pm-lines"));
+      if (!m) { return; }
+      var intersects;
+      try { intersects = range.intersectsNode(el); } catch (e) { intersects = false; }
+      if (!intersects) { return; }
+      var s = +m[1];
+      var e2 = +m[2];
+      if (start === null || s < start) { start = s; }
+      if (end === null || e2 > end) { end = e2; }
+    });
+    return start === null ? null : [start, end];
+  };
+
   function renderMermaid() {
     var nodes = document.querySelectorAll(".mermaid");
     if (!nodes.length || typeof mermaid === "undefined") { return; }
@@ -1006,11 +1033,11 @@
     var fm = fmParse(payload.markdown);
     var docBody = fm ? fm.rest : payload.markdown;
     content.innerHTML = render(docBody);
-    // The document renders whole either way (footnotes and reference links
-    // intact); blame only annotates line ranges before other passes mutate
-    // the DOM, then draws the gutter once the page has settled.
-    var blameAnnotated = payload.blame && payload.blame.length
-      && annotateBlockLines(docBody, fm ? fm.endLine : 0);
+    // Every document is annotated with source line ranges before other
+    // passes mutate the DOM: the blame gutter positions its runs from them,
+    // and Copy as Markdown maps the selection back to source lines.
+    var linesAnnotated = annotateBlockLines(docBody, fm ? fm.endLine : 0);
+    var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;
     if (fm) {
       var fmDetails = frontMatterEl(fm.lines, false);
       // Blame treats the fence like any block: annotate its file lines.

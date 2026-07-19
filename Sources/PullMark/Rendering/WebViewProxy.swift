@@ -58,6 +58,22 @@ final class WebViewProxy: ObservableObject {
         }
     }
 
+    /// 1-based inclusive source line range covered by the current selection
+    /// (whole-block granularity, from the data-pm-lines annotations), or nil
+    /// when nothing usable is selected — the caller then copies the whole
+    /// document source.
+    func selectionSourceLineRange(completion: @escaping ((start: Int, end: Int)?) -> Void) {
+        guard let webView else {
+            completion(nil)
+            return
+        }
+        let js = "window.__pmSelectionLines ? window.__pmSelectionLines() : null"
+        webView.evaluateJavaScript(js) { result, _ in
+            let pair = (result as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? []
+            completion(pair.count == 2 ? (pair[0], pair[1]) : nil)
+        }
+    }
+
     /// action: "set" (with query), "next", "prev", or "clear".
     func find(_ action: String, query: String? = nil,
               completion: @escaping (Int, Int) -> Void) {
