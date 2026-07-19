@@ -69,6 +69,12 @@ struct DiffSegmentPayload: Encodable, Equatable {
     let lineStart: Int
     let lineEnd: Int
     let side: String
+    /// Whether `text` (resp. `oldText`) is a leading YAML front matter
+    /// block — decided here because only Swift knows each side's true line
+    /// numbers (a modified segment's payload carries only the new side's).
+    /// The web layer renders flagged sides as metadata tables.
+    var fmText = false
+    var fmOldText = false
     /// Existing review threads anchored to this segment (attached later by
     /// ReviewThreads.place, hence mutable).
     var threads: [ThreadPayload]? = nil
@@ -84,16 +90,21 @@ extension DiffSegment {
         switch self {
         case .unchanged(_, let new):
             return DiffSegmentPayload(kind: "unchanged", text: new.text, oldText: nil,
-                                      lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT")
+                                      lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
+                                      fmText: MarkdownBlocks.isFrontMatter(new))
         case .added(let block):
             return DiffSegmentPayload(kind: "added", text: block.text, oldText: nil,
-                                      lineStart: block.startLine, lineEnd: block.endLine, side: "RIGHT")
+                                      lineStart: block.startLine, lineEnd: block.endLine, side: "RIGHT",
+                                      fmText: MarkdownBlocks.isFrontMatter(block))
         case .removed(let block):
             return DiffSegmentPayload(kind: "removed", text: block.text, oldText: nil,
-                                      lineStart: block.startLine, lineEnd: block.endLine, side: "LEFT")
+                                      lineStart: block.startLine, lineEnd: block.endLine, side: "LEFT",
+                                      fmText: MarkdownBlocks.isFrontMatter(block))
         case .modified(let old, let new):
             return DiffSegmentPayload(kind: "modified", text: new.text, oldText: old.text,
-                                      lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT")
+                                      lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
+                                      fmText: MarkdownBlocks.isFrontMatter(new),
+                                      fmOldText: MarkdownBlocks.isFrontMatter(old))
         }
     }
 }

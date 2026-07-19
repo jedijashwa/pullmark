@@ -1,3 +1,11 @@
+---
+title: GFM kitchen sink
+status: draft
+tags:
+  - markdown
+  - regression
+---
+
 # GFM kitchen sink
 
 Every construct PullMark should render. Used by `scripts/render-check.sh` as a regression test.

@@ -81,6 +81,9 @@ check "mermaid svg"          '<svg[^>]*(id="mermaid|aria-roledescription="pie)'
 check "alert"                "markdown-alert-tip"
 check "footnote"             'footnote|data-footnote'
 check "heading anchor id"    'id="gfm-kitchen-sink"'
+check "front matter details" '<details class="pm-frontmatter"[^>]*><summary>Front matter</summary>'
+check "front matter row"     '<th>title</th><td>GFM kitchen sink</td>'
+check "front matter nested"  '<pre>  - markdown</pre>'
 
 if [ "$failures" -gt 0 ]; then
   echo "render-check: $failures failure(s)"

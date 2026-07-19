@@ -78,4 +78,58 @@ import Testing
             }
         }
     }
+
+    @Test func wordDiffSkippedForFrontMatterSegments() {
+        let old = "---\ntitle: Old title\n---\n\nShared paragraph\n\nOld text"
+        let new = "---\ntitle: New title\n---\n\nShared paragraph\n\nNew text"
+        let payloads = DiffPageBuilder.segments(old: old, new: new)
+        #expect(payloads.count == 3)
+        #expect(payloads[0].kind == "modified")
+        #expect(payloads[0].lineStart == 1)
+        // Front matter renders as plain old/new metadata tables; word marks
+        // are skipped.
+        #expect(payloads[0].wordDiff == nil)
+        // Ordinary modified prose still gets word-level markup.
+        #expect(payloads[2].kind == "modified")
+        #expect(payloads[2].wordDiff != nil)
+    }
+
+    @Test func wordDiffSkippedWhenOnlyOneSideIsFrontMatter() {
+        let payloads = DiffPageBuilder.segments(
+            old: "---\ntitle: Old\n---",
+            new: "Intro paragraph"
+        )
+        #expect(payloads.count == 1)
+        #expect(payloads[0].kind == "modified")
+        #expect(payloads[0].wordDiff == nil)
+        #expect(payloads[0].fmOldText)
+        #expect(!payloads[0].fmText)
+    }
+
+    @Test func frontMatterFlagsMarkEachSide() {
+        let old = "---\ntitle: One\n---\n\npara"
+        let new = "---\ntitle: Two\n---\n\npara"
+        let payloads = DiffPageBuilder.segments(old: old, new: new)
+        #expect(payloads[0].fmText)
+        #expect(payloads[0].fmOldText)
+        // Prose segments are never flagged.
+        #expect(!payloads[1].fmText)
+        #expect(!payloads[1].fmOldText)
+    }
+
+    @Test func brokenFrontMatterOnNewSideOnlyFlagsOldSide() {
+        // Mirrors github/docs#45206: the PR accidentally adds a blank line
+        // before the opening fence, so the new side is no longer front
+        // matter — only the old side may render as a metadata table, even
+        // though the pairing gives the segment the new side's line numbers.
+        let old = "---\ntitle: Hello\nversions:\n  fpt: '*'\n---\n\nBody para"
+        let new = "\n---\n\ntitle: Hello\nversions:\n  fpt: '*'\n---\n\nBody para"
+        let payloads = DiffPageBuilder.segments(old: old, new: new)
+        let fmOld = payloads.first { $0.fmOldText || $0.fmText }
+        #expect(fmOld != nil)
+        #expect(fmOld?.fmText == false)
+        #expect(fmOld?.wordDiff == nil)
+        // No new-side segment is flagged (the fence is broken there).
+        #expect(!payloads.contains { $0.fmText })
+    }
 }
