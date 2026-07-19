@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.9.0 - 2026-07-19
 
 - Show Markdown Source: **⌥⌘U** (View menu) temporarily flips the active
   document — local files, browsed PR docs, and a PR file's Result view — to
