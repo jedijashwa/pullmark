@@ -141,8 +141,10 @@ body {
 /* Local-document block editing: the pencil is the only button, flush right;
    blocks anchor it and reveal on hover. */
 .pm-editable { position: relative; }
-.pm-editable > .pm-edit-local { right: 6px; }
-.pm-editable:hover > .pm-edit-local { display: flex; }
+.pm-editable > .pm-edit-local { right: 6px; opacity: 0; transition: opacity 0.12s 0.15s; }
+/* Delayed fade-in so mouse travel while reading doesn't flicker pencils
+   across every block passed over. */
+.pm-editable:hover > .pm-edit-local { display: flex; opacity: 1; }
 
 /* ---- Review comment threads ---- */
 

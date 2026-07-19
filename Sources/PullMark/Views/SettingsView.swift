@@ -50,9 +50,9 @@ struct GeneralSettingsTab: View {
             .pickerStyle(.segmented)
             .help("What pressing space in Finder shows for Markdown files")
 
-            Picker("Block edits:", selection: $autosaveEdits) {
-                Text("Save automatically").tag(true)
-                Text("Save manually (⌘S)").tag(false)
+            Picker("Saving edits:", selection: $autosaveEdits) {
+                Text("Automatically").tag(true)
+                Text("Manually (⌘S)").tag(false)
             }
             .pickerStyle(.segmented)
             .help("Whether editing a block writes to the file immediately or waits for File → Save")

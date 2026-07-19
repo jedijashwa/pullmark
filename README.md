@@ -164,7 +164,7 @@ Nothing fetched from GitHub is written to persistent storage: API calls use an e
 ## Notes & limitations
 
 - GitHub allows one pending review per user per PR — if you already have one, "Save as Pending" fails until it's submitted or dismissed on github.com.
-- Editing is not supported yet; PullMark is a viewer/reviewer.
+- Editing is deliberately light: block-level edits on local files (hover a block → pencil) with autosave or ⌘S, suggestion edits on PRs, and File → Commit Changes… for the repo — PullMark is a reader first, not a text editor.
 - Quick Look previews render statically: code is highlighted, but Mermaid diagrams appear as code blocks.
 
 ## License

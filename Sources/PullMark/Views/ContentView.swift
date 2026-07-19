@@ -52,6 +52,9 @@ struct ContentView: View {
         .sheet(isPresented: $state.searchPaletteVisible) {
             SearchPalette()
         }
+        .sheet(item: $state.commitRequest) { request in
+            CommitSheet(root: request.root)
+        }
         .sheet(isPresented: $updates.showReleaseNotes) {
             ReleaseNotesSheet(
                 title: "What's New in PullMark \(updates.availableVersion ?? "")",

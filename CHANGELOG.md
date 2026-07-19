@@ -4,6 +4,21 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Local block editing: hover any block in a local document and the pencil
+  opens its Markdown source in an editor. Choose in Settings whether edits
+  save to disk immediately (default) or accumulate until File → Save (⌘S) —
+  unsaved state shows as "· edited" in the titlebar. Collisions with other
+  writers (editors, agents) are guarded: applying an edit verifies the
+  block hasn't moved, ⌘S asks before overwriting a file that changed
+  underneath, and a notice appears the moment the file diverges.
+- Commit without leaving: File → Commit Changes… (⌃⌘K) stages and commits
+  changes in the active file's repository — changed files with toggles,
+  a message field, and the current branch shown up front. On main/master
+  it first offers to create a branch (with a per-repo "don't ask again").
+- The titlebar now shows the current git branch next to the folder path.
+
 ## 0.10.0 - 2026-07-19
 
 - Edit-as-suggestion: hover any new-side block in a rendered PR diff and a

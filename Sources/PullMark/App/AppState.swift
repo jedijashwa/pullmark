@@ -115,6 +115,8 @@ final class AppState: ObservableObject {
     /// The on-disk text each overlay was based on — ⌘S compares against it
     /// to catch the file changing underneath (another editor, an agent).
     var editedBase: [URL: String] = [:]
+    /// Presents the commit sheet for a repo root (File → Commit Changes…).
+    @Published var commitRequest: CommitRequest?
 
     /// Writes the pending overlay for `url` to disk; the file watcher's
     /// re-read then converges the view. If the file changed on disk since
