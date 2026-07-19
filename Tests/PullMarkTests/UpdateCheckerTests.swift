@@ -84,6 +84,69 @@ import Testing
     }
 }
 
+@Suite struct BrewUpdateTests {
+    @Test func noBrewBinaryMeansDownloadWithoutRunningAnything() {
+        var ran = false
+        let method = BrewUpdate.detectMethod(
+            fileExists: { _ in false },
+            runner: { _, _ in ran = true; return true }
+        )
+        #expect(method == .download)
+        #expect(!ran)
+    }
+
+    @Test func brewManagedInstallPrefersAppleSiliconBrew() {
+        var probed: (String, [String])?
+        let method = BrewUpdate.detectMethod(
+            fileExists: { _ in true },  // both paths exist → first wins
+            runner: { path, args in probed = (path, args); return true }
+        )
+        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew"))
+        #expect(probed?.0 == "/opt/homebrew/bin/brew")
+        #expect(probed?.1 == ["list", "--cask", "pullmark"])
+    }
+
+    @Test func fallsBackToIntelBrewPath() {
+        let method = BrewUpdate.detectMethod(
+            fileExists: { $0 == "/usr/local/bin/brew" },
+            runner: { path, _ in path == "/usr/local/bin/brew" }
+        )
+        #expect(method == .brew(brewPath: "/usr/local/bin/brew"))
+    }
+
+    @Test func brewPresentButCaskNotInstalledMeansDownload() {
+        let method = BrewUpdate.detectMethod(
+            fileExists: { $0 == "/opt/homebrew/bin/brew" },
+            runner: { _, _ in false }  // `brew list --cask pullmark` fails
+        )
+        #expect(method == .download)
+    }
+
+    @Test func commandConstruction() {
+        #expect(BrewUpdate.command == "brew upgrade --cask pullmark")
+        #expect(BrewUpdate.upgradeArguments == ["upgrade", "--cask", "pullmark"])
+        #expect(BrewUpdate.listArguments == ["list", "--cask", "pullmark"])
+    }
+
+    @Test func relaunchTargetsTheRunningAppBundle() {
+        #expect(BrewUpdate.relaunchAppPath(bundlePath: "/Applications/PullMark.app")
+            == "/Applications/PullMark.app")
+        #expect(BrewUpdate.relaunchAppPath(bundlePath: "/Users/x/Apps/PullMark.app")
+            == "/Users/x/Apps/PullMark.app")
+    }
+
+    @Test func relaunchFallsBackToApplicationsForNonBundleBuilds() {
+        // `swift run` executes straight from .build — no .app to reopen.
+        #expect(BrewUpdate.relaunchAppPath(bundlePath: "/Users/x/pullmark/.build/debug")
+            == "/Applications/PullMark.app")
+    }
+
+    @Test func relaunchCommandSleepsThenReopens() {
+        #expect(BrewUpdate.relaunchShellCommand(appPath: "/Applications/PullMark.app")
+            == "sleep 1; open -a \"/Applications/PullMark.app\"")
+    }
+}
+
 @Suite struct UpdateReleaseTests {
     @Test func decodesReleaseJSON() throws {
         let json = """
