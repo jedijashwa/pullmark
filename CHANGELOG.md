@@ -6,6 +6,11 @@ section current as features land.
 
 ## Unreleased
 
+- The app icon adopts macOS 26's layered Liquid Glass format: the M and
+  the green download arrow are separate layers over a gradient fill, so
+  tinted and dark icon modes recolor the glyph properly instead of
+  desaturating a flat bitmap. Older macOS versions keep a flat icon derived
+  from the same layers.
 - Fixed Quick Look previews showing the raw file after an update: brew's
   delete-and-replace upgrade can silently drop the preview extension's
   registration. The app now re-registers its extension on every launch, and
