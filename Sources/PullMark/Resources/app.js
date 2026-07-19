@@ -1130,8 +1130,20 @@
       ta.rows = Math.min(24, seed.split("\n").length + 1);
       var hint = document.createElement("div");
       hint.className = "pm-inline-edit-hint";
-      hint.textContent = "\u2318\u21A9 save \u00B7 \u238B cancel"
+      var saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "pm-inline-edit-btn pm-inline-edit-save";
+      saveBtn.textContent = "Save";
+      saveBtn.title = "\u2318\u21A9";
+      var cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "pm-inline-edit-btn";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.title = "\u238B";
+      var hintText = document.createElement("span");
+      hintText.textContent = "\u2318\u21A9 save \u00B7 \u238B cancel"
         + (payload.autosaveEdits === false ? " \u00B7 saves in the window, \u2318S writes" : "");
+      hint.append(saveBtn, cancelBtn, hintText);
       function cancel() {
         window.__pmCancelInlineEdit = null;
         wrap.remove();
@@ -1144,7 +1156,9 @@
       function commit() {
         if (ta.value === seed) { cancel(); return; }
         ta.disabled = true;
-        hint.textContent = "saving\u2026";
+        saveBtn.disabled = true;
+        cancelBtn.disabled = true;
+        hintText.textContent = "saving\u2026";
         post({ type: "editLocal", lineStart: lo, lineEnd: hi,
                replacement: ta.value, seed: seed });
       }
@@ -1159,6 +1173,8 @@
           commit();
         }
       });
+      saveBtn.addEventListener("click", commit);
+      cancelBtn.addEventListener("click", cancel);
       wrap.append(ta, hint);
       el.style.display = "none";
       el.after(wrap);
