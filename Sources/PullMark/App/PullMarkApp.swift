@@ -43,6 +43,13 @@ struct PullMarkApp: App {
         }
     }
 
+    /// The active document's file URL when it is a local file (ActiveDocument
+    /// ids are "local:<path>" for those) — drives the ⌘S Save command.
+    private var activeLocalFileURL: URL? {
+        guard let id = state.activeDocument?.id, id.hasPrefix("local:") else { return nil }
+        return URL(fileURLWithPath: String(id.dropFirst("local:".count)))
+    }
+
     /// Copy as Markdown (⌥⌘C): the page maps the selection to covered
     /// source lines (whole-block granularity via data-pm-lines), Swift
     /// slices the original markdown and puts plain text on the pasteboard.
@@ -104,6 +111,15 @@ struct PullMarkApp: App {
                         Button("Clear Menu") { state.clearRecents() }
                     }
                 }
+            }
+            CommandGroup(replacing: .saveItem) {
+                // Manual-save mode: writes the active document's pending
+                // block edits; a no-op (disabled) when nothing is dirty.
+                Button("Save") {
+                    if let url = activeLocalFileURL { state.saveEdits(for: url) }
+                }
+                .keyboardShortcut("s")
+                .disabled(activeLocalFileURL.map { state.editedText[$0] == nil } ?? true)
             }
             CommandGroup(replacing: .importExport) {
                 Button("Export as PDF…") {

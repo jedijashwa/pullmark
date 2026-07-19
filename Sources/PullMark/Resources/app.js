@@ -1083,6 +1083,28 @@
     // passes mutate the DOM: the blame gutter positions its runs from them,
     // and Copy as Markdown maps the selection back to source lines.
     var linesAnnotated = annotateBlockLines(docBody, fm ? fm.endLine : 0);
+    // Local editing: every line-annotated block grows a hover pencil that
+    // opens the block editor in Swift.
+    if (payload.editable && linesAnnotated) {
+      for (var ec = content.firstElementChild; ec; ec = ec.nextElementSibling) {
+        var range = (ec.getAttribute("data-pm-lines") || "").split("-");
+        if (range.length !== 2) { continue; }
+        ec.classList.add("pm-editable");
+        (function (lo, hi) {
+          var btn = document.createElement("button");
+          btn.className = "pm-comment-btn pm-edit-btn pm-edit-local";
+          btn.type = "button";
+          btn.innerHTML = EDIT_ICON;
+          btn.title = "Edit this block (lines " + lo + "–" + hi + ")";
+          btn.setAttribute("aria-label", btn.title);
+          btn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            post({ type: "editLocal", lineStart: lo, lineEnd: hi });
+          });
+          ec.append(btn);
+        })(parseInt(range[0], 10), parseInt(range[1], 10));
+      }
+    }
     var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;
     if (fm) {
       var fmDetails = frontMatterEl(fm.lines, false);

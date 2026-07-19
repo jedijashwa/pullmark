@@ -38,6 +38,14 @@ enum LocalGit {
         }
     }
 
+    /// The checked-out branch name; nil outside a repo or on a detached
+    /// HEAD (where "HEAD" is what git reports).
+    static func currentBranch(in root: URL) -> String? {
+        guard let out = run(["rev-parse", "--abbrev-ref", "HEAD"], in: root.path) else { return nil }
+        let name = out.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty || name == "HEAD" ? nil : name
+    }
+
     static func branches(in root: URL, remote: Bool) -> [String] {
         let args = remote
             ? ["branch", "-r", "--format=%(refname:short)"]
