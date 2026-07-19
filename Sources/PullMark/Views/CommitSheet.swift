@@ -214,9 +214,13 @@ struct CommitSheet: View {
             if failure == nil {
                 failure = LocalGit.commit(paths: paths, message: commitMessage, in: root)
             }
-            if failure == nil, push,
-               let target = branchName.isEmpty ? currentBranchName : branchName {
-                pushFailure = LocalGit.push(branch: target, in: root)
+            if failure == nil, push {
+                if let target = branchName.isEmpty ? currentBranchName : branchName {
+                    pushFailure = LocalGit.push(branch: target, in: root)
+                } else {
+                    // Detached HEAD: never claim "pushed" for a skipped push.
+                    pushFailure = "not on a branch (detached HEAD), so nothing was pushed"
+                }
             }
             // Rebound to lets: the MainActor closure must not capture the
             // mutable locals (a Swift 6 error).

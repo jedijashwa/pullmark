@@ -83,7 +83,9 @@ struct ContentView: View {
         .onChange(of: controlActiveState) { active in
             if active == .key { AppState.keyInstance = state }
         }
-        .onOpenURL { url in state.add(url: url) }
+        .onOpenURL { url in
+            if AppState.gateOpen(url) { state.add(url: url) }
+        }
     }
 
     private var errorPresented: Binding<Bool> {
