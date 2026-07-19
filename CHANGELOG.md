@@ -6,6 +6,12 @@ section current as features land.
 
 ## Unreleased
 
+- Settings → General now shows which app opens `.md` files, with a one-click
+  "Make PullMark the Default" button when it isn't PullMark.
+- If you made PullMark your default Markdown app and an upgrade later makes
+  macOS drop that binding (brew replaces the app on disk and Launch Services
+  forgets), a banner offers to make PullMark the default again. Dismissing it
+  clears the reminder until you claim the default next time.
 - The update banner now updates in place: brew-managed installs get an
   "Update Now" button that runs `brew upgrade --cask pullmark` and relaunches
   PullMark (with a fallback to the copyable command if brew fails); other
