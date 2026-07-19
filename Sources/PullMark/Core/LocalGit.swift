@@ -124,16 +124,16 @@ enum LocalGit {
         return name.isEmpty || name == "HEAD" ? nil : name
     }
 
+    /// The 20 most recently ACTIVE branches — with hundreds of branches,
+    /// an alphabetical cap would almost never contain the one you want.
     static func branches(in root: URL, remote: Bool) -> [String] {
-        let args = remote
-            ? ["branch", "-r", "--format=%(refname:short)"]
-            : ["branch", "--format=%(refname:short)"]
-        guard let out = run(args, in: root.path) else { return [] }
+        let ref = remote ? "refs/remotes" : "refs/heads"
+        guard let out = run(["for-each-ref", "--sort=-committerdate",
+                             "--count=20", "--format=%(refname:short)", ref],
+                            in: root.path) else { return [] }
         return out.components(separatedBy: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty && !$0.contains("HEAD") }
-            .prefix(20)
-            .map { $0 }
+            .filter { !$0.isEmpty && !$0.hasSuffix("/HEAD") && $0 != "HEAD" }
     }
 
     /// File contents at a ref (commit sha or branch name); nil when the file

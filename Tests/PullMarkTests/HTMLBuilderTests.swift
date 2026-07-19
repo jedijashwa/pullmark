@@ -38,6 +38,22 @@ import Testing
         #expect(page.contains("<script type=\"application/json\" id=\"pm-payload\">"))
     }
 
+    @Test func pageGenerationIsDeterministic() {
+        // The web view reloads when the page string changes; body recomputes
+        // fire on unrelated state (scroll-spy, timers). Nondeterministic
+        // JSON key order made identical inputs produce different bytes —
+        // the reader was yanked to the top mid-scroll.
+        let reference = HTMLBuilder.documentPage(markdown: "# Doc\n\nBody",
+                                                 title: "T", localResources: true,
+                                                 theme: "editorial", editable: true)
+        for _ in 0..<50 {
+            let again = HTMLBuilder.documentPage(markdown: "# Doc\n\nBody",
+                                                 title: "T", localResources: true,
+                                                 theme: "editorial", editable: true)
+            #expect(again == reference)
+        }
+    }
+
     @Test func pagesCarryTheContentSecurityPolicy() {
         for page in [HTMLBuilder.documentPage(markdown: "x"),
                      HTMLBuilder.diffPage(segments: []),

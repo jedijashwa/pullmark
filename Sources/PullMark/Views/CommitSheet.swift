@@ -59,7 +59,9 @@ struct CommitSheet: View {
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else {
                 List {
-                    ForEach(changed, id: \.path) { file in
+                    // Bounded: a monorepo with thousands of changed files
+                    // must not build thousands of rows.
+                    ForEach(changed.prefix(500), id: \.path) { file in
                         Toggle(isOn: binding(for: file.path)) {
                             HStack {
                                 Text(file.path)
@@ -75,6 +77,11 @@ struct CommitSheet: View {
                 }
                 .frame(minHeight: 90, maxHeight: 180)
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                if changed.count > 500 {
+                    Text("Showing 500 of \(changed.count) changed files — Markdown files are preselected either way.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
 
                 TextField("", text: $message,
                           prompt: Text("Commit message"), axis: .vertical)

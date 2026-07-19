@@ -23,11 +23,11 @@ struct LocalFileView: View {
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
     @State private var currentBranch: String?
-    @State private var editTarget: BlockEditTarget?
     @State private var didRestorePosition = false
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
+    @State private var compareGeneration = 0
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -96,11 +96,6 @@ struct LocalFileView: View {
         // read ActiveDocument.markdown, and line ranges shift with edits.
         .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
-        .sheet(item: $editTarget) { target in
-            BlockEditSheet(fileName: file.url.lastPathComponent, target: target) { replacement in
-                applyBlockEdit(target, replacement: replacement)
-            }
-        }
         .toolbar {
             ToolbarItem {
                 compareMenu
@@ -157,7 +152,7 @@ struct LocalFileView: View {
     private var compareMenu: some View {
         Menu {
             if !commits.isEmpty {
-                Section("History") {
+                Section(commits.count >= 25 ? "History (25 most recent)" : "History") {
                     ForEach(commits) { commit in
                         Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
                             startComparing(ref: commit.sha,
@@ -167,14 +162,14 @@ struct LocalFileView: View {
                 }
             }
             if !branches.isEmpty {
-                Section("Branches") {
+                Section(branches.count >= 20 ? "Recent Branches" : "Branches") {
                     ForEach(branches, id: \.self) { branch in
                         Button(branch) { startComparing(ref: branch, label: branch) }
                     }
                 }
             }
             if !remoteBranches.isEmpty {
-                Section("Remote Branches") {
+                Section(remoteBranches.count >= 20 ? "Recent Remote Branches" : "Remote Branches") {
                     ForEach(remoteBranches, id: \.self) { branch in
                         Button(branch) { startComparing(ref: branch, label: branch) }
                     }
@@ -205,10 +200,12 @@ struct LocalFileView: View {
         return parts
     }
 
-    private func handleEditLocal(_ start: Int, _ end: Int) {
-        if let seed = TextLines.lines(in: displayText, from: start, to: end) {
-            editTarget = BlockEditTarget(lineStart: start, lineEnd: end, seed: seed)
-        }
+    /// In-place editor commit from the page. The seed is the text the
+    /// editor was opened with — applyBlockEdit's guard compares it against
+    /// the current lines, so a file changed underneath still aborts.
+    private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
+        applyBlockEdit(BlockEditTarget(lineStart: start, lineEnd: end, seed: seed),
+                       replacement: replacement)
     }
 
     private var html: String {
@@ -232,6 +229,8 @@ struct LocalFileView: View {
                                         theme: style.theme,
                                         customCSS: style.customCSS,
                                         editable: true,
+                                        autosave: UserDefaults.standard
+                                            .object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
     }
@@ -247,12 +246,16 @@ struct LocalFileView: View {
                 == target.seed else {
             state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
                 + "this block — nothing was saved. Re-open the block to edit the current version."
+            proxy.cancelInlineEdit()
             return
         }
         guard let newText = TextLines.replacing(in: displayText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
-                                                with: replacement) else { return }
+                                                with: replacement) else {
+            proxy.cancelInlineEdit()
+            return
+        }
         if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
             if state.editedText[file.url] != nil {
                 // Manual-mode leftovers plus autosave: route through the
@@ -269,6 +272,7 @@ struct LocalFileView: View {
                 state.editedBase[file.url] = nil
             } catch {
                 state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+                proxy.cancelInlineEdit()
             }
         } else {
             // First overlay for this file: remember the disk text it was
@@ -393,11 +397,17 @@ struct LocalFileView: View {
 
     private func startComparing(ref: String, label: String) {
         let url = file.url
+        compareGeneration += 1
+        let generation = compareGeneration
         Task.detached(priority: .userInitiated) {
             let old = LocalGit.content(of: url, at: ref)
             await MainActor.run {
+                // Scrubbing fires these faster than git answers — only the
+                // newest request may land, or the page and banner disagree.
+                guard generation == compareGeneration else { return }
                 guard let old else {
                     state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
+                    stopComparing()
                     return
                 }
                 compareText = old
@@ -410,4 +420,5 @@ struct LocalFileView: View {
         compare = nil
         compareText = nil
     }
+
 }

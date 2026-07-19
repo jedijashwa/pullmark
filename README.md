@@ -26,6 +26,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Navigation** — a navigator-style outline sidebar (toolbar toggle) listing the document's headings with level indentation, **⌘F** find-in-page with match stepping, and **⇧⌘F** search across every file in the sidebar with results grouped by file.
 - **Export** — **File → Export as PDF…** saves the rendered document as one continuous page; **Export as HTML…** writes a fully self-contained single file (styles inlined, local images embedded).
 - **Copy in two flavors** — **⌘C** copies the selection as rich text that pastes formatted into Google Docs, Slack, and friends; **⌥⌘C** (Copy as Markdown) copies the original Markdown source behind the selection (the whole document when nothing is selected).
+- **Edit in place** — click a block's pencil and it becomes an editor inside the rendered page; ⌘↩ or the Save button commits (guarded, versioned), Esc cancels.
 - **Source at a keystroke** — **⌥⌘U** (View → Show Markdown Source) temporarily flips the active document to its raw Markdown, syntax-tinted and light/dark aware; press again to return to the rendered view.
 - **Windows and tabs** — ⌘N opens an independent window (own sidebar, PRs, and edits); merge windows into native macOS tabs. Opens from Finder or the CLI land in the frontmost window. Drag `.md` files or folders onto any window.
 - **Review-request inbox** — PRs awaiting your review sit at the top of the sidebar with unread indicators and a Markdown-file-count badge; refreshed quietly, hideable in Settings.
