@@ -31,6 +31,11 @@
   if (typeof markedFootnote === "function") {
     marked.use(markedFootnote());
   }
+  // extended-syntax constructs (math/[toc]/highlight/sub/sup) shared with the
+  // Quick Look static renderer.
+  if (typeof pmExtensions !== "undefined") {
+    marked.use({ extensions: pmExtensions.extensions() });
+  }
   marked.use({ gfm: true });
 
   // Outline speech bubble drawn to match the SF Symbols style used in the
@@ -339,6 +344,62 @@
       });
     });
     post({ type: "outline", items: items });
+    return items;
+  }
+
+  // ---- [toc] ----
+  // pm-extensions.js renders a `[toc]` paragraph as an empty nav
+  // placeholder; fill every one with links built from the same heading
+  // items the outline sidebar shows (anchors already exist by now).
+
+  function populateToc(items) {
+    var navs = content.querySelectorAll("nav.pm-toc");
+    if (!navs.length) { return; }
+    var minLevel = items.reduce(function (min, item) {
+      return Math.min(min, item.level);
+    }, 6);
+    navs.forEach(function (nav) {
+      nav.textContent = "";
+      if (!items.length) {
+        var empty = document.createElement("p");
+        empty.className = "pm-toc-empty";
+        empty.textContent = "No headings";
+        nav.append(empty);
+        return;
+      }
+      var list = document.createElement("ul");
+      list.className = "pm-toc-list";
+      items.forEach(function (item) {
+        var li = document.createElement("li");
+        li.className = "pm-toc-item pm-toc-level-" + (item.level - minLevel + 1);
+        var a = document.createElement("a");
+        a.href = "#" + item.id;
+        a.textContent = item.text;
+        li.append(a);
+        list.append(li);
+      });
+      nav.append(list);
+    });
+  }
+
+  // ---- Word count / reading time (document mode only) ----
+  // Counted from the rendered text so markup, front matter, the [toc]
+  // block, and KaTeX's duplicated math trees don't inflate the number.
+
+  function reportStats(root) {
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        return node.parentElement &&
+          node.parentElement.closest(".pm-toc, .pm-frontmatter, .katex")
+          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var words = 0;
+    while (walker.nextNode()) {
+      words += (walker.currentNode.nodeValue.match(/[\p{L}\p{N}]+/gu) || []).length;
+    }
+    // 220 wpm is a middle-of-the-road silent reading speed.
+    post({ type: "stats", words: words, minutes: Math.max(1, Math.ceil(words / 220)) });
   }
 
   // Scroll-spy: report which section the viewport is currently in.
@@ -539,7 +600,8 @@
       return (text.match(/\n/g) || []).length;
     }
 
-    var ONE = { heading: 1, paragraph: 1, code: 1, blockquote: 1, list: 1, table: 1, hr: 1 };
+    var ONE = { heading: 1, paragraph: 1, code: 1, blockquote: 1, list: 1, table: 1, hr: 1,
+                pmMathBlock: 1, pmToc: 1 };
     var NONE = { space: 1, def: 1, footnote: 1 };
     var line = 1 + (lineOffset || 0); // 1-based file line at srcPos
     var srcPos = 0;
@@ -947,8 +1009,9 @@
     rewriteLocalResources(content);
     rewriteRemoteResources(content);
     setupHeadingAnchors(content);
-    reportOutline(content);
+    populateToc(reportOutline(content));
     enhance(content);
+    reportStats(content);
     renderMermaid();
     if (blameAnnotated) { setupBlameGutter(payload.blame); }
   } else if (payload.mode === "diff") {
@@ -967,7 +1030,7 @@
     appendOutdated();
     rewriteRemoteResources(content);
     setupHeadingAnchors(content);
-    reportOutline(content);
+    populateToc(reportOutline(content));
     enhance(content);
     renderMermaid();
   } else if (payload.mode === "patch") {

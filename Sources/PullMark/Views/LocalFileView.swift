@@ -8,6 +8,7 @@ struct LocalFileView: View {
     @State private var watcher: FileWatcher?
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
+    @State private var stats: DocumentStats?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
@@ -57,8 +58,14 @@ struct LocalFileView: View {
                     onBlameHistory: { start, end in
                         historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                     },
+                    onStats: { stats = $0 },
                     proxy: proxy
                 )
+                .overlay(alignment: .bottomTrailing) {
+                    if compare == nil, let stats {
+                        DocumentStatsPill(stats: stats)
+                    }
+                }
                 .layoutPriority(1)
                 if outlineVisible {
                     OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
@@ -152,17 +159,19 @@ struct LocalFileView: View {
     }
 
     private var html: String {
-        let theme = Theme.current(from: themeRaw).rawValue
+        let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
             let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
                                         title: file.url.lastPathComponent,
-                                        theme: theme)
+                                        theme: style.theme,
+                                        customCSS: style.customCSS)
         }
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
-                                        theme: theme,
+                                        theme: style.theme,
+                                        customCSS: style.customCSS,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
     }

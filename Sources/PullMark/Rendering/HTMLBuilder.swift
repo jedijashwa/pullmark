@@ -56,6 +56,7 @@ enum HTMLBuilder {
                              localResources: Bool = false,
                              remote: RemoteAssets? = nil,
                              theme: String = "github",
+                             customCSS: String? = nil,
                              preview: Bool = false,
                              blame: [BlameRunPayload]? = nil,
                              blameNote: String? = nil) -> String {
@@ -67,7 +68,7 @@ enum HTMLBuilder {
                                     preview: preview ? true : nil,
                                     blame: blame,
                                     blameNote: blameNote),
-             title: title)
+             title: title, customCSS: customCSS)
     }
 
     static func diffPage(segments: [DiffSegmentPayload],
@@ -77,6 +78,7 @@ enum HTMLBuilder {
                          commentable: Bool = true,
                          title: String = "",
                          theme: String = "github",
+                         customCSS: String? = nil,
                          preview: Bool = false) -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
@@ -86,13 +88,14 @@ enum HTMLBuilder {
                                     resourceDir: remote?.resourceDir,
                                     theme: theme,
                                     preview: preview ? true : nil),
-             title: title)
+             title: title, customCSS: customCSS)
     }
 
     static func patchPage(patch: String, title: String = "",
-                          theme: String = "github") -> String {
+                          theme: String = "github",
+                          customCSS: String? = nil) -> String {
         page(payload: RenderPayload(mode: "patch", patch: patch, theme: theme),
-             title: title)
+             title: title, customCSS: customCSS)
     }
 
     /// Encodes a value as a JSON literal safe to embed inside a <script> tag.
@@ -153,7 +156,18 @@ enum HTMLBuilder {
         + "img-src file: data: https: pullmark-local: pullmark-remote:; "
         + "font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'"
 
-    private static func page(payload: RenderPayload, title: String) -> String {
+    /// Inline `<style>` block for a user-supplied custom theme. The CSS is a
+    /// local file the user placed on disk, but "</" is still escaped (a valid
+    /// CSS escape for "/") so the text can never close the style tag; the CSP
+    /// would stop any smuggled inline script regardless.
+    private static func customStyleTag(_ css: String?) -> String {
+        guard let css, !css.isEmpty else { return "" }
+        let safe = css.replacingOccurrences(of: "</", with: "<\\/")
+        return "<style id=\"pm-custom-theme\">\(safe)</style>\n"
+    }
+
+    private static func page(payload: RenderPayload, title: String,
+                             customCSS: String? = nil) -> String {
         """
         <!DOCTYPE html>
         <html>
@@ -164,8 +178,9 @@ enum HTMLBuilder {
         <link rel="stylesheet" href="vendor/github-markdown.css">
         <link rel="stylesheet" media="(prefers-color-scheme: light)" href="vendor/hljs-github.min.css">
         <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="vendor/hljs-github-dark.min.css">
+        <link rel="stylesheet" href="vendor/katex/katex.min.css">
         <link rel="stylesheet" href="app.css">
-        </head>
+        \(customStyleTag(customCSS))</head>
         <body>
         <article id="content" class="markdown-body"></article>
         <script type="application/json" id="pm-payload">\(jsonLiteral(payload))</script>
@@ -174,6 +189,8 @@ enum HTMLBuilder {
         <script src="vendor/marked-footnote.min.js"></script>
         <script src="vendor/highlight.min.js"></script>
         <script src="vendor/mermaid.min.js"></script>
+        <script src="vendor/katex/katex.min.js"></script>
+        <script src="pm-extensions.js"></script>
         <script src="app.js"></script>
         </body>
         </html>

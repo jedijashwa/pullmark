@@ -427,6 +427,52 @@ body {
   margin: 0 0 20px;
 }
 
+/* ---- Math (KaTeX) ---- */
+
+.pm-math-block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 16px 0;
+}
+.pm-math-block .katex-display {
+  margin: 0;
+}
+
+/* ---- ==highlight== ---- */
+
+.markdown-body mark {
+  background: rgba(255, 212, 0, 0.42);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+@media (prefers-color-scheme: dark) {
+  .markdown-body mark { background: rgba(187, 128, 9, 0.45); }
+}
+
+/* ---- [toc] ---- */
+
+nav.pm-toc {
+  margin: 0 0 16px;
+}
+.markdown-body .pm-toc-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.markdown-body .pm-toc-item {
+  margin: 3px 0;
+}
+.pm-toc-level-2 { padding-left: 16px; }
+.pm-toc-level-3 { padding-left: 32px; }
+.pm-toc-level-4 { padding-left: 48px; }
+.pm-toc-level-5 { padding-left: 64px; }
+.pm-toc-level-6 { padding-left: 80px; }
+.pm-toc-empty {
+  color: var(--fgColor-muted, #6e7781);
+  font-style: italic;
+}
+
 /* ---- Find in page ---- */
 
 mark.pm-find {

@@ -7,6 +7,12 @@ struct BridgeMessage {
     let side: String
 }
 
+/// Word count / reading time of a rendered document, computed in the page.
+struct DocumentStats: Equatable {
+    let words: Int
+    let minutes: Int
+}
+
 struct MarkdownWebView: NSViewRepresentable {
     let html: String
     var onCommentRequest: ((BridgeMessage) -> Void)?
@@ -30,6 +36,9 @@ struct MarkdownWebView: NSViewRepresentable {
     var onThreadResolve: ((Int, Bool) -> Void)?
     /// Blame gutter entry clicked: open line history for this 1-based range.
     var onBlameHistory: ((Int, Int) -> Void)?
+    /// Word count / reading time computed from the rendered text
+    /// (document mode only — diffs never post stats).
+    var onStats: ((DocumentStats) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
     /// False for the Settings theme-preview cards: the web view refuses all
@@ -136,6 +145,11 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let start = dict["lineStart"] as? Int,
                    let end = dict["lineEnd"] as? Int {
                     parent.onBlameHistory?(start, end)
+                }
+            case "stats":
+                if let words = dict["words"] as? Int,
+                   let minutes = dict["minutes"] as? Int {
+                    parent.onStats?(DocumentStats(words: words, minutes: minutes))
                 }
             case "threadResolve":
                 if let rootID = dict["rootID"] as? Int,

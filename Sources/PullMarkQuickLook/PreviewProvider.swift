@@ -89,15 +89,25 @@ final class StaticRenderer {
               let alert = load("marked-alert.min.js"),
               let footnote = load("marked-footnote.min.js"),
               let hljs = load("highlight.min.js"),
+              let katex = load("katex/katex.min.js"),
+              let katexCSS = load("katex/katex.min.css"),
+              let extensions = try? String(
+                  contentsOf: resources.appendingPathComponent("pm-extensions.js"),
+                  encoding: .utf8),
               let markdownCSS = load("github-markdown.css"),
               let hljsLight = load("hljs-github.min.css"),
               let hljsDark = load("hljs-github-dark.min.css")
         else { return }
 
+        // KaTeX's CSS is inlined; its url(fonts/...) references cannot
+        // resolve in a data-based preview (no base URL, font-src 'none'), so
+        // math falls back to the stacks' system serif fonts — structurally
+        // correct, just less pretty than in the app.
         stylesheet = """
         <style>\(markdownCSS)</style>
         <style media="(prefers-color-scheme: light)">\(hljsLight)</style>
         <style media="(prefers-color-scheme: dark)">\(hljsDark)</style>
+        <style>\(katexCSS)</style>
         <style>
         body { margin: 0; background: #ffffff; }
         @media (prefers-color-scheme: dark) { body { background: #0d1117; } }
@@ -148,10 +158,30 @@ final class StaticRenderer {
           font-size: 12px;
           color: inherit;
         }
+        /* Math, ==highlight== and [toc] (kept in sync with app.css). */
+        .pm-math-block { overflow-x: auto; overflow-y: hidden; margin: 16px 0; }
+        .pm-math-block .katex-display { margin: 0; }
+        .markdown-body mark {
+          background: rgba(255, 212, 0, 0.42);
+          color: inherit;
+          border-radius: 2px;
+          padding: 0 1px;
+        }
+        @media (prefers-color-scheme: dark) {
+          .markdown-body mark { background: rgba(187, 128, 9, 0.45); }
+        }
+        nav.pm-toc { margin: 0 0 16px; }
+        .markdown-body .pm-toc-list { list-style: none; padding-left: 0; margin: 0; }
+        .markdown-body .pm-toc-item { margin: 3px 0; }
+        .pm-toc-level-2 { padding-left: 16px; }
+        .pm-toc-level-3 { padding-left: 32px; }
+        .pm-toc-level-4 { padding-left: 48px; }
+        .pm-toc-level-5 { padding-left: 64px; }
+        .pm-toc-level-6 { padding-left: 80px; }
         </style>
         """
 
-        for script in [marked, alert, footnote, hljs] {
+        for script in [marked, alert, footnote, hljs, katex, extensions] {
             context.evaluateScript(script)
         }
         context.evaluateScript("""
@@ -160,7 +190,45 @@ final class StaticRenderer {
         }
         marked.use(markedAlert());
         marked.use(markedFootnote());
+        // Math/[toc]/highlight/sub/sup — the same extension pack app.js
+        // uses; KaTeX's renderToString needs no DOM, so math renders here.
+        marked.use({ extensions: pmExtensions.extensions() });
         marked.use({ gfm: true });
+        // The browser pipeline slugs headings in the DOM; here ids come from
+        // a renderer override so [toc] links have anchors to land on.
+        var __slugUsed = {};
+        marked.use({
+          renderer: {
+            heading: function (token) {
+              var slug = pmExtensions.slugify(token.text) || "section";
+              var unique = slug;
+              var n = 1;
+              while (__slugUsed[unique]) { unique = slug + "-" + n; n += 1; }
+              __slugUsed[unique] = true;
+              __headings.push({
+                level: token.depth,
+                id: unique,
+                html: this.parser.parseInline(token.tokens)
+              });
+              return "<h" + token.depth + ' id="' + unique + '">' +
+                this.parser.parseInline(token.tokens) + "</h" + token.depth + ">\\n";
+            }
+          }
+        });
+        var __headings = [];
+        // Builds the [toc] list from the headings collected during parse
+        // (h1-h4, matching the app's outline). Labels reuse the rendered
+        // inline HTML with tags stripped so nested anchors can't occur.
+        function __tocHTML() {
+          var items = __headings.filter(function (h) { return h.level <= 4; });
+          if (!items.length) { return '<p class="pm-toc-empty">No headings</p>'; }
+          var min = items.reduce(function (m, h) { return Math.min(m, h.level); }, 6);
+          return '<ul class="pm-toc-list">' + items.map(function (h) {
+            var label = h.html.replace(/<[^>]*>/g, "");
+            return '<li class="pm-toc-item pm-toc-level-' + (h.level - min + 1) +
+              '"><a href="#' + h.id + '">' + label + "</a></li>";
+          }).join("") + "</ul>";
+        }
         marked.use({
           renderer: {
             code: function (token) {
@@ -201,9 +269,18 @@ final class StaticRenderer {
             '<table class="pm-frontmatter-table"><tbody>' + rows + "</tbody></table></details>";
         }
         function __render(src) {
+          __slugUsed = {};
+          __headings = [];
           var fm = __frontMatter(src);
-          if (!fm) { return marked.parse(src); }
-          return __frontMatterHTML(fm.lines) + marked.parse(fm.rest);
+          var body = marked.parse(fm ? fm.rest : src);
+          // Fill the [toc] placeholders the pmToc extension emitted; the
+          // whole document has been parsed by now, so __headings is complete.
+          if (body.indexOf(pmExtensions.TOC_PLACEHOLDER) !== -1) {
+            var open = pmExtensions.TOC_PLACEHOLDER.replace("></nav>", ">");
+            var filled = open + __tocHTML() + "</nav>";
+            body = body.split(pmExtensions.TOC_PLACEHOLDER).join(filled);
+          }
+          return fm ? __frontMatterHTML(fm.lines) + body : body;
         }
         """)
         ready = context.objectForKeyedSubscript("__render")?.isUndefined == false

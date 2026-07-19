@@ -116,31 +116,72 @@ struct GeneralSettingsTab: View {
 
 struct ThemeSettingsTab: View {
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @State private var customNames: [String] = []
 
-    private var selected: Theme { Theme.current(from: themeRaw) }
+    private var selection: ThemeSelection {
+        ThemeSelection.resolve(themeRaw, availableCustom: customNames)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                ForEach(Theme.allCases) { theme in
-                    ThemePreviewCard(theme: theme, selected: theme == selected) {
-                        themeRaw = theme.rawValue
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 16) {
+                    ForEach(Theme.allCases) { theme in
+                        ThemePreviewCard(
+                            title: theme.label,
+                            descriptor: theme.descriptor,
+                            theme: theme.rawValue,
+                            selected: selection == ThemeSelection(theme: theme, customName: nil)
+                        ) {
+                            themeRaw = theme.rawValue
+                        }
                     }
                 }
+                if !customNames.isEmpty {
+                    Text("Custom themes")
+                        .font(.headline)
+                        .padding(.top, 4)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 16)],
+                              alignment: .leading, spacing: 16) {
+                        ForEach(customNames, id: \.self) { name in
+                            ThemePreviewCard(
+                                title: name,
+                                descriptor: "\(name).css",
+                                theme: Theme.github.rawValue,
+                                customCSS: CustomThemes.css(for: name),
+                                selected: selection.customName == name
+                            ) {
+                                themeRaw = CustomThemes.selectionPrefix + name
+                            }
+                        }
+                    }
+                }
+                HStack(spacing: 10) {
+                    Button("Open Themes Folder") {
+                        NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
+                    }
+                    Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
+                }
+                Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews always use the GitHub theme.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Quick Look previews always use the GitHub theme.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .fixedSize(horizontal: false, vertical: true)
+            .padding(20)
         }
-        .padding(20)
+        .frame(height: 540)
+        .onAppear { customNames = CustomThemes.availableThemeNames() }
     }
 }
 
 /// One selectable theme card: a miniature, non-interactive MarkdownWebView
-/// rendering a fixed sample through the real pipeline with this theme.
+/// rendering a fixed sample through the real pipeline with this theme
+/// (built-in name and, for custom themes, the user CSS appended).
 struct ThemePreviewCard: View {
-    let theme: Theme
+    let title: String
+    let descriptor: String
+    let theme: String
+    var customCSS: String?
     let selected: Bool
     let select: () -> Void
 
@@ -164,8 +205,9 @@ struct ThemePreviewCard: View {
     private var previewHTML: String {
         HTMLBuilder.diffPage(segments: Self.sampleSegments,
                              commentable: false,
-                             title: theme.label,
-                             theme: theme.rawValue,
+                             title: title,
+                             theme: theme,
+                             customCSS: customCSS,
                              preview: true)
     }
 
@@ -190,9 +232,9 @@ struct ThemePreviewCard: View {
                     }
                 }
                 .padding(.bottom, 4)
-            Text(theme.label)
+            Text(title)
                 .font(.callout.weight(selected ? .semibold : .medium))
-            Text(theme.descriptor)
+            Text(descriptor)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -202,7 +244,7 @@ struct ThemePreviewCard: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: select)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(theme.label) theme")
+        .accessibilityLabel("\(title) theme")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction(.default, select)
     }
