@@ -156,6 +156,13 @@ struct PullMarkApp: App {
                         Text(appearance.label).tag(appearance.rawValue)
                     }
                 }
+                Divider()
+                Button(state.sourceViewVisible ? "Hide Markdown Source" : "Show Markdown Source") {
+                    state.sourceViewVisible.toggle()
+                }
+                .keyboardShortcut("u", modifiers: [.command, .option])
+                .disabled(state.activeDocument == nil)
+                .help("Temporarily show the raw Markdown behind the rendered document")
             }
         }
         Settings {

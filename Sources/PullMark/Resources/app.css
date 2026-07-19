@@ -660,3 +660,14 @@ mark.pm-find.pm-find-current {
 :root[data-preview="1"] .markdown-body pre {
   padding: 10px 12px;
 }
+
+/* ---- Show Markdown Source (mode "source") ---- */
+.pm-source-view {
+  font: 12.5px/1.65 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  padding: 18px 22px;
+  background: transparent;
+}
+.pm-source-view code { background: transparent; padding: 0; }

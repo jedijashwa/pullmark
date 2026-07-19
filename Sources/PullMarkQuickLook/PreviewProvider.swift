@@ -16,15 +16,20 @@ final class PreviewProvider: QLPreviewProvider, QLPreviewingController {
         StaticRenderer.debugLog("providePreview: \(request.fileURL.lastPathComponent)")
         let markdown = try String(contentsOf: request.fileURL, encoding: .utf8)
         let html: String
-        do {
-            html = try StaticRenderer.shared.renderPage(
-                markdown: markdown,
-                title: request.fileURL.lastPathComponent
-            )
-            StaticRenderer.debugLog("rendered \(html.utf8.count) bytes")
-        } catch {
-            StaticRenderer.debugLog("render error: \(error)")
-            throw error
+        if !StaticRenderer.wantsRenderedPreviews() {
+            html = StaticRenderer.sourcePage(markdown: markdown,
+                                             title: request.fileURL.lastPathComponent)
+        } else {
+            do {
+                html = try StaticRenderer.shared.renderPage(
+                    markdown: markdown,
+                    title: request.fileURL.lastPathComponent
+                )
+                StaticRenderer.debugLog("rendered \(html.utf8.count) bytes")
+            } catch {
+                StaticRenderer.debugLog("render error: \(error)")
+                throw error
+            }
         }
         let reply = QLPreviewReply(
             dataOfContentType: .html,
@@ -301,6 +306,57 @@ final class StaticRenderer {
         }
         """)
         ready = context.objectForKeyedSubscript("__render")?.isUndefined == false
+    }
+
+    /// Settings → "Quick Look previews: Rendered / Raw Source", mirrored
+    /// into the shared suite like the theme. Absent means rendered.
+    static func wantsRenderedPreviews() -> Bool {
+        UserDefaults(suiteName: "35F47G5Y6D.app.pullmark")?
+            .object(forKey: "pm.qlRendered") as? Bool ?? true
+    }
+
+    /// Raw-source preview: escaped monospace text, following the system
+    /// light/dark appearance. Same no-scripts CSP as rendered previews.
+    static func sourcePage(markdown: String, title: String) -> String {
+        func escape(_ s: String) -> String {
+            s.replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+                .replacingOccurrences(of: ">", with: "&gt;")
+        }
+        let csp = "default-src 'none'; script-src 'none'; "
+            + "style-src 'unsafe-inline'; img-src 'none'; "
+            + "connect-src 'none'; frame-src 'none'; object-src 'none'"
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="\(csp)">
+        <title>\(escape(title))</title>
+        <style>
+        :root { color-scheme: light dark; }
+        body {
+          margin: 0;
+          background: #ffffff;
+          color: #1f2328;
+        }
+        pre {
+          margin: 0;
+          padding: 20px 24px;
+          font: 12.5px/1.65 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+          white-space: pre;
+          overflow-x: auto;
+        }
+        @media (prefers-color-scheme: dark) {
+          body { background: #0d1117; color: #e6edf3; }
+        }
+        </style>
+        </head>
+        <body>
+        <pre>\(escape(markdown))</pre>
+        </body>
+        </html>
+        """
     }
 
     /// The app mirrors its reading-theme choice into the shared app-group

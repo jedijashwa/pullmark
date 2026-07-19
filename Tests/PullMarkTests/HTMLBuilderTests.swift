@@ -27,6 +27,17 @@ import Testing
         #expect(page.contains("<title>T</title>"))
     }
 
+    @Test func sourcePageCarriesRawMarkdownAsSourceMode() {
+        let page = HTMLBuilder.sourcePage(markdown: "# Raw **stuff**", title: "S",
+                                          theme: "editorial")
+        #expect(page.contains("\"mode\":\"source\""))
+        #expect(page.contains("# Raw **stuff**"))
+        #expect(page.contains("data-theme=\"editorial\"")
+            || page.contains("\"theme\":\"editorial\""))
+        // Same non-executing payload embedding as every other page.
+        #expect(page.contains("<script type=\"application/json\" id=\"pm-payload\">"))
+    }
+
     @Test func pagesCarryTheContentSecurityPolicy() {
         for page in [HTMLBuilder.documentPage(markdown: "x"),
                      HTMLBuilder.diffPage(segments: []),
