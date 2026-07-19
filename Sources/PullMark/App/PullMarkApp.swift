@@ -150,16 +150,6 @@ struct PullMarkApp: App {
                 }
                 .disabled(activeLocalFileURL.map { EditHistory.lastSnapshot(for: $0) == nil } ?? true)
                 .help("Restore the file as it was before PullMark's last edit")
-                Divider()
-                Button("Check Documentation…") {
-                    guard let url = activeLocalFileURL,
-                          let file = state?.localFiles.first(where: { $0.url == url })
-                    else { return }
-                    state?.doctorRequest = DoctorRequest(root: file.resourceRoot)
-                }
-                .keyboardShortcut("d", modifiers: [.command, .shift])
-                .disabled(activeLocalFileURL == nil)
-                .help("Scan the folder for broken links, dead anchors, missing images, and orphan pages")
             }
             CommandGroup(replacing: .printItem) {
                 Button("Print…") { state?.activeDocument?.proxy.printDocument() }

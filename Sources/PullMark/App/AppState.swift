@@ -119,8 +119,6 @@ final class AppState: ObservableObject {
     var editedBase: [URL: String] = [:]
     /// Presents the commit sheet for a repo root (File → Commit Changes…).
     @Published var commitRequest: CommitRequest?
-    /// Presents Doc Doctor for a folder root (File → Check Documentation…).
-    @Published var doctorRequest: DoctorRequest?
 
     /// Writes the pending overlay for `url` to disk; the file watcher's
     /// re-read then converges the view. If the file changed on disk since

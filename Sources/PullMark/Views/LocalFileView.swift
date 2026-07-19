@@ -27,11 +27,7 @@ struct LocalFileView: View {
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
-    /// Timeline scrubbing: index into `commits` reversed (oldest → newest).
-    @State private var timelineActive = false
-    @State private var timelinePosition = 0.0
     @State private var compareGeneration = 0
-    @State private var compareLoading = false
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -41,9 +37,7 @@ struct LocalFileView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if timelineActive {
-                timelineBar
-            } else if let compare {
+            if let compare {
                 HStack(spacing: 10) {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("Comparing with \(compare.label)")
@@ -143,14 +137,6 @@ struct LocalFileView: View {
         }
         .onChange(of: inGitRepo) { _ in loadBlame() }
         .onChange(of: compare) { _ in updateActiveDocument() }
-        .onChange(of: timelinePosition) { position in
-            guard timelineActive else { return }
-            let index = min(max(Int(position.rounded()), 0), max(0, timelineCommits.count - 1))
-            guard timelineCommits.indices.contains(index) else { return }
-            let commit = timelineCommits[index]
-            guard compare?.ref != commit.sha else { return }
-            startComparing(ref: commit.sha, label: "\(commit.shortSHA) (\(commit.date))")
-        }
         .modifier(PendingSearchConsumer(target: .local(file.url),
                                         consume: consumePendingSearch))
         .sheet(item: $historyRequest) { request in
@@ -167,9 +153,8 @@ struct LocalFileView: View {
         Menu {
             if !commits.isEmpty {
                 Section("History") {
-                    ForEach(commits.prefix(25)) { commit in
+                    ForEach(commits) { commit in
                         Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
-                            timelineActive = false
                             startComparing(ref: commit.sha,
                                            label: "\(commit.shortSHA) (\(commit.date))")
                         }
@@ -179,26 +164,16 @@ struct LocalFileView: View {
             if !branches.isEmpty {
                 Section("Branches") {
                     ForEach(branches, id: \.self) { branch in
-                        Button(branch) {
-                            timelineActive = false
-                            startComparing(ref: branch, label: branch)
-                        }
+                        Button(branch) { startComparing(ref: branch, label: branch) }
                     }
                 }
             }
             if !remoteBranches.isEmpty {
                 Section("Remote Branches") {
                     ForEach(remoteBranches, id: \.self) { branch in
-                        Button(branch) {
-                            timelineActive = false
-                            startComparing(ref: branch, label: branch)
-                        }
+                        Button(branch) { startComparing(ref: branch, label: branch) }
                     }
                 }
-            }
-            if !commits.isEmpty {
-                Divider()
-                Button("Timeline…") { beginTimeline() }
             }
             if compare != nil {
                 Divider()
@@ -391,7 +366,7 @@ struct LocalFileView: View {
         let url = file.url
         Task.detached(priority: .utility) {
             guard let root = LocalGit.repoRoot(for: url) else { return }
-            let commits = LocalGit.history(of: url, limit: 200)
+            let commits = LocalGit.history(of: url)
             let branches = LocalGit.branches(in: root, remote: false)
             let remotes = LocalGit.branches(in: root, remote: true)
             let current = LocalGit.currentBranch(in: root)
@@ -424,14 +399,12 @@ struct LocalFileView: View {
         let url = file.url
         compareGeneration += 1
         let generation = compareGeneration
-        compareLoading = true
         Task.detached(priority: .userInitiated) {
             let old = LocalGit.content(of: url, at: ref)
             await MainActor.run {
                 // Scrubbing fires these faster than git answers — only the
                 // newest request may land, or the page and banner disagree.
                 guard generation == compareGeneration else { return }
-                compareLoading = false
                 guard let old else {
                     state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
                     stopComparing()
@@ -446,58 +419,6 @@ struct LocalFileView: View {
     private func stopComparing() {
         compare = nil
         compareText = nil
-        timelineActive = false
     }
 
-    // MARK: - Timeline
-
-    /// Commits oldest → newest, matching the slider's left → right.
-    private var timelineCommits: [LocalGit.Commit] { commits.reversed() }
-
-    /// The document's history as a scrubber: drag (or arrow-step) through
-    /// commits and watch the rendered diff against today evolve.
-    private var timelineBar: some View {
-        let count = timelineCommits.count
-        let index = min(max(Int(timelinePosition.rounded()), 0), max(0, count - 1))
-        let commit = timelineCommits.indices.contains(index) ? timelineCommits[index] : nil
-        return HStack(spacing: 10) {
-            if compareLoading {
-                ProgressView().controlSize(.small)
-            } else {
-                Image(systemName: "clock.arrow.circlepath")
-            }
-            Stepper {
-                if let commit {
-                    Text("\(commit.shortSHA) · \(commit.date) · \(commit.subject)")
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: 380, alignment: .leading)
-                        .layoutPriority(0)
-                }
-            } onIncrement: {
-                timelinePosition = Double(min(index + 1, count - 1))
-            } onDecrement: {
-                timelinePosition = Double(max(index - 1, 0))
-            }
-            if count > 1 {
-                Slider(value: $timelinePosition, in: 0...Double(count - 1), step: 1)
-                    .frame(minWidth: 160, maxWidth: 320)
-                    .help("Older ⟷ newer — the page shows what changed since this commit")
-            }
-            Spacer(minLength: 8)
-            Button("Done") { stopComparing() }
-        }
-        .font(.callout)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background(Color.blue.opacity(0.14))
-    }
-
-    private func beginTimeline() {
-        guard let oldest = timelineCommits.first else { return }
-        timelineActive = true
-        timelinePosition = 0
-        startComparing(ref: oldest.sha, label: "\(oldest.shortSHA) (\(oldest.date))")
-    }
 }
