@@ -65,7 +65,13 @@ enum OpenQuickly {
                 continue
             }
             guard !inFence, trimmed.hasPrefix("#") else { continue }
-            let title = trimmed.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces)
+            var title = String(trimmed.drop { $0 == "#" }).trimmingCharacters(in: .whitespaces)
+            // Approximate the rendered textContent the page slugged: inline
+            // links/images collapse to their text, code/emphasis markers drop.
+            title = title.replacingOccurrences(of: #"!?\[([^\]]*)\]\([^)]*\)"#,
+                                               with: "$1", options: .regularExpression)
+            title = title.replacingOccurrences(of: "[`*_]", with: "",
+                                               options: .regularExpression)
             guard !title.isEmpty else { continue }
             result.append((title, headingSlug(title)))
         }

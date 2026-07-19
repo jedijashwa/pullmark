@@ -75,8 +75,13 @@ enum BlockDiff {
         var addedIndex: [String: [Int]] = [:]
         for (i, segment) in segments.enumerated() {
             switch segment {
-            case .removed(let block): removedIndex[block.text, default: []].append(i)
-            case .added(let block): addedIndex[block.text, default: []].append(i)
+            // Substantial blocks only: a lone "---" or short one-liner that
+            // happens to be deleted here and added there is coincidence,
+            // and the chip's provenance claim must never be a guess.
+            case .removed(let block) where block.text.count >= 24:
+                removedIndex[block.text, default: []].append(i)
+            case .added(let block) where block.text.count >= 24:
+                addedIndex[block.text, default: []].append(i)
             default: break
             }
         }

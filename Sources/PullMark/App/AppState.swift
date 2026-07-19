@@ -96,12 +96,8 @@ struct RecentItem: Codable, Identifiable, Equatable {
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var localFiles: [LocalFile] = [] {
-        didSet { if Self.keyInstance === self { snapshotSession() } }
-    }
-    @Published var prSessions: [PRSession] = [] {
-        didSet { if Self.keyInstance === self { snapshotSession() } }
-    }
+    @Published var localFiles: [LocalFile] = []
+    @Published var prSessions: [PRSession] = []
     @Published var selection: SidebarSelection?
     @Published var showAddPR = false
     @Published var lastError: String?
@@ -221,6 +217,9 @@ final class AppState: ObservableObject {
         }
         loadRecents()
         Task { @MainActor [weak self] in
+            // Brief grace so launch-time opens (CLI, Finder) land first —
+            // restore skips itself when anything is already open.
+            try? await Task.sleep(nanoseconds: 300_000_000)
             self?.restoreSessionIfWanted()
             await self?.refreshInboxIfDue()
         }
@@ -240,12 +239,17 @@ final class AppState: ObservableObject {
     /// Search-API rate limits are tight (30/min): refresh at most every
     /// five minutes, quietly — an inbox should never produce error alerts.
     func refreshInboxIfDue() async {
-        guard inboxEnabled else { return }
+        // Only the key window polls — N windows sharing one rate limit
+        // would multiply identical searches for identical results.
+        guard inboxEnabled, Self.keyInstance === self else { return }
         if let last = lastInboxRefresh, Date().timeIntervalSince(last) < 300 { return }
         lastInboxRefresh = Date()
         guard let items = try? await client.reviewRequests() else { return }
         inbox = items
-        for item in items {
+        // Badge counts: top 15 only, cache pruned to live entries.
+        let liveKeys = Set(items.map { $0.id + "@" + $0.updatedAt })
+        inboxMDCounts = inboxMDCounts.filter { liveKeys.contains($0.key) }
+        for item in items.prefix(15) {
             let cacheKey = item.id + "@" + item.updatedAt
             if inboxMDCounts[cacheKey] == nil,
                let count = try? await client.markdownFileCount(item.ref) {
@@ -266,9 +270,15 @@ final class AppState: ObservableObject {
     func openInboxItem(_ item: GitHubClient.InboxPR) {
         var seen = UserDefaults.standard.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
         seen[item.id] = item.updatedAt
-        // Bounded: forget entries no longer in the inbox.
-        let live = Set(inbox.map(\.id))
-        seen = seen.filter { live.contains($0.key) }
+        // Bounded, but never pruned against the current (single-page) inbox
+        // — that resurrected read state for anything briefly absent.
+        if seen.count > 200 {
+            let live = Set(inbox.map(\.id))
+            for key in seen.keys where !live.contains(key) {
+                seen[key] = nil
+                if seen.count <= 200 { break }
+            }
+        }
         UserDefaults.standard.set(seen, forKey: DefaultsKeys.inboxSeen)
         objectWillChange.send()
         Task {
@@ -285,10 +295,15 @@ final class AppState: ObservableObject {
     /// Files and PRs reopen where you left off (Settings-controlled,
     /// default on). Snapshots are written on every sidebar change; restore
     /// is skipped when the app was launched to open something specific.
+    /// PRs from the previous snapshot that haven't (re)opened yet — kept in
+    /// every new snapshot so an offline launch can't erase them.
+    private var pendingRestorePRs: Set<String> = []
+
     func snapshotSession() {
+        let openPRs = prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" }
         let snapshot: [String: [String]] = [
             "files": localFiles.map(\.url.path),
-            "prs": prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" },
+            "prs": Array(Set(openPRs).union(pendingRestorePRs)),
         ]
         UserDefaults.standard.set(snapshot, forKey: DefaultsKeys.sessionSnapshot)
     }
@@ -306,8 +321,17 @@ final class AppState: ObservableObject {
             add(url: URL(fileURLWithPath: path))
         }
         selection = nil
-        for pr in snapshot["prs"] ?? [] {
-            Task { try? await addPR(pr) }
+        pendingRestorePRs = Set(snapshot["prs"] ?? [])
+        for pr in pendingRestorePRs {
+            Task { [weak self] in
+                do {
+                    try await self?.addPR(pr)
+                    self?.pendingRestorePRs.remove(pr)
+                } catch {
+                    // Kept pending: the next snapshot still lists it, so a
+                    // failed (offline) restore never erases the PR.
+                }
+            }
         }
     }
 

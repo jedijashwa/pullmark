@@ -7,12 +7,12 @@ import Testing
     }
 
     @Test func relocatedBlockBecomesMovedNotAddRemove() {
-        let old = "# Title\n\nAlpha paragraph.\n\nBeta paragraph.\n\nGamma paragraph."
-        let new = "# Title\n\nBeta paragraph.\n\nGamma paragraph.\n\nAlpha paragraph."
+        let old = "# Title\n\nAlpha paragraph, long enough to pair.\n\nBeta paragraph, long enough to pair.\n\nGamma paragraph, long enough to pair."
+        let new = "# Title\n\nBeta paragraph, long enough to pair.\n\nGamma paragraph, long enough to pair.\n\nAlpha paragraph, long enough to pair."
         let result = segments(old: old, new: new)
         let moved = result.compactMap { if case .moved(let o, let n) = $0 { return (o, n) }; return nil }
         #expect(moved.count == 1)
-        #expect(moved.first?.0.text == "Alpha paragraph.")
+        #expect(moved.first?.0.text == "Alpha paragraph, long enough to pair.")
         // The removal half disappears — a move renders once, at its new home.
         #expect(!result.contains { if case .removed = $0 { return true }; return false })
         #expect(!result.contains { if case .added = $0 { return true }; return false })
@@ -22,22 +22,31 @@ import Testing
         }
     }
 
+    @Test func shortBlocksNeverPairAsMoves() {
+        // Provenance must never be a guess: a lone "---" (or any block under
+        // the size floor) that vanishes here and appears there stays plain.
+        let old = "Some opening paragraph text here.\n\n---\n\nClosing paragraph text here today."
+        let new = "Some opening paragraph text here.\n\nClosing paragraph text here today.\n\n---"
+        let result = segments(old: old, new: new)
+        #expect(!result.contains { if case .moved = $0 { return true }; return false })
+    }
+
     @Test func duplicatedTextIsNeverMispairedAsMove() {
         // "Note: see docs." exists twice among removals — ambiguous, so both
         // stay plain removed/added rather than guessing a pairing.
-        let old = "Note: see docs.\n\nMiddle.\n\nNote: see docs."
-        let new = "Middle.\n\nNote: see docs.\n\nTail."
+        let old = "Note: see the documentation.\n\nMiddle paragraph, long enough.\n\nNote: see the documentation."
+        let new = "Middle paragraph, long enough.\n\nNote: see the documentation.\n\nTail paragraph, long enough."
         let result = segments(old: old, new: new)
         #expect(!result.contains { if case .moved = $0 { return true }; return false })
     }
 
     @Test func movedPayloadCarriesProvenance() {
-        let old = "One.\n\nTwo.\n\nThree."
-        let new = "Two.\n\nThree.\n\nOne."
+        let old = "First block with plenty of text.\n\nSecond block, also long.\n\nThird block, also long enough."
+        let new = "Second block, also long.\n\nThird block, also long enough.\n\nFirst block with plenty of text."
         let payloads = segments(old: old, new: new).map(\.payload)
         let moved = payloads.first { $0.kind == "moved" }
         #expect(moved != nil)
-        #expect(moved?.text == "One.")
+        #expect(moved?.text == "First block with plenty of text.")
         #expect(moved?.movedFromLine == 1)
         #expect(moved?.side == "RIGHT")
     }

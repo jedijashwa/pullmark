@@ -30,7 +30,7 @@ struct OpenQuicklyPalette: View {
                 .onSubmit { open(at: selectedIndex) }
             Divider()
             if filtered.isEmpty {
-                Text(query.isEmpty ? "Type to jump to a file, heading, or pull request."
+                Text(query.isEmpty ? "Nothing open yet — open a file or pull request first."
                                    : "No matches.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -65,8 +65,9 @@ struct OpenQuicklyPalette: View {
                 }
             }
         }
-        .frame(width: 560, height: 380)
+        .frame(width: 620, height: 440)
         .onAppear { focused = true }
+        .onExitCommand { dismiss() }
         .onChange(of: query) { _ in selectedIndex = 0 }
         .onMoveCommand { direction in
             switch direction {
