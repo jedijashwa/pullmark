@@ -14,6 +14,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 
 - **Local Markdown viewing** — open files or whole folders; files re-render automatically when they change on disk. Relative images render, relative links to other Markdown files open in-app, heading anchors (`#section` links) jump within the page, and external links open in your browser — with a status pill previewing every link destination on hover.
 - **GitHub-flavored rendering** — tables (with alignment), task lists, nested/numbered lists, strikethrough, footnotes, alerts/callouts (`> [!NOTE]`), syntax-highlighted code blocks, and Mermaid diagrams. The full construct list is exercised by [docs/kitchen-sink.md](docs/kitchen-sink.md) and asserted in CI by `scripts/render-check.sh`.
+- **Math and `[toc]`** — `$inline$` and `$$block$$` TeX render through bundled KaTeX, fully offline (prose like `$5 and $10` stays currency), and a paragraph containing just `[toc]` becomes a linked table of contents. Typora-style `==highlight==`, `~sub~`, and `^sup^` render too.
 - **Rendered PR diffs** — added, removed, and changed blocks highlighted in place. Changed blocks show a **word-level diff** when the edit is small enough to make sense (falling back to old/new stacked when it isn't). Switch between **inline** and **side-by-side** layout, or drop to the raw *Source Diff*, or preview the final *Result*.
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
   - **Comment Now** posts a single review comment immediately.
@@ -21,12 +22,15 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
   - **Insert Suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
 - **PR images and links** — repo-relative images in PR files render (fetched at the PR's commit, cached in memory only); repo-relative links to Markdown files open in-app at that commit, other repo links open on GitHub.
 - **Stays current** — open PRs are checked every minute; if the branch moves, a banner offers a one-click refresh (your draft comments survive).
-- **Navigation** — a navigator-style outline sidebar (toolbar toggle) listing the document's headings with level indentation, and **⌘F** find-in-page with match stepping.
+- **Navigation** — a navigator-style outline sidebar (toolbar toggle) listing the document's headings with level indentation, **⌘F** find-in-page with match stepping, and **⇧⌘F** search across every file in the sidebar with results grouped by file.
+- **Export** — **File → Export as PDF…** saves the rendered document as one continuous page; **Export as HTML…** writes a fully self-contained single file (styles inlined, local images embedded).
+- **Copy in two flavors** — **⌘C** copies the selection as rich text that pastes formatted into Google Docs, Slack, and friends; **⌥⌘C** (Copy as Markdown) copies the original Markdown source behind the selection (the whole document when nothing is selected).
+- **Word count** — a quiet words · reading-time pill in the corner of rendered documents.
 - **Recents** — recently opened files, folders, and pull requests live in **File → Open Recent** and a sidebar section. PR entries show their live status — draft, open, closed, merged, or unavailable (colored GitHub-style icons, kept up to date while you work).
 - **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style (Mermaid degrades to a code block in previews).
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.
-- **Reading themes** — GitHub (default), Editorial (serif headers, warm paper), and Terminal (monospace, phosphor accent), chosen from a Settings window (⌘,) with live preview cards. Each theme adapts to light and dark.
+- **Reading themes** — Editorial (default; serif headers, warm paper), GitHub (the classic github.com look), and Terminal (monospace, phosphor accent), chosen from a Settings window (⌘,) with live preview cards. Each theme adapts to light and dark. Drop `.css` files into the Themes folder (button in Settings) to add your own — they appear as extra preview cards.
 - **Built-in updates** — PullMark checks for new releases on launch and periodically. Brew-managed installs get a one-click **Update Now** that upgrades and relaunches in place (other installs get a Download button), and a "What's New" summary shows everything that changed after you update.
 - **Blame at reading altitude** — a toolbar toggle draws a quiet gutter beside the rendered document: one avatar per run of blocks last touched by the same commit, with a hover popover (author, relative date, commit headline, SHA chip) and a click-through **line history** panel (`git log -L` for local files; the file's history, split PR-branch vs base, for PR files). Uses GitHub's blame API when the file lives in a GitHub repo (PRs, or local repos with a github.com remote), plain `git blame` otherwise.
 - **Front matter as metadata** — YAML front matter renders as a quiet, collapsible key/value table at the top of documents (and Quick Look previews), and rendered diffs show compact old/new tables inside the usual red/green blocks instead of walls of bold prose.
@@ -35,7 +39,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 
 ## Installation
 
-### Homebrew (recommended)
+### Homebrew
 
 ```sh
 brew tap jedijashwa/tap
@@ -43,11 +47,11 @@ brew trust jedijashwa/tap    # Homebrew ≥ 6 requires trusting third-party taps
 brew install --cask pullmark
 ```
 
-Releases are signed with a Developer ID and notarized by Apple — no Gatekeeper warnings.
-
 ### Direct download
 
 Download `PullMark-<version>.dmg` from the [latest release](https://github.com/jedijashwa/pullmark/releases/latest), open it, and drag PullMark into Applications.
+
+Either way, PullMark checks for updates and installs them with one click. Releases are signed with a Developer ID and notarized by Apple — no Gatekeeper warnings.
 
 ### Build from source
 
