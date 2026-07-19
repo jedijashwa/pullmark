@@ -97,9 +97,10 @@ import Testing
         #expect(preview.contains("\"preview\":true"))
     }
 
-    @Test func themeSelectionFallsBackToGitHub() {
-        #expect(Theme.current(from: nil) == .github)
-        #expect(Theme.current(from: "nonsense") == .github)
+    @Test func themeSelectionFallsBackToEditorial() {
+        // Editorial is the app's signature default; GitHub remains selectable.
+        #expect(Theme.current(from: nil) == .editorial)
+        #expect(Theme.current(from: "nonsense") == .editorial)
         #expect(Theme.current(from: "editorial") == .editorial)
         #expect(Theme.current(from: "terminal") == .terminal)
     }
