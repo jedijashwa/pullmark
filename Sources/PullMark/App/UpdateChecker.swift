@@ -341,7 +341,10 @@ final class UpdateChecker: ObservableObject {
                 fileExists: { FileManager.default.isExecutableFile(atPath: $0) },
                 runner: BrewUpdate.run
             )
-            await MainActor.run { self?.updateMethod = method }
+            // Rebound to a `let` so the MainActor closure captures an
+            // immutable reference (weak `self` is a var — a Swift 6 error).
+            guard let self else { return }
+            await MainActor.run { self.updateMethod = method }
         }
     }
 
@@ -371,8 +374,8 @@ final class UpdateChecker: ObservableObject {
         updateRun = .updating("Updating…")
         Task.detached(priority: .userInitiated) { [weak self] in
             let failure = BrewUpdate.runUpgrade(brewPath: brewPath)
+            guard let self else { return }
             await MainActor.run {
-                guard let self else { return }
                 if let failure {
                     self.updateRun = .failed(failure)
                 } else {

@@ -49,7 +49,7 @@ brew install --cask pullmark
 
 ### Direct download
 
-Download `PullMark-<version>.dmg` from the [latest release](https://github.com/jedijashwa/pullmark/releases/latest), open it, and drag PullMark into Applications.
+[**Download PullMark.dmg**](https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg) (always the latest version), open it, and drag PullMark into Applications. Launching it straight from the disk image also works — PullMark offers to move itself into Applications, then to eject the image and drop the `.dmg` in the Trash. Versioned downloads live on the [releases page](https://github.com/jedijashwa/pullmark/releases).
 
 Either way, PullMark checks for updates and installs them with one click. Releases are signed with a Developer ID and notarized by Apple — no Gatekeeper warnings.
 
