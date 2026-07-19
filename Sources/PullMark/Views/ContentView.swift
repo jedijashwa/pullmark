@@ -61,9 +61,6 @@ struct ContentView: View {
         .sheet(isPresented: $state.openQuicklyVisible) {
             OpenQuicklyPalette()
         }
-        .sheet(item: $state.doctorRequest) { request in
-            DocDoctorSheet(root: request.root)
-        }
         .sheet(isPresented: $updates.showReleaseNotes) {
             ReleaseNotesSheet(
                 title: "What's New in PullMark \(updates.availableVersion ?? "")",
