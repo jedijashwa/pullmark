@@ -832,6 +832,9 @@
         var bottom = null;
         blocks.forEach(function (block) {
           if (block.start > item.run.lineEnd || block.end < item.run.lineStart) { return; }
+          // Hidden while its in-place editor is open: a zero rect would
+          // smear this run's gutter entry to the viewport top.
+          if (!block.el.offsetHeight) { return; }
           var rect = block.el.getBoundingClientRect();
           if (top === null || rect.top < top) { top = rect.top; }
           if (bottom === null || rect.bottom > bottom) { bottom = rect.bottom; }
@@ -1109,27 +1112,123 @@
     // passes mutate the DOM: the blame gutter positions its runs from them,
     // and Copy as Markdown maps the selection back to source lines.
     var linesAnnotated = annotateBlockLines(docBody, fm ? fm.endLine : 0);
-    // Local editing: every line-annotated block grows a hover pencil that
-    // opens the block editor in Swift.
+    // Local editing, in place: the pencil (or a double-click) swaps the
+    // rendered block for an editor right in the page. ⌘↩ commits through
+    // the bridge (Swift applies it with the same guarded, versioned write
+    // path as ever), Esc restores the rendered block untouched.
+    function beginInlineEdit(el, lo, hi) {
+      if (document.querySelector(".pm-inline-edit")) { return; } // one at a time
+      var seed = (payload.markdown || "").split("\n").slice(lo - 1, hi).join("\n");
+      var wrap = document.createElement("div");
+      wrap.className = "pm-inline-edit";
+      // Carries the block's lines so the blame gutter measures the editor
+      // while the rendered block is hidden.
+      wrap.setAttribute("data-pm-lines", lo + "-" + hi);
+      var ta = document.createElement("textarea");
+      ta.value = seed;
+      ta.spellcheck = false;
+      ta.rows = Math.min(24, seed.split("\n").length + 1);
+      var hint = document.createElement("div");
+      hint.className = "pm-inline-edit-hint";
+      var saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "pm-inline-edit-btn pm-inline-edit-save";
+      saveBtn.textContent = "Save";
+      saveBtn.title = "\u2318\u21A9";
+      var cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "pm-inline-edit-btn";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.title = "\u238B";
+      var hintText = document.createElement("span");
+      hintText.textContent = "\u2318\u21A9 save \u00B7 \u238B cancel"
+        + (payload.autosaveEdits === false ? " \u00B7 saves in the window, \u2318S writes" : "");
+      hint.append(saveBtn, cancelBtn, hintText);
+      function cancel() {
+        window.__pmCancelInlineEdit = null;
+        wrap.remove();
+        el.style.display = "";
+      }
+      // Swift calls this when a save is refused (file changed underneath,
+      // write failure) — without it the disabled editor would be stuck,
+      // since an unchanged document never re-renders.
+      window.__pmCancelInlineEdit = cancel;
+      function commit() {
+        if (ta.value === seed) { cancel(); return; }
+        ta.disabled = true;
+        saveBtn.disabled = true;
+        cancelBtn.disabled = true;
+        hintText.textContent = "saving\u2026";
+        post({ type: "editLocal", lineStart: lo, lineEnd: hi,
+               replacement: ta.value, seed: seed });
+      }
+      ta.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          cancel();
+        }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          commit();
+        }
+      });
+      saveBtn.addEventListener("click", commit);
+      cancelBtn.addEventListener("click", cancel);
+      wrap.append(ta, hint);
+      el.style.display = "none";
+      el.after(wrap);
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+    }
+
+    // The block for a line range, resolved at interaction time — enhance()
+    // replaces some elements (mermaid) after the pencils are attached, so
+    // captured references would go stale.
+    function editableBlockFor(lines) {
+      var found = null;
+      for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+        if (el.classList.contains("pm-editable")
+            && el.getAttribute("data-pm-lines") === lines) { found = el; }
+      }
+      return found;
+    }
+
     if (payload.editable && linesAnnotated) {
       for (var ec = content.firstElementChild; ec; ec = ec.nextElementSibling) {
         var range = (ec.getAttribute("data-pm-lines") || "").split("-");
         if (range.length !== 2) { continue; }
         ec.classList.add("pm-editable");
-        (function (lo, hi) {
-          var btn = document.createElement("button");
-          btn.className = "pm-comment-btn pm-edit-btn pm-edit-local";
-          btn.type = "button";
-          btn.innerHTML = EDIT_ICON;
-          btn.title = "Edit this block (lines " + lo + "–" + hi + ")";
-          btn.setAttribute("aria-label", btn.title);
-          btn.addEventListener("click", function (event) {
-            event.stopPropagation();
-            post({ type: "editLocal", lineStart: lo, lineEnd: hi });
-          });
-          ec.append(btn);
-        })(parseInt(range[0], 10), parseInt(range[1], 10));
+        var btn = document.createElement("button");
+        btn.className = "pm-comment-btn pm-edit-btn pm-edit-local";
+        btn.type = "button";
+        btn.innerHTML = EDIT_ICON;
+        btn.title = "Edit this block in place (lines " + range[0] + "\u2013" + range[1] + ")";
+        btn.setAttribute("aria-label", btn.title);
+        ec.append(btn);
       }
+      // Delegated: survives enhance() replacing individual blocks.
+      content.addEventListener("click", function (event) {
+        var pencil = event.target.closest(".pm-edit-local");
+        if (!pencil) { return; }
+        event.stopPropagation();
+        var host = pencil.closest("[data-pm-lines]");
+        var lines = host && host.getAttribute("data-pm-lines");
+        var el = lines && editableBlockFor(lines);
+        if (!el) { return; }
+        var parts = lines.split("-");
+        beginInlineEdit(el, parseInt(parts[0], 10), parseInt(parts[1], 10));
+      });
+      content.addEventListener("dblclick", function (event) {
+        // Double-click-to-select-a-word is bedrock macOS: only a dblclick
+        // that selected NOTHING (padding, blank space) opens the editor.
+        if (event.target.closest("a, textarea, button")) { return; }
+        if (String(window.getSelection()).length > 0) { return; }
+        var host = event.target.closest(".pm-editable[data-pm-lines]");
+        if (!host) { return; }
+        var parts = host.getAttribute("data-pm-lines").split("-");
+        beginInlineEdit(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
+      });
     }
     var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;
     if (fm) {

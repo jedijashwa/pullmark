@@ -6,6 +6,10 @@ section current as features land.
 
 ## Unreleased
 
+- Editing grew up: click a block's pencil and it becomes an editor right
+  inside the rendered page, with Save/Cancel buttons. ⌘↩ saves
+  through the same guarded path as ever (collision check, edit history,
+  autosave or ⌘S per Settings), Esc puts the rendered block back untouched.
 - A review-request inbox: pull requests awaiting your review appear at the
   top of the sidebar with unread indicators and a Markdown-file-count badge
   (PRs with no Markdown are dimmed — PullMark will open them, but the

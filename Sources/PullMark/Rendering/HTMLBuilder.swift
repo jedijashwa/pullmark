@@ -33,6 +33,8 @@ enum HTMLBuilder {
         /// Local documents: blocks grow a hover pencil that opens the
         /// block editor (bridge "editLocal").
         var editable: Bool?
+        /// Shown in the in-place editor's hint: false = manual-save mode.
+        var autosaveEdits: Bool?
         /// Blame gutter runs (document mode). The page renders the whole
         /// markdown normally (footnotes and reference links intact), then
         /// annotates block positions and draws a left gutter from these runs.
@@ -62,6 +64,7 @@ enum HTMLBuilder {
                              customCSS: String? = nil,
                              preview: Bool = false,
                              editable: Bool = false,
+                             autosave: Bool = true,
                              blame: [BlameRunPayload]? = nil,
                              blameNote: String? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
@@ -71,6 +74,7 @@ enum HTMLBuilder {
                                     theme: theme,
                                     preview: preview ? true : nil,
                                     editable: editable ? true : nil,
+                                    autosaveEdits: editable ? autosave : nil,
                                     blame: blame,
                                     blameNote: blameNote),
              title: title, customCSS: customCSS)
@@ -119,7 +123,15 @@ enum HTMLBuilder {
     /// into the script-data-escaped states, and the JS line separators
     /// U+2028/U+2029 are escaped on top of that.
     static func jsonLiteral<T: Encodable>(_ value: T) -> String {
-        guard let data = try? JSONEncoder().encode(value),
+        let encoder = JSONEncoder()
+        // Deterministic key order is LOAD-BEARING: the web view reloads
+        // whenever the page string changes, and SwiftUI recomputes pages on
+        // unrelated state changes (scroll-spy, timers). Foundation's
+        // encoder otherwise randomizes object key order per encode, which
+        // made every recompute a byte-different page — reloading the web
+        // view and yanking the reader back to the top mid-scroll.
+        encoder.outputFormatting = .sortedKeys
+        guard let data = try? encoder.encode(value),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
         }
