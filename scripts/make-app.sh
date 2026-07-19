@@ -154,6 +154,9 @@ cat > "$APPEX/Contents/Info.plist" <<EOF
 </plist>
 EOF
 
+# Both bundles join the team-prefixed app group: the app mirrors the
+# reading-theme choice into the shared defaults suite, and the sandboxed
+# Quick Look appex reads it there (it cannot see the app's own defaults).
 QL_ENTITLEMENTS="$(mktemp -t ql-entitlements).plist"
 cat > "$QL_ENTITLEMENTS" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -162,6 +165,24 @@ cat > "$QL_ENTITLEMENTS" <<'EOF'
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>35F47G5Y6D.app.pullmark</string>
+    </array>
+</dict>
+</plist>
+EOF
+
+APP_ENTITLEMENTS="$(mktemp -t app-entitlements).plist"
+cat > "$APP_ENTITLEMENTS" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>35F47G5Y6D.app.pullmark</string>
+    </array>
 </dict>
 </plist>
 EOF
@@ -169,5 +190,6 @@ EOF
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"}" --entitlements "$QL_ENTITLEMENTS" "$APPEX"
 rm -f "$QL_ENTITLEMENTS"
 
-codesign --force --sign "$SIGN_IDENTITY" "${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"}" "$APP"
+codesign --force --sign "$SIGN_IDENTITY" "${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"}" --entitlements "$APP_ENTITLEMENTS" "$APP"
+rm -f "$APP_ENTITLEMENTS"
 echo "Built $APP"

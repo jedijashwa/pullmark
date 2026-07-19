@@ -181,6 +181,14 @@ final class StaticRenderer {
         </style>
         """
 
+        // app.css carries the reading-theme packs (:root[data-theme="…"]);
+        // appended last so a chosen theme's rules win over the inline
+        // defaults above. It references no external assets.
+        if let appCSS = try? String(contentsOf: resources.appendingPathComponent("app.css"),
+                                    encoding: .utf8) {
+            stylesheet += "<style>\(appCSS)</style>"
+        }
+
         for script in [marked, alert, footnote, hljs, katex, extensions] {
             context.evaluateScript(script)
         }
@@ -295,6 +303,22 @@ final class StaticRenderer {
         ready = context.objectForKeyedSubscript("__render")?.isUndefined == false
     }
 
+    /// The app mirrors its reading-theme choice into the shared app-group
+    /// suite (see SharedTheme in the app target) because a sandboxed appex
+    /// cannot read another bundle's defaults. Built-in themes apply
+    /// directly; custom .css themes live in the app's container where this
+    /// appex can't reach, so they fall back to their GitHub base; no stored
+    /// value means the app-default Editorial.
+    static func sharedTheme() -> String {
+        let raw = UserDefaults(suiteName: "35F47G5Y6D.app.pullmark")?
+            .string(forKey: "pm.theme")
+        switch raw {
+        case "github", "editorial", "terminal": return raw!
+        case .some(let value) where value.hasPrefix("custom:"): return "github"
+        default: return "editorial"
+        }
+    }
+
     func renderPage(markdown: String, title: String) throws -> String {
         guard ready else { throw RenderError.resourcesMissing }
         context.exception = nil
@@ -316,7 +340,7 @@ final class StaticRenderer {
             + "connect-src 'none'; frame-src 'none'; object-src 'none'"
         return """
         <!DOCTYPE html>
-        <html>
+        <html data-theme="\(Self.sharedTheme())">
         <head>
         <meta charset="utf-8">
         <meta http-equiv="Content-Security-Policy" content="\(csp)">

@@ -9,6 +9,8 @@ struct PROverviewView: View {
     @State private var reviewSummary = ""
     @State private var submitting = false
     @State private var confirmation: String?
+    @State private var findSeed: String?
+    @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
     var body: some View {
@@ -16,6 +18,9 @@ struct PROverviewView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if session.updateAvailable {
                     PRUpdateBanner(sessionID: sessionID)
+                }
+                if state.findBarVisible {
+                    FindBar(proxy: proxy, seed: $findSeed)
                 }
                 header(session)
                     .padding([.horizontal, .top], 20)
@@ -27,14 +32,24 @@ struct PROverviewView: View {
                 }
                 Divider()
                 let style = ThemeSelection.pageStyle(from: themeRaw)
-                MarkdownWebView(html: HTMLBuilder.documentPage(
-                    markdown: session.details.body?.isEmpty == false
-                        ? session.details.body!
-                        : "_No description provided._",
-                    title: session.details.title,
-                    theme: style.theme,
-                    customCSS: style.customCSS
-                ))
+                MarkdownWebView(
+                    html: HTMLBuilder.documentPage(
+                        markdown: session.details.body?.isEmpty == false
+                            ? session.details.body!
+                            : "_No description provided._",
+                        title: session.details.title,
+                        theme: style.theme,
+                        customCSS: style.customCSS
+                    ),
+                    onPageLoaded: {
+                        // Restore find highlights if the page re-renders
+                        // beneath an active find (same as the file views).
+                        if state.findBarVisible, let query = proxy.activeFindQuery {
+                            findSeed = query
+                        }
+                    },
+                    proxy: proxy
+                )
                 .background(Color(nsColor: .textBackgroundColor))
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))

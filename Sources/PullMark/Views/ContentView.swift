@@ -67,12 +67,22 @@ struct ContentView: View {
         } message: {
             Text(state.lastError ?? "")
         }
+        .alert(state.lastNotice ?? "", isPresented: noticePresented) {
+            Button("OK", role: .cancel) {}
+        }
     }
 
     private var errorPresented: Binding<Bool> {
         Binding(
             get: { state.lastError != nil },
             set: { if !$0 { state.lastError = nil } }
+        )
+    }
+
+    private var noticePresented: Binding<Bool> {
+        Binding(
+            get: { state.lastNotice != nil },
+            set: { if !$0 { state.lastNotice = nil } }
         )
     }
 }

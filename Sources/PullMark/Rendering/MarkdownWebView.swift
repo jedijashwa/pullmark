@@ -73,8 +73,14 @@ struct MarkdownWebView: NSViewRepresentable {
             : PassthroughWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         // Let the SwiftUI background show through so there is no white flash
-        // in dark mode while pages load.
-        webView.setValue(false, forKey: "drawsBackground")
+        // in dark mode while pages load. There is still no supported macOS
+        // API for this; the KVC is guarded so a future WebKit that drops the
+        // property degrades to a white flash instead of an NSUnknownKey
+        // crash, and the supported under-page color covers overscroll.
+        if webView.responds(to: Selector(("setDrawsBackground:"))) {
+            webView.setValue(false, forKey: "drawsBackground")
+        }
+        webView.underPageBackgroundColor = .clear
         return webView
     }
 
@@ -165,6 +171,11 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Several web views loading at once (Settings theme previews)
+            // occasionally leave one blank until it is clicked — WebKit
+            // skips the first composited frame for an occluded/busy view.
+            // Marking the view dirty after navigation forces that frame.
+            DispatchQueue.main.async { webView.needsDisplay = true }
             parent.onPageLoaded?()
         }
 
