@@ -152,7 +152,7 @@ struct LocalFileView: View {
     private var compareMenu: some View {
         Menu {
             if !commits.isEmpty {
-                Section("History") {
+                Section(commits.count >= 25 ? "History (25 most recent)" : "History") {
                     ForEach(commits) { commit in
                         Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
                             startComparing(ref: commit.sha,
@@ -162,14 +162,14 @@ struct LocalFileView: View {
                 }
             }
             if !branches.isEmpty {
-                Section("Branches") {
+                Section(branches.count >= 20 ? "Recent Branches" : "Branches") {
                     ForEach(branches, id: \.self) { branch in
                         Button(branch) { startComparing(ref: branch, label: branch) }
                     }
                 }
             }
             if !remoteBranches.isEmpty {
-                Section("Remote Branches") {
+                Section(remoteBranches.count >= 20 ? "Recent Remote Branches" : "Remote Branches") {
                     ForEach(remoteBranches, id: \.self) { branch in
                         Button(branch) { startComparing(ref: branch, label: branch) }
                     }
