@@ -13,6 +13,15 @@ section current as features land.
   inlined (KaTeX with embedded fonts when math is present), scripts and the
   CSP are stripped, and local/already-loaded PR images are embedded as data:
   URIs (unfetched remote images keep their URLs, best effort).
+- Copy in two flavors (#10): ⌘C keeps the web view's native copy — the
+  selection lands on the pasteboard as rich text (RTF/HTML) that pastes
+  formatted into Google Docs, Slack, and friends. Edit → "Copy as Markdown"
+  (⌥⌘C) instead maps the selection back to the original Markdown source at
+  whole-block granularity (selecting part of a block copies that whole
+  block's source; no selection copies the whole document). Works on local
+  files, a PR file's Result view, and browsed repo docs. Rendered documents
+  now always annotate blocks with their source line ranges (previously only
+  when blame was shown), which is what makes the mapping possible.
 - Search across all files (#8): ⇧⌘F (Edit-menu "Search All Files…") opens a
   command-palette-style search over everything in the sidebar — local files
   are read from disk, and PR documents already loaded in memory are included

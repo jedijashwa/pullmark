@@ -79,16 +79,16 @@ check "strikethrough"        "<del>strikethrough</del>"
 check "inline code"          "<code>inline code</code>"
 check "link"                 '<a href="https://example.com">link</a>'
 check "autolink"             '<a href="https://example.com/auto">'
-check "ordered list"         "<ol>"
-check "ordered list start"   '<ol start="5">'
+check "ordered list"         "<ol[ >]"
+check "ordered list start"   '<ol start="5"'
 check "nested list"          "<li>Nested ordered"
-check "unordered list"       "<ul>"
+check "unordered list"       "<ul[ >]"
 check "task checkbox"        'type="checkbox"'
-check "blockquote"           "<blockquote>"
-check "table"                "<table>"
+check "blockquote"           "<blockquote[ >]"
+check "table"                "<table[ >]"
 check "table alignment"      'align="right"|text-align: ?right'
 check "code block highlight" 'hljs-(keyword|title|function)'
-check "horizontal rule"      "<hr>"
+check "horizontal rule"      "<hr[ >]"
 check "mermaid svg"          '<svg[^>]*(id="mermaid|aria-roledescription="pie)'
 check "alert"                "markdown-alert-tip"
 check "footnote"             'footnote|data-footnote'
@@ -107,6 +107,7 @@ check "superscript"          'mc<sup>2</sup>'
 check "tilde strikethrough"  '<del>strikethrough still works</del>'
 check "toc list"             '<nav class="pm-toc"[^>]*><ul class="pm-toc-list">'
 check "toc links headings"   '<a href="#math">Math</a>'
+check "block line annotations" 'data-pm-lines="[0-9]+-[0-9]+"'
 
 # ---- Hostile markdown: script injection must be inert under the CSP (#5).
 cat > "$WORK/hostile.md" <<'EOF'
