@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.8.1 - 2026-07-19
 
 - The app icon adopts macOS 26's layered Liquid Glass format: the M and
   the green download arrow are separate layers over a gradient fill, so
