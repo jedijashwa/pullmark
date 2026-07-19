@@ -36,4 +36,15 @@ enum DefaultsKeys {
     static let commitToMainAllowed = "pm.commitToMainAllowed"
     /// Commit sheet: also push to origin after a successful commit.
     static let pushAfterCommit = "pm.pushAfterCommit"
+    /// Review-request inbox in the sidebar (default on; hidden when
+    /// unauthenticated either way).
+    static let inboxEnabled = "pm.inboxEnabled"
+    /// Inbox unread tracking: PR id → updatedAt last seen.
+    static let inboxSeen = "pm.inboxSeen"
+    /// Restore the previous session's files and PRs at launch (default on).
+    static let restoreSession = "pm.restoreSession"
+    /// Persisted session: local file paths + PR refs from last quit.
+    static let sessionSnapshot = "pm.sessionSnapshot"
+    /// Reading positions: document key → scroll fraction.
+    static let readingPositions = "pm.readingPositions"
 }
