@@ -106,6 +106,28 @@ struct OutlineSidebar: View {
     }
 }
 
+/// Unobtrusive word count / reading time pill overlaid on document views
+/// (bottom-trailing, opposite the in-page link-status pill). Document mode
+/// only — diff pages never post stats.
+struct DocumentStatsPill: View {
+    let stats: DocumentStats
+
+    var body: some View {
+        Text("\(stats.words.formatted()) words · \(stats.minutes) min")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(
+                Capsule().strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            )
+            .padding(10)
+            .allowsHitTesting(false)
+            .accessibilityLabel("\(stats.words) words, about \(stats.minutes) minute read")
+    }
+}
+
 /// Toolbar toggle for the outline panel.
 struct OutlineToggle: View {
     @Binding var visible: Bool
@@ -260,10 +282,13 @@ struct ReleaseNotesSheet: View {
             }
             .padding(12)
             Divider()
-            MarkdownWebView(html: HTMLBuilder.documentPage(
-                markdown: markdown, title: title,
-                theme: Theme.current(from: themeRaw).rawValue
-            ))
+            MarkdownWebView(html: {
+                let style = ThemeSelection.pageStyle(from: themeRaw)
+                return HTMLBuilder.documentPage(
+                    markdown: markdown, title: title,
+                    theme: style.theme, customCSS: style.customCSS
+                )
+            }())
                 .background(Color(nsColor: .textBackgroundColor))
         }
         .frame(width: 640, height: 520)

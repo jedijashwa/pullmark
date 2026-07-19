@@ -21,7 +21,7 @@ fi
 RES="Sources/PullMark/Resources"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-cp -R "$RES/vendor" "$RES/app.js" "$RES/app.css" "$WORK/"
+cp -R "$RES/vendor" "$RES/app.js" "$RES/app.css" "$RES/pm-extensions.js" "$WORK/"
 
 # Mirrors HTMLBuilder.page: CSP meta + non-executing JSON payload (#5).
 CSP="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src file: data: https: pullmark-local: pullmark-remote:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'"
@@ -37,6 +37,7 @@ emit_page() {
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <title>render-check</title>
 <link rel="stylesheet" href="vendor/github-markdown.css">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -47,6 +48,8 @@ emit_page() {
 <script src="vendor/marked-footnote.min.js"></script>
 <script src="vendor/highlight.min.js"></script>
 <script src="vendor/mermaid.min.js"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="pm-extensions.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
@@ -93,6 +96,17 @@ check "heading anchor id"    'id="gfm-kitchen-sink"'
 check "front matter details" '<details class="pm-frontmatter"[^>]*><summary>Front matter</summary>'
 check "front matter row"     '<th>title</th><td>GFM kitchen sink</td>'
 check "front matter nested"  '<pre>  - markdown</pre>'
+check "inline math (katex)"  'class="katex"'
+check "display math"         'class="katex-display"'
+check "currency untouched"   '\$5 today and \$10 tomorrow'
+check "math skips code span" '<code>\$x\$</code>'
+check "math skips fences"    '\$\$ not math inside a fence \$\$'
+check "highlight"            '<mark>Highlighted</mark>'
+check "subscript"            'H<sub>2</sub>O'
+check "superscript"          'mc<sup>2</sup>'
+check "tilde strikethrough"  '<del>strikethrough still works</del>'
+check "toc list"             '<nav class="pm-toc"[^>]*><ul class="pm-toc-list">'
+check "toc links headings"   '<a href="#math">Math</a>'
 
 # ---- Hostile markdown: script injection must be inert under the CSP (#5).
 cat > "$WORK/hostile.md" <<'EOF'
@@ -103,6 +117,8 @@ cat > "$WORK/hostile.md" <<'EOF'
 <img src=x onerror="document.title='pwned'">
 
 [malicious link](javascript:document.title='pwned')
+
+Hostile math: $\href{javascript:document.title='pwned'}{click}$ stays inert.
 
 Safe **bold** text survives.
 EOF
@@ -133,6 +149,11 @@ hostile_check "title untouched by injected script" "<title>render-check</title>"
 hostile_check "no script executed"                 "<title>pwned</title>" absent
 hostile_check "benign markdown still renders"      "<strong>bold</strong>"
 hostile_check "csp meta present"                   'http-equiv="Content-Security-Policy"'
+# The \href must not become an anchor (KaTeX's default trust=false renders
+# it as red error text); the plain-markdown javascript: link above the math
+# line still exists as inert markup, so match the math link's text.
+hostile_check "katex refuses untrusted \\href"     '>click</a>' absent
+hostile_check "hostile math still rendered inert"  'class="katex"'
 
 if [ "$failures" -gt 0 ]; then
   echo "render-check: $failures failure(s)"

@@ -18,7 +18,7 @@ enum RenderPageStore {
         }
 
         if let resources = HTMLBuilder.resourcesBaseURL {
-            for item in ["vendor", "app.js", "app.css"] {
+            for item in ["vendor", "app.js", "app.css", "pm-extensions.js"] {
                 let destination = dir.appendingPathComponent(item)
                 try? fm.removeItem(at: destination)
                 try? fm.copyItem(at: resources.appendingPathComponent(item), to: destination)

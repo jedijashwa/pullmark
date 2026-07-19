@@ -4,6 +4,28 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Math rendering (#11): `$inline$` and `$$block$$` TeX render through a
+  bundled KaTeX — fully offline and CSP-compatible. The tokenizer is
+  conservative so prose survives: `$5 and $10` stays currency, dollars inside
+  code spans and fences are untouched, and untrusted `\href` targets are
+  refused. Quick Look previews render math too (server-side, no scripts).
+- `[toc]`: a paragraph containing exactly `[toc]` renders as a linked table
+  of contents built from the document's headings — in documents, diffs, and
+  Quick Look previews.
+- Typora-style inline marks (#11): `==highlight==` → highlighted text,
+  `~sub~` → subscript, `^sup^` → superscript. `~~strikethrough~~` is
+  unaffected.
+- Custom themes: drop `.css` files into
+  `~/Library/Application Support/PullMark/Themes/` and they appear in
+  Settings → Themes below the built-ins, with live preview cards. Custom CSS
+  applies on top of the GitHub look; if the file disappears, PullMark falls
+  back to the GitHub theme.
+- Word count and reading time: rendered documents show a quiet
+  "1,234 words · 6 min" pill in the bottom corner (documents only, never
+  diffs).
+
 ## 0.5.0 - 2026-07-19
 
 - Non-brew installs now truly self-update: "Update Now" downloads the

@@ -26,12 +26,14 @@ struct PROverviewView: View {
                         .padding(.bottom, 12)
                 }
                 Divider()
+                let style = ThemeSelection.pageStyle(from: themeRaw)
                 MarkdownWebView(html: HTMLBuilder.documentPage(
                     markdown: session.details.body?.isEmpty == false
                         ? session.details.body!
                         : "_No description provided._",
                     title: session.details.title,
-                    theme: Theme.current(from: themeRaw).rawValue
+                    theme: style.theme,
+                    customCSS: style.customCSS
                 ))
                 .background(Color(nsColor: .textBackgroundColor))
             }
@@ -193,6 +195,7 @@ struct PRFileView: View {
     @State private var commentTarget: CommentTarget?
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
+    @State private var stats: DocumentStats?
     @State private var replyTarget: ReplyTarget?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
@@ -254,8 +257,14 @@ struct PRFileView: View {
                         onBlameHistory: { start, end in
                             historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                         },
+                        onStats: { stats = $0 },
                         proxy: proxy
                     )
+                    .overlay(alignment: .bottomTrailing) {
+                        if mode == .result, let stats {
+                            DocumentStatsPill(stats: stats)
+                        }
+                    }
                     .layoutPriority(1)
                     if outlineVisible {
                         OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
@@ -347,7 +356,8 @@ struct PRFileView: View {
 
     private var html: String {
         guard let file else { return "" }
-        let theme = Theme.current(from: themeRaw).rawValue
+        let style = ThemeSelection.pageStyle(from: themeRaw)
+        let theme = style.theme
         switch mode {
         case .result:
             let markdown = file.status == "removed"
@@ -356,13 +366,15 @@ struct PRFileView: View {
             return HTMLBuilder.documentPage(markdown: markdown, title: path,
                                             remote: HTMLBuilder.RemoteAssets(filePath: path),
                                             theme: theme,
+                                            customCSS: style.customCSS,
                                             blame: blameVisible ? blamePayloads : nil,
                                             blameNote: blameVisible ? blameNote : nil)
         case .sourceDiff:
             return HTMLBuilder.patchPage(
                 patch: file.patch ?? "No textual diff available for this file.",
                 title: path,
-                theme: theme
+                theme: theme,
+                customCSS: style.customCSS
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
@@ -383,7 +395,8 @@ struct PRFileView: View {
                                         layout: layout == .split ? "split" : "inline",
                                         remote: HTMLBuilder.RemoteAssets(filePath: path),
                                         title: path,
-                                        theme: theme)
+                                        theme: theme,
+                                        customCSS: style.customCSS)
         }
     }
 
@@ -568,6 +581,7 @@ struct PRDocView: View {
     @State private var loadError: String?
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
+    @State private var stats: DocumentStats?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
@@ -579,11 +593,13 @@ struct PRDocView: View {
     private var session: PRSession? { state.session(sessionID) }
 
     private var html: String {
-        HTMLBuilder.documentPage(markdown: markdown, title: path,
-                                 remote: HTMLBuilder.RemoteAssets(filePath: path),
-                                 theme: Theme.current(from: themeRaw).rawValue,
-                                 blame: blameVisible ? blamePayloads : nil,
-                                 blameNote: blameVisible ? blameNote : nil)
+        let style = ThemeSelection.pageStyle(from: themeRaw)
+        return HTMLBuilder.documentPage(markdown: markdown, title: path,
+                                        remote: HTMLBuilder.RemoteAssets(filePath: path),
+                                        theme: style.theme,
+                                        customCSS: style.customCSS,
+                                        blame: blameVisible ? blamePayloads : nil,
+                                        blameNote: blameVisible ? blameNote : nil)
     }
 
     var body: some View {
@@ -619,8 +635,14 @@ struct PRDocView: View {
                         onBlameHistory: { start, end in
                             historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                         },
+                        onStats: { stats = $0 },
                         proxy: proxy
                     )
+                    .overlay(alignment: .bottomTrailing) {
+                        if let stats {
+                            DocumentStatsPill(stats: stats)
+                        }
+                    }
                     .layoutPriority(1)
                     if outlineVisible {
                         OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)

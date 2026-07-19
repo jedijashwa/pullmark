@@ -62,6 +62,26 @@ def greet(name: str) -> str:
 
 ---
 
+## Math
+
+Inline math $E = mc^2$ sits in a sentence, but currency survives: it costs
+$5 today and $10 tomorrow, and code keeps its dollars: `$x$`.
+
+$$
+\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}
+$$
+
+```text
+$$ not math inside a fence $$
+```
+
+## Typora extras
+
+==Highlighted== text, water is H~2~O, and E = mc^2^ again as plain sup.
+Also ~~strikethrough still works~~ next to a lone ~tilde~ subscript.
+
+[toc]
+
 ## Mermaid
 
 ```mermaid
