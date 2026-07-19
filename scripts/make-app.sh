@@ -23,6 +23,31 @@ cp .build/release/PullMark "$APP/Contents/MacOS/PullMark"
 cp -R .build/release/PullMark_PullMark.bundle "$APP/Contents/Resources/"
 cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
+# macOS 26 layered icon (Liquid Glass): assets/AppIcon.icon compiles only
+# with full Xcode's actool — the Command Line Tools cannot build Icon
+# Composer packages. Without it (or on compile failure) the classic .icns
+# still ships via CFBundleIconFile, so CLT-only machines and CI keep
+# working; CFBundleIconName is added only when Assets.car actually exists.
+ICON_NAME_ENTRY=""
+if [ -d assets/AppIcon.icon ]; then
+  for DEV in "$(xcode-select -p 2>/dev/null)" "/Applications/Xcode.app/Contents/Developer"; do
+    ACTOOL="$DEV/usr/bin/actool"
+    [ -x "$ACTOOL" ] || continue
+    if DEVELOPER_DIR="$DEV" "$ACTOOL" assets/AppIcon.icon \
+        --compile "$APP/Contents/Resources" \
+        --platform macosx --minimum-deployment-target 13.0 \
+        --app-icon AppIcon \
+        --output-partial-info-plist /dev/null >/dev/null 2>&1 \
+        && [ -f "$APP/Contents/Resources/Assets.car" ]; then
+      ICON_NAME_ENTRY="    <key>CFBundleIconName</key><string>AppIcon</string>"
+      echo "==> Compiled macOS 26 layered icon (Assets.car)"
+    else
+      echo "warning: actool found but layered-icon compile failed; shipping .icns only" >&2
+    fi
+    break
+  done
+fi
+
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -52,6 +77,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <true/>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+${ICON_NAME_ENTRY}
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
