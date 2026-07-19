@@ -45,6 +45,10 @@ brew install --cask pullmark
 
 Releases are signed with a Developer ID and notarized by Apple — no Gatekeeper warnings.
 
+### Direct download
+
+Download `PullMark-<version>.dmg` from the [latest release](https://github.com/jedijashwa/pullmark/releases/latest), open it, and drag PullMark into Applications.
+
 ### Build from source
 
 Requirements: **macOS 13+** and a Swift 6 toolchain — either Xcode, or just the [Command Line Tools](https://developer.apple.com/download/all/) (`xcode-select --install`). No other dependencies.
