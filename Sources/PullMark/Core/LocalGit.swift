@@ -229,7 +229,12 @@ enum DiffPageBuilder {
         let newBlocks = MarkdownBlocks.split(new)
         return BlockDiff.diff(old: oldBlocks, new: newBlocks).map { segment in
             var payload = segment.payload
-            if case .modified(let oldBlock, let newBlock) = segment {
+            if case .modified(let oldBlock, let newBlock) = segment,
+               !MarkdownBlocks.isFrontMatter(oldBlock),
+               !MarkdownBlocks.isFrontMatter(newBlock) {
+                // Front matter is excluded: the web layer renders it as
+                // old/new key-value tables, where word marks would not
+                // survive anyway (tables are built with textContent).
                 payload.wordDiff = WordDiff.markup(old: oldBlock.text, new: newBlock.text)
             }
             return payload

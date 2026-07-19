@@ -226,6 +226,62 @@ body {
   border-radius: 0;
 }
 
+/* ---- YAML front matter ----
+   Leading `---` fences render as a quiet metadata table (collapsed in
+   document mode, open inside diff blocks) instead of bold prose. Built on
+   the primer variables so all reading themes and both appearances adapt. */
+
+.pm-frontmatter {
+  border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
+  margin: 0 0 16px;
+}
+.pm-frontmatter > summary {
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fgColor-muted, #6e7781);
+  user-select: none;
+}
+.pm-frontmatter[open] > summary {
+  border-bottom: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+}
+/* Reset the stock github-markdown table look: no cell borders, no zebra
+   stripes, full width. */
+.markdown-body .pm-frontmatter-table {
+  display: table;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 12px;
+}
+.markdown-body .pm-frontmatter-table tr {
+  background: transparent;
+  border: 0;
+}
+.markdown-body .pm-frontmatter-table th,
+.markdown-body .pm-frontmatter-table td {
+  border: 0;
+  padding: 2px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.markdown-body .pm-frontmatter-table th {
+  color: var(--fgColor-muted, #6e7781);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 1%;
+}
+.markdown-body .pm-frontmatter-table pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 12px;
+  color: inherit;
+}
+
 /* ---- Blame gutter ----
    A left gutter column at rendered altitude: one avatar per coalesced run of
    blocks last touched by the same commit, with a rule spanning the run.

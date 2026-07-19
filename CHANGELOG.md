@@ -6,6 +6,12 @@ section current as features land.
 
 ## Unreleased
 
+- YAML front matter now renders as metadata instead of prose (#6): documents
+  (and Quick Look previews) show a quiet, collapsed "Front matter" table at
+  the top, and rendered diffs show compact key/value tables inside the usual
+  red/green blocks instead of walls of bold prose. Simple `key: value` lines
+  split into two columns; nested YAML stays preformatted. Word-level diff
+  marks are skipped for front matter (plain old/new tables are clearer).
 - Blame redesigned as a gutter: instead of annotation strips under every
   block, blame now draws a quiet left gutter — one avatar per run of
   consecutive blocks last touched by the same commit, with a rule spanning

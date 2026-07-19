@@ -154,6 +154,95 @@
     });
   }
 
+  // ---- YAML front matter ----
+  // GitHub renders a leading `---` fence as a metadata table instead of
+  // prose. Detection is line-based (no YAML parser): the opening `---` must
+  // be the very first line, the closing `---` the next line that is exactly
+  // `---` after trimming. Values are inserted with textContent, never parsed.
+
+  // Document mode: split leading front matter off the source. Returns
+  // { lines, rest, endLine } (endLine = 1-based line of the closing fence)
+  // or null when the document has no front matter.
+  function fmParse(markdown) {
+    var lines = (markdown || "").split("\n");
+    if (lines.length < 2 || lines[0].replace(/\r$/, "") !== "---") { return null; }
+    for (var i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        return {
+          lines: lines.slice(1, i),
+          rest: lines.slice(i + 1).join("\n"),
+          endLine: i + 1
+        };
+      }
+    }
+    return null;
+  }
+
+  // Diff mode: front matter arrives as one whole block segment (Swift keeps
+  // the fence together). Returns the inner lines, or null when the text is
+  // not exactly a front matter fence.
+  function fmBlockLines(text) {
+    var lines = (text || "").split("\n");
+    if (lines.length < 2 || lines[0].replace(/\r$/, "") !== "---") { return null; }
+    if (lines[lines.length - 1].trim() !== "---") { return null; }
+    return lines.slice(1, -1);
+  }
+
+  // One table row per line: simple `key: value` lines split on the first
+  // colon; anything else (nested/indented YAML, list items, comments) stays
+  // a single preformatted cell.
+  function fmRowEl(line) {
+    var row = document.createElement("tr");
+    var m = /^([^\s:#-][^:]*?)[ \t]*:(?:[ \t]+(.*))?$/.exec(line);
+    if (m) {
+      var key = document.createElement("th");
+      key.textContent = m[1];
+      var value = document.createElement("td");
+      value.textContent = (m[2] || "").trim();
+      row.append(key, value);
+    } else {
+      var cell = document.createElement("td");
+      cell.colSpan = 2;
+      var pre = document.createElement("pre");
+      pre.textContent = line;
+      cell.append(pre);
+      row.append(cell);
+    }
+    return row;
+  }
+
+  function frontMatterEl(lines, open) {
+    var details = document.createElement("details");
+    details.className = "pm-frontmatter";
+    if (open) { details.open = true; }
+    var summary = document.createElement("summary");
+    summary.textContent = "Front matter";
+    details.append(summary);
+    var table = document.createElement("table");
+    table.className = "pm-frontmatter-table";
+    var tbody = document.createElement("tbody");
+    lines.forEach(function (line) {
+      if (!line.trim()) { return; }
+      tbody.append(fmRowEl(line));
+    });
+    table.append(tbody);
+    details.append(table);
+    return details;
+  }
+
+  // Diff segments: Swift flags each side that is a leading front matter
+  // block (fmText / fmOldText — only Swift knows both sides' true line
+  // numbers). Fills `el` with the metadata table when flagged, with
+  // rendered markdown otherwise.
+  function renderSegmentText(el, text, isFrontMatter, open) {
+    var lines = isFrontMatter ? fmBlockLines(text) : null;
+    if (lines) {
+      el.append(frontMatterEl(lines, open));
+    } else {
+      el.innerHTML = render(text);
+    }
+  }
+
   // ---- Heading anchors + link previews ----
 
   // marked v15 no longer emits heading ids; generate GitHub-style slugs so
@@ -399,8 +488,10 @@
   // from a moving cursor (raws appear in source order, but plain
   // concatenation would drift: marked swallows link-reference definitions
   // without emitting a token). Returns false when the walk isn't possible
-  // (lexer failure) so the gutter is skipped.
-  function annotateBlockLines(markdown) {
+  // (lexer failure) so the gutter is skipped. `lineOffset` is the number of
+  // source lines stripped before `markdown` (the front matter fence), so
+  // annotations still carry original file line numbers.
+  function annotateBlockLines(markdown, lineOffset) {
     var source = markdown || "";
     var tokens;
     try { tokens = marked.lexer(source); } catch (e) { return false; }
@@ -441,7 +532,7 @@
 
     var ONE = { heading: 1, paragraph: 1, code: 1, blockquote: 1, list: 1, table: 1, hr: 1 };
     var NONE = { space: 1, def: 1, footnote: 1 };
-    var line = 1; // 1-based line at srcPos
+    var line = 1 + (lineOffset || 0); // 1-based file line at srcPos
     var srcPos = 0;
     var ei = 0;
     var i = 0;
@@ -725,15 +816,15 @@
       wrap.className = "pm-block pm-modified";
       var oldDiv = document.createElement("div");
       oldDiv.className = "pm-old";
-      oldDiv.innerHTML = render(seg.oldText);
+      renderSegmentText(oldDiv, seg.oldText, seg.fmOldText, true);
       var newDiv = document.createElement("div");
       newDiv.className = "pm-new";
-      newDiv.innerHTML = render(seg.text);
+      renderSegmentText(newDiv, seg.text, seg.fmText, true);
       wrap.append(oldDiv, newDiv);
     } else {
       wrap.className = "pm-block pm-" + seg.kind;
       var div = document.createElement("div");
-      div.innerHTML = render(seg.text);
+      renderSegmentText(div, seg.text, seg.fmText, seg.kind !== "unchanged");
       if (seg.kind === "added" || seg.kind === "removed") { markEmptyBlock(div); }
       wrap.append(div);
     }
@@ -760,16 +851,16 @@
       left.className = "pm-cell";
       right.className = "pm-cell";
       if (seg.kind === "unchanged") {
-        left.innerHTML = render(seg.text);
-        right.innerHTML = render(seg.text);
+        renderSegmentText(left, seg.text, seg.fmText, false);
+        renderSegmentText(right, seg.text, seg.fmText, false);
       } else if (seg.kind === "added") {
         left.classList.add("pm-cell-empty");
         right.classList.add("pm-cell-added");
-        right.innerHTML = render(seg.text);
+        renderSegmentText(right, seg.text, seg.fmText, true);
         markEmptyBlock(right);
       } else if (seg.kind === "removed") {
         left.classList.add("pm-cell-removed");
-        left.innerHTML = render(seg.text);
+        renderSegmentText(left, seg.text, seg.fmText, true);
         markEmptyBlock(left);
         right.classList.add("pm-cell-empty");
       } else {
@@ -781,8 +872,8 @@
           applyWordDiffMarks(left);
           applyWordDiffMarks(right);
         } else {
-          left.innerHTML = render(seg.oldText);
-          right.innerHTML = render(seg.text);
+          renderSegmentText(left, seg.oldText, seg.fmOldText, true);
+          renderSegmentText(right, seg.text, seg.fmText, true);
         }
       }
       if (payload.commentable !== false) {
@@ -827,12 +918,22 @@
   setupLinkPreview();
 
   if (payload.mode === "document") {
-    content.innerHTML = render(payload.markdown);
+    // Leading YAML front matter renders as a collapsed metadata table, the
+    // rest as normal markdown.
+    var fm = fmParse(payload.markdown);
+    var docBody = fm ? fm.rest : payload.markdown;
+    content.innerHTML = render(docBody);
     // The document renders whole either way (footnotes and reference links
     // intact); blame only annotates line ranges before other passes mutate
     // the DOM, then draws the gutter once the page has settled.
     var blameAnnotated = payload.blame && payload.blame.length
-      && annotateBlockLines(payload.markdown);
+      && annotateBlockLines(docBody, fm ? fm.endLine : 0);
+    if (fm) {
+      var fmDetails = frontMatterEl(fm.lines, false);
+      // Blame treats the fence like any block: annotate its file lines.
+      fmDetails.setAttribute("data-pm-lines", "1-" + fm.endLine);
+      content.prepend(fmDetails);
+    }
     if (payload.blameNote) { content.prepend(blameNoteEl(payload.blameNote)); }
     rewriteLocalResources(content);
     rewriteRemoteResources(content);

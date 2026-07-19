@@ -102,6 +102,52 @@ final class StaticRenderer {
         body { margin: 0; background: #ffffff; }
         @media (prefers-color-scheme: dark) { body { background: #0d1117; } }
         .markdown-body { max-width: 860px; margin: 0 auto; padding: 24px 24px 48px; }
+        /* YAML front matter metadata table (kept in sync with app.css). */
+        .pm-frontmatter {
+          border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+          border-radius: 6px;
+          background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
+          margin: 0 0 16px;
+        }
+        .pm-frontmatter > summary {
+          cursor: pointer;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--fgColor-muted, #6e7781);
+          user-select: none;
+        }
+        .pm-frontmatter[open] > summary {
+          border-bottom: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+        }
+        .markdown-body .pm-frontmatter-table {
+          display: table;
+          width: 100%;
+          margin: 6px 0;
+          font-size: 12px;
+        }
+        .markdown-body .pm-frontmatter-table tr { background: transparent; border: 0; }
+        .markdown-body .pm-frontmatter-table th,
+        .markdown-body .pm-frontmatter-table td {
+          border: 0;
+          padding: 2px 12px;
+          text-align: left;
+          vertical-align: top;
+        }
+        .markdown-body .pm-frontmatter-table th {
+          color: var(--fgColor-muted, #6e7781);
+          font-weight: 600;
+          white-space: nowrap;
+          width: 1%;
+        }
+        .markdown-body .pm-frontmatter-table pre {
+          margin: 0;
+          padding: 0;
+          background: transparent;
+          border-radius: 0;
+          font-size: 12px;
+          color: inherit;
+        }
         </style>
         """
 
@@ -129,7 +175,36 @@ final class StaticRenderer {
             }
           }
         });
-        function __render(src) { return marked.parse(src); }
+        // Leading YAML front matter renders as a metadata table (same
+        // line-based detection as app.js — no YAML parser).
+        function __frontMatter(src) {
+          var lines = src.split("\\n");
+          if (lines.length < 2 || lines[0].replace(/\\r$/, "") !== "---") { return null; }
+          for (var i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === "---") {
+              return { lines: lines.slice(1, i), rest: lines.slice(i + 1).join("\\n") };
+            }
+          }
+          return null;
+        }
+        function __frontMatterHTML(lines) {
+          var rows = lines.map(function (line) {
+            if (!line.trim()) { return ""; }
+            var m = /^([^\\s:#-][^:]*?)[ \\t]*:(?:[ \\t]+(.*))?$/.exec(line);
+            if (m) {
+              return "<tr><th>" + __escapeHtml(m[1]) + "</th><td>" +
+                __escapeHtml((m[2] || "").trim()) + "</td></tr>";
+            }
+            return '<tr><td colspan="2"><pre>' + __escapeHtml(line) + "</pre></td></tr>";
+          }).join("");
+          return '<details class="pm-frontmatter"><summary>Front matter</summary>' +
+            '<table class="pm-frontmatter-table"><tbody>' + rows + "</tbody></table></details>";
+        }
+        function __render(src) {
+          var fm = __frontMatter(src);
+          if (!fm) { return marked.parse(src); }
+          return __frontMatterHTML(fm.lines) + marked.parse(fm.rest);
+        }
         """)
         ready = context.objectForKeyedSubscript("__render")?.isUndefined == false
     }
