@@ -99,10 +99,13 @@ enum LocalGit {
         runForError(["checkout", "-b", name], in: root.path)
     }
 
-    /// Whether the repo has any remote configured (drives the push toggle).
+    /// Whether the repo has an `origin` remote specifically — the push
+    /// toggle targets origin, so an upstream-only repo must not show it.
     static func hasRemote(in root: URL) -> Bool {
         guard let out = run(["remote"], in: root.path) else { return false }
-        return !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return out.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .contains("origin")
     }
 
     /// Pushes HEAD, setting upstream on first push of a branch. Uses the

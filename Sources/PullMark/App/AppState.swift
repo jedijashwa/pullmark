@@ -166,6 +166,32 @@ final class AppState: ObservableObject {
     /// ContentView updates this as windows gain key status.
     static weak var keyInstance: AppState?
 
+    /// Cross-window dedup: opens can arrive through both the scene's
+    /// onOpenURL and the app delegate's router path, and with per-window
+    /// states those may target different windows. First path in wins;
+    /// the duplicate within the window is swallowed.
+    private static var recentOpens: [URL: Date] = [:]
+    static func gateOpen(_ url: URL) -> Bool {
+        let now = Date()
+        recentOpens = recentOpens.filter { now.timeIntervalSince($0.value) < 2 }
+        guard recentOpens[url] == nil else { return false }
+        recentOpens[url] = now
+        return true
+    }
+
+    /// Router delivery with a retry buffer: keyInstance is weak and goes
+    /// nil between a key window closing and the next one keying — an open
+    /// landing in that gap would otherwise be silently dropped.
+    static func deliverExternalOpens(_ urls: [URL], retries: Int = 20) {
+        if let instance = keyInstance {
+            for url in urls where gateOpen(url) { instance.add(url: url) }
+        } else if retries > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                deliverExternalOpens(urls, retries: retries - 1)
+            }
+        }
+    }
+
     init() {
         if Self.keyInstance == nil { Self.keyInstance = self }
         // Registering also flushes any open-file events that arrived before
@@ -173,9 +199,7 @@ final class AppState: ObservableObject {
         // routes through keyInstance so re-registration by later windows
         // is harmless.
         OpenURLRouter.shared.onOpen { urls in
-            Task { @MainActor in
-                for url in urls { AppState.keyInstance?.add(url: url) }
-            }
+            Task { @MainActor in AppState.deliverExternalOpens(urls) }
         }
         // Command-line arguments, in case this state is created before the
         // app delegate finished launching (or vice versa).

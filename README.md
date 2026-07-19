@@ -27,6 +27,8 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Export** — **File → Export as PDF…** saves the rendered document as one continuous page; **Export as HTML…** writes a fully self-contained single file (styles inlined, local images embedded).
 - **Copy in two flavors** — **⌘C** copies the selection as rich text that pastes formatted into Google Docs, Slack, and friends; **⌥⌘C** (Copy as Markdown) copies the original Markdown source behind the selection (the whole document when nothing is selected).
 - **Source at a keystroke** — **⌥⌘U** (View → Show Markdown Source) temporarily flips the active document to its raw Markdown, syntax-tinted and light/dark aware; press again to return to the rendered view.
+- **Windows and tabs** — ⌘N opens an independent window (own sidebar, PRs, and edits); merge windows into native macOS tabs. Opens from Finder or the CLI land in the frontmost window.
+- **Commit and push** — File → Commit Changes… (⌃⌘K) stages and commits in the active file's repo, with an optional push to origin; on main/master it first offers to create a branch.
 - **Word count** — a quiet words · reading-time pill in the corner of rendered documents.
 - **Recents** — recently opened files, folders, and pull requests live in **File → Open Recent** and a sidebar section. PR entries show their live status — draft, open, closed, merged, or unavailable (colored GitHub-style icons, kept up to date while you work).
 - **Quick Look** — press space on any Markdown file in Finder to see it rendered PullMark-style, in your chosen reading theme (Mermaid degrades to a code block in previews; custom CSS themes fall back to their GitHub base). Prefer raw text? Settings → General can switch previews to **Raw Source**.

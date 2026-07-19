@@ -32,9 +32,12 @@ enum PullMarkLauncher {
 
 struct PullMarkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    /// The focused window's state; commands act on it (nil disables them).
+    /// The focused window's state; commands act on it and disable when no
+    /// document window is focused (e.g. Settings is key) — deliberately no
+    /// static fallback: it wouldn't be observed, so menus would go stale
+    /// and commands could mutate a non-frontmost window.
     @FocusedObject private var focusedState: AppState?
-    private var state: AppState? { focusedState ?? AppState.keyInstance }
+    private var state: AppState? { focusedState }
     @StateObject private var updates = UpdateChecker()
     @StateObject private var defaultApp = DefaultAppManager()
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
@@ -80,11 +83,6 @@ struct PullMarkApp: App {
                 // per open-file event; an existing window must also declare
                 // that it prefers to handle those events.
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
-                // Launch-time open-document events are claimed by the SwiftUI
-                // scene and never reach application(_:open:); without this
-                // handler a document opened while the app is not running
-                // would be silently dropped. (AppState.add is idempotent, so
-                // overlap with the delegate path is harmless.)
         }
         // Route file-open events into the existing window instead of
         // spawning a second one.

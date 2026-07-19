@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Multiple windows, really: ⌘N opens an independent window — its own
+  sidebar, PRs, selection, and unsaved edits — and windows merge into
+  native macOS tabs. Files opened from Finder, the CLI, or the Dock land
+  in the frontmost window; menu commands act on the focused one.
+- The commit sheet can push: "Push to origin after committing" (shown when
+  the repo has a remote, remembered once set) pushes with upstream setup so
+  brand-new branches land on the first try. If the push fails the message
+  says exactly that — the commit itself is never misreported as failed.
+
 ## 0.11.0 - 2026-07-19
 
 - Local block editing: hover any block in a local document and the pencil
