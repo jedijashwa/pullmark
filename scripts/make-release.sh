@@ -69,10 +69,16 @@ grep -q "status: Accepted" /tmp/pullmark-notary.log || { echo "Notarization not 
 xcrun stapler staple dist/PullMark.app
 spctl -a -vv dist/PullMark.app
 
-echo "==> Re-zipping stapled app and creating GitHub release v${VERSION}"
+echo "==> Re-zipping stapled app"
 ditto -c -k --keepParent dist/PullMark.app "$ZIP"
 SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
-gh release create "v${VERSION}" "$ZIP" --title "PullMark ${VERSION}" \
+
+echo "==> Building drag-to-install DMG"
+SIGN_IDENTITY="$IDENTITY" NOTARY_PROFILE="$PROFILE" ./scripts/make-dmg.sh "$VERSION"
+DMG="dist/PullMark-${VERSION}.dmg"
+
+echo "==> Creating GitHub release v${VERSION}"
+gh release create "v${VERSION}" "$ZIP" "$DMG" --title "PullMark ${VERSION}" \
   --notes "$NOTES"
 
 echo "==> Updating cask in ${TAP}"
