@@ -94,6 +94,8 @@ struct PullMarkApp: App {
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state.findBarVisible = true }
                     .keyboardShortcut("f")
+                Button("Search All Files…") { state.searchPaletteVisible = true }
+                    .keyboardShortcut("f", modifiers: [.command, .shift])
             }
             CommandGroup(replacing: .help) {
                 Button("PullMark Website") {

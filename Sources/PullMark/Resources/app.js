@@ -453,7 +453,19 @@
       clear();
       if (!query) { return [0, 0]; }
       var lowered = query.toLowerCase();
-      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+      // Skip non-rendered text (e.g. <style> sheets that mermaid embeds in
+      // its SVGs mention ".mermaid" dozens of times): matches there would
+      // be invisible and inflate the count.
+      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          var el = node.parentElement;
+          var tag = el && el.tagName ? el.tagName.toLowerCase() : "";
+          if (!el || tag === "style" || tag === "script" || tag === "noscript") {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
       var nodes = [];
       while (walker.nextNode()) { nodes.push(walker.currentNode); }
       nodes.forEach(function (node) {

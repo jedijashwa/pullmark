@@ -12,6 +12,12 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// The query currently highlighted by find-in-page, if any. Tracked so
+    /// the find can be re-applied after the page reloads underneath it
+    /// (e.g. blame annotations arriving re-renders the whole page, which
+    /// wipes the highlight marks).
+    private(set) var activeFindQuery: String?
+
     func scrollToAnchor(_ id: String) {
         let js = "document.getElementById(\(HTMLBuilder.jsStringLiteral(id)))"
             + "?.scrollIntoView({behavior: \"smooth\", block: \"start\"});"
@@ -23,8 +29,10 @@ final class WebViewProxy: ObservableObject {
               completion: @escaping (Int, Int) -> Void) {
         let js: String
         if action == "set", let query {
+            activeFindQuery = query.isEmpty ? nil : query
             js = "__pmFind.set(\(HTMLBuilder.jsStringLiteral(query)))"
         } else {
+            if action == "clear" { activeFindQuery = nil }
             js = "__pmFind.\(action)()"
         }
         guard let webView else {

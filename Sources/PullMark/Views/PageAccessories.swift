@@ -4,6 +4,9 @@ import SwiftUI
 struct FindBar: View {
     @EnvironmentObject private var state: AppState
     let proxy: WebViewProxy
+    /// Optional query handed in by the all-files search palette; consumed
+    /// once (set to nil after it seeds the field, which runs the find).
+    var seed: Binding<String?>? = nil
 
     @State private var query = ""
     @State private var current = 0
@@ -41,11 +44,28 @@ struct FindBar: View {
         .padding(.vertical, 7)
         .background(.bar)
         .onAppear {
+            consumeSeed()
             // Direct assignment in onAppear loses the race against the
             // WKWebView grabbing first responder; defer one runloop turn.
             DispatchQueue.main.async { focused = true }
         }
+        .onChange(of: seed?.wrappedValue) { _ in consumeSeed() }
         .onExitCommand { close() }
+    }
+
+    private func consumeSeed() {
+        guard let value = seed?.wrappedValue, !value.isEmpty else { return }
+        seed?.wrappedValue = nil
+        if query != value {
+            // Assigning `query` triggers onChange, which runs the find.
+            query = value
+        } else {
+            // Same query re-seeded after a page reload: onChange won't
+            // fire, so run the find directly to restore the highlights.
+            proxy.find("set", query: value) { c, t in
+                current = c; total = t
+            }
+        }
     }
 
     private func step(_ action: String) {

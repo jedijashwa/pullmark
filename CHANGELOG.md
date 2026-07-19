@@ -6,6 +6,16 @@ section current as features land.
 
 ## Unreleased
 
+- Search across all files (#8): ⇧⌘F (Edit-menu "Search All Files…") opens a
+  command-palette-style search over everything in the sidebar — local files
+  are read from disk, and PR documents already loaded in memory are included
+  (never fetched for search). Results group by file with the matched term
+  bolded in its line context; Enter or a click opens the file and drives
+  find-in-page so the term is highlighted and scrolled into view.
+- Find-in-page fixes: highlights are re-applied when the page re-renders
+  underneath an active find (e.g. blame annotations arriving), and matches
+  inside non-rendered text (mermaid's embedded SVG stylesheets) no longer
+  inflate the count or swallow the first hit.
 - Math rendering (#11): `$inline$` and `$$block$$` TeX render through a
   bundled KaTeX — fully offline and CSP-compatible. The tokenizer is
   conservative so prose survives: `$5 and $10` stays currency, dollars inside

@@ -197,6 +197,7 @@ struct PRFileView: View {
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
     @State private var replyTarget: ReplyTarget?
+    @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
@@ -216,7 +217,7 @@ struct PRFileView: View {
                 PRUpdateBanner(sessionID: sessionID)
             }
             if state.findBarVisible {
-                FindBar(proxy: proxy)
+                FindBar(proxy: proxy, seed: $findSeed)
             }
             if loading {
                 ProgressView("Loading \(path)…")
@@ -258,6 +259,7 @@ struct PRFileView: View {
                             historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                         },
                         onStats: { stats = $0 },
+                        onPageLoaded: { handlePageLoaded() },
                         proxy: proxy
                     )
                     .overlay(alignment: .bottomTrailing) {
@@ -308,6 +310,8 @@ struct PRFileView: View {
         }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .onChange(of: mode) { _ in loadBlameIfNeeded() }
+        .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
+                                        consume: consumePendingSearch))
         .sheet(item: $commentTarget) { target in
             CommentComposer(sessionID: sessionID, path: path, target: target)
         }
@@ -443,12 +447,35 @@ struct PRFileView: View {
                     path: path,
                     at: session.details.head.sha
                 )
+                if let headText {
+                    // Feed the all-files search palette (memory-only cache).
+                    state.cachePRContent(sessionID: sessionID, path: path, text: headText)
+                }
             }
         } catch {
             loadError = error.localizedDescription
         }
         loading = false
         loadBlameIfNeeded()
+    }
+
+    private func handlePageLoaded() {
+        if state.pendingSearchQuery != nil {
+            consumePendingSearch()
+        } else if state.findBarVisible, let query = proxy.activeFindQuery {
+            // The page reloaded under an active find (e.g. blame arrived and
+            // re-rendered the document): restore highlights and counts.
+            findSeed = query
+        }
+    }
+
+    /// Query handed over by the all-files search palette: show the find bar
+    /// seeded with it so the term is highlighted and scrolled into view.
+    private func consumePendingSearch() {
+        guard let query = state.pendingSearchQuery else { return }
+        state.pendingSearchQuery = nil
+        findSeed = query
+        state.findBarVisible = true
     }
 }
 
@@ -582,6 +609,7 @@ struct PRDocView: View {
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
+    @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
@@ -605,7 +633,7 @@ struct PRDocView: View {
     var body: some View {
         VStack(spacing: 0) {
             if state.findBarVisible {
-                FindBar(proxy: proxy)
+                FindBar(proxy: proxy, seed: $findSeed)
             }
             if loading {
                 ProgressView("Loading \(path)…")
@@ -636,6 +664,7 @@ struct PRDocView: View {
                             historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                         },
                         onStats: { stats = $0 },
+                        onPageLoaded: { handlePageLoaded() },
                         proxy: proxy
                     )
                     .overlay(alignment: .bottomTrailing) {
@@ -664,6 +693,8 @@ struct PRDocView: View {
             await load()
         }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
+        .modifier(PendingSearchConsumer(target: .prDoc(sessionID, path),
+                                        consume: consumePendingSearch))
         .sheet(item: $historyRequest) { _ in
             let ref = session?.ref
             let sha = session?.details.head.sha
@@ -675,6 +706,25 @@ struct PRDocView: View {
                                                             path: path, sha: sha)
             }
         }
+    }
+
+    private func handlePageLoaded() {
+        if state.pendingSearchQuery != nil {
+            consumePendingSearch()
+        } else if state.findBarVisible, let query = proxy.activeFindQuery {
+            // The page reloaded under an active find (e.g. blame arrived and
+            // re-rendered the document): restore highlights and counts.
+            findSeed = query
+        }
+    }
+
+    /// Query handed over by the all-files search palette: show the find bar
+    /// seeded with it so the term is highlighted and scrolled into view.
+    private func consumePendingSearch() {
+        guard let query = state.pendingSearchQuery else { return }
+        state.pendingSearchQuery = nil
+        findSeed = query
+        state.findBarVisible = true
     }
 
     private func loadBlameIfNeeded() {
@@ -703,6 +753,8 @@ struct PRDocView: View {
         do {
             markdown = try await state.client.fileContent(session.ref, path: path,
                                                           at: session.details.head.sha)
+            // Feed the all-files search palette (memory-only cache).
+            state.cachePRContent(sessionID: sessionID, path: path, text: markdown)
         } catch {
             loadError = error.localizedDescription
         }
