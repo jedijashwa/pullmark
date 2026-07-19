@@ -176,7 +176,7 @@ private struct RecentRow: View {
     private var helpText: String {
         switch item.kind {
         case .file, .folder:
-            return item.path ?? item.title
+            return item.path.map { PathAbbreviator.abbreviate($0) } ?? item.title
         case .pr:
             let status = item.prStatus.map { " — \($0.label)" } ?? ""
             return "\(item.owner ?? "")/\(item.repo ?? "")#\(item.number ?? 0)\(status)"
