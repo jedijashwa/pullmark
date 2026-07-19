@@ -30,6 +30,8 @@ struct LocalFileView: View {
     /// Timeline scrubbing: index into `commits` reversed (oldest → newest).
     @State private var timelineActive = false
     @State private var timelinePosition = 0.0
+    @State private var compareGeneration = 0
+    @State private var compareLoading = false
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -408,9 +410,16 @@ struct LocalFileView: View {
 
     private func startComparing(ref: String, label: String) {
         let url = file.url
+        compareGeneration += 1
+        let generation = compareGeneration
+        compareLoading = true
         Task.detached(priority: .userInitiated) {
             let old = LocalGit.content(of: url, at: ref)
             await MainActor.run {
+                // Scrubbing fires these faster than git answers — only the
+                // newest request may land, or the page and banner disagree.
+                guard generation == compareGeneration else { return }
+                compareLoading = false
                 guard let old else {
                     state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
                     return
@@ -439,12 +448,19 @@ struct LocalFileView: View {
         let index = min(max(Int(timelinePosition.rounded()), 0), max(0, count - 1))
         let commit = timelineCommits.indices.contains(index) ? timelineCommits[index] : nil
         return HStack(spacing: 10) {
-            Image(systemName: "clock.arrow.circlepath")
+            if compareLoading {
+                ProgressView().controlSize(.small)
+            } else {
+                Image(systemName: "clock.arrow.circlepath")
+            }
             Stepper {
                 if let commit {
                     Text("\(commit.shortSHA) · \(commit.date) · \(commit.subject)")
+                        .monospacedDigit()
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .frame(maxWidth: 380, alignment: .leading)
+                        .layoutPriority(0)
                 }
             } onIncrement: {
                 timelinePosition = Double(min(index + 1, count - 1))

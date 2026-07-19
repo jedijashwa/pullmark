@@ -41,7 +41,7 @@ struct DocDoctorSheet: View {
                         Text("No issues in \(checkedCount) Markdown file\(checkedCount == 1 ? "" : "s").")
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 140)
+                    .frame(maxWidth: .infinity, minHeight: 220)
                 } else {
                     List {
                         ForEach(groupedFiles, id: \.self) { file in
@@ -89,6 +89,11 @@ struct DocDoctorSheet: View {
             }
 
             HStack {
+                Button("Recheck") {
+                    issues = nil
+                    run()
+                }
+                .disabled(issues == nil)
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -105,10 +110,10 @@ struct DocDoctorSheet: View {
 
     private func icon(for kind: DocDoctor.Kind) -> String {
         switch kind {
-        case .brokenLink: return "link.badge.plus"
+        case .brokenLink: return "link"
         case .brokenImage: return "photo"
         case .deadAnchor: return "number"
-        case .orphanPage: return "doc.questionmark"
+        case .orphanPage: return "questionmark.folder"
         }
     }
 
