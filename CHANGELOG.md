@@ -4,6 +4,28 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- A review-request inbox: pull requests awaiting your review appear at the
+  top of the sidebar with unread indicators and a Markdown-file-count badge
+  (PRs with no Markdown are dimmed — PullMark will open them, but the
+  reading room has nothing to show). Refreshes quietly every five minutes;
+  Settings can hide it.
+- Moved-block detection: a block relocated verbatim now renders once, at
+  its new position, with a quiet violet "moved" chip (tooltip: the line it
+  came from) — instead of a red deletion here and a green addition there.
+  Only unambiguous relocations qualify; duplicated boilerplate stays plain.
+- Open Quickly (⌘K): one field that jumps anywhere — headings in the
+  current document, sidebar files, pull requests and their files, recents —
+  with fuzzy matching that favors word starts and short names.
+- Session restore: the files and PRs you had open reopen at launch
+  (Settings-controlled; new ⌘N windows always start empty).
+- Reading positions: long documents reopen where you left off.
+- Every PullMark edit is revertible: the previous contents snapshot before
+  any write, and File → Revert Last Edit restores them (revertible itself).
+- Drag .md files or folders onto the window to open them.
+- Print (⌘P): the rendered document, through the standard print panel.
+
 ## 0.12.0 - 2026-07-19
 
 - Multiple windows, really: ⌘N opens an independent window — its own

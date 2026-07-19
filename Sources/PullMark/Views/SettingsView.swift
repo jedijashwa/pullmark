@@ -31,13 +31,16 @@ struct GeneralSettingsTab: View {
 
     var body: some View {
         Form {
+            Section("Appearance") {
             Picker("Appearance:", selection: $appearanceRaw) {
                 ForEach(Appearance.allCases) { appearance in
                     Text(appearance.label).tag(appearance.rawValue)
                 }
             }
             .pickerStyle(.segmented)
+            }
 
+            Section("Reviewing") {
             Picker("Default diff layout:", selection: $diffLayoutRaw) {
                 ForEach(PRFileView.DiffLayout.allCases) { layout in
                     Text(layout.rawValue).tag(layout.rawValue)
@@ -54,15 +57,23 @@ struct GeneralSettingsTab: View {
 
             Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
                 .help("Open pull requests where your review is requested")
-            Toggle("Restore files and PRs from the last session", isOn: $restoreSession)
+            }
 
+            Section("Reading") {
+            Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
+                .help("Reopen what was in the sidebar when PullMark last quit")
+            }
+
+            Section("Editing") {
             Picker("Saving edits:", selection: $autosaveEdits) {
                 Text("Automatically").tag(true)
                 Text("Manually (⌘S)").tag(false)
             }
             .pickerStyle(.segmented)
             .help("Whether editing a block writes to the file immediately or waits for File → Save")
+            }
 
+            Section("System") {
             LabeledContent("Default Markdown app:") {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 7) {
@@ -115,9 +126,10 @@ struct GeneralSettingsTab: View {
                     }
                 }
             }
+            }
         }
         .formStyle(.grouped)
-        .frame(height: 300)
+        .frame(height: 560)
         // The binding can change behind our back (Finder's "Change All…",
         // another app claiming it) — re-resolve whenever the tab shows.
         .onAppear { defaultApp.refresh() }

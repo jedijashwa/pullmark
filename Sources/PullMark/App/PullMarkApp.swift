@@ -139,6 +139,10 @@ struct PullMarkApp: App {
                     guard let url = activeLocalFileURL else { return }
                     do {
                         try EditHistory.revertLastEdit(for: url)
+                        // A pending manual-mode overlay would mask the
+                        // revert on screen and ⌘S would write it back.
+                        state?.editedText[url] = nil
+                        state?.editedBase[url] = nil
                         state?.lastNotice = "Reverted the last edit to \(url.lastPathComponent)."
                     } catch {
                         state?.lastError = "Couldn't revert: \(error.localizedDescription)"
@@ -309,5 +313,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // The session snapshot is written once, at quit, from the last key
+        // window — mid-session didSet snapshots proved racy (a restore's
+        // own adds overwrote the snapshot it was restoring from).
+        AppState.keyInstance?.snapshotSession()
     }
 }

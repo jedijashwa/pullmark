@@ -59,7 +59,12 @@ struct LocalFileView: View {
                     localResourceRoot: file.resourceRoot,
                     onOpenLocalFile: { url in state.add(url: url) },
                     onOutline: { outline = $0 },
-                    onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
+                    onActiveSection: {
+                        activeSection = $0.isEmpty ? nil : $0
+                        // Scroll-spy doubles as a progress heartbeat, so a
+                        // plain ⌘Q (no onDisappear) still keeps the spot.
+                        throttledPositionSave()
+                    },
                     onBlameHistory: { start, end in
                         historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                     },
@@ -309,6 +314,14 @@ struct LocalFileView: View {
             proxy.restoreScrollFraction(fraction)
         }
         didRestorePosition = true
+    }
+
+    @State private var lastPositionSave = Date.distantPast
+
+    private func throttledPositionSave() {
+        guard Date().timeIntervalSince(lastPositionSave) > 5 else { return }
+        lastPositionSave = Date()
+        saveReadingPosition()
     }
 
     private func saveReadingPosition() {

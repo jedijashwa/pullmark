@@ -209,7 +209,7 @@ private struct InboxRow: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                if let count = state.inboxMDCount(item) {
+                if let count = state.inboxMDCount(item), count > 0 {
                     Label("\(count)", systemImage: "doc.text")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -219,7 +219,6 @@ private struct InboxRow: View {
             }
         }
         .buttonStyle(.plain)
-        .opacity(state.inboxMDCount(item) == 0 ? 0.55 : 1)
         .help(state.inboxMDCount(item) == 0
             ? "No Markdown files in this pull request" : item.title)
     }

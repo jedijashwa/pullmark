@@ -685,7 +685,13 @@ mark.pm-find.pm-find-current {
 .pm-moved {
   box-shadow: inset 3px 0 0 rgba(130, 80, 223, 0.55);
 }
-.pm-cell-moved { box-shadow: inset 3px 0 0 rgba(130, 80, 223, 0.55); }
+.pm-cell-moved {
+  position: relative;
+  box-shadow: inset 3px 0 0 rgba(130, 80, 223, 0.55);
+}
+/* Keep the hover buttons clear of the chip in both layouts. */
+.pm-cell-moved:hover .pm-comment-btn { right: 64px; }
+.pm-cell-moved:hover .pm-edit-btn { right: 98px; }
 .pm-moved-chip {
   position: absolute;
   top: 4px;
@@ -699,8 +705,8 @@ mark.pm-find.pm-find-current {
   padding: 3px 7px;
   background: var(--bgColor-default, #fff);
 }
-.pm-cell-moved { position: relative; }
 .pm-block.pm-moved:hover .pm-comment-btn { right: 64px; }
+.pm-block.pm-moved:hover .pm-edit-btn { right: 98px; }
 @media (prefers-color-scheme: dark) {
   .pm-moved-chip { color: #a371f7; border-color: rgba(163, 113, 247, 0.5); }
 }
