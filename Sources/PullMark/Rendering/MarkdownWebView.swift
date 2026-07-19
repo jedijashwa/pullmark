@@ -28,6 +28,8 @@ struct MarkdownWebView: NSViewRepresentable {
     var onThreadReply: ((Int) -> Void)?
     /// Resolve/unresolve requested (root comment id, desired state).
     var onThreadResolve: ((Int, Bool) -> Void)?
+    /// Blame gutter entry clicked: open line history for this 1-based range.
+    var onBlameHistory: ((Int, Int) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
     /// False for the Settings theme-preview cards: the web view refuses all
@@ -129,6 +131,11 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let sha = dict["sha"] as? String {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(sha, forType: .string)
+                }
+            case "blameHistory":
+                if let start = dict["lineStart"] as? Int,
+                   let end = dict["lineEnd"] as? Int {
+                    parent.onBlameHistory?(start, end)
                 }
             case "threadResolve":
                 if let rootID = dict["rootID"] as? Int,

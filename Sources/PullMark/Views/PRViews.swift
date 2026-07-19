@@ -198,8 +198,9 @@ struct PRFileView: View {
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
-    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
+    @State private var historyRequest: BlameHistoryRequest?
 
     private var layout: DiffLayout { DiffLayout(rawValue: layoutRaw) ?? .inline }
 
@@ -249,6 +250,9 @@ struct PRFileView: View {
                         onThreadReply: { replyTarget = ReplyTarget(id: $0) },
                         onThreadResolve: { rootID, resolved in
                             setThreadResolved(rootID: rootID, resolved: resolved)
+                        },
+                        onBlameHistory: { start, end in
+                            historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                         },
                         proxy: proxy
                     )
@@ -300,6 +304,17 @@ struct PRFileView: View {
         }
         .sheet(item: $replyTarget) { target in
             ThreadReplyComposer(sessionID: sessionID, rootID: target.id)
+        }
+        .sheet(item: $historyRequest) { _ in
+            let ref = session?.ref
+            let sha = session?.details.head.sha
+            BlameHistorySheet {
+                guard let ref, let sha else {
+                    throw GitHubClient.APIError(status: -1, message: "The PR session is no longer available.")
+                }
+                return try await BlameService.remoteHistory(client: state.client, ref: ref,
+                                                            path: path, sha: sha)
+            }
         }
     }
 
@@ -557,8 +572,9 @@ struct PRDocView: View {
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
-    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
+    @State private var historyRequest: BlameHistoryRequest?
 
     private var session: PRSession? { state.session(sessionID) }
 
@@ -600,6 +616,9 @@ struct PRDocView: View {
                         },
                         onOutline: { outline = $0 },
                         onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
+                        onBlameHistory: { start, end in
+                            historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
+                        },
                         proxy: proxy
                     )
                     .layoutPriority(1)
@@ -623,6 +642,17 @@ struct PRDocView: View {
             await load()
         }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
+        .sheet(item: $historyRequest) { _ in
+            let ref = session?.ref
+            let sha = session?.details.head.sha
+            BlameHistorySheet {
+                guard let ref, let sha else {
+                    throw GitHubClient.APIError(status: -1, message: "The PR session is no longer available.")
+                }
+                return try await BlameService.remoteHistory(client: state.client, ref: ref,
+                                                            path: path, sha: sha)
+            }
+        }
     }
 
     private func loadBlameIfNeeded() {

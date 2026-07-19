@@ -12,6 +12,8 @@ final class GitHubClient {
 
     private var cachedToken: String?
     private var tokenResolved = false
+    private var cachedViewer: ViewerIdentity?
+    private var viewerResolved = false
     /// Ephemeral so no repo content or API response is ever cached to disk —
     /// everything fetched lives in memory only.
     private let session = URLSession(configuration: .ephemeral)
@@ -156,6 +158,65 @@ final class GitHubClient {
                                      variables: ["owner": ref.owner, "repo": ref.repo,
                                                  "expr": sha, "path": path])
         return try GitHubBlame.parse(data)
+    }
+
+    /// The signed-in user's identity, fetched once per session (GraphQL).
+    /// Nil without credentials — avatar tiering then skips the viewer tier.
+    func viewerIdentity() async -> ViewerIdentity? {
+        if viewerResolved { return cachedViewer }
+        viewerResolved = true
+        struct Response: Decodable {
+            struct DataBox: Decodable { let viewer: Viewer? }
+            struct Viewer: Decodable {
+                let login: String
+                let name: String?
+                let email: String?
+                let avatarUrl: String?
+            }
+            let data: DataBox?
+        }
+        // The email field needs the user:email/read:user scope, which gh
+        // tokens frequently lack — fall back to a scope-free query (the
+        // noreply-address match still identifies the viewer's commits).
+        var viewer: Response.Viewer?
+        for query in ["query { viewer { login name email avatarUrl } }",
+                      "query { viewer { login name avatarUrl } }"] {
+            if let data = try? await graphQL(query, variables: [:]),
+               let decoded = try? JSONDecoder().decode(Response.self, from: data).data?.viewer {
+                viewer = decoded
+                break
+            }
+        }
+        guard let viewer else { return nil }
+        cachedViewer = ViewerIdentity(login: viewer.login, name: viewer.name,
+                                      email: viewer.email, avatarUrl: viewer.avatarUrl)
+        return cachedViewer
+    }
+
+    /// Latest commits that touched a repo file at a commit (GraphQL; the
+    /// History panel's data for PR files — GitHub has no line-history API).
+    func fileHistory(ref: PullRequestRef, path: String, sha: String,
+                     limit: Int = 15) async throws -> [BlameCommit] {
+        let data = try await graphQL(GitHubHistory.query,
+                                     variables: ["owner": ref.owner, "repo": ref.repo,
+                                                 "expr": sha, "path": path, "first": limit])
+        return try GitHubHistory.parse(data)
+    }
+
+    /// SHAs of the commits on the PR branch (REST, paginated). Used to split
+    /// the History panel between PR-branch and base-branch commits.
+    func prCommitSHAs(_ ref: PullRequestRef) async throws -> [String] {
+        struct CommitRow: Decodable { let sha: String }
+        var all: [String] = []
+        for page in 1...3 {
+            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/commits",
+                                         query: [URLQueryItem(name: "per_page", value: "100"),
+                                                 URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decoder.decode([CommitRow].self, from: data)
+            all.append(contentsOf: batch.map(\.sha))
+            if batch.count < 100 { break }
+        }
+        return all
     }
 
     private func graphQL(_ query: String, variables: [String: Any]) async throws -> Data {

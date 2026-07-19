@@ -4,6 +4,30 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Blame redesigned as a gutter: instead of annotation strips under every
+  block, blame now draws a quiet left gutter — one avatar per run of
+  consecutive blocks last touched by the same commit, with a rule spanning
+  the run. Hovering shows a popover with the author, relative date, commit
+  headline, and the SHA chip (open on GitHub / copy). Works across all three
+  reading themes in Light and Dark.
+- Blame mode now renders the whole document once, so footnotes and
+  reference-style links work with blame on (#7).
+- Avatars resolve far more often: commits authored under private/noreply
+  emails that GitHub can't match to an account now fall back to the signed-in
+  user's avatar when the author is you, then to GitHub's email-derived
+  avatar, before initials.
+- Line history: clicking a gutter entry opens a History panel. Local files
+  get true line history (`git log -L`) for the run's lines; PR files show the
+  file's history (GitHub has no line-history API — the panel says so), split
+  by a divider into commits on the PR branch vs ones already on the base
+  branch. Rows open the commit on GitHub or copy the SHA.
+- Empty added/removed blocks in rendered diffs show a small "(empty)" label
+  instead of a bare colored box (#7).
+- The Blame toolbar button no longer appears for files outside a git
+  repository.
+
 ## 0.3.1 - 2026-07-18
 
 - Opening a file while PullMark is already running no longer spawns a

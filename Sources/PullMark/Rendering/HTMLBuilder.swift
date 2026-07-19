@@ -30,9 +30,10 @@ enum HTMLBuilder {
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
-        /// Per-block blame annotations (document mode). When present the page
-        /// renders block-by-block with an annotation strip under each block.
-        var blame: [BlockBlamePayload]?
+        /// Blame gutter runs (document mode). The page renders the whole
+        /// markdown normally (footnotes and reference links intact), then
+        /// annotates block positions and draws a left gutter from these runs.
+        var blame: [BlameRunPayload]?
         /// One-line note shown when blame was requested but unavailable.
         var blameNote: String?
     }
@@ -56,13 +57,9 @@ enum HTMLBuilder {
                              remote: RemoteAssets? = nil,
                              theme: String = "github",
                              preview: Bool = false,
-                             blame: [BlockBlamePayload]? = nil,
+                             blame: [BlameRunPayload]? = nil,
                              blameNote: String? = nil) -> String {
-        // Blame mode renders block-by-block from the annotation payloads
-        // (each carries its block's source), so the full markdown would be
-        // dead weight duplicated in the page.
-        let markdown = (blame?.isEmpty == false) ? nil : markdown
-        return page(payload: RenderPayload(mode: "document", markdown: markdown,
+        page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
