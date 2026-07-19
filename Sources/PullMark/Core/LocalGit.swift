@@ -79,13 +79,61 @@ enum LocalGit {
         return parseGitHubRemote(out)
     }
 
+    /// Line-level history: the chain of commits that touched a 1-based line
+    /// range, newest first. Nil when git fails (untracked file, or the range
+    /// doesn't exist at HEAD).
+    static func lineHistory(of url: URL, start: Int, end: Int, limit: Int = 15) -> [BlameCommit]? {
+        guard let root = repoRoot(for: url) else { return nil }
+        let rel = relativePath(of: url, in: root)
+        guard let out = run(["log", "-n", "\(limit)", logFormat,
+                             "-L", "\(start),\(end):\(rel)"], in: root.path) else { return nil }
+        let commits = parseLineLog(out)
+        return commits.isEmpty ? nil : commits
+    }
+
+    /// File-level history as full BlameCommits (fallback when line-level
+    /// history is unavailable).
+    static func fileHistory(of url: URL, limit: Int = 15) -> [BlameCommit]? {
+        guard let root = repoRoot(for: url) else { return nil }
+        let rel = relativePath(of: url, in: root)
+        guard let out = run(["log", "--follow", "-n", "\(limit)", logFormat, "--", rel],
+                            in: root.path) else { return nil }
+        let commits = parseLineLog(out)
+        return commits.isEmpty ? nil : commits
+    }
+
+    /// Commit lines start with a U+0001 sentinel so `parseLineLog` can pick
+    /// them out of `git log -L` output, which interleaves patch text (-L
+    /// cannot suppress patches on older gits).
+    private static let logFormat = "--format=%x01%H%x09%an%x09%ae%x09%at%x09%s"
+
+    /// Pure parser for `git log` output produced with `logFormat`: keeps only
+    /// sentinel lines carrying a valid 40-hex sha and skips everything else
+    /// (diff headers, hunks, and content lines — even ones that happen to
+    /// begin with the sentinel, since those fail sha validation).
+    static func parseLineLog(_ output: String) -> [BlameCommit] {
+        output.components(separatedBy: "\n").compactMap { line in
+            guard line.hasPrefix("\u{01}") else { return nil }
+            let parts = line.dropFirst().components(separatedBy: "\t")
+            guard parts.count >= 5, parts[0].count == 40,
+                  parts[0].allSatisfy(\.isHexDigit) else { return nil }
+            return BlameCommit(
+                sha: parts[0],
+                authorName: parts[1],
+                authorEmail: parts[2].isEmpty ? nil : parts[2],
+                date: TimeInterval(parts[3]).map { Date(timeIntervalSince1970: $0) },
+                summary: parts[4...].joined(separator: "\t")
+            )
+        }
+    }
+
     /// Pure parser for `git blame --porcelain` output: header lines carry
     /// "<sha> <origLine> <finalLine> [<groupSize>]"; commit metadata tags
     /// (author, author-time, summary, …) appear only the first time a commit
     /// is seen. Contiguous lines blamed to the same commit coalesce into one
     /// range.
     static func parseBlamePorcelain(_ output: String) -> [BlameRange] {
-        struct Partial { var name = "unknown"; var date: Date?; var summary = "" }
+        struct Partial { var name = "unknown"; var email: String?; var date: Date?; var summary = "" }
         var commits: [String: Partial] = [:]
         var lineSHAs: [(line: Int, sha: String)] = []
         var currentSHA: String?
@@ -104,6 +152,10 @@ enum LocalGit {
             guard let sha = currentSHA else { continue }
             if raw.hasPrefix("author ") {
                 commits[sha]?.name = String(raw.dropFirst("author ".count))
+            } else if raw.hasPrefix("author-mail ") {
+                let mail = String(raw.dropFirst("author-mail ".count))
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "<>"))
+                commits[sha]?.email = mail.isEmpty ? nil : mail
             } else if raw.hasPrefix("author-time ") {
                 if let t = TimeInterval(raw.dropFirst("author-time ".count)) {
                     commits[sha]?.date = Date(timeIntervalSince1970: t)
@@ -121,7 +173,8 @@ enum LocalGit {
             } else {
                 let p = commits[sha] ?? Partial()
                 ranges.append(BlameRange(start: line, end: line, commit: BlameCommit(
-                    sha: sha, authorName: p.name, date: p.date, summary: p.summary
+                    sha: sha, authorName: p.name, authorEmail: p.email,
+                    date: p.date, summary: p.summary
                 )))
             }
         }

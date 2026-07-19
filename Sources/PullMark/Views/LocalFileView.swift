@@ -26,8 +26,9 @@ struct LocalFileView: View {
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
-    @State private var blamePayloads: [BlockBlamePayload]?
+    @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
+    @State private var historyRequest: BlameHistoryRequest?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,6 +54,9 @@ struct LocalFileView: View {
                     onOpenLocalFile: { url in state.add(url: url) },
                     onOutline: { outline = $0 },
                     onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
+                    onBlameHistory: { start, end in
+                        historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
+                    },
                     proxy: proxy
                 )
                 .layoutPriority(1)
@@ -68,9 +72,13 @@ struct LocalFileView: View {
             ToolbarItem {
                 compareMenu
             }
-            ToolbarItem {
-                BlameToggle(visible: $blameVisible)
-                    .disabled(!inGitRepo || compare != nil)
+            // No git context, no Blame button: the toggle only appears for
+            // files inside a repository.
+            if inGitRepo {
+                ToolbarItem {
+                    BlameToggle(visible: $blameVisible)
+                        .disabled(compare != nil)
+                }
             }
             ToolbarItem {
                 OutlineToggle(visible: $outlineVisible)
@@ -95,6 +103,13 @@ struct LocalFileView: View {
         .onChange(of: blameVisible) { _ in loadBlame() }
         .onChange(of: currentText) { _ in loadBlame() }
         .onChange(of: inGitRepo) { _ in loadBlame() }
+        .sheet(item: $historyRequest) { request in
+            BlameHistorySheet {
+                await BlameService.localHistory(client: state.client, fileURL: file.url,
+                                                lineStart: request.lineStart,
+                                                lineEnd: request.lineEnd)
+            }
+        }
     }
 
     @ViewBuilder

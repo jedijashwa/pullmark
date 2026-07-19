@@ -85,14 +85,17 @@ import Testing
         #expect(Theme.current(from: "terminal") == .terminal)
     }
 
-    @Test func blamePageOmitsDuplicateMarkdown() {
-        let blame = [BlockBlamePayload(text: "# Hi", lineStart: 1, lineEnd: 1)]
+    @Test func blamePageKeepsMarkdownAndEmbedsRuns() {
+        // The whole document renders normally in blame mode (footnotes and
+        // reference links must keep working); the runs ride alongside.
+        let blame = [BlameRunPayload(lineStart: 1, lineEnd: 3,
+                                     sha: String(repeating: "a", count: 40),
+                                     shortSHA: "aaaaaaa", author: "Ada")]
         let page = HTMLBuilder.documentPage(markdown: "# Hi", blame: blame)
         #expect(page.contains("\"blame\":"))
-        #expect(!page.contains("\"markdown\""))
-        // An empty blame array must fall back to normal markdown rendering.
-        let empty = HTMLBuilder.documentPage(markdown: "# Hi", blame: [])
-        #expect(empty.contains("\"markdown\":\"# Hi\""))
+        #expect(page.contains("\"markdown\":\"# Hi\""))
+        #expect(page.contains("\"lineStart\":1"))
+        #expect(page.contains("\"shortSHA\":\"aaaaaaa\""))
     }
 
     @Test func referencesBundledAssets() {

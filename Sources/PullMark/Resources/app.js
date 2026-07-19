@@ -198,11 +198,14 @@
 
   function enhance(root) {
     root.querySelectorAll("pre code.language-mermaid").forEach(function (el) {
+      var pre = el.closest("pre");
       var div = document.createElement("div");
       div.className = "mermaid";
       div.dataset.source = el.textContent;
       div.textContent = el.textContent;
-      el.closest("pre").replaceWith(div);
+      // Keep the blame line annotation on the replacement element.
+      if (pre.dataset.pmLines) { div.dataset.pmLines = pre.dataset.pmLines; }
+      pre.replaceWith(div);
     });
     // GitHub suggestion blocks get a labeled container instead of syntax
     // highlighting.
@@ -213,6 +216,7 @@
       var label = document.createElement("div");
       label.className = "pm-suggestion-label";
       label.textContent = "Suggested change";
+      if (pre.dataset.pmLines) { wrap.dataset.pmLines = pre.dataset.pmLines; }
       pre.replaceWith(wrap);
       wrap.append(label, pre);
     });
@@ -349,11 +353,14 @@
 
   darkQuery.addEventListener("change", renderMermaid);
 
-  // ---- Blame annotations (document mode) ----
-  // Swift computes everything (relative dates, primary commit, extra
-  // contributors); this only builds DOM. Avatars are remote https images in
-  // a non-persistent web view; when no avatar URL exists (local-only blame)
-  // a deterministic initials circle stands in.
+  // ---- Blame gutter (document mode) ----
+  // Swift computes everything (relative dates, coalesced runs, avatar
+  // tiering); this only builds DOM. The document is rendered once, whole
+  // (so footnotes and reference links work), then each top-level element is
+  // annotated with its source line range via the marked lexer, and gutter
+  // entries are positioned from element geometry. Avatars are remote https
+  // images in a non-persistent web view; when no avatar URL exists
+  // (local-only blame) a deterministic initials circle stands in.
 
   function blameInitialsEl(name) {
     var span = document.createElement("span");
@@ -379,54 +386,6 @@
     return img;
   }
 
-  function blameStripEl(entry) {
-    var strip = document.createElement("div");
-    strip.className = "pm-blame";
-    if (entry.headline) { strip.title = entry.headline; }
-
-    var avatars = document.createElement("span");
-    avatars.className = "pm-blame-avatars";
-    avatars.append(blameAvatarEl(entry.author, entry.avatarUrl));
-    (entry.others || []).forEach(function (other) {
-      avatars.append(blameAvatarEl(other.name, other.avatarUrl));
-    });
-    strip.append(avatars);
-
-    var author = document.createElement("span");
-    author.className = "pm-blame-author";
-    author.textContent = entry.uncommitted ? "Uncommitted changes" : (entry.author || "");
-    strip.append(author);
-
-    if (entry.dateLabel) {
-      var date = document.createElement("span");
-      date.className = "pm-blame-date";
-      date.textContent = entry.dateLabel;
-      strip.append(date);
-    }
-
-    if (entry.shortSHA && !entry.uncommitted) {
-      var sha;
-      if (entry.url) {
-        sha = document.createElement("a");
-        sha.href = entry.url; // opened externally by the navigation delegate
-        sha.title = (entry.headline ? entry.headline + " — " : "") + "View commit on GitHub";
-      } else {
-        sha = document.createElement("button");
-        sha.type = "button";
-        sha.title = (entry.headline ? entry.headline + " — " : "") + "Copy full SHA";
-        sha.addEventListener("click", function () {
-          post({ type: "copySHA", sha: entry.sha });
-          sha.textContent = "copied";
-          setTimeout(function () { sha.textContent = entry.shortSHA; }, 900);
-        });
-      }
-      sha.className = "pm-blame-sha";
-      sha.textContent = entry.shortSHA;
-      strip.append(sha);
-    }
-    return strip;
-  }
-
   function blameNoteEl(text) {
     var note = document.createElement("div");
     note.className = "pm-blame-note";
@@ -434,19 +393,257 @@
     return note;
   }
 
-  function renderBlameDocument(entries) {
-    entries.forEach(function (entry) {
-      var wrap = document.createElement("div");
-      wrap.className = "pm-blame-block";
-      var body = document.createElement("div");
-      body.innerHTML = render(entry.text);
-      wrap.append(body);
-      if (entry.sha) { wrap.append(blameStripEl(entry)); }
-      content.append(wrap);
+  // Walks the top-level lexer tokens in parallel with #content's children,
+  // stamping each element with its 1-based source line range
+  // (data-pm-lines="start-end"). Each token's raw is located in the source
+  // from a moving cursor (raws appear in source order, but plain
+  // concatenation would drift: marked swallows link-reference definitions
+  // without emitting a token). Returns false when the walk isn't possible
+  // (lexer failure) so the gutter is skipped.
+  function annotateBlockLines(markdown) {
+    var source = markdown || "";
+    var tokens;
+    try { tokens = marked.lexer(source); } catch (e) { return false; }
+
+    var els = [];
+    for (var child = content.firstElementChild; child; child = child.nextElementSibling) {
+      // marked-footnote appends the footnotes section at the end; it has no
+      // in-place source lines.
+      if (child.tagName === "SECTION" && child.classList.contains("footnotes")) { continue; }
+      els.push(child);
+    }
+
+    // Bare instance (no extensions) used to count how many top-level
+    // elements a raw-HTML token produces.
+    var plain = null;
+    function htmlElementCount(raw) {
+      try {
+        plain = plain || new marked.Marked({ gfm: true });
+        var tpl = document.createElement("template");
+        tpl.innerHTML = plain.parse(raw);
+        return tpl.content.children.length;
+      } catch (e) { return 1; }
+    }
+
+    // Block tokens start at line beginnings; anchoring the search there
+    // avoids false matches inside skipped regions.
+    function findToken(raw, from) {
+      var idx = source.indexOf(raw, from);
+      while (idx > 0 && raw[0] !== "\n" && source[idx - 1] !== "\n") {
+        idx = source.indexOf(raw, idx + 1);
+      }
+      return idx === -1 ? from : idx;
+    }
+
+    function countNewlines(text) {
+      return (text.match(/\n/g) || []).length;
+    }
+
+    var ONE = { heading: 1, paragraph: 1, code: 1, blockquote: 1, list: 1, table: 1, hr: 1 };
+    var NONE = { space: 1, def: 1, footnote: 1 };
+    var line = 1; // 1-based line at srcPos
+    var srcPos = 0;
+    var ei = 0;
+    var i = 0;
+    while (i < tokens.length && ei < els.length) {
+      var tok = tokens[i];
+      if (tok.type === "footnotes") {
+        // Synthetic container token — its raw is a label, not source text.
+        i += 1;
+        continue;
+      }
+      var raw = tok.raw || "";
+      var count;
+      if (tok.type === "text") {
+        // Consecutive top-level text tokens merge into one paragraph.
+        while (i + 1 < tokens.length && tokens[i + 1].type === "text") {
+          i += 1;
+          raw += tokens[i].raw || "";
+        }
+        count = 1;
+      } else if (NONE[tok.type]) {
+        count = 0;
+      } else if (ONE[tok.type]) {
+        count = 1;
+      } else {
+        count = htmlElementCount(raw);
+      }
+      var idx = findToken(raw, srcPos);
+      line += countNewlines(source.slice(srcPos, idx));
+      var startLine = line;
+      var endLine = startLine + countNewlines(raw.replace(/\n+$/, ""));
+      for (var k = 0; k < count && ei < els.length; k++) {
+        els[ei].setAttribute("data-pm-lines", startLine + "-" + endLine);
+        ei += 1;
+      }
+      line = startLine + countNewlines(raw);
+      srcPos = idx + raw.length;
+      i += 1;
+    }
+    return true;
+  }
+
+  function setupBlameGutter(runs) {
+    document.documentElement.classList.add("pm-blame-on");
+
+    var layer = document.createElement("div");
+    layer.className = "pm-blame-gutter";
+    content.append(layer);
+
+    // Shared hover popover; lives inside #content so it inherits the
+    // reading theme's primer variables.
+    var pop = document.createElement("div");
+    pop.className = "pm-blame-pop";
+    content.append(pop);
+    var hideTimer = null;
+    function hidePop() { pop.style.display = "none"; }
+    function scheduleHide() { hideTimer = setTimeout(hidePop, 250); }
+    function cancelHide() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    }
+    pop.addEventListener("mouseenter", cancelHide);
+    pop.addEventListener("mouseleave", scheduleHide);
+    window.addEventListener("scroll", hidePop, { passive: true });
+
+    function shaChipEl(run) {
+      var sha;
+      if (run.url) {
+        sha = document.createElement("a");
+        sha.href = run.url; // opened externally by the navigation delegate
+        sha.title = "View commit on GitHub";
+      } else {
+        sha = document.createElement("button");
+        sha.type = "button";
+        sha.title = "Copy full SHA";
+        sha.addEventListener("click", function (event) {
+          event.stopPropagation();
+          post({ type: "copySHA", sha: run.sha });
+          sha.textContent = "copied";
+          setTimeout(function () { sha.textContent = run.shortSHA; }, 900);
+        });
+      }
+      sha.className = "pm-blame-sha";
+      sha.textContent = run.shortSHA;
+      return sha;
+    }
+
+    function fillPop(run) {
+      pop.textContent = "";
+      var head = document.createElement("div");
+      head.className = "pm-blame-pop-head";
+      var author = document.createElement("span");
+      author.className = "pm-blame-pop-author";
+      author.textContent = run.uncommitted ? "Uncommitted changes" : (run.author || "");
+      head.append(author);
+      if (run.dateLabel && !run.uncommitted) {
+        var date = document.createElement("span");
+        date.className = "pm-blame-pop-date";
+        date.textContent = run.dateLabel;
+        head.append(date);
+      }
+      pop.append(head);
+      if (run.headline && !run.uncommitted) {
+        var headline = document.createElement("div");
+        headline.className = "pm-blame-pop-headline";
+        headline.textContent = run.headline;
+        pop.append(headline);
+      }
+      var actions = document.createElement("div");
+      actions.className = "pm-blame-pop-actions";
+      if (!run.uncommitted) { actions.append(shaChipEl(run)); }
+      var hint = document.createElement("span");
+      hint.className = "pm-blame-pop-hint";
+      hint.textContent = "Click the gutter for history";
+      actions.append(hint);
+      pop.append(actions);
+    }
+
+    function showPop(entry, run) {
+      cancelHide();
+      fillPop(run);
+      pop.style.display = "block";
+      var rect = entry.getBoundingClientRect();
+      // Fixed positioning, clamped to the viewport.
+      pop.style.left = Math.round(rect.right + 10) + "px";
+      pop.style.top = "0px";
+      var height = pop.offsetHeight;
+      var top = Math.min(Math.max(8, rect.top - 4), window.innerHeight - height - 8);
+      pop.style.top = Math.round(top) + "px";
+    }
+
+    var entries = [];
+    runs.forEach(function (run) {
+      if (!run.sha) { return; }
+      var entry = document.createElement("div");
+      entry.className = "pm-blame-entry";
+      if (run.uncommitted) { entry.classList.add("pm-blame-entry-uncommitted"); }
+      entry.append(blameAvatarEl(run.uncommitted ? "· ·" : run.author, run.avatarUrl));
+      var rule = document.createElement("div");
+      rule.className = "pm-blame-rule";
+      entry.append(rule);
+      entry.addEventListener("mouseenter", function () { showPop(entry, run); });
+      entry.addEventListener("mouseleave", scheduleHide);
+      entry.addEventListener("click", function () {
+        hidePop();
+        post({ type: "blameHistory", lineStart: run.lineStart, lineEnd: run.lineEnd });
+      });
+      layer.append(entry);
+      entries.push({ el: entry, run: run });
     });
+
+    function blockRanges() {
+      var out = [];
+      content.querySelectorAll("[data-pm-lines]").forEach(function (el) {
+        var m = /^(\d+)-(\d+)$/.exec(el.getAttribute("data-pm-lines"));
+        if (m) { out.push({ el: el, start: +m[1], end: +m[2] }); }
+      });
+      return out;
+    }
+
+    function positionEntries() {
+      var blocks = blockRanges();
+      var cRect = content.getBoundingClientRect();
+      entries.forEach(function (item) {
+        var top = null;
+        var bottom = null;
+        blocks.forEach(function (block) {
+          if (block.start > item.run.lineEnd || block.end < item.run.lineStart) { return; }
+          var rect = block.el.getBoundingClientRect();
+          if (top === null || rect.top < top) { top = rect.top; }
+          if (bottom === null || rect.bottom > bottom) { bottom = rect.bottom; }
+        });
+        if (top === null) {
+          item.el.style.display = "none";
+          return;
+        }
+        item.el.style.display = "";
+        item.el.style.top = Math.round(top - cRect.top) + "px";
+        item.el.style.height = Math.round(Math.max(24, bottom - top)) + "px";
+      });
+    }
+
+    positionEntries();
+    // Reposition as async content (mermaid diagrams, images) changes block
+    // heights, and on window resizes.
+    if (typeof ResizeObserver === "function") {
+      new ResizeObserver(positionEntries).observe(content);
+    }
+    window.addEventListener("resize", positionEntries);
   }
 
   // ---- Diff rendering ----
+
+  // An added/removed block whose Markdown renders to nothing (or to an empty
+  // shell like a bare code fence) would show as a bare colored box; give it a
+  // minimal label instead.
+  function markEmptyBlock(div) {
+    if (div.textContent.trim() !== "") { return; }
+    if (div.querySelector("img, svg, hr, video, iframe, input, object, embed, canvas")) { return; }
+    var label = document.createElement("span");
+    label.className = "pm-blank-label";
+    label.textContent = "(empty)";
+    div.append(label);
+  }
 
   function commentButton(seg) {
     var btn = document.createElement("button");
@@ -537,6 +734,7 @@
       wrap.className = "pm-block pm-" + seg.kind;
       var div = document.createElement("div");
       div.innerHTML = render(seg.text);
+      if (seg.kind === "added" || seg.kind === "removed") { markEmptyBlock(div); }
       wrap.append(div);
     }
     if (payload.commentable !== false) { wrap.append(commentButton(seg)); }
@@ -568,9 +766,11 @@
         left.classList.add("pm-cell-empty");
         right.classList.add("pm-cell-added");
         right.innerHTML = render(seg.text);
+        markEmptyBlock(right);
       } else if (seg.kind === "removed") {
         left.classList.add("pm-cell-removed");
         left.innerHTML = render(seg.text);
+        markEmptyBlock(left);
         right.classList.add("pm-cell-empty");
       } else {
         left.classList.add("pm-cell-removed");
@@ -627,11 +827,12 @@
   setupLinkPreview();
 
   if (payload.mode === "document") {
-    if (payload.blame && payload.blame.length) {
-      renderBlameDocument(payload.blame);
-    } else {
-      content.innerHTML = render(payload.markdown);
-    }
+    content.innerHTML = render(payload.markdown);
+    // The document renders whole either way (footnotes and reference links
+    // intact); blame only annotates line ranges before other passes mutate
+    // the DOM, then draws the gutter once the page has settled.
+    var blameAnnotated = payload.blame && payload.blame.length
+      && annotateBlockLines(payload.markdown);
     if (payload.blameNote) { content.prepend(blameNoteEl(payload.blameNote)); }
     rewriteLocalResources(content);
     rewriteRemoteResources(content);
@@ -639,6 +840,7 @@
     reportOutline(content);
     enhance(content);
     renderMermaid();
+    if (blameAnnotated) { setupBlameGutter(payload.blame); }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];
     if (!segments.length) {
