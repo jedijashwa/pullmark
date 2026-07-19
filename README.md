@@ -27,8 +27,11 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Uses your existing credentials** — no separate login (see [Authentication](#authentication)).
 - **Light & dark mode** — follows the system by default, with a manual switch that restyles everything, Mermaid included.
 - **Reading themes** — GitHub (default), Editorial (serif headers, warm paper), and Terminal (monospace, phosphor accent), chosen from a Settings window (⌘,) with live preview cards. Each theme adapts to light and dark.
-- **Built-in updates** — PullMark checks for new releases on launch and periodically, offers the `brew upgrade` command when one is available, and shows a "What's New" summary of everything that changed after you update.
-- **Blame at reading altitude** — a toolbar toggle annotates each rendered block with its authors: avatars, names, relative dates, and SHA chips linking to the commit. Uses GitHub's blame API when the file lives in a GitHub repo (PRs, or local repos with a github.com remote), plain `git blame` otherwise.
+- **Built-in updates** — PullMark checks for new releases on launch and periodically. Brew-managed installs get a one-click **Update Now** that upgrades and relaunches in place (other installs get a Download button), and a "What's New" summary shows everything that changed after you update.
+- **Blame at reading altitude** — a toolbar toggle draws a quiet gutter beside the rendered document: one avatar per run of blocks last touched by the same commit, with a hover popover (author, relative date, commit headline, SHA chip) and a click-through **line history** panel (`git log -L` for local files; the file's history, split PR-branch vs base, for PR files). Uses GitHub's blame API when the file lives in a GitHub repo (PRs, or local repos with a github.com remote), plain `git blame` otherwise.
+- **Front matter as metadata** — YAML front matter renders as a quiet, collapsible key/value table at the top of documents (and Quick Look previews), and rendered diffs show compact old/new tables inside the usual red/green blocks instead of walls of bold prose.
+- **Hardened rendering** — a Content-Security-Policy lets only PullMark's own bundled scripts run, so `<script>` tags or `on*=` handlers smuggled into hostile Markdown via raw HTML never execute; the render payload is embedded as non-executing JSON, and Quick Look previews allow no scripts at all.
+- **Default-app control** — Settings → General shows which app currently opens `.md` files and makes PullMark the default in one click; if an upgrade ever makes Launch Services drop the binding, PullMark notices and offers to take it back.
 
 ## Installation
 
@@ -100,7 +103,7 @@ The app binary itself also accepts paths (`PullMark.app/Contents/MacOS/PullMark 
 
 ### Make PullMark the default app for Markdown
 
-PullMark registers as a Markdown viewer, so: right-click any `.md` file in Finder → **Get Info** → **Open with:** → choose **PullMark** → **Change All…**. Every Markdown file will now open in PullMark on double-click.
+Open **Settings (⌘,) → General** and click **Make PullMark the Default** — the row shows which app currently owns `.md` files. Every Markdown file will then open in PullMark on double-click, and if a later upgrade drops the binding, PullMark offers to reclaim it. (The Finder route still works too: right-click any `.md` file → **Get Info** → **Open with:** → **PullMark** → **Change All…**.)
 
 ### Authentication
 
