@@ -102,6 +102,10 @@ struct PullMarkApp: App {
                     .keyboardShortcut("o")
                 Button("Open Pull Request…") { state?.showAddPR = true }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
+                Button("Open Quickly…") { state?.openQuicklyVisible = true }
+                    .keyboardShortcut("k")
+                    .disabled(state == nil)
+                    .help("Jump to any file, heading, or pull request")
                 Menu("Open Recent") {
                     ForEach(state?.recents ?? []) { item in
                         Button(item.title) { state?.openRecent(item) }
