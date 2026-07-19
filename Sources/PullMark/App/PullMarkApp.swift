@@ -226,6 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !cliURLs.isEmpty {
             OpenURLRouter.shared.deliver(cliURLs)
         }
+        DMGGreeter.runAtLaunch()
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

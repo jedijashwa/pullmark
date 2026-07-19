@@ -77,8 +77,14 @@ echo "==> Building drag-to-install DMG"
 SIGN_IDENTITY="$IDENTITY" NOTARY_PROFILE="$PROFILE" ./scripts/make-dmg.sh "$VERSION"
 DMG="dist/PullMark-${VERSION}.dmg"
 
+# The website's Download button points at the version-less asset name, which
+# is the only way to get a stable releases/latest/download URL. Same bytes,
+# uploaded under both names.
+STABLE_DMG="dist/PullMark.dmg"
+cp -f "$DMG" "$STABLE_DMG"
+
 echo "==> Creating GitHub release v${VERSION}"
-gh release create "v${VERSION}" "$ZIP" "$DMG" --title "PullMark ${VERSION}" \
+gh release create "v${VERSION}" "$ZIP" "$DMG" "$STABLE_DMG" --title "PullMark ${VERSION}" \
   --notes "$NOTES"
 
 echo "==> Updating cask in ${TAP}"

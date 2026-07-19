@@ -25,3 +25,4 @@ The project owns the domain **pullmark.app** (registered on Namecheap, July 2026
 - GitHub review comment positions use file line numbers + side (`RIGHT` = new file, `LEFT` = old); blocks carry their source line ranges through the diff for this.
 - Language mode is Swift 5 (set in Package.swift) — don't introduce strict-concurrency-only patterns.
 - After any verification that launched `dist/PullMark.app`, run `make unregister-dist` so the dev copy never steals Launch Services bindings (default app, Quick Look) from /Applications.
+- Screenshots/screen capture: Screen Recording permission is granted to the session directly — run `screencapture` (and any capture scripting) in-process. Never route captures through Terminal via AppleScript `do script` (it leaves stray Terminal windows behind), and close any window an agent opens before finishing.

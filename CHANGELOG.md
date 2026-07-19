@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- A proper DMG install experience (macOS provides neither prompt itself):
+  launch PullMark from the disk image and it offers to move itself into
+  Applications and relaunch; once installed, if the disk image is still
+  mounted it offers to eject it and move the `.dmg` to the Trash. Declining
+  the Trash offer is remembered — PullMark won't ask about that image again.
+- Releases now also publish a version-less `PullMark.dmg` asset, so
+  [the latest DMG has a stable URL](https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg)
+  — the website's Download button points straight at it.
+
 ## 0.6.0 - 2026-07-19
 
 - Editorial is now the default reading theme (GitHub and Terminal remain one click away in Settings).

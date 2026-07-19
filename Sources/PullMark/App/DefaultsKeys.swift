@@ -23,4 +23,6 @@ enum DefaultsKeys {
     /// The user made PullMark the default Markdown app (drives the
     /// "no longer your default" banner when Launch Services loses the binding).
     static let claimedDefaultHandler = "pm.claimedDefaultHandler"
+    /// DMG paths whose eject-and-trash offer the user declined (never re-ask).
+    static let dmgCleanupDeclined = "pm.dmgCleanupDeclined"
 }
