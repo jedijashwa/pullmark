@@ -408,6 +408,11 @@ struct PRFileView: View {
             let markdown = file.status == "removed"
                 ? "> [!NOTE]\n> This file was deleted in the pull request."
                 : (headText ?? "")
+            if state.sourceViewVisible, file.status != "removed" {
+                return HTMLBuilder.sourcePage(markdown: markdown, title: path,
+                                              theme: theme,
+                                              customCSS: style.customCSS)
+            }
             return HTMLBuilder.documentPage(markdown: markdown, title: path,
                                             remote: HTMLBuilder.RemoteAssets(filePath: path),
                                             theme: theme,
@@ -664,6 +669,11 @@ struct PRDocView: View {
 
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
+        if state.sourceViewVisible {
+            return HTMLBuilder.sourcePage(markdown: markdown, title: path,
+                                          theme: style.theme,
+                                          customCSS: style.customCSS)
+        }
         return HTMLBuilder.documentPage(markdown: markdown, title: path,
                                         remote: HTMLBuilder.RemoteAssets(filePath: path),
                                         theme: style.theme,

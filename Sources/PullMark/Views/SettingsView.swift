@@ -22,6 +22,7 @@ struct GeneralSettingsTab: View {
     @EnvironmentObject private var defaultApp: DefaultAppManager
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
     @State private var updateStatus: String?
     @State private var checking = false
 
@@ -40,6 +41,13 @@ struct GeneralSettingsTab: View {
                 }
             }
             .pickerStyle(.segmented)
+
+            Picker("Quick Look previews:", selection: $qlRendered) {
+                Text("Rendered").tag(true)
+                Text("Raw Source").tag(false)
+            }
+            .pickerStyle(.segmented)
+            .help("What pressing space in Finder shows for Markdown files")
 
             LabeledContent("Default Markdown app:") {
                 VStack(alignment: .leading, spacing: 6) {

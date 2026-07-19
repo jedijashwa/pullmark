@@ -25,4 +25,7 @@ enum DefaultsKeys {
     static let claimedDefaultHandler = "pm.claimedDefaultHandler"
     /// DMG paths whose eject-and-trash offer the user declined (never re-ask).
     static let dmgCleanupDeclined = "pm.dmgCleanupDeclined"
+    /// Quick Look previews render Markdown (true, default) or show the raw
+    /// source (false). Mirrored into the shared app-group suite for the appex.
+    static let qlRendered = "pm.qlRendered"
 }

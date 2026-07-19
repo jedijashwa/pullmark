@@ -1088,6 +1088,17 @@
     populateToc(reportOutline(content));
     enhance(content);
     renderMermaid();
+  } else if (payload.mode === "source") {
+    // Raw Markdown source ("Show Markdown Source" / Quick Look preference):
+    // textContent assignment keeps hostile content inert by construction.
+    var sourcePre = document.createElement("pre");
+    sourcePre.className = "pm-source-view";
+    var sourceCode = document.createElement("code");
+    sourceCode.className = "language-markdown";
+    sourceCode.textContent = payload.markdown || "";
+    sourcePre.append(sourceCode);
+    content.append(sourcePre);
+    if (window.hljs) { try { hljs.highlightElement(sourceCode); } catch (e) {} }
   } else if (payload.mode === "patch") {
     renderPatch(payload.patch);
   }

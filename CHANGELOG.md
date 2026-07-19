@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Show Markdown Source: **⌥⌘U** (View menu) temporarily flips the active
+  document — local files, browsed PR docs, and a PR file's Result view — to
+  its raw Markdown, monospace and syntax-tinted, honoring light/dark and
+  your reading theme's paper. Press again to return; the choice is never
+  persisted, so reading stays the default.
+- Quick Look previews are now a preference: Settings → General → "Quick
+  Look previews" chooses **Rendered** (default) or **Raw Source** — the raw
+  view is a clean monospace page that follows light/dark, not the system's
+  plain-text dump.
+
 ## 0.8.1 - 2026-07-19
 
 - The app icon adopts macOS 26's layered Liquid Glass format: the M and

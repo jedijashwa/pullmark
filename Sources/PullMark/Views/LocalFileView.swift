@@ -177,6 +177,12 @@ struct LocalFileView: View {
                                         theme: style.theme,
                                         customCSS: style.customCSS)
         }
+        if state.sourceViewVisible {
+            return HTMLBuilder.sourcePage(markdown: currentText,
+                                          title: file.url.lastPathComponent,
+                                          theme: style.theme,
+                                          customCSS: style.customCSS)
+        }
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,

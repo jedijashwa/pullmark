@@ -71,6 +71,16 @@ enum HTMLBuilder {
              title: title, customCSS: customCSS)
     }
 
+    /// The raw Markdown source as a monospace, syntax-tinted page — used by
+    /// the in-app "Show Markdown Source" toggle and (in spirit) mirrored by
+    /// the Quick Look source preference.
+    static func sourcePage(markdown: String, title: String = "",
+                           theme: String = "github",
+                           customCSS: String? = nil) -> String {
+        page(payload: RenderPayload(mode: "source", markdown: markdown, theme: theme),
+             title: title, customCSS: customCSS)
+    }
+
     static func diffPage(segments: [DiffSegmentPayload],
                          outdatedThreads: [ThreadPayload] = [],
                          layout: String = "inline",

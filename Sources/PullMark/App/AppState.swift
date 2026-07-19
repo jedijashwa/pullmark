@@ -104,6 +104,10 @@ final class AppState: ObservableObject {
     /// Informational, non-error messages ("no Markdown files here") — shown
     /// as a plain notice, never behind the "Something went wrong" title.
     @Published var lastNotice: String?
+    /// Transient "Show Markdown Source" (⌥⌘U): flips the active document
+    /// view to the raw text. Deliberately not persisted — reading stays the
+    /// default on every launch.
+    @Published var sourceViewVisible = false
     @Published var findBarVisible = false
     @Published var recents: [RecentItem] = []
     @Published var searchPaletteVisible = false

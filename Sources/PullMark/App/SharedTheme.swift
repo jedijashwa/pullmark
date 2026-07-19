@@ -26,7 +26,13 @@ enum SharedTheme {
     private static func mirror() {
         guard let shared = UserDefaults(suiteName: suiteName) else { return }
         let theme = UserDefaults.standard.string(forKey: DefaultsKeys.theme)
-        guard shared.string(forKey: DefaultsKeys.theme) != theme else { return }
-        shared.set(theme, forKey: DefaultsKeys.theme)
+        if shared.string(forKey: DefaultsKeys.theme) != theme {
+            shared.set(theme, forKey: DefaultsKeys.theme)
+        }
+        // Rendered-vs-source preview preference rides along the same way.
+        let rendered = UserDefaults.standard.object(forKey: DefaultsKeys.qlRendered) as? Bool
+        if shared.object(forKey: DefaultsKeys.qlRendered) as? Bool != rendered {
+            shared.set(rendered, forKey: DefaultsKeys.qlRendered)
+        }
     }
 }
