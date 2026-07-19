@@ -34,6 +34,7 @@ struct PullMarkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
     @StateObject private var updates = UpdateChecker()
+    @StateObject private var defaultApp = DefaultAppManager()
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
 
     private func open(_ urlString: String) {
@@ -47,6 +48,7 @@ struct PullMarkApp: App {
             ContentView()
                 .environmentObject(state)
                 .environmentObject(updates)
+                .environmentObject(defaultApp)
                 .onChange(of: appearanceRaw) { newValue in
                     (Appearance(rawValue: newValue) ?? .system).apply()
                 }
@@ -120,6 +122,7 @@ struct PullMarkApp: App {
         Settings {
             SettingsView()
                 .environmentObject(updates)
+                .environmentObject(defaultApp)
         }
     }
 }

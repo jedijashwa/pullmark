@@ -12,6 +12,7 @@ struct ContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 AppUpdateBanner()
+                DefaultAppBanner()
                 DetailView()
             }
         }
