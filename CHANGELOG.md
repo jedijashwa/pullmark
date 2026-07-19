@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Edit-as-suggestion: hover any new-side block in a rendered PR diff and a
+  pencil appears next to the comment bubble. It opens the block's actual
+  Markdown source in an editor — change it, optionally explain why, and
+  submit. Your edit lands as a GitHub ```suggestion comment the author
+  applies with one click (or add it to your review like any draft).
+  Clearing the text suggests deleting the lines; embedded code fences are
+  fenced safely. The first step on PullMark's editing roadmap.
+
 ## 0.9.0 - 2026-07-19
 
 - Show Markdown Source: **⌥⌘U** (View menu) temporarily flips the active

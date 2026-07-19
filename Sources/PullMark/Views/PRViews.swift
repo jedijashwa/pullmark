@@ -253,11 +253,15 @@ struct PRFileView: View {
                     MarkdownWebView(
                         html: html,
                         onCommentRequest: { message in
+                            let seed = suggestionSeed(for: message)
                             commentTarget = CommentTarget(
                                 lineStart: message.lineStart,
                                 lineEnd: message.lineEnd,
                                 side: message.side,
-                                suggestionSeed: suggestionSeed(for: message)
+                                suggestionSeed: seed,
+                                // Pencil without a seed (head text not loaded
+                                // yet) degrades to the plain composer.
+                                editSuggestion: message.edit && seed != nil
                             )
                         },
                         remoteContext: remoteContext,
@@ -532,6 +536,9 @@ struct CommentTarget: Identifiable {
     let lineEnd: Int
     let side: String
     var suggestionSeed: String?
+    /// Edit-as-suggestion: the composer opens as an editor on the block's
+    /// source and submits the change wrapped in a ```suggestion block.
+    var editSuggestion = false
 }
 
 // MARK: - Comment composer
@@ -545,24 +552,55 @@ struct CommentComposer: View {
     let target: CommentTarget
 
     @State private var text = ""
+    @State private var replacement = ""
     @State private var posting = false
     @State private var error: String?
+    @FocusState private var replacementFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Comment on \(path)")
+            Text(target.editSuggestion ? "Suggest an edit to \(path)" : "Comment on \(path)")
                 .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
             Text(draft.lineDescription)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            TextEditor(text: $text)
-                .font(.body)
-                .frame(minHeight: 130)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.secondary.opacity(0.35))
-                )
+            if target.editSuggestion {
+                // The block's source, ready to edit; submitted as a
+                // ```suggestion the author applies with one click. Neutral
+                // chrome — the focus ring, not a colored border, signals
+                // editability on macOS.
+                TextEditor(text: $replacement)
+                    .font(.system(.body, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .padding(6)
+                    .background(Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                    .frame(minHeight: 150, maxHeight: 320)
+                    .focused($replacementFocused)
+                if replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Clearing all text suggests deleting these lines.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                TextField("", text: $text,
+                          prompt: Text("Add an optional note explaining the change"),
+                          axis: .vertical)
+                    .lineLimit(2...4)
+                    .textFieldStyle(.roundedBorder)
+            } else {
+                TextEditor(text: $text)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .padding(6)
+                    .background(Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                    .frame(minHeight: 130, maxHeight: 320)
+            }
 
             if let error {
                 Text(error)
@@ -572,7 +610,7 @@ struct CommentComposer: View {
             }
 
             HStack {
-                if target.suggestionSeed != nil {
+                if !target.editSuggestion, target.suggestionSeed != nil {
                     Button {
                         insertSuggestion()
                     } label: {
@@ -580,31 +618,60 @@ struct CommentComposer: View {
                     }
                     .help("Insert a ```suggestion block pre-filled with the current lines")
                 }
-                Text("Comments must target lines that are part of the PR diff.")
+                // Out-of-diff targets fail at post time (or reject the whole
+                // review for drafts) — the warning matters in BOTH modes.
+                Text(target.editSuggestion
+                    ? "Suggestions must target lines that are part of the PR diff."
+                    : "Comments must target lines that are part of the PR diff.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
                 Button("Add to Review") {
                     state.addDraft(sessionID: sessionID, draft)
                     dismiss()
                 }
-                .disabled(trimmed.isEmpty || posting)
-                Button("Comment Now") { postNow() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(trimmed.isEmpty || posting)
-                if posting {
-                    ProgressView().controlSize(.small)
-                }
+                .disabled(!submittable || posting)
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button(target.editSuggestion ? "Suggest Now" : "Comment Now") { postNow() }
+                    // ⌘↩ — Return alone inserts a newline while an editor
+                    // has focus, so plain .defaultAction would never fire.
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(!submittable || posting)
+                ProgressView()
+                    .controlSize(.small)
+                    .opacity(posting ? 1 : 0)
             }
         }
         .padding(20)
-        .frame(width: 500)
+        .frame(minWidth: target.editSuggestion ? 560 : 500)
+        .onAppear {
+            if target.editSuggestion, let seed = target.suggestionSeed {
+                replacement = seed
+                replacementFocused = true
+            }
+        }
     }
 
     private var trimmed: String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Suggestion mode requires an actual change (or a note); a suggestion
+    /// identical to the current lines would be a no-op review comment.
+    private var submittable: Bool {
+        if target.editSuggestion {
+            return replacement != (target.suggestionSeed ?? "") || !trimmed.isEmpty
+        }
+        return !trimmed.isEmpty
+    }
+
+    /// The posted body: suggestion mode wraps the edited replacement (plus
+    /// the optional note) via Suggestion.body; plain mode posts the text.
+    private var composedBody: String {
+        target.editSuggestion
+            ? Suggestion.body(note: text, replacement: replacement)
+            : trimmed
     }
 
     /// GitHub applies the suggestion in place of the commented lines, so the
@@ -617,7 +684,7 @@ struct CommentComposer: View {
 
     private var draft: DraftComment {
         DraftComment(path: path, lineStart: target.lineStart, lineEnd: target.lineEnd,
-                     side: target.side, body: trimmed)
+                     side: target.side, body: composedBody)
     }
 
     private func postNow() {

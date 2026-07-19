@@ -20,6 +20,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
   - **Comment Now** posts a single review comment immediately.
   - **Add to Review** collects drafts locally; submit them together (Comment / Approve / Request Changes) or save them to GitHub as a **pending review** to finish later on github.com.
   - **Insert Suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
+  - **Edit as suggestion** — the pencil next to the bubble opens the block's Markdown source in an editor; your change (plus an optional note) is submitted as a suggestion, now or as part of your review.
 - **PR images and links** — repo-relative images in PR files render (fetched at the PR's commit, cached in memory only); repo-relative links to Markdown files open in-app at that commit, other repo links open on GitHub.
 - **Stays current** — open PRs are checked every minute; if the branch moves, a banner offers a one-click refresh (your draft comments survive).
 - **Navigation** — a navigator-style outline sidebar (toolbar toggle) listing the document's headings with level indentation, **⌘F** find-in-page with match stepping, and **⇧⌘F** search across every file in the sidebar with results grouped by file.
