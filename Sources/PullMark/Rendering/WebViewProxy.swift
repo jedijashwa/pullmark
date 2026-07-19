@@ -12,6 +12,15 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Releases a stuck in-place editor after Swift refuses/fails a save —
+    /// an unchanged document never re-renders, so the page can't recover
+    /// on its own.
+    func cancelInlineEdit() {
+        webView?.evaluateJavaScript(
+            "window.__pmCancelInlineEdit && window.__pmCancelInlineEdit();",
+            completionHandler: nil)
+    }
+
     /// Current scroll position as a 0–1 fraction of the scrollable height.
     func scrollFraction(_ completion: @escaping (Double?) -> Void) {
         guard let webView else { return completion(nil) }

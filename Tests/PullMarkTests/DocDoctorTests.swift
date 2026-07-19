@@ -55,8 +55,30 @@ struct DocDoctorTests {
         #expect(issues.first?.kind == .orphanPage)
     }
 
+    @Test func parsesAngleBracketAndParenTargets() {
+        let refs = DocDoctor.references(in: "[a](<sp aced.md>) [b](one(x).md) ![c](img.png \"t\")")
+        #expect(refs.map(\.target) == ["sp aced.md", "one(x).md", "img.png"])
+        #expect(refs.map(\.label) == ["a", "b", "c"])
+    }
+
+    @Test func percentEncodedTargetsResolve() {
+        let issues = scan([
+            "a.md": "[x](sp%20aced.md) [y](#my-heading)\n\n# My Heading",
+            "sp aced.md": "# S\n\n[back](a.md)",
+        ])
+        #expect(issues.isEmpty)
+    }
+
+    @Test func linksEscapingTheRootAreSkippedNotGuessed() {
+        // The un-verifiable out-of-root link is skipped (no broken-link
+        // guess); the page itself being an orphan is a separate, true fact.
+        let issues = scan(["docs/a.md": "[out](../../elsewhere.md)"])
+        #expect(!issues.contains { $0.kind == .brokenLink })
+    }
+
     @Test func normalizeResolvesDotSegments() {
         #expect(DocDoctor.normalize("docs/../img/./a.png") == "img/a.png")
+        #expect(DocDoctor.normalize("../outside.md") == nil)
         #expect(DocDoctor.normalize("./x.md") == "x.md")
     }
 }
