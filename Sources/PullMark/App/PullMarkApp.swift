@@ -131,6 +131,17 @@ struct PullMarkApp: App {
                 .keyboardShortcut("k", modifiers: [.command, .control])
                 .disabled(activeLocalFileURL == nil)
                 .help("Stage and commit changes in this file's repository")
+                Button("Revert Last Edit") {
+                    guard let url = activeLocalFileURL else { return }
+                    do {
+                        try EditHistory.revertLastEdit(for: url)
+                        state?.lastNotice = "Reverted the last edit to \(url.lastPathComponent)."
+                    } catch {
+                        state?.lastError = "Couldn't revert: \(error.localizedDescription)"
+                    }
+                }
+                .disabled(activeLocalFileURL.map { EditHistory.lastSnapshot(for: $0) == nil } ?? true)
+                .help("Restore the file as it was before PullMark's last edit")
             }
             CommandGroup(replacing: .printItem) {
                 Button("Print…") { state?.activeDocument?.proxy.printDocument() }

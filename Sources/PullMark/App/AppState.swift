@@ -140,6 +140,7 @@ final class AppState: ObservableObject {
             guard alert.runModal() == .alertFirstButtonReturn else { return }
         }
         do {
+            EditHistory.snapshot(url)
             try text.write(to: url, atomically: true, encoding: .utf8)
             editedText[url] = nil
             editedBase[url] = nil

@@ -258,6 +258,7 @@ struct LocalFileView: View {
                 return
             }
             do {
+                EditHistory.snapshot(file.url)
                 try newText.write(to: file.url, atomically: true, encoding: .utf8)
                 state.editedText[file.url] = nil
                 state.editedBase[file.url] = nil
