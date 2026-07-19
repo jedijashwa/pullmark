@@ -308,8 +308,14 @@ struct PRFileView: View {
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
         }
+        .onDisappear {
+            state.unregisterActiveDocument(id: activeDocumentID)
+        }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
-        .onChange(of: mode) { _ in loadBlameIfNeeded() }
+        .onChange(of: mode) { _ in
+            loadBlameIfNeeded()
+            updateActiveDocument()
+        }
         .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
                                         consume: consumePendingSearch))
         .sheet(item: $commentTarget) { target in
@@ -329,6 +335,26 @@ struct PRFileView: View {
                                                             path: path, sha: sha)
             }
         }
+    }
+
+    private var activeDocumentID: String { "prFile:" + sessionID + "|" + path }
+
+    /// Only the Result mode is a document (diff modes never register), and
+    /// only once the head content is loaded; a deleted file's placeholder
+    /// note is not worth exporting.
+    private func updateActiveDocument() {
+        guard mode == .result, !loading, loadError == nil,
+              let headText, file?.status != "removed" else {
+            state.unregisterActiveDocument(id: activeDocumentID)
+            return
+        }
+        state.registerActiveDocument(ActiveDocument(
+            id: activeDocumentID,
+            exportBaseName: ((path as NSString).lastPathComponent as NSString).deletingPathExtension,
+            markdown: headText,
+            proxy: proxy,
+            remoteContext: remoteContext
+        ))
     }
 
     private func setThreadResolved(rootID: Int, resolved: Bool) {
@@ -457,6 +483,7 @@ struct PRFileView: View {
         }
         loading = false
         loadBlameIfNeeded()
+        updateActiveDocument()
     }
 
     private func handlePageLoaded() {
@@ -692,6 +719,9 @@ struct PRDocView: View {
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
         }
+        .onDisappear {
+            state.unregisterActiveDocument(id: activeDocumentID)
+        }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .modifier(PendingSearchConsumer(target: .prDoc(sessionID, path),
                                         consume: consumePendingSearch))
@@ -760,6 +790,24 @@ struct PRDocView: View {
         }
         loading = false
         loadBlameIfNeeded()
+        updateActiveDocument()
+    }
+
+    private var activeDocumentID: String { "prDoc:" + sessionID + "|" + path }
+
+    private func updateActiveDocument() {
+        guard !loading, loadError == nil, let session else {
+            state.unregisterActiveDocument(id: activeDocumentID)
+            return
+        }
+        state.registerActiveDocument(ActiveDocument(
+            id: activeDocumentID,
+            exportBaseName: ((path as NSString).lastPathComponent as NSString).deletingPathExtension,
+            markdown: markdown,
+            proxy: proxy,
+            remoteContext: RemoteResourceContext(ref: session.ref,
+                                                 commitSHA: session.details.head.sha)
+        ))
     }
 }
 

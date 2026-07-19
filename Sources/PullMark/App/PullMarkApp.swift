@@ -91,6 +91,20 @@ struct PullMarkApp: App {
                     }
                 }
             }
+            CommandGroup(replacing: .importExport) {
+                Button("Export as PDF…") {
+                    guard let document = state.activeDocument else { return }
+                    DocumentExport.exportPDF(document) { state.lastError = $0 }
+                }
+                .disabled(state.activeDocument == nil)
+                .help("Save the rendered document as a PDF")
+                Button("Export as HTML…") {
+                    guard let document = state.activeDocument else { return }
+                    DocumentExport.exportHTML(document) { state.lastError = $0 }
+                }
+                .disabled(state.activeDocument == nil)
+                .help("Save the rendered document as a self-contained HTML file")
+            }
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state.findBarVisible = true }
                     .keyboardShortcut("f")

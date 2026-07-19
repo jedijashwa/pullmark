@@ -105,13 +105,19 @@ struct LocalFileView: View {
             load()
             loadGitInfo()
             watcher = FileWatcher(url: file.url) { load() }
+            updateActiveDocument()
         }
         .onDisappear {
             watcher = nil
+            state.unregisterActiveDocument(id: activeDocumentID)
         }
         .onChange(of: blameVisible) { _ in loadBlame() }
-        .onChange(of: currentText) { _ in loadBlame() }
+        .onChange(of: currentText) { _ in
+            loadBlame()
+            updateActiveDocument()
+        }
         .onChange(of: inGitRepo) { _ in loadBlame() }
+        .onChange(of: compare) { _ in updateActiveDocument() }
         .modifier(PendingSearchConsumer(target: .local(file.url),
                                         consume: consumePendingSearch))
         .sheet(item: $historyRequest) { request in
@@ -178,6 +184,24 @@ struct LocalFileView: View {
                                         customCSS: style.customCSS,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
+    }
+
+    private var activeDocumentID: String { "local:" + file.url.path }
+
+    /// Export and Copy-as-Markdown target rendered documents, not diffs:
+    /// while a comparison is showing the registration is dropped.
+    private func updateActiveDocument() {
+        guard compare == nil else {
+            state.unregisterActiveDocument(id: activeDocumentID)
+            return
+        }
+        state.registerActiveDocument(ActiveDocument(
+            id: activeDocumentID,
+            exportBaseName: file.url.deletingPathExtension().lastPathComponent,
+            markdown: currentText,
+            proxy: proxy,
+            localRoot: file.resourceRoot
+        ))
     }
 
     private func handlePageLoaded() {

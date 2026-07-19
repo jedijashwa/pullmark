@@ -24,6 +24,40 @@ final class WebViewProxy: ObservableObject {
         webView?.evaluateJavaScript(js)
     }
 
+    /// PDF of the whole rendered document. WKPDFConfiguration.rect is set to
+    /// the full content height so long documents export completely — as one
+    /// continuous page, since WebKit's createPDF does not paginate.
+    func pdfData(completion: @escaping (Result<Data, Error>) -> Void) {
+        guard let webView else {
+            completion(.failure(MessageError(message: "No rendered document to export.")))
+            return
+        }
+        webView.evaluateJavaScript(
+            "Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)"
+        ) { result, _ in
+            let configuration = WKPDFConfiguration()
+            let height = (result as? NSNumber).map { CGFloat(truncating: $0) } ?? 0
+            if height > 0 {
+                configuration.rect = CGRect(x: 0, y: 0, width: webView.bounds.width, height: height)
+            }
+            webView.createPDF(configuration: configuration) { pdfResult in
+                completion(pdfResult)
+            }
+        }
+    }
+
+    /// Serialized DOM of the rendered page in its current state (after the
+    /// page scripts ran), without the doctype.
+    func pageDOM(completion: @escaping (String?) -> Void) {
+        guard let webView else {
+            completion(nil)
+            return
+        }
+        webView.evaluateJavaScript("document.documentElement.outerHTML") { result, _ in
+            completion(result as? String)
+        }
+    }
+
     /// action: "set" (with query), "next", "prev", or "clear".
     func find(_ action: String, query: String? = nil,
               completion: @escaping (Int, Int) -> Void) {

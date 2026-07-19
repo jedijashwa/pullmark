@@ -23,6 +23,17 @@ final class RemoteResourceSchemeHandler: NSObject, WKURLSchemeHandler {
     }()
     private var stoppedTasks = Set<ObjectIdentifier>()
 
+    private static func cacheKey(context: RemoteResourceContext, path: String) -> NSString {
+        "\(context.ref.owner)/\(context.ref.repo)@\(context.commitSHA):\(path)" as NSString
+    }
+
+    /// Bytes already fetched for a repo path at this context's commit, if
+    /// any — lets HTML export embed images the live page has already loaded
+    /// without re-fetching (best effort: uncached images keep their URLs).
+    static func cachedData(context: RemoteResourceContext, path: String) -> Data? {
+        cache.object(forKey: cacheKey(context: context, path: path)) as Data?
+    }
+
     /// Repo-relative path from a pullmark-remote:/// URL; nil when empty or
     /// attempting traversal.
     static func repoPath(from url: URL) -> String? {
@@ -42,7 +53,7 @@ final class RemoteResourceSchemeHandler: NSObject, WKURLSchemeHandler {
             urlSchemeTask.didFailWithError(URLError(.badURL))
             return
         }
-        let key = "\(context.ref.owner)/\(context.ref.repo)@\(context.commitSHA):\(path)" as NSString
+        let key = Self.cacheKey(context: context, path: path)
         if let cached = Self.cache.object(forKey: key) {
             complete(urlSchemeTask, url: url, path: path, data: cached as Data)
             return
