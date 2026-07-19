@@ -6,6 +6,10 @@ section current as features land.
 
 ## Unreleased
 
+- The update banner now updates in place: brew-managed installs get an
+  "Update Now" button that runs `brew upgrade --cask pullmark` and relaunches
+  PullMark (with a fallback to the copyable command if brew fails); other
+  installs get a "Download" button that opens the release page.
 - YAML front matter now renders as metadata instead of prose (#6): documents
   (and Quick Look previews) show a quiet, collapsed "Front matter" table at
   the top, and rendered diffs show compact key/value tables inside the usual

@@ -140,10 +140,24 @@ struct AppUpdateBanner: View {
         if let version = updates.availableVersion {
             HStack(spacing: 10) {
                 Image(systemName: "sparkles")
-                Text("PullMark \(version) is available.")
-                Button("What's New") { updates.showReleaseNotes = true }
-                Button("Copy brew Command") { updates.copyBrewCommand() }
-                    .help("Copies “brew upgrade --cask pullmark” to the clipboard")
+                switch updates.updateRun {
+                case .updating:
+                    Text("Updating…")
+                    ProgressView().controlSize(.small)
+                case .failed(let message):
+                    Text("Update failed: \(message)")
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(BrewUpdate.command)
+                        .font(.callout.monospaced())
+                        .textSelection(.enabled)
+                    Button("Copy") { updates.copyBrewCommand() }
+                        .help("Copies “\(BrewUpdate.command)” to the clipboard")
+                case .idle:
+                    Text("PullMark \(version) is available.")
+                    Button("What's New") { updates.showReleaseNotes = true }
+                    primaryButton
+                }
                 Spacer()
                 Button {
                     updates.dismissAvailableUpdate()
@@ -151,12 +165,30 @@ struct AppUpdateBanner: View {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.borderless)
+                .disabled(updates.updateRun == .updating)
                 .help("Dismiss — this version won't be suggested again")
             }
             .font(.callout)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
             .background(Color.blue.opacity(0.15))
+            .onAppear { updates.detectUpdateMethodIfNeeded() }
+        }
+    }
+
+    /// "Update Now" for brew-managed installs (disabled while brew is still
+    /// being probed), "Download" otherwise.
+    @ViewBuilder private var primaryButton: some View {
+        switch updates.updateMethod {
+        case .brew, nil:
+            Button("Update Now") { updates.updateNow() }
+                .buttonStyle(.borderedProminent)
+                .disabled(updates.updateMethod == nil)
+                .help("Runs “\(BrewUpdate.command)” and relaunches PullMark")
+        case .download:
+            Button("Download") { updates.updateNow() }
+                .buttonStyle(.borderedProminent)
+                .help("Opens the release page on GitHub")
         }
     }
 }
