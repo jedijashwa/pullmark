@@ -10,6 +10,11 @@ section current as features land.
   "Update Now" button that runs `brew upgrade --cask pullmark` and relaunches
   PullMark (with a fallback to the copyable command if brew fails); other
   installs get a "Download" button that opens the release page.
+- Rendered pages are hardened against script injection from hostile Markdown
+  (#5): a Content-Security-Policy only lets PullMark's own bundled scripts
+  run — inline `<script>` tags and `on*=` handlers smuggled in via raw HTML
+  are blocked — and the render payload is embedded as non-executing JSON.
+  Quick Look previews get an even stricter policy (no scripts at all).
 - YAML front matter now renders as metadata instead of prose (#6): documents
   (and Quick Look previews) show a quiet, collapsed "Front matter" table at
   the top, and rendered diffs show compact key/value tables inside the usual

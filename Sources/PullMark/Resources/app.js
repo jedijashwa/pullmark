@@ -1,7 +1,16 @@
 (function () {
   "use strict";
 
-  var payload = window.__PAYLOAD__ || { mode: "document", markdown: "" };
+  // The payload rides in a non-executing JSON script tag so hostile markdown
+  // can never reach an executing context; page CSP additionally blocks any
+  // inline script (#5).
+  var payload = { mode: "document", markdown: "" };
+  var payloadElement = document.getElementById("pm-payload");
+  if (payloadElement) {
+    try {
+      payload = JSON.parse(payloadElement.textContent);
+    } catch (e) { /* fall through to the empty document */ }
+  }
   var content = document.getElementById("content");
   var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 

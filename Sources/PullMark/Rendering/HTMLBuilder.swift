@@ -141,12 +141,25 @@ enum HTMLBuilder {
             .replacingOccurrences(of: ">", with: "&gt;")
     }
 
+    /// Content-Security-Policy for rendered pages (#5): only our own bundled
+    /// scripts run ('self' resolves file-relative for loadFileURL pages —
+    /// verified in WKWebView), so markdown-injected inline <script> and on*=
+    /// handlers are dead on arrival. mermaid injects inline <style> into its
+    /// SVGs → style-src keeps 'unsafe-inline'. Images may be local files,
+    /// data: URIs (also CSS masks), https (avatars), or the app's custom
+    /// resource schemes. No fetch/XHR, frames, objects, or remote fonts.
+    static let contentSecurityPolicy = "default-src 'none'; script-src 'self'; "
+        + "style-src 'self' 'unsafe-inline'; "
+        + "img-src file: data: https: pullmark-local: pullmark-remote:; "
+        + "font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'"
+
     private static func page(payload: RenderPayload, title: String) -> String {
         """
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="\(contentSecurityPolicy)">
         <title>\(escapeHTML(title))</title>
         <link rel="stylesheet" href="vendor/github-markdown.css">
         <link rel="stylesheet" media="(prefers-color-scheme: light)" href="vendor/hljs-github.min.css">
@@ -155,7 +168,7 @@ enum HTMLBuilder {
         </head>
         <body>
         <article id="content" class="markdown-body"></article>
-        <script>window.__PAYLOAD__ = \(jsonLiteral(payload));</script>
+        <script type="application/json" id="pm-payload">\(jsonLiteral(payload))</script>
         <script src="vendor/marked.min.js"></script>
         <script src="vendor/marked-alert.min.js"></script>
         <script src="vendor/marked-footnote.min.js"></script>
