@@ -99,6 +99,20 @@ enum LocalGit {
         runForError(["checkout", "-b", name], in: root.path)
     }
 
+    /// Whether the repo has any remote configured (drives the push toggle).
+    static func hasRemote(in root: URL) -> Bool {
+        guard let out = run(["remote"], in: root.path) else { return false }
+        return !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Pushes HEAD, setting upstream on first push of a branch. Uses the
+    /// same credential story as the rest of the app (system git helpers;
+    /// GIT_TERMINAL_PROMPT=0 fails cleanly instead of hanging). Returns nil
+    /// on success or git's stderr on failure.
+    static func push(branch: String, in root: URL) -> String? {
+        runForError(["push", "--set-upstream", "origin", branch], in: root.path)
+    }
+
     /// The checked-out branch name; nil outside a repo or on a detached
     /// HEAD (where "HEAD" is what git reports).
     static func currentBranch(in root: URL) -> String? {

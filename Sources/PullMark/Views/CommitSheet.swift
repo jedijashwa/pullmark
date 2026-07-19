@@ -22,6 +22,8 @@ struct CommitSheet: View {
     @State private var newBranchName = ""
     @State private var useNewBranch = true
     @State private var skipMainPrompt = false
+    @State private var hasRemote = false
+    @AppStorage(DefaultsKeys.pushAfterCommit) private var pushAfterCommit = false
     @State private var committing = false
     @State private var error: String?
     @FocusState private var messageFocused: Bool
@@ -112,6 +114,10 @@ struct CommitSheet: View {
             }
 
             HStack {
+                if hasRemote {
+                    Toggle("Push to origin after committing", isOn: $pushAfterCommit)
+                        .font(.caption)
+                }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -166,9 +172,11 @@ struct CommitSheet: View {
         Task.detached(priority: .userInitiated) {
             let branch = LocalGit.currentBranch(in: root)
             let changed = LocalGit.changedFiles(in: root)
+            let hasRemote = LocalGit.hasRemote(in: root)
             await MainActor.run {
                 self.branch = branch
                 self.changed = changed
+                self.hasRemote = hasRemote
                 // Markdown files preselected — the ones PullMark edits.
                 self.selected = Set(changed.map(\.path).filter {
                     MarkdownFileType.matches(($0 as NSString).pathExtension)
@@ -193,9 +201,12 @@ struct CommitSheet: View {
         // Only a deliberate commit-to-main can waive future prompts — the
         // checkbox is meaningless (and hidden) when branching.
         let remember = skipMainPrompt && !branchingNow && mainPromptNeeded
+        let push = pushAfterCommit && hasRemote
+        let currentBranchName = branch
         Task.detached(priority: .userInitiated) {
             var failure: String?
             var createdBranch = false
+            var pushFailure: String?
             if !branchName.isEmpty {
                 failure = LocalGit.createBranch(branchName, in: root)
                 createdBranch = failure == nil
@@ -203,19 +214,26 @@ struct CommitSheet: View {
             if failure == nil {
                 failure = LocalGit.commit(paths: paths, message: commitMessage, in: root)
             }
+            if failure == nil, push,
+               let target = branchName.isEmpty ? currentBranchName : branchName {
+                pushFailure = LocalGit.push(branch: target, in: root)
+            }
+            // Rebound to lets: the MainActor closure must not capture the
+            // mutable locals (a Swift 6 error).
+            let (result, branched, pushResult) = (failure, createdBranch, pushFailure)
             await MainActor.run {
                 committing = false
-                if createdBranch {
+                if branched {
                     // HEAD moved even if the commit then failed: reflect it
                     // so a retry commits here instead of re-running
                     // checkout -b into an "already exists" wedge.
                     self.branch = branchName
                     self.branchCreated = true
                 }
-                if let failure {
-                    self.error = createdBranch && !branchName.isEmpty
-                        ? "Now on branch “\(branchName)” — the commit itself failed: \(failure)"
-                        : failure
+                if let result {
+                    self.error = branched && !branchName.isEmpty
+                        ? "Now on branch “\(branchName)” — the commit itself failed: \(result)"
+                        : result
                     return
                 }
                 if remember {
@@ -224,8 +242,16 @@ struct CommitSheet: View {
                     if !allowed.contains(root.path) { allowed.append(root.path) }
                     UserDefaults.standard.set(allowed, forKey: DefaultsKeys.commitToMainAllowed)
                 }
-                state.lastNotice = "Committed \(displayCount) file\(displayCount == 1 ? "" : "s")"
-                    + (branchName.isEmpty ? "." : " on new branch “\(branchName)”.")
+                let committed = "Committed \(displayCount) file\(displayCount == 1 ? "" : "s")"
+                    + (branchName.isEmpty ? "" : " on new branch “\(branchName)”")
+                if let pushResult {
+                    // The commit landed — a push failure must not read as a
+                    // failed commit.
+                    state.lastNotice = committed
+                        + ", but the push failed: \(pushResult)"
+                } else {
+                    state.lastNotice = committed + (push ? " and pushed to origin." : ".")
+                }
                 dismiss()
             }
         }

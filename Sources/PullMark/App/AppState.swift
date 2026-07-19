@@ -161,11 +161,21 @@ final class AppState: ObservableObject {
 
     private var updateTimer: Timer?
 
+    /// The key window's AppState: external opens (Finder, CLI, dock drops)
+    /// land in the frontmost window now that each window owns its state.
+    /// ContentView updates this as windows gain key status.
+    static weak var keyInstance: AppState?
+
     init() {
+        if Self.keyInstance == nil { Self.keyInstance = self }
         // Registering also flushes any open-file events that arrived before
-        // this state existed (cold launch with a document).
-        OpenURLRouter.shared.onOpen { [weak self] urls in
-            for url in urls { self?.add(url: url) }
+        // any state existed (cold launch with a document). The handler
+        // routes through keyInstance so re-registration by later windows
+        // is harmless.
+        OpenURLRouter.shared.onOpen { urls in
+            Task { @MainActor in
+                for url in urls { AppState.keyInstance?.add(url: url) }
+            }
         }
         // Command-line arguments, in case this state is created before the
         // app delegate finished launching (or vice versa).

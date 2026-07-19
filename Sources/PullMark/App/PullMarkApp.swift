@@ -32,7 +32,9 @@ enum PullMarkLauncher {
 
 struct PullMarkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var state = AppState()
+    /// The focused window's state; commands act on it (nil disables them).
+    @FocusedObject private var focusedState: AppState?
+    private var state: AppState? { focusedState ?? AppState.keyInstance }
     @StateObject private var updates = UpdateChecker()
     @StateObject private var defaultApp = DefaultAppManager()
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
@@ -48,8 +50,8 @@ struct PullMarkApp: App {
     /// unregisters the document, and Save must keep working with unsaved
     /// edits while a comparison is on screen.
     private var activeLocalFileURL: URL? {
-        if case .local(let url) = state.selection { return url }
-        return nil
+        guard let selection = state?.selection, case .local(let url) = selection else { return nil }
+        return url
     }
 
     /// Copy as Markdown (⌥⌘C): the page maps the selection to covered
@@ -57,7 +59,7 @@ struct PullMarkApp: App {
     /// slices the original markdown and puts plain text on the pasteboard.
     /// No selection copies the whole document source.
     private func copyAsMarkdown() {
-        guard let document = state.activeDocument else { return }
+        guard let document = state?.activeDocument else { return }
         document.proxy.selectionSourceLineRange { range in
             let source = MarkdownCopy.source(of: document.markdown, lineRange: range)
             let pasteboard = NSPasteboard.general
@@ -69,7 +71,6 @@ struct PullMarkApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(state)
                 .environmentObject(updates)
                 .environmentObject(defaultApp)
                 .onChange(of: appearanceRaw) { newValue in
@@ -84,7 +85,6 @@ struct PullMarkApp: App {
                 // handler a document opened while the app is not running
                 // would be silently dropped. (AppState.add is idempotent, so
                 // overlap with the delegate path is harmless.)
-                .onOpenURL { url in state.add(url: url) }
         }
         // Route file-open events into the existing window instead of
         // spawning a second one.
@@ -94,23 +94,23 @@ struct PullMarkApp: App {
                 Button("Check for Updates…") {
                     Task {
                         if let message = await updates.checkManually() {
-                            state.lastError = message
+                            state?.lastError = message
                         }
                     }
                 }
             }
             CommandGroup(after: .newItem) {
-                Button("Open…") { state.openFileOrFolder() }
+                Button("Open…") { state?.openFileOrFolder() }
                     .keyboardShortcut("o")
-                Button("Open Pull Request…") { state.showAddPR = true }
+                Button("Open Pull Request…") { state?.showAddPR = true }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
                 Menu("Open Recent") {
-                    ForEach(state.recents) { item in
-                        Button(item.title) { state.openRecent(item) }
+                    ForEach(state?.recents ?? []) { item in
+                        Button(item.title) { state?.openRecent(item) }
                     }
-                    if !state.recents.isEmpty {
+                    if state?.recents.isEmpty == false {
                         Divider()
-                        Button("Clear Menu") { state.clearRecents() }
+                        Button("Clear Menu") { state?.clearRecents() }
                     }
                 }
             }
@@ -118,16 +118,16 @@ struct PullMarkApp: App {
                 // Manual-save mode: writes the active document's pending
                 // block edits; a no-op (disabled) when nothing is dirty.
                 Button("Save") {
-                    if let url = activeLocalFileURL { state.saveEdits(for: url) }
+                    if let url = activeLocalFileURL { state?.saveEdits(for: url) }
                 }
                 .keyboardShortcut("s")
-                .disabled(activeLocalFileURL.map { state.editedText[$0] == nil } ?? true)
+                .disabled(activeLocalFileURL.map { state?.editedText[$0] == nil } ?? true)
                 Button("Commit Changes…") {
                     guard let url = activeLocalFileURL else { return }
                     if let root = LocalGit.repoRoot(for: url) {
-                        state.commitRequest = CommitRequest(root: root)
+                        state?.commitRequest = CommitRequest(root: root)
                     } else {
-                        state.lastNotice = "\(url.lastPathComponent) isn't inside a git repository."
+                        state?.lastNotice = "\(url.lastPathComponent) isn't inside a git repository."
                     }
                 }
                 .keyboardShortcut("k", modifiers: [.command, .control])
@@ -136,16 +136,16 @@ struct PullMarkApp: App {
             }
             CommandGroup(replacing: .importExport) {
                 Button("Export as PDF…") {
-                    guard let document = state.activeDocument else { return }
-                    DocumentExport.exportPDF(document) { state.lastError = $0 }
+                    guard let document = state?.activeDocument else { return }
+                    DocumentExport.exportPDF(document) { state?.lastError = $0 }
                 }
-                .disabled(state.activeDocument == nil)
+                .disabled(state?.activeDocument == nil)
                 .help("Save the rendered document as a PDF")
                 Button("Export as HTML…") {
-                    guard let document = state.activeDocument else { return }
-                    DocumentExport.exportHTML(document) { state.lastError = $0 }
+                    guard let document = state?.activeDocument else { return }
+                    DocumentExport.exportHTML(document) { state?.lastError = $0 }
                 }
-                .disabled(state.activeDocument == nil)
+                .disabled(state?.activeDocument == nil)
                 .help("Save the rendered document as a self-contained HTML file")
             }
             // The system Copy item (⌘C) stays: WKWebView's native copy puts
@@ -153,14 +153,14 @@ struct PullMarkApp: App {
             CommandGroup(after: .pasteboard) {
                 Button("Copy as Markdown") { copyAsMarkdown() }
                     .keyboardShortcut("c", modifiers: [.command, .option])
-                    .disabled(state.activeDocument == nil)
+                    .disabled(state?.activeDocument == nil)
                     .help("Copies the Markdown source of the selected blocks "
                         + "(whole blocks — or the whole document when nothing is selected)")
             }
             CommandGroup(after: .textEditing) {
-                Button("Find in Page") { state.findBarVisible = true }
+                Button("Find in Page") { state?.findBarVisible = true }
                     .keyboardShortcut("f")
-                Button("Search All Files…") { state.searchPaletteVisible = true }
+                Button("Search All Files…") { state?.searchPaletteVisible = true }
                     .keyboardShortcut("f", modifiers: [.command, .shift])
             }
             CommandGroup(replacing: .help) {
@@ -186,11 +186,11 @@ struct PullMarkApp: App {
                     }
                 }
                 Divider()
-                Button(state.sourceViewVisible ? "Hide Markdown Source" : "Show Markdown Source") {
-                    state.sourceViewVisible.toggle()
+                Button(state?.sourceViewVisible == true ? "Hide Markdown Source" : "Show Markdown Source") {
+                    state?.sourceViewVisible.toggle()
                 }
                 .keyboardShortcut("u", modifiers: [.command, .option])
-                .disabled(state.activeDocument == nil)
+                .disabled(state?.activeDocument == nil)
                 .help("Temporarily show the raw Markdown behind the rendered document")
             }
         }
