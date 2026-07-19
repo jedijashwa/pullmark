@@ -6,6 +6,8 @@ section current as features land.
 
 ## Unreleased
 
+- Paths shown in the UI abbreviate your home folder to `~` (titlebar
+  subtitles, Recents tooltips, search-result subtitles).
 - Export (#9): File → "Export as PDF…" / "Export as HTML…" save the rendered
   document (local files, a PR file's Result view, and browsed repo docs —
   not diffs). PDF captures the full document via WebKit as one continuous

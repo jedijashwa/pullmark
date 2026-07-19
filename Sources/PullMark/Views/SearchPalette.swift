@@ -279,7 +279,7 @@ struct SearchPalette: View {
             sources.append(SearchSource(
                 id: "local:" + file.url.path,
                 title: file.displayName,
-                subtitle: file.resourceRoot.path,
+                subtitle: PathAbbreviator.abbreviate(file.resourceRoot.path),
                 target: .local(file.url),
                 content: nil,
                 url: file.url

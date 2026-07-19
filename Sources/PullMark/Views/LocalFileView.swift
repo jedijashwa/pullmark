@@ -76,7 +76,7 @@ struct LocalFileView: View {
         }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
-        .navigationSubtitle(file.url.deletingLastPathComponent().path)
+        .navigationSubtitle(PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path))
         .toolbar {
             ToolbarItem {
                 compareMenu
@@ -227,7 +227,7 @@ struct LocalFileView: View {
         do {
             currentText = try String(contentsOf: file.url, encoding: .utf8)
         } catch {
-            currentText = "> [!CAUTION]\n> Could not read `\(file.url.path)`: \(error.localizedDescription)"
+            currentText = "> [!CAUTION]\n> Could not read `\(PathAbbreviator.abbreviate(file.url.path))`: \(error.localizedDescription)"
         }
     }
 
