@@ -6,6 +6,13 @@ section current as features land.
 
 ## Unreleased
 
+- Export (#9): File → "Export as PDF…" / "Export as HTML…" save the rendered
+  document (local files, a PR file's Result view, and browsed repo docs —
+  not diffs). PDF captures the full document via WebKit as one continuous
+  page (not paginated). HTML is a self-contained single file: styles are
+  inlined (KaTeX with embedded fonts when math is present), scripts and the
+  CSP are stripped, and local/already-loaded PR images are embedded as data:
+  URIs (unfetched remote images keep their URLs, best effort).
 - Search across all files (#8): ⇧⌘F (Edit-menu "Search All Files…") opens a
   command-palette-style search over everything in the sidebar — local files
   are read from disk, and PR documents already loaded in memory are included

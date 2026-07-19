@@ -41,6 +41,27 @@ struct MessageError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+/// The document-shaped content currently frontmost in the detail area (a
+/// local file, a PR file's Result view, or a browsed repo doc). Registered
+/// by the detail views so app-level menu commands (Export as PDF/HTML, Copy
+/// as Markdown) can reach the live web view and the original markdown
+/// source. Diff views and the PR overview never register — those commands
+/// are document-only (v1).
+struct ActiveDocument {
+    /// Registration identity, so a disappearing view only unregisters itself.
+    let id: String
+    /// Suggested export file basename (source file name without extension).
+    let exportBaseName: String
+    /// The original markdown source backing the rendered page.
+    let markdown: String
+    /// Handle on the live web view rendering the document.
+    let proxy: WebViewProxy
+    /// Root for pullmark-local image resolution (local files only).
+    var localRoot: URL?
+    /// Context for pullmark-remote image resolution (PR content only).
+    var remoteContext: RemoteResourceContext?
+}
+
 /// A recently opened file, folder, or pull request. Persisted (metadata only)
 /// in UserDefaults.
 struct RecentItem: Codable, Identifiable, Equatable {
@@ -87,6 +108,9 @@ final class AppState: ObservableObject {
     /// consumed once (the view drives find-in-page with it after its page
     /// loads, so the term is highlighted and scrolled into view).
     @Published var pendingSearchQuery: String?
+    /// See ActiveDocument; nil while a diff, the PR overview, or the empty
+    /// placeholder is frontmost (export/copy menu items disable themselves).
+    @Published var activeDocument: ActiveDocument?
 
     let client = GitHubClient.shared
 
@@ -114,6 +138,19 @@ final class AppState: ObservableObject {
 
     deinit {
         updateTimer?.invalidate()
+    }
+
+    // MARK: - Active document
+
+    func registerActiveDocument(_ document: ActiveDocument) {
+        activeDocument = document
+    }
+
+    /// Views unregister by id on disappear; the guard keeps a stale
+    /// onDisappear (fired after the next view already registered) from
+    /// clobbering the new registration.
+    func unregisterActiveDocument(id: String) {
+        if activeDocument?.id == id { activeDocument = nil }
     }
 
     // MARK: - Local files
