@@ -132,6 +132,12 @@ struct PullMarkApp: App {
                 .disabled(activeLocalFileURL == nil)
                 .help("Stage and commit changes in this file's repository")
             }
+            CommandGroup(replacing: .printItem) {
+                Button("Print…") { state?.activeDocument?.proxy.printDocument() }
+                    .keyboardShortcut("p")
+                    .disabled(state?.activeDocument == nil)
+                    .help("Print the rendered document")
+            }
             CommandGroup(replacing: .importExport) {
                 Button("Export as PDF…") {
                     guard let document = state?.activeDocument else { return }

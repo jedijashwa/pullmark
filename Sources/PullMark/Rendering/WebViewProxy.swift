@@ -12,6 +12,23 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// ⌘P: prints the rendered document through the standard panel.
+    func printDocument() {
+        guard let webView, let window = webView.window else { return }
+        let info = NSPrintInfo.shared
+        info.horizontalPagination = .fit
+        info.verticalPagination = .automatic
+        info.topMargin = 36; info.bottomMargin = 36
+        info.leftMargin = 36; info.rightMargin = 36
+        let operation = webView.printOperation(with: info)
+        operation.showsPrintPanel = true
+        operation.showsProgressPanel = true
+        // WKWebView's print view starts zero-sized; without this the panel
+        // previews an empty page.
+        operation.view?.frame = webView.bounds
+        operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+    }
+
     /// The query currently highlighted by find-in-page, if any. Tracked so
     /// the find can be re-applied after the page reloads underneath it
     /// (e.g. blame annotations arriving re-renders the whole page, which
