@@ -21,6 +21,9 @@ struct MarkdownWebView: NSViewRepresentable {
     /// In-place block editing commit: (lineStart, lineEnd, seed the editor
     /// started from, replacement) — 1-based inclusive source lines.
     var onEditLocal: ((Int, Int, String, String) -> Void)?
+    /// An in-place editor opened (true) or closed (false) — re-renders are
+    /// deferred while one is open so the draft can't be destroyed.
+    var onEditingState: ((Bool) -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -139,6 +142,10 @@ struct MarkdownWebView: NSViewRepresentable {
                       let seed = dict["seed"] as? String
                 else { return }
                 parent.onEditLocal?(lineStart, lineEnd, seed, replacement)
+            case "editingState":
+                if let active = dict["active"] as? Bool {
+                    parent.onEditingState?(active)
+                }
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in

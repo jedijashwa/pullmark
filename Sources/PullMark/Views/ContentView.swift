@@ -98,6 +98,12 @@ struct ContentView: View {
         .onChange(of: controlActiveState) { active in
             if active == .key { AppState.keyInstance = state }
         }
+        // Closing the last window IS the app's default quit path, and the
+        // weak keyInstance nils before applicationWillTerminate can use it
+        // — snapshot here while this window's state is still alive.
+        .onDisappear {
+            if AppState.keyInstance === state { state.snapshotSession() }
+        }
         .onOpenURL { url in
             if AppState.gateOpen(url) { state.add(url: url) }
         }

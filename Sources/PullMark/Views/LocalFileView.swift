@@ -28,6 +28,13 @@ struct LocalFileView: View {
     @State private var compare: CompareTarget?
     @State private var compareText: String?
     @State private var compareGeneration = 0
+    /// An in-place editor is open: re-renders are deferred (a reload would
+    /// destroy the draft mid-typing).
+    @State private var inlineEditing = false
+    @State private var reloadDeferred = false
+    /// Scroll fraction to restore after an intentional re-render (an edit
+    /// save or an external file change) — reloads land at the top otherwise.
+    @State private var pendingScrollRestore: Double?
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -56,6 +63,13 @@ struct LocalFileView: View {
                 MarkdownWebView(
                     html: html,
                     onEditLocal: handleEditLocal,
+                    onEditingState: { active in
+                        inlineEditing = active
+                        if !active, reloadDeferred {
+                            reloadDeferred = false
+                            load()
+                        }
+                    },
                     localResourceRoot: file.resourceRoot,
                     onOpenLocalFile: { url in state.add(url: url) },
                     onOutline: { outline = $0 },
@@ -204,8 +218,13 @@ struct LocalFileView: View {
     /// editor was opened with — applyBlockEdit's guard compares it against
     /// the current lines, so a file changed underneath still aborts.
     private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
-        applyBlockEdit(BlockEditTarget(lineStart: start, lineEnd: end, seed: seed),
-                       replacement: replacement)
+        proxy.scrollFraction { fraction in
+            Task { @MainActor in
+                if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
+                applyBlockEdit(BlockEditTarget(lineStart: start, lineEnd: end, seed: seed),
+                               replacement: replacement)
+            }
+        }
     }
 
     private var html: String {
@@ -305,6 +324,14 @@ struct LocalFileView: View {
     }
 
     private func handlePageLoaded() {
+        if let fraction = pendingScrollRestore {
+            // An edit save or external change re-rendered the page — put
+            // the reader back where they were.
+            pendingScrollRestore = nil
+            proxy.restoreScrollFraction(fraction)
+            didRestorePosition = true
+            return
+        }
         if state.pendingSearchQuery != nil {
             consumePendingSearch()
         } else if state.findBarVisible, let query = proxy.activeFindQuery {
@@ -347,6 +374,19 @@ struct LocalFileView: View {
     }
 
     private func load() {
+        // A reload while an in-place editor is open would destroy the
+        // draft — hold it until the editor closes.
+        if inlineEditing {
+            reloadDeferred = true
+            return
+        }
+        // Keep the reader's place across the re-render (async capture from
+        // the still-loaded page; the restore happens on the next load).
+        proxy.scrollFraction { fraction in
+            if let fraction, fraction > 0.02 {
+                Task { @MainActor in pendingScrollRestore = fraction }
+            }
+        }
         do {
             currentText = try String(contentsOf: file.url, encoding: .utf8)
         } catch {

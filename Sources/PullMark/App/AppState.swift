@@ -293,8 +293,9 @@ final class AppState: ObservableObject {
     // MARK: - Session restore
 
     /// Files and PRs reopen where you left off (Settings-controlled,
-    /// default on). Snapshots are written on every sidebar change; restore
-    /// is skipped when the app was launched to open something specific.
+    /// default on). Snapshots are written at quit and when the key window
+    /// closes; restore is skipped when the app was launched to open
+    /// something specific.
     /// PRs from the previous snapshot that haven't (re)opened yet — kept in
     /// every new snapshot so an offline launch can't erase them.
     private var pendingRestorePRs: Set<String> = []

@@ -29,6 +29,15 @@ section current as features land.
   any write, and File → Revert Last Edit restores them (revertible itself).
 - Drag .md files or folders onto the window to open them.
 - Print (⌘P): the rendered document, through the standard print panel.
+- Fixed a long-standing scroll bug: the page could reload underneath you and
+  jump to the top mid-read (nondeterministic page serialization — now
+  byte-stable). Saving an edit or an external file change now puts you back
+  exactly where you were, and re-renders wait while an editor is open so a
+  draft can never be destroyed mid-typing.
+- Compare menus rank branches by recent activity (with hundreds of
+  branches, an alphabetical top-20 was never the ones you wanted) and say
+  when they're showing a subset; the commit sheet stays fast in monorepos
+  with thousands of changed files.
 
 ## 0.12.0 - 2026-07-19
 
