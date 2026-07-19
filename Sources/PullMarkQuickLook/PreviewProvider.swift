@@ -188,12 +188,21 @@ final class StaticRenderer {
         function __escapeHtml(s) {
           return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
-        marked.use(markedAlert());
-        marked.use(markedFootnote());
+        // Parse through a real Marked instance — the UMD namespace's
+        // methods are read-only getters, so fixWalkTokens couldn't patch
+        // walkTokens on it.
+        marked = new marked.Marked();
+        // boundStarts keeps lexing linear in document size (see
+        // pm-extensions.js) — same registration app.js uses.
+        marked.use(pmExtensions.boundStarts(markedAlert()));
+        marked.use(pmExtensions.boundStarts(markedFootnote()));
         // Math/[toc]/highlight/sub/sup — the same extension pack app.js
         // uses; KaTeX's renderToString needs no DOM, so math renders here.
         marked.use({ extensions: pmExtensions.extensions() });
         marked.use({ gfm: true });
+        // Linear walkTokens (marked's own is quadratic in token count —
+        // see pm-extensions.js). Must come after every marked.use.
+        pmExtensions.fixWalkTokens(marked);
         // The browser pipeline slugs headings in the DOM; here ids come from
         // a renderer override so [toc] links have anchors to land on.
         var __slugUsed = {};

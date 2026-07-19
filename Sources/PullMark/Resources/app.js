@@ -25,11 +25,22 @@
     document.documentElement.dataset.preview = "1";
   }
 
+  // Parse through a real Marked instance: the UMD namespace's methods are
+  // read-only getters, so fixWalkTokens couldn't patch walkTokens on it.
+  var MarkedCtor = marked.Marked;
+  marked = new MarkedCtor();
+
+  // Third-party extension configs go through pmExtensions.boundStarts:
+  // their unbounded start() scans are what made lexing quadratic in
+  // document size (see pm-extensions.js).
+  var boundStarts = typeof pmExtensions !== "undefined"
+    ? pmExtensions.boundStarts
+    : function (config) { return config; };
   if (typeof markedAlert === "function") {
-    marked.use(markedAlert());
+    marked.use(boundStarts(markedAlert()));
   }
   if (typeof markedFootnote === "function") {
-    marked.use(markedFootnote());
+    marked.use(boundStarts(markedFootnote()));
   }
   // Typora-parity constructs (math/[toc]/highlight/sub/sup) shared with the
   // Quick Look static renderer.
@@ -37,6 +48,11 @@
     marked.use({ extensions: pmExtensions.extensions() });
   }
   marked.use({ gfm: true });
+  // Linear walkTokens (marked's own is quadratic in token count — see
+  // pm-extensions.js). Must come after every marked.use.
+  if (typeof pmExtensions !== "undefined") {
+    pmExtensions.fixWalkTokens(marked);
+  }
 
   // Outline speech bubble drawn to match the SF Symbols style used in the
   // native toolbar.
@@ -618,7 +634,7 @@
     var plain = null;
     function htmlElementCount(raw) {
       try {
-        plain = plain || new marked.Marked({ gfm: true });
+        plain = plain || new MarkedCtor({ gfm: true });
         var tpl = document.createElement("template");
         tpl.innerHTML = plain.parse(raw);
         return tpl.content.children.length;

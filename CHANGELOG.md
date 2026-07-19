@@ -4,6 +4,22 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Rendering huge documents is dramatically faster: two quadratic paths in the
+  Markdown pipeline are now linear. A 10,000-paragraph, 1&nbsp;MB document that
+  took ~6.8&nbsp;seconds of main-thread work now renders in ~0.6&nbsp;seconds; a
+  5,000-row table dropped from ~1.5&nbsp;s to ~0.45&nbsp;s. (The causes:
+  marked calls every extension's `start()` with the whole remaining source per
+  token — now bounded to a 4&nbsp;KB lookahead — and marked's `walkTokens`
+  accumulates with repeated `Array.concat` — replaced with a linear
+  traversal. Both fixes also apply to Quick Look previews.)
+- New `make perf-check` stress harness renders pathological documents
+  (10k paragraphs, 5k-row tables, 400 code fences, a 1.5&nbsp;MB single
+  paragraph) plus real-world giants through the real pipeline in headless
+  Chrome and reports timings, and the Swift test suite now includes
+  performance smoke tests guarding the block splitter and diff engine.
+
 ## 0.7.0 - 2026-07-19
 
 - A proper DMG install experience (macOS provides neither prompt itself):

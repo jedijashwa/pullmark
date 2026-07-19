@@ -12,7 +12,7 @@ endif
 # Prefer the Homebrew bin (user-writable on Apple Silicon), else /usr/local.
 BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /usr/local/bin)
 
-.PHONY: build test app run clean install-cli release unregister-dist
+.PHONY: build test app run clean install-cli release unregister-dist render-check perf-check
 
 build:
 	swift build
@@ -22,6 +22,16 @@ test:
 
 app:
 	./scripts/make-app.sh
+
+# JS-pipeline checks in headless Chrome: render-check asserts every GFM
+# construct renders (runs in CI); perf-check stress-renders pathological and
+# real-world giant documents and reports timings (manual, needs network for
+# the real-world corpus — SKIP_DOWNLOADS=1 for offline).
+render-check:
+	./scripts/render-check.sh
+
+perf-check:
+	./scripts/perf-check.sh
 
 run:
 	swift run PullMark
