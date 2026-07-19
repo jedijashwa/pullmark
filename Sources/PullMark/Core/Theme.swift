@@ -32,6 +32,6 @@ enum Theme: String, CaseIterable, Identifiable {
 
     /// The stored selection, falling back to the default GitHub theme.
     static func current(from raw: String?) -> Theme {
-        raw.flatMap(Theme.init(rawValue:)) ?? .github
+        raw.flatMap(Theme.init(rawValue:)) ?? .editorial
     }
 }

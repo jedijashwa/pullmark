@@ -21,9 +21,9 @@ import Testing
                 ThemeSelection(theme: .github, customName: nil))
     }
 
-    @Test func nilAndUnknownValuesFallBackToGitHub() {
-        #expect(ThemeSelection.resolve(nil, availableCustom: []).theme == .github)
-        #expect(ThemeSelection.resolve("solarized", availableCustom: []).theme == .github)
+    @Test func nilAndUnknownValuesFallBackToEditorial() {
+        #expect(ThemeSelection.resolve(nil, availableCustom: []).theme == .editorial)
+        #expect(ThemeSelection.resolve("solarized", availableCustom: []).theme == .editorial)
     }
 
     @Test func customSchemeResolvesWhenFileExists() {

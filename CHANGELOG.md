@@ -6,6 +6,8 @@ section current as features land.
 
 ## Unreleased
 
+- Editorial is now the default reading theme (GitHub and Terminal remain one click away in Settings).
+
 - Paths shown in the UI abbreviate your home folder to `~` (titlebar
   subtitles, Recents tooltips, search-result subtitles).
 - Export (#9): File → "Export as PDF…" / "Export as HTML…" save the rendered
