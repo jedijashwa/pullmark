@@ -1198,6 +1198,44 @@
       autoGrow(ta);
       ta.focus();
       ta.addEventListener("input", function () { autoGrow(ta); });
+      function caretLine() {
+        return ta.value.slice(0, ta.selectionStart).split("\n").length;
+      }
+      function navigate(direction) {
+        var st = revealState;
+        if (!st) { return; }
+        if (st.ta.value !== st.seed) {
+          // Changed: commit, and tell Swift where the caret goes after the
+          // reload (line numbers shift by the edit's line delta).
+          var newLines = st.ta.value.split("\n").length;
+          var target = direction > 0 ? st.lo + newLines + 1 : st.lo - 1;
+          st.ta.disabled = true;
+          post({ type: "editingState", active: false });
+          post({ type: "editLocal", lineStart: st.lo, lineEnd: st.hi,
+                 replacement: st.ta.value, seed: st.seed,
+                 nextRevealLine: direction > 0 ? target : -target });
+          window.__pmCancelInlineEdit = closeReveal;
+          revealState = null;
+          return;
+        }
+        // Anchor on a block that survives closeReveal (the wrap itself is
+        // removed by it): downward from the original block, upward from the
+        // topmost block the region swallowed.
+        var anchor = direction > 0 ? st.hidden[0] : st.hidden[st.hidden.length - 1];
+        closeReveal();
+        var el = direction > 0 ? anchor.nextElementSibling : anchor.previousElementSibling;
+        while (el && (!el.classList || !el.classList.contains("pm-editable"))) {
+          el = direction > 0 ? el.nextElementSibling : el.previousElementSibling;
+        }
+        if (!el) { return; }
+        var parts = el.getAttribute("data-pm-lines").split("-");
+        reveal(el, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        if (revealState) {
+          // Arriving from above: caret at the start; from below: at the end.
+          var n = direction > 0 ? 0 : revealState.ta.value.length;
+          revealState.ta.setSelectionRange(n, n);
+        }
+      }
       ta.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -1209,6 +1247,16 @@
           event.preventDefault();
           expandUp();
         }
+        if (event.key === "ArrowDown" && ta.selectionStart === ta.selectionEnd
+            && caretLine() === ta.value.split("\n").length) {
+          event.preventDefault();
+          navigate(1);
+        }
+        if (event.key === "ArrowUp" && ta.selectionStart === ta.selectionEnd
+            && caretLine() === 1) {
+          event.preventDefault();
+          navigate(-1);
+        }
       });
       ta.addEventListener("blur", function () {
         // Leaving the block commits (the exit-saves behavior). Clicks on
@@ -1219,6 +1267,25 @@
         }, 100);
       });
     }
+
+    // Continue keyboard navigation across a commit-triggered reload:
+    // Swift calls this after the page loads. Negative line = caret at end.
+    window.__pmRevealAtLine = function (signedLine) {
+      var line = Math.abs(signedLine);
+      var atEnd = signedLine < 0;
+      for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+        var r = ((el.getAttribute && el.getAttribute("data-pm-lines")) || "").split("-");
+        if (r.length !== 2 || !el.classList.contains("pm-editable")) { continue; }
+        if (parseInt(r[0], 10) <= line && line <= parseInt(r[1], 10)) {
+          reveal(el, parseInt(r[0], 10), parseInt(r[1], 10));
+          if (revealState && atEnd) {
+            var n = revealState.ta.value.length;
+            revealState.ta.setSelectionRange(n, n);
+          }
+          return;
+        }
+      }
+    };
 
     if (payload.editable && linesAnnotated) {
       document.documentElement.classList.add("pm-edit-mode");

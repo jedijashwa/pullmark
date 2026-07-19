@@ -12,6 +12,13 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Continues arrow-key editing navigation after a commit reload.
+    func revealAtLine(_ signedLine: Int) {
+        webView?.evaluateJavaScript(
+            "window.__pmRevealAtLine && window.__pmRevealAtLine(\(signedLine));",
+            completionHandler: nil)
+    }
+
     /// Releases a stuck in-place editor after Swift refuses/fails a save —
     /// an unchanged document never re-renders, so the page can't recover
     /// on its own.

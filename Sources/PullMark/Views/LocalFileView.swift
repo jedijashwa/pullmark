@@ -38,6 +38,8 @@ struct LocalFileView: View {
     /// Scroll fraction to restore after an intentional re-render (an edit
     /// save or an external file change) — reloads land at the top otherwise.
     @State private var pendingScrollRestore: Double?
+    /// Arrow navigation across a commit: reveal here after the reload.
+    @State private var pendingRevealLine: Int?
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -45,60 +47,61 @@ struct LocalFileView: View {
     @State private var blameNote: String?
     @State private var historyRequest: BlameHistoryRequest?
 
-    var body: some View {
-        VStack(spacing: 0) {
-            if let compare {
-                HStack(spacing: 10) {
-                    Image(systemName: "clock.arrow.circlepath")
-                    Text("Comparing with \(compare.label)")
-                    Spacer()
-                    Button("Done") { stopComparing() }
-                }
-                .font(.callout)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.blue.opacity(0.14))
-            }
-            if state.findBarVisible {
-                FindBar(proxy: proxy, seed: $findSeed)
-            }
-            HSplitView {
-                MarkdownWebView(
-                    html: html,
-                    onEditLocal: handleEditLocal,
-                    onEditingState: { active in
-                        inlineEditing = active
-                        if !active, reloadDeferred {
-                            reloadDeferred = false
-                            load()
-                        }
-                    },
-                    localResourceRoot: file.resourceRoot,
-                    onOpenLocalFile: { url in state.add(url: url) },
-                    onOutline: { outline = $0 },
-                    onActiveSection: {
-                        activeSection = $0.isEmpty ? nil : $0
-                        // Scroll-spy doubles as a progress heartbeat, so a
-                        // plain ⌘Q (no onDisappear) still keeps the spot.
-                        throttledPositionSave()
-                    },
-                    onBlameHistory: { start, end in
-                        historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
-                    },
-                    onStats: { stats = $0 },
-                    onPageLoaded: { handlePageLoaded() },
-                    proxy: proxy
-                )
+    private var documentWebView: MarkdownWebView {
+        MarkdownWebView(
+            html: html,
+            onEditLocal: handleEditLocal,
+            onEditingState: handleEditingState,
+            onNextReveal: handleNextReveal,
+            localResourceRoot: file.resourceRoot,
+            onOpenLocalFile: handleOpenLocalFile,
+            onOutline: handleOutline,
+            onActiveSection: handleActiveSection,
+            onBlameHistory: handleBlameHistory,
+            onStats: handleStats,
+            onPageLoaded: handlePageLoaded,
+            proxy: proxy
+        )
+    }
+
+    private var contentSplit: some View {
+        HSplitView {
+            documentWebView
                 .overlay(alignment: .bottomTrailing) {
                     if compare == nil, let stats {
                         DocumentStatsPill(stats: stats)
                     }
                 }
                 .layoutPriority(1)
-                if outlineVisible {
-                    OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
-                }
+            if outlineVisible {
+                OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var compareBanner: some View {
+        if let compare {
+            HStack(spacing: 10) {
+                Image(systemName: "clock.arrow.circlepath")
+                Text("Comparing with \(compare.label)")
+                Spacer()
+                Button("Done") { stopComparing() }
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.14))
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            compareBanner
+            if state.findBarVisible {
+                FindBar(proxy: proxy, seed: $findSeed)
+            }
+            contentSplit
         }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
@@ -113,39 +116,7 @@ struct LocalFileView: View {
         // read ActiveDocument.markdown, and line ranges shift with edits.
         .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
-        .toolbar {
-            ToolbarItem {
-                Toggle(isOn: $editMode) {
-                    Label("Edit", systemImage: "pencil")
-                }
-                .keyboardShortcut("e")
-                .help(editMode ? "Done editing (⌘E)"
-                               : "Edit this document (⌘E) — then click any block")
-                .disabled(compare != nil || state.sourceViewVisible)
-            }
-            ToolbarItem {
-                compareMenu
-            }
-            // No git context, no Blame button: the toggle only appears for
-            // files inside a repository.
-            if inGitRepo {
-                ToolbarItem {
-                    BlameToggle(visible: $blameVisible)
-                        .disabled(compare != nil)
-                }
-            }
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-            ToolbarItem {
-                Button {
-                    load()
-                } label: {
-                    Label("Reload", systemImage: "arrow.clockwise")
-                }
-                .help("Reload from disk")
-            }
-        }
+        .toolbar { toolbarItems }
         .onAppear {
             load()
             loadGitInfo()
@@ -172,6 +143,43 @@ struct LocalFileView: View {
                                                 lineEnd: request.lineEnd)
             }
         }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+            ToolbarItem { editToggle }
+            ToolbarItem {
+                compareMenu
+            }
+            // No git context, no Blame button: the toggle only appears for
+            // files inside a repository.
+            if inGitRepo {
+                ToolbarItem {
+                    BlameToggle(visible: $blameVisible)
+                        .disabled(compare != nil)
+                }
+            }
+            ToolbarItem {
+                OutlineToggle(visible: $outlineVisible)
+            }
+            ToolbarItem {
+                Button {
+                    load()
+                } label: {
+                    Label("Reload", systemImage: "arrow.clockwise")
+                }
+                .help("Reload from disk")
+            }
+    }
+
+    private var editToggle: some View {
+        Toggle(isOn: $editMode) {
+            Label("Edit", systemImage: "pencil")
+        }
+        .keyboardShortcut("e")
+        .help(editMode ? "Done editing (⌘E)"
+                       : "Edit this document (⌘E) — then click any block")
+        .disabled(compare != nil || state.sourceViewVisible)
     }
 
     @ViewBuilder
@@ -229,6 +237,31 @@ struct LocalFileView: View {
     /// In-place editor commit from the page. The seed is the text the
     /// editor was opened with — applyBlockEdit's guard compares it against
     /// the current lines, so a file changed underneath still aborts.
+    private func handleOpenLocalFile(_ url: URL) { state.add(url: url) }
+    private func handleOutline(_ items: [OutlineItem]) { outline = items }
+    private func handleStats(_ documentStats: DocumentStats) { stats = documentStats }
+    private func handleBlameHistory(_ start: Int, _ end: Int) {
+        historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
+    }
+    private func handleActiveSection(_ id: String) {
+        activeSection = id.isEmpty ? nil : id
+        // Scroll-spy doubles as a progress heartbeat, so a plain ⌘Q (no
+        // onDisappear) still keeps the spot.
+        throttledPositionSave()
+    }
+
+    private func handleNextReveal(_ line: Int) {
+        pendingRevealLine = line
+    }
+
+    private func handleEditingState(_ active: Bool) {
+        inlineEditing = active
+        if !active, reloadDeferred {
+            reloadDeferred = false
+            load()
+        }
+    }
+
     private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
         proxy.scrollFraction { fraction in
             Task { @MainActor in
@@ -336,6 +369,10 @@ struct LocalFileView: View {
     }
 
     private func handlePageLoaded() {
+        if let line = pendingRevealLine {
+            pendingRevealLine = nil
+            proxy.revealAtLine(line)
+        }
         if let fraction = pendingScrollRestore {
             // An edit save or external change re-rendered the page — put
             // the reader back where they were.
