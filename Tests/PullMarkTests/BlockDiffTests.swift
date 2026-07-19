@@ -6,6 +6,42 @@ import Testing
         BlockDiff.diff(old: MarkdownBlocks.split(old), new: MarkdownBlocks.split(new))
     }
 
+    @Test func relocatedBlockBecomesMovedNotAddRemove() {
+        let old = "# Title\n\nAlpha paragraph.\n\nBeta paragraph.\n\nGamma paragraph."
+        let new = "# Title\n\nBeta paragraph.\n\nGamma paragraph.\n\nAlpha paragraph."
+        let result = segments(old: old, new: new)
+        let moved = result.compactMap { if case .moved(let o, let n) = $0 { return (o, n) }; return nil }
+        #expect(moved.count == 1)
+        #expect(moved.first?.0.text == "Alpha paragraph.")
+        // The removal half disappears — a move renders once, at its new home.
+        #expect(!result.contains { if case .removed = $0 { return true }; return false })
+        #expect(!result.contains { if case .added = $0 { return true }; return false })
+        // Line mapping survives: new position + provenance of the old one.
+        if case .moved(let o, let n)? = result.last {
+            #expect(n.startLine > o.startLine)
+        }
+    }
+
+    @Test func duplicatedTextIsNeverMispairedAsMove() {
+        // "Note: see docs." exists twice among removals — ambiguous, so both
+        // stay plain removed/added rather than guessing a pairing.
+        let old = "Note: see docs.\n\nMiddle.\n\nNote: see docs."
+        let new = "Middle.\n\nNote: see docs.\n\nTail."
+        let result = segments(old: old, new: new)
+        #expect(!result.contains { if case .moved = $0 { return true }; return false })
+    }
+
+    @Test func movedPayloadCarriesProvenance() {
+        let old = "One.\n\nTwo.\n\nThree."
+        let new = "Two.\n\nThree.\n\nOne."
+        let payloads = segments(old: old, new: new).map(\.payload)
+        let moved = payloads.first { $0.kind == "moved" }
+        #expect(moved != nil)
+        #expect(moved?.text == "One.")
+        #expect(moved?.movedFromLine == 1)
+        #expect(moved?.side == "RIGHT")
+    }
+
     @Test func identicalDocuments() {
         let text = "# A\n\nBody"
         let result = segments(old: text, new: text)

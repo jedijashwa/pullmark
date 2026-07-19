@@ -5,6 +5,10 @@ enum DiffSegment: Equatable {
     case added(MarkdownBlock)
     case removed(MarkdownBlock)
     case modified(old: MarkdownBlock, new: MarkdownBlock)
+    /// The same text deleted in one place and inserted verbatim in another:
+    /// a move, not an edit. Rendered once, at the new position, with a
+    /// quiet "moved" marker instead of screaming red + green.
+    case moved(old: MarkdownBlock, new: MarkdownBlock)
 }
 
 enum BlockDiff {
@@ -57,6 +61,43 @@ enum BlockDiff {
                 k += 1
             }
         }
+        return detectMoves(in: result)
+    }
+
+    /// Post-pass: a block removed in one place and added VERBATIM in
+    /// another is presented as `.moved` at its new position; the removal
+    /// disappears (nothing about the content changed). Only unambiguous
+    /// pairs qualify — the text must appear exactly once among removals
+    /// and once among additions, so duplicated boilerplate ("---", repeated
+    /// notes) can never be mispaired.
+    static func detectMoves(in segments: [DiffSegment]) -> [DiffSegment] {
+        var removedIndex: [String: [Int]] = [:]
+        var addedIndex: [String: [Int]] = [:]
+        for (i, segment) in segments.enumerated() {
+            switch segment {
+            case .removed(let block): removedIndex[block.text, default: []].append(i)
+            case .added(let block): addedIndex[block.text, default: []].append(i)
+            default: break
+            }
+        }
+        var moves: [Int: Int] = [:]  // added index → removed index
+        for (text, removedAt) in removedIndex {
+            guard removedAt.count == 1, let addedAt = addedIndex[text],
+                  addedAt.count == 1 else { continue }
+            moves[addedAt[0]] = removedAt[0]
+        }
+        guard !moves.isEmpty else { return segments }
+        let removedSlots = Set(moves.values)
+        var result: [DiffSegment] = []
+        for (i, segment) in segments.enumerated() {
+            if removedSlots.contains(i) { continue }
+            if let from = moves[i], case .removed(let old) = segments[from],
+               case .added(let new) = segment {
+                result.append(.moved(old: old, new: new))
+            } else {
+                result.append(segment)
+            }
+        }
         return result
     }
 }
@@ -75,6 +116,8 @@ struct DiffSegmentPayload: Encodable, Equatable {
     /// The web layer renders flagged sides as metadata tables.
     var fmText = false
     var fmOldText = false
+    /// For kind "moved": the 1-based old-file line the block came from.
+    var movedFromLine: Int? = nil
     /// Existing review threads anchored to this segment (attached later by
     /// ReviewThreads.place, hence mutable).
     var threads: [ThreadPayload]? = nil
@@ -105,6 +148,11 @@ extension DiffSegment {
                                       lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
                                       fmText: MarkdownBlocks.isFrontMatter(new),
                                       fmOldText: MarkdownBlocks.isFrontMatter(old))
+        case .moved(let old, let new):
+            return DiffSegmentPayload(kind: "moved", text: new.text, oldText: nil,
+                                      lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
+                                      fmText: MarkdownBlocks.isFrontMatter(new),
+                                      movedFromLine: old.startLine)
         }
     }
 }
