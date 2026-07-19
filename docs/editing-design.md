@@ -65,7 +65,16 @@ blocks"; (2) smooth caret handoff and cross-block selection. Keep **B** as
 the long-horizon ceiling if C's feel isn't seamless enough in practice — C's
 per-block source mapping is a prerequisite for B anyway, so no work is lost.
 
-## Open questions for Josh
+## Decisions (2026-07-19)
+
+1. **Source-reveal matches the bar** — raw `**bold**` inside the active
+   block is the expectation. Architecture **C** confirmed.
+2. **Editing is a mode** — explicit toggle; reading stays the default
+   posture. No always-on editing.
+3. **Tables/mermaid as source blocks is good enough for now** — real or
+   assisted structured editing is future roadmap.
+
+## Original questions (answered above)
 
 1. Does source-reveal (you see raw `**bold**` while inside a block) match
    your expectation, or do you want inline rich editing (bold stays
