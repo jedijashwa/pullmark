@@ -12,6 +12,23 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Current scroll position as a 0–1 fraction of the scrollable height.
+    func scrollFraction(_ completion: @escaping (Double?) -> Void) {
+        guard let webView else { return completion(nil) }
+        webView.evaluateJavaScript(
+            "window.scrollY / Math.max(1, document.body.scrollHeight - window.innerHeight)"
+        ) { value, _ in completion(value as? Double) }
+    }
+
+    /// Restores a saved fraction (no-op near the top — jumping to 0.00x
+    /// would just fight the natural default).
+    func restoreScrollFraction(_ fraction: Double) {
+        guard fraction > 0.02 else { return }
+        webView?.evaluateJavaScript(
+            "window.scrollTo(0, \(fraction) * Math.max(0, document.body.scrollHeight - window.innerHeight));",
+            completionHandler: nil)
+    }
+
     /// ⌘P: prints the rendered document through the standard panel.
     func printDocument() {
         guard let webView, let window = webView.window else { return }

@@ -24,6 +24,7 @@ struct LocalFileView: View {
     @State private var branches: [String] = []
     @State private var currentBranch: String?
     @State private var editTarget: BlockEditTarget?
+    @State private var didRestorePosition = false
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
@@ -89,6 +90,7 @@ struct LocalFileView: View {
         // Overlay changes must re-register: export and Copy-as-Markdown
         // read ActiveDocument.markdown, and line ranges shift with edits.
         .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
+        .onDisappear { saveReadingPosition() }
         .sheet(item: $editTarget) { target in
             BlockEditSheet(fileName: file.url.lastPathComponent, target: target) { replacement in
                 applyBlockEdit(target, replacement: replacement)
@@ -299,6 +301,21 @@ struct LocalFileView: View {
             // The page reloaded under an active find (e.g. blame arrived and
             // re-rendered the document): restore highlights and counts.
             findSeed = query
+        } else if !didRestorePosition, compare == nil,
+                  let fraction = ReadingPositions.fraction(for: activeDocumentID) {
+            // First load only — blame/edit re-renders must not yank the
+            // reader back to a stale position.
+            proxy.restoreScrollFraction(fraction)
+        }
+        didRestorePosition = true
+    }
+
+    private func saveReadingPosition() {
+        guard compare == nil else { return }
+        let key = activeDocumentID
+        proxy.scrollFraction { fraction in
+            guard let fraction else { return }
+            Task { @MainActor in ReadingPositions.save(fraction, for: key) }
         }
     }
 
