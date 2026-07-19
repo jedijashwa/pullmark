@@ -1124,7 +1124,7 @@
       ta.rows = Math.min(24, seed.split("\n").length + 1);
       var hint = document.createElement("div");
       hint.className = "pm-inline-edit-hint";
-      hint.textContent = "⌘↩ save · esc cancel"
+      hint.textContent = "⌘↩ save · ⎋ cancel"
         + (payload.autosaveEdits === false ? " · saves in the window, ⌘S writes" : "");
       function cancel() {
         wrap.remove();
@@ -1141,7 +1141,11 @@
         // shows the notice — either way this page instance is replaced.
       }
       ta.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") { event.preventDefault(); cancel(); }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          cancel();
+        }
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
           commit();
@@ -1171,10 +1175,11 @@
             beginInlineEdit(element, lo, hi);
           });
           element.addEventListener("dblclick", function (event) {
-            // Double-click anywhere in a block edits it — unless the user
-            // is double-clicking to select inside an existing editor or on
-            // a link they mean to follow.
+            // Double-click-to-select-a-word is bedrock macOS: only a
+            // dblclick that selected NOTHING (padding, blank space) opens
+            // the editor; links/buttons/editors keep their own behavior.
             if (event.target.closest("a, textarea, button")) { return; }
+            if (String(window.getSelection()).length > 0) { return; }
             beginInlineEdit(element, lo, hi);
           });
           element.append(btn);
