@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.5.0 - 2026-07-19
 
 - Non-brew installs now truly self-update: "Update Now" downloads the
   release's zip to a purgeable temp folder, verifies it before touching
