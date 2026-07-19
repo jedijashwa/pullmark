@@ -6,6 +6,18 @@ section current as features land.
 
 ## Unreleased
 
+- Non-brew installs now truly self-update: "Update Now" downloads the
+  release's zip to a purgeable temp folder, verifies it before touching
+  anything (code signature intact, signed by PullMark's Developer ID team,
+  accepted by Gatekeeper/notarization), swaps the app bundle in place with a
+  rename dance that can't leave a half-installed app, and relaunches. Any
+  verification failure aborts, cleans up, shows the error in the banner, and
+  opens the release page as a fallback. The banner reports progress
+  ("Downloading…", "Verifying…", "Installing…").
+- Fixed update-method detection: a brew-installed pullmark cask elsewhere on
+  the machine no longer claims a PullMark running from a different location —
+  the brew tier now applies only when the running bundle is the copy brew
+  manages (/Applications/PullMark.app or brew's Caskroom).
 - Releases now include a drag-to-install DMG.
 
 ## 0.4.0 - 2026-07-19

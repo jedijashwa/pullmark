@@ -76,6 +76,19 @@ import Testing
         #expect(checker.availableVersion == "0.5.0")
     }
 
+    @Test @MainActor func applyStoresTheZipAssetURLAndDismissClearsIt() {
+        let checker = makeChecker()
+        let withAsset = UpdateRelease(
+            tagName: "v0.4.0", body: nil, htmlUrl: "https://example.com/r",
+            prerelease: false, draft: false,
+            assets: [UpdateAsset(name: "PullMark-0.4.0.zip",
+                                 browserDownloadUrl: "https://example.com/a.zip")])
+        checker.apply(withAsset, ignoringDismissal: true)
+        #expect(checker.availableZipURL == "https://example.com/a.zip")
+        checker.dismissAvailableUpdate()
+        #expect(checker.availableZipURL == nil)
+    }
+
     @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBanner() {
         let checker = makeChecker()
         checker.apply(release("v0.4.0", draft: true), ignoringDismissal: false)
@@ -85,19 +98,24 @@ import Testing
 }
 
 @Suite struct BrewUpdateTests {
-    @Test func noBrewBinaryMeansDownloadWithoutRunningAnything() {
+    /// The canonical cask install target — the path brew manages.
+    private let installedApp = "/Applications/PullMark.app"
+
+    @Test func noBrewBinaryMeansSelfUpdateWithoutRunningAnything() {
         var ran = false
         let method = BrewUpdate.detectMethod(
+            bundlePath: installedApp,
             fileExists: { _ in false },
             runner: { _, _ in ran = true; return true }
         )
-        #expect(method == .download)
+        #expect(method == .selfUpdate)
         #expect(!ran)
     }
 
     @Test func brewManagedInstallPrefersAppleSiliconBrew() {
         var probed: (String, [String])?
         let method = BrewUpdate.detectMethod(
+            bundlePath: installedApp,
             fileExists: { _ in true },  // both paths exist → first wins
             runner: { path, args in probed = (path, args); return true }
         )
@@ -108,18 +126,69 @@ import Testing
 
     @Test func fallsBackToIntelBrewPath() {
         let method = BrewUpdate.detectMethod(
+            bundlePath: installedApp,
             fileExists: { $0 == "/usr/local/bin/brew" },
             runner: { path, _ in path == "/usr/local/bin/brew" }
         )
         #expect(method == .brew(brewPath: "/usr/local/bin/brew"))
     }
 
-    @Test func brewPresentButCaskNotInstalledMeansDownload() {
+    @Test func brewPresentButCaskNotInstalledMeansSelfUpdate() {
         let method = BrewUpdate.detectMethod(
+            bundlePath: installedApp,
             fileExists: { $0 == "/opt/homebrew/bin/brew" },
             runner: { _, _ in false }  // `brew list --cask pullmark` fails
         )
+        #expect(method == .selfUpdate)
+    }
+
+    @Test func brewManagedCaskDoesNotClaimABundleRunningElsewhere() {
+        // The cask may be installed on the machine, but the RUNNING copy is
+        // some other bundle (e.g. /tmp, ~/Apps) — brew must not update it.
+        var ran = false
+        let method = BrewUpdate.detectMethod(
+            bundlePath: "/tmp/PMTest/PullMark.app",
+            fileExists: { _ in true },
+            runner: { _, _ in ran = true; return true }
+        )
+        #expect(method == .selfUpdate)
+        #expect(!ran)  // no point probing brew for a bundle it doesn't manage
+    }
+
+    @Test func caskroomBundleCountsAsBrewManaged() {
+        let method = BrewUpdate.detectMethod(
+            bundlePath: "/opt/homebrew/Caskroom/pullmark/0.4.0/PullMark.app",
+            fileExists: { $0 == "/opt/homebrew/bin/brew" },
+            runner: { _, _ in true }
+        )
+        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew"))
+    }
+
+    @Test func nonBundleDevBuildFallsBackToDownload() {
+        // `swift run` executes from .build — there is no .app to swap.
+        let method = BrewUpdate.detectMethod(
+            bundlePath: "/Users/x/pullmark/.build/debug",
+            fileExists: { _ in true },
+            runner: { _, _ in true }
+        )
         #expect(method == .download)
+    }
+
+    @Test func isBrewInstalledBundleMatchesTargetAndCaskroomOnly() {
+        let brew = "/opt/homebrew/bin/brew"
+        #expect(BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/Applications/PullMark.app", brewPath: brew))
+        #expect(BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/opt/homebrew/Caskroom/pullmark/0.4.0/PullMark.app", brewPath: brew))
+        #expect(BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/usr/local/Caskroom/pullmark/0.4.0/PullMark.app",
+            brewPath: "/usr/local/bin/brew"))
+        #expect(!BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/tmp/PMTest/PullMark.app", brewPath: brew))
+        #expect(!BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/Users/x/Apps/PullMark.app", brewPath: brew))
+        #expect(!BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/Applications/PullMark Helper.app", brewPath: brew))
     }
 
     @Test func commandConstruction() {
@@ -149,6 +218,8 @@ import Testing
 
 @Suite struct UpdateReleaseTests {
     @Test func decodesReleaseJSON() throws {
+        // Shape mirrors the GitHub REST releases API, including the asset
+        // fields the self-updater needs (browser_download_url).
         let json = """
         {
           "tag_name": "v0.2.0",
@@ -157,7 +228,20 @@ import Testing
           "body": "## Highlights\\n\\n- In-app update checks\\n- What's New sheet",
           "draft": false,
           "prerelease": false,
-          "assets": []
+          "assets": [
+            {
+              "name": "PullMark-0.2.0.dmg",
+              "content_type": "application/x-apple-diskimage",
+              "size": 3141674,
+              "browser_download_url": "https://github.com/jedijashwa/pullmark/releases/download/v0.2.0/PullMark-0.2.0.dmg"
+            },
+            {
+              "name": "PullMark-0.2.0.zip",
+              "content_type": "application/zip",
+              "size": 3114855,
+              "browser_download_url": "https://github.com/jedijashwa/pullmark/releases/download/v0.2.0/PullMark-0.2.0.zip"
+            }
+          ]
         }
         """
         let release = try JSONDecoder().decode(UpdateRelease.self, from: Data(json.utf8))
@@ -166,6 +250,11 @@ import Testing
         #expect(release.body?.contains("In-app update checks") == true)
         #expect(release.draft == false)
         #expect(release.prerelease == false)
+        #expect(release.assets?.count == 2)
+        #expect(release.assets?[1].name == "PullMark-0.2.0.zip")
+        // zipAssetURL picks the .zip, not the .dmg listed first.
+        #expect(release.zipAssetURL ==
+            "https://github.com/jedijashwa/pullmark/releases/download/v0.2.0/PullMark-0.2.0.zip")
     }
 
     @Test func decodesReleaseListWithMissingOptionalFields() throws {
@@ -179,6 +268,21 @@ import Testing
         #expect(releases.count == 2)
         #expect(releases[1].body == nil)
         #expect(releases[0].prerelease == nil)
+        #expect(releases[0].assets == nil)
+        #expect(releases[0].zipAssetURL == nil)
+    }
+
+    @Test func zipAssetURLIsNilWithoutAZipAsset() {
+        let dmgOnly = UpdateRelease(
+            tagName: "v0.2.0", body: nil, htmlUrl: "https://example.com/2",
+            prerelease: false, draft: false,
+            assets: [UpdateAsset(name: "PullMark-0.2.0.dmg",
+                                 browserDownloadUrl: "https://example.com/d.dmg")])
+        #expect(dmgOnly.zipAssetURL == nil)
+        let empty = UpdateRelease(tagName: "v0.2.0", body: nil,
+                                  htmlUrl: "https://example.com/2",
+                                  prerelease: false, draft: false, assets: [])
+        #expect(empty.zipAssetURL == nil)
     }
 
     @Test func betweenSelectsRangeNewestFirst() {

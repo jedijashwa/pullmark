@@ -141,18 +141,23 @@ struct AppUpdateBanner: View {
             HStack(spacing: 10) {
                 Image(systemName: "sparkles")
                 switch updates.updateRun {
-                case .updating:
-                    Text("Updating…")
+                case .updating(let phase):
+                    Text(phase)
                     ProgressView().controlSize(.small)
                 case .failed(let message):
                     Text("Update failed: \(message)")
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    Text(BrewUpdate.command)
-                        .font(.callout.monospaced())
-                        .textSelection(.enabled)
-                    Button("Copy") { updates.copyBrewCommand() }
-                        .help("Copies “\(BrewUpdate.command)” to the clipboard")
+                    if case .brew = updates.updateMethod {
+                        Text(BrewUpdate.command)
+                            .font(.callout.monospaced())
+                            .textSelection(.enabled)
+                        Button("Copy") { updates.copyBrewCommand() }
+                            .help("Copies “\(BrewUpdate.command)” to the clipboard")
+                    } else {
+                        Button("Open Release Page") { updates.openReleasePage() }
+                            .help("Opens the release page on GitHub to update manually")
+                    }
                 case .idle:
                     Text("PullMark \(version) is available.")
                     Button("What's New") { updates.showReleaseNotes = true }
@@ -165,7 +170,7 @@ struct AppUpdateBanner: View {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.borderless)
-                .disabled(updates.updateRun == .updating)
+                .disabled(updates.isUpdating)
                 .help("Dismiss — this version won't be suggested again")
             }
             .font(.callout)
@@ -176,8 +181,9 @@ struct AppUpdateBanner: View {
         }
     }
 
-    /// "Update Now" for brew-managed installs (disabled while brew is still
-    /// being probed), "Download" otherwise.
+    /// "Update Now" for brew-managed installs (runs brew) and for other real
+    /// .app installs (verified in-place self-update); disabled while the
+    /// install method is still being probed. "Download" for dev builds.
     @ViewBuilder private var primaryButton: some View {
         switch updates.updateMethod {
         case .brew, nil:
@@ -185,6 +191,10 @@ struct AppUpdateBanner: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(updates.updateMethod == nil)
                 .help("Runs “\(BrewUpdate.command)” and relaunches PullMark")
+        case .selfUpdate:
+            Button("Update Now") { updates.updateNow() }
+                .buttonStyle(.borderedProminent)
+                .help("Downloads the update, verifies its signature, and installs it in place")
         case .download:
             Button("Download") { updates.updateNow() }
                 .buttonStyle(.borderedProminent)

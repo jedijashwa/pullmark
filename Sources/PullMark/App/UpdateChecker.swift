@@ -38,6 +38,17 @@ enum SemVer {
     }
 }
 
+/// A downloadable file attached to a GitHub release.
+struct UpdateAsset: Decodable, Equatable {
+    let name: String
+    let browserDownloadUrl: String
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case browserDownloadUrl = "browser_download_url"
+    }
+}
+
 /// A GitHub release as returned by the REST API (the fields we use).
 struct UpdateRelease: Decodable, Equatable {
     let tagName: String
@@ -45,6 +56,7 @@ struct UpdateRelease: Decodable, Equatable {
     let htmlUrl: String
     let prerelease: Bool?
     let draft: Bool?
+    let assets: [UpdateAsset]?
 
     enum CodingKeys: String, CodingKey {
         case tagName = "tag_name"
@@ -52,6 +64,23 @@ struct UpdateRelease: Decodable, Equatable {
         case htmlUrl = "html_url"
         case prerelease
         case draft
+        case assets
+    }
+
+    init(tagName: String, body: String?, htmlUrl: String,
+         prerelease: Bool?, draft: Bool?, assets: [UpdateAsset]? = nil) {
+        self.tagName = tagName
+        self.body = body
+        self.htmlUrl = htmlUrl
+        self.prerelease = prerelease
+        self.draft = draft
+        self.assets = assets
+    }
+
+    /// Download URL of the release's `.zip` asset (the notarized app
+    /// archive) — what the in-place self-updater installs.
+    var zipAssetURL: String? {
+        assets?.first { $0.name.lowercased().hasSuffix(".zip") }?.browserDownloadUrl
     }
 
     /// Full releases newer than `stored`, up to and including `current`,
@@ -73,7 +102,11 @@ struct UpdateRelease: Decodable, Equatable {
 enum UpdateMethod: Equatable {
     /// The install is brew-managed: "Update Now" runs `brew upgrade`.
     case brew(brewPath: String)
-    /// Not brew-managed: "Download" opens the release page.
+    /// A real .app outside brew management: "Update Now" downloads the
+    /// release zip, verifies its signature, and swaps the bundle in place.
+    case selfUpdate
+    /// No .app bundle to replace (dev build): "Download" opens the
+    /// release page.
     case download
 }
 
@@ -89,16 +122,33 @@ enum BrewUpdate {
     static var listArguments: [String] { ["list", "--cask", caskName] }
     static var upgradeArguments: [String] { ["upgrade", "--cask", caskName] }
 
-    /// Decision tiers: no brew binary → download; brew present but
-    /// `brew list --cask pullmark` fails (not installed via brew) → download;
-    /// otherwise the install is brew-managed. `runner` returns true when the
-    /// command exits 0.
-    static func detectMethod(fileExists: (String) -> Bool,
+    /// True when the RUNNING bundle is the copy brew manages: the cask's
+    /// install target (/Applications/PullMark.app) or a copy inside brew's
+    /// own Caskroom. A brew-managed cask elsewhere on the machine must not
+    /// claim a bundle running from some other path (e.g. ~/Apps).
+    static func isBrewInstalledBundle(bundlePath: String, brewPath: String) -> Bool {
+        let path = (bundlePath as NSString).standardizingPath
+        if path == "/Applications/PullMark.app" { return true }
+        let brewPrefix = ((brewPath as NSString).deletingLastPathComponent
+            as NSString).deletingLastPathComponent
+        return path.hasPrefix("\(brewPrefix)/Caskroom/\(caskName)/")
+    }
+
+    /// Decision tiers, checked against the RUNNING bundle:
+    /// - the bundle is brew's install target and `brew list --cask pullmark`
+    ///   succeeds → brew-managed ("Update Now" runs brew);
+    /// - otherwise a real .app → self-update (download + verify + swap);
+    /// - not an .app at all (dev build) → download (open the release page).
+    /// `runner` returns true when the command exits 0.
+    static func detectMethod(bundlePath: String,
+                             fileExists: (String) -> Bool,
                              runner: (String, [String]) -> Bool) -> UpdateMethod {
-        guard let brew = brewCandidatePaths.first(where: fileExists) else {
-            return .download
+        let fallback: UpdateMethod = bundlePath.hasSuffix(".app") ? .selfUpdate : .download
+        guard let brew = brewCandidatePaths.first(where: fileExists),
+              isBrewInstalledBundle(bundlePath: bundlePath, brewPath: brew) else {
+            return fallback
         }
-        return runner(brew, listArguments) ? .brew(brewPath: brew) : .download
+        return runner(brew, listArguments) ? .brew(brewPath: brew) : fallback
     }
 
     /// Path to relaunch after a brew upgrade: the running .app bundle, or the
@@ -163,6 +213,8 @@ final class UpdateChecker: ObservableObject {
     @Published var availableNotes = ""
     /// GitHub release page of the available version.
     @Published var availableURL: String?
+    /// Download URL of the available version's .zip asset (self-update).
+    @Published var availableZipURL: String?
     /// Sheet with the available version's release notes.
     @Published var showReleaseNotes = false
     /// Post-update sheet: concatenated notes since the last-run version.
@@ -170,9 +222,15 @@ final class UpdateChecker: ObservableObject {
     @Published var whatsNewMarkdown = ""
     /// How the banner's primary action behaves; nil while still probing brew.
     @Published var updateMethod: UpdateMethod?
-    /// In-banner brew upgrade lifecycle.
-    enum UpdateRun: Equatable { case idle, updating, failed(String) }
+    /// In-banner update lifecycle; `updating`'s text is the progress phase
+    /// shown in the banner ("Updating…", "Downloading…", "Verifying…", …).
+    enum UpdateRun: Equatable { case idle, updating(String), failed(String) }
     @Published var updateRun: UpdateRun = .idle
+
+    var isUpdating: Bool {
+        if case .updating = updateRun { return true }
+        return false
+    }
 
     /// "0.0.0" for dev builds (`swift run`), which never prompt.
     let currentVersion: String
@@ -248,6 +306,7 @@ final class UpdateChecker: ObservableObject {
         availableVersion = version
         availableNotes = release.body ?? ""
         availableURL = release.htmlUrl
+        availableZipURL = release.zipAssetURL
     }
 
     /// Hides the banner and remembers the version so it never re-nags
@@ -259,6 +318,7 @@ final class UpdateChecker: ObservableObject {
         availableVersion = nil
         availableNotes = ""
         availableURL = nil
+        availableZipURL = nil
         updateRun = .idle
     }
 
@@ -271,11 +331,13 @@ final class UpdateChecker: ObservableObject {
     // MARK: Update Now
 
     /// Called when the banner appears: probes brew off the main thread to
-    /// decide between "Update Now" (brew-managed) and "Download".
+    /// decide between brew upgrade, in-place self-update, and "Download".
     func detectUpdateMethodIfNeeded() {
         guard updateMethod == nil else { return }
+        let bundlePath = Bundle.main.bundlePath
         Task.detached(priority: .utility) { [weak self] in
             let method = BrewUpdate.detectMethod(
+                bundlePath: bundlePath,
                 fileExists: { FileManager.default.isExecutableFile(atPath: $0) },
                 runner: BrewUpdate.run
             )
@@ -283,22 +345,30 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    /// Primary banner action: brew-managed installs upgrade in place (then
-    /// relaunch); everything else opens the release page.
+    /// Primary banner action: brew-managed installs upgrade via brew;
+    /// other real .app installs self-update in place; dev builds open
+    /// the release page.
     func updateNow() {
         switch updateMethod {
         case .brew(let brewPath):
             runBrewUpgrade(brewPath: brewPath)
+        case .selfUpdate:
+            runSelfUpdate()
         case .download, nil:
-            if let availableURL, let url = URL(string: availableURL) {
-                NSWorkspace.shared.open(url)
-            }
+            openReleasePage()
+        }
+    }
+
+    /// Opens the GitHub release page — the manual-update fallback.
+    func openReleasePage() {
+        if let availableURL, let url = URL(string: availableURL) {
+            NSWorkspace.shared.open(url)
         }
     }
 
     private func runBrewUpgrade(brewPath: String) {
-        guard updateRun != .updating else { return }
-        updateRun = .updating
+        guard !isUpdating else { return }
+        updateRun = .updating("Updating…")
         Task.detached(priority: .userInitiated) { [weak self] in
             let failure = BrewUpdate.runUpgrade(brewPath: brewPath)
             await MainActor.run {
@@ -309,6 +379,82 @@ final class UpdateChecker: ObservableObject {
                     self.relaunchAfterUpdate()
                 }
             }
+        }
+    }
+
+    // MARK: In-place self-update (non-brew .app installs)
+
+    /// Downloads the release zip to $TMPDIR (purgeable), unpacks it, verifies
+    /// the signature (seal intact, Team ID matches, Gatekeeper accepts), and
+    /// swaps the running bundle. Any failure aborts, cleans the temp dir,
+    /// surfaces the error in the banner, and opens the release page so the
+    /// user can still update by hand.
+    private func runSelfUpdate() {
+        guard !isUpdating else { return }
+        guard let zipString = availableZipURL, let zipURL = URL(string: zipString) else {
+            openReleasePage()  // release has no zip asset: nothing to install
+            return
+        }
+        updateRun = .updating("Downloading…")
+        let targetPath = Bundle.main.bundlePath
+        Task { [weak self] in
+            await self?.performSelfUpdate(zipURL: zipURL, targetPath: targetPath)
+        }
+    }
+
+    private func performSelfUpdate(zipURL: URL, targetPath: String) async {
+        let fm = FileManager.default
+        let workDir = fm.temporaryDirectory
+            .appendingPathComponent("PullMark-update-\(UUID().uuidString)", isDirectory: true)
+        func fail(_ message: String) {
+            try? fm.removeItem(at: workDir)
+            updateRun = .failed(message)
+            openReleasePage()
+        }
+        do {
+            try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+            var request = URLRequest(url: zipURL)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (downloaded, response) = try await session.download(for: request)
+            if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                fail("download failed (HTTP \(http.statusCode))")
+                return
+            }
+            let zipFile = workDir.appendingPathComponent("PullMark.zip")
+            try fm.moveItem(at: downloaded, to: zipFile)
+
+            updateRun = .updating("Verifying…")
+            let unpackDir = workDir.appendingPathComponent("unpacked", isDirectory: true)
+            let verified: Result<String, MessageError> =
+                await Task.detached(priority: .userInitiated) {
+                    let unpack = SelfUpdate.run(SelfUpdate.unpackCommand(
+                        zipPath: zipFile.path, destination: unpackDir.path))
+                    guard unpack.status == 0 else {
+                        return .failure(MessageError(message: "could not unpack the downloaded archive"))
+                    }
+                    guard let app = SelfUpdate.findApp(in: unpackDir) else {
+                        return .failure(MessageError(message: "the downloaded archive contains no app"))
+                    }
+                    if let reason = SelfUpdate.verify(appPath: app.path, runner: SelfUpdate.run) {
+                        return .failure(MessageError(message: reason))
+                    }
+                    return .success(app.path)
+                }.value
+            let newAppPath: String
+            switch verified {
+            case .failure(let error): fail(error.message); return
+            case .success(let path): newAppPath = path
+            }
+
+            updateRun = .updating("Installing…")
+            try await Task.detached(priority: .userInitiated) {
+                try SelfUpdate.install(newApp: URL(fileURLWithPath: newAppPath),
+                                       over: URL(fileURLWithPath: targetPath))
+            }.value
+            try? fm.removeItem(at: workDir)
+            relaunchAfterUpdate()
+        } catch {
+            fail(error.localizedDescription)
         }
     }
 
