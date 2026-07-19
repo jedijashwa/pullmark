@@ -80,6 +80,15 @@ struct LocalFileView: View {
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
+        // The platform dirty indicator (dot in the close button) — subtitle
+        // text alone is too quiet for unsaved manual-mode edits.
+        .onAppear { NSApp.mainWindow?.isDocumentEdited = state.editedText[file.url] != nil }
+        .onChange(of: state.editedText[file.url] != nil) { dirty in
+            NSApp.mainWindow?.isDocumentEdited = dirty
+        }
+        // Overlay changes must re-register: export and Copy-as-Markdown
+        // read ActiveDocument.markdown, and line ranges shift with edits.
+        .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .sheet(item: $editTarget) { target in
             BlockEditSheet(fileName: file.url.lastPathComponent, target: target) { replacement in
                 applyBlockEdit(target, replacement: replacement)
@@ -238,9 +247,18 @@ struct LocalFileView: View {
                                                 to: target.lineEnd,
                                                 with: replacement) else { return }
         if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
+            if state.editedText[file.url] != nil {
+                // Manual-mode leftovers plus autosave: route through the
+                // guarded save so the disk-changed-underneath confirmation
+                // still runs (and the overlay/base clear together).
+                state.editedText[file.url] = newText
+                state.saveEdits(for: file.url)
+                return
+            }
             do {
                 try newText.write(to: file.url, atomically: true, encoding: .utf8)
                 state.editedText[file.url] = nil
+                state.editedBase[file.url] = nil
             } catch {
                 state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
             }
@@ -266,7 +284,9 @@ struct LocalFileView: View {
         state.registerActiveDocument(ActiveDocument(
             id: activeDocumentID,
             exportBaseName: file.url.deletingPathExtension().lastPathComponent,
-            markdown: currentText,
+            // The overlay, not the disk text — export and ⌥⌘C must match
+            // what the page is actually rendering.
+            markdown: displayText,
             proxy: proxy,
             localRoot: file.resourceRoot
         ))

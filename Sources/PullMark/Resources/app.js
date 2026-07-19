@@ -324,6 +324,13 @@
       div.textContent = el.textContent;
       // Keep the blame line annotation on the replacement element.
       if (pre.dataset.pmLines) { div.dataset.pmLines = pre.dataset.pmLines; }
+      // ...and the local-editing pencil, or mermaid blocks silently lose
+      // editability.
+      if (pre.classList.contains("pm-editable")) {
+        div.classList.add("pm-editable");
+        var pencil = pre.querySelector(".pm-edit-local");
+        if (pencil) { div.append(pencil); }
+      }
       pre.replaceWith(div);
     });
     // GitHub suggestion blocks get a labeled container instead of syntax

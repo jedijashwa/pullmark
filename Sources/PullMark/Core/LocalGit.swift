@@ -38,6 +38,67 @@ enum LocalGit {
         }
     }
 
+    /// Changed paths (`git status --porcelain`), repo-relative with their
+    /// two-letter status codes, e.g. [(" M", "docs/readme.md")].
+    struct ChangedFile {
+        /// Two-letter porcelain status code.
+        let status: String
+        /// Display path (a rename's NEW name).
+        let path: String
+        /// Every path that must be staged for this entry to commit whole —
+        /// a rename contributes its OLD path too, or the deletion half is
+        /// silently left behind.
+        let stagePaths: [String]
+    }
+
+    /// Changed files via `git status --porcelain -z`: NUL separation, so
+    /// paths with spaces/quotes/non-ASCII arrive unmangled (the newline
+    /// format C-quotes them, which then never matches a pathspec).
+    static func changedFiles(in root: URL) -> [ChangedFile] {
+        guard let out = run(["status", "--porcelain", "-z"], in: root.path) else { return [] }
+        let fields = out.components(separatedBy: "\0")
+        var files: [ChangedFile] = []
+        var index = 0
+        while index < fields.count {
+            let entry = fields[index]
+            index += 1
+            guard entry.count > 3 else { continue }
+            let status = String(entry.prefix(2))
+            let path = String(entry.dropFirst(3))
+            if status.hasPrefix("R") || status.hasPrefix("C"), index < fields.count {
+                // -z renames/copies: the OLD path follows as its own field.
+                let oldPath = fields[index]
+                index += 1
+                files.append(ChangedFile(status: status, path: path,
+                                         stagePaths: [path, oldPath]))
+            } else {
+                files.append(ChangedFile(status: status, path: path, stagePaths: [path]))
+            }
+        }
+        return files
+    }
+
+    /// Stages the given repo-relative paths and commits with `message`.
+    /// Returns nil on success or git's stderr on failure. Only paths that
+    /// still exist in the worktree are `git add`ed — a staged rename's old
+    /// path (or a deleted file) matches no addable file and would fail the
+    /// whole operation; commit's own pathspec picks those up from the
+    /// index/worktree state instead.
+    static func commit(paths: [String], message: String, in root: URL) -> String? {
+        let addable = paths.filter {
+            FileManager.default.fileExists(atPath: root.appendingPathComponent($0).path)
+        }
+        if !addable.isEmpty,
+           let failure = runForError(["add", "--"] + addable, in: root.path) { return failure }
+        return runForError(["commit", "-m", message, "--"] + paths, in: root.path)
+    }
+
+    /// Creates and checks out a new branch. Returns nil on success or
+    /// git's stderr on failure.
+    static func createBranch(_ name: String, in root: URL) -> String? {
+        runForError(["checkout", "-b", name], in: root.path)
+    }
+
     /// The checked-out branch name; nil outside a repo or on a detached
     /// HEAD (where "HEAD" is what git reports).
     static func currentBranch(in root: URL) -> String? {
@@ -207,6 +268,27 @@ enum LocalGit {
             return (String(s[ownerRange]), String(s[repoRange]))
         }
         return nil
+    }
+
+    /// Runs git for its side effect: nil on success, captured stderr (or a
+    /// generic message) on failure — commit/branch surface these to the UI.
+    private static func runForError(_ args: [String], in directory: String) -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["git", "-C", directory] + args
+        var env = ProcessInfo.processInfo.environment
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        process.environment = env
+        let stderr = Pipe()
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = stderr
+        do { try process.run() } catch { return error.localizedDescription }
+        let data = stderr.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus != 0 else { return nil }
+        let message = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return message.isEmpty ? "git \(args.first ?? "") failed" : message
     }
 
     private static func run(_ args: [String], in directory: String) -> String? {

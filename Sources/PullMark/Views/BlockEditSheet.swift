@@ -45,21 +45,21 @@ struct BlockEditSheet: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
                 .frame(minHeight: 150, maxHeight: 340)
                 .focused($focused)
-            if replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text("Clearing all text deletes this block.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
+            // Fixed slot (opacity, not if) so typing never jumps the layout.
+            Text("Clearing all text deletes this block.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .opacity(replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 1 : 0)
 
             HStack {
                 Text(autosave ? "Saves to \(fileName) immediately."
-                              : "Applies in the window — ⌘S saves to disk.")
+                              : "Saves in the window — ⌘S writes to disk.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button(autosave ? "Save" : "Apply") {
+                Button("Save") {
                     onApply(replacement)
                     dismiss()
                 }

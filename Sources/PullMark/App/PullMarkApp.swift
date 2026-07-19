@@ -43,11 +43,13 @@ struct PullMarkApp: App {
         }
     }
 
-    /// The active document's file URL when it is a local file (ActiveDocument
-    /// ids are "local:<path>" for those) — drives the ⌘S Save command.
+    /// The selected local file — drives Save (⌘S) and Commit Changes….
+    /// Read from the sidebar selection, not ActiveDocument: comparing
+    /// unregisters the document, and Save must keep working with unsaved
+    /// edits while a comparison is on screen.
     private var activeLocalFileURL: URL? {
-        guard let id = state.activeDocument?.id, id.hasPrefix("local:") else { return nil }
-        return URL(fileURLWithPath: String(id.dropFirst("local:".count)))
+        if case .local(let url) = state.selection { return url }
+        return nil
     }
 
     /// Copy as Markdown (⌥⌘C): the page maps the selection to covered
@@ -120,6 +122,17 @@ struct PullMarkApp: App {
                 }
                 .keyboardShortcut("s")
                 .disabled(activeLocalFileURL.map { state.editedText[$0] == nil } ?? true)
+                Button("Commit Changes…") {
+                    guard let url = activeLocalFileURL else { return }
+                    if let root = LocalGit.repoRoot(for: url) {
+                        state.commitRequest = CommitRequest(root: root)
+                    } else {
+                        state.lastNotice = "\(url.lastPathComponent) isn't inside a git repository."
+                    }
+                }
+                .keyboardShortcut("k", modifiers: [.command, .control])
+                .disabled(activeLocalFileURL == nil)
+                .help("Stage and commit changes in this file's repository")
             }
             CommandGroup(replacing: .importExport) {
                 Button("Export as PDF…") {
