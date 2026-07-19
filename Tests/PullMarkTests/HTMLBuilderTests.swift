@@ -17,12 +17,31 @@ import Testing
         #expect(literal.contains("\\u003c!--\\u003cscript>"))
     }
 
-    @Test func documentPayloadIsEmbedded() {
+    @Test func documentPayloadIsEmbeddedWithoutExecuting() {
         let page = HTMLBuilder.documentPage(markdown: "# Hi", title: "T")
-        #expect(page.contains("window.__PAYLOAD__"))
+        // Non-executing JSON payload tag, not an executing script (#5).
+        #expect(page.contains("<script type=\"application/json\" id=\"pm-payload\">"))
+        #expect(!page.contains("window.__PAYLOAD__"))
         #expect(page.contains("\"mode\":\"document\""))
         #expect(page.contains("# Hi"))
         #expect(page.contains("<title>T</title>"))
+    }
+
+    @Test func pagesCarryTheContentSecurityPolicy() {
+        for page in [HTMLBuilder.documentPage(markdown: "x"),
+                     HTMLBuilder.diffPage(segments: []),
+                     HTMLBuilder.patchPage(patch: "@@")] {
+            #expect(page.contains(
+                "<meta http-equiv=\"Content-Security-Policy\" content=\"\(HTMLBuilder.contentSecurityPolicy)\">"))
+        }
+        // Only bundled scripts may execute; inline script and handlers die.
+        #expect(HTMLBuilder.contentSecurityPolicy.contains("script-src 'self'"))
+        #expect(HTMLBuilder.contentSecurityPolicy.contains("default-src 'none'"))
+        // mermaid injects inline <style> into its SVGs.
+        #expect(HTMLBuilder.contentSecurityPolicy.contains("style-src 'self' 'unsafe-inline'"))
+        // Local files, data URIs, avatars, and the app's resource schemes.
+        #expect(HTMLBuilder.contentSecurityPolicy.contains(
+            "img-src file: data: https: pullmark-local: pullmark-remote:"))
     }
 
     @Test func titleIsHTMLEscaped() {

@@ -221,11 +221,19 @@ final class StaticRenderer {
         let escapedTitle = title
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "<", with: "&lt;")
+        // Static previews run no JavaScript at all, so script-src is 'none';
+        // hostile markdown can't execute here even without the policy, but
+        // the CSP makes that a guarantee (#5). The bundled styles are inline
+        // <style> blocks → 'unsafe-inline'.
+        let csp = "default-src 'none'; script-src 'none'; "
+            + "style-src 'unsafe-inline'; img-src file: data: https:; "
+            + "connect-src 'none'; frame-src 'none'; object-src 'none'"
         return """
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="\(csp)">
         <title>\(escapedTitle)</title>
         \(stylesheet)
         </head>
