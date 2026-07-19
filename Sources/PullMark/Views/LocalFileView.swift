@@ -9,6 +9,7 @@ struct LocalFileView: View {
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
+    @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
@@ -46,7 +47,7 @@ struct LocalFileView: View {
                 .background(Color.blue.opacity(0.14))
             }
             if state.findBarVisible {
-                FindBar(proxy: proxy)
+                FindBar(proxy: proxy, seed: $findSeed)
             }
             HSplitView {
                 MarkdownWebView(
@@ -59,6 +60,7 @@ struct LocalFileView: View {
                         historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                     },
                     onStats: { stats = $0 },
+                    onPageLoaded: { handlePageLoaded() },
                     proxy: proxy
                 )
                 .overlay(alignment: .bottomTrailing) {
@@ -110,6 +112,8 @@ struct LocalFileView: View {
         .onChange(of: blameVisible) { _ in loadBlame() }
         .onChange(of: currentText) { _ in loadBlame() }
         .onChange(of: inGitRepo) { _ in loadBlame() }
+        .modifier(PendingSearchConsumer(target: .local(file.url),
+                                        consume: consumePendingSearch))
         .sheet(item: $historyRequest) { request in
             BlameHistorySheet {
                 await BlameService.localHistory(client: state.client, fileURL: file.url,
@@ -174,6 +178,25 @@ struct LocalFileView: View {
                                         customCSS: style.customCSS,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
+    }
+
+    private func handlePageLoaded() {
+        if state.pendingSearchQuery != nil {
+            consumePendingSearch()
+        } else if state.findBarVisible, let query = proxy.activeFindQuery {
+            // The page reloaded under an active find (e.g. blame arrived and
+            // re-rendered the document): restore highlights and counts.
+            findSeed = query
+        }
+    }
+
+    /// Query handed over by the all-files search palette: show the find bar
+    /// seeded with it so the term is highlighted and scrolled into view.
+    private func consumePendingSearch() {
+        guard let query = state.pendingSearchQuery else { return }
+        state.pendingSearchQuery = nil
+        findSeed = query
+        state.findBarVisible = true
     }
 
     private func load() {

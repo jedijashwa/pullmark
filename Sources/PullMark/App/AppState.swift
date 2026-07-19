@@ -82,6 +82,11 @@ final class AppState: ObservableObject {
     @Published var lastError: String?
     @Published var findBarVisible = false
     @Published var recents: [RecentItem] = []
+    @Published var searchPaletteVisible = false
+    /// Query handed from the search palette to the detail view it opened;
+    /// consumed once (the view drives find-in-page with it after its page
+    /// loads, so the term is highlighted and scrolled into view).
+    @Published var pendingSearchQuery: String?
 
     let client = GitHubClient.shared
 
@@ -188,6 +193,28 @@ final class AppState: ObservableObject {
 
     // MARK: - Pull requests
 
+    /// Head-revision Markdown text already fetched for PR files and browsed
+    /// repo docs, keyed by (session id, repo path). Memory only — populated
+    /// as detail views load content, so the search palette can search PR
+    /// documents without triggering network fetches.
+    struct PRContentKey: Hashable {
+        let sessionID: String
+        let path: String
+    }
+    private var prContentCache: [PRContentKey: String] = [:]
+
+    func cachePRContent(sessionID: String, path: String, text: String) {
+        prContentCache[PRContentKey(sessionID: sessionID, path: path)] = text
+    }
+
+    func cachedPRContent(sessionID: String, path: String) -> String? {
+        prContentCache[PRContentKey(sessionID: sessionID, path: path)]
+    }
+
+    private func dropPRContentCache(sessionID: String) {
+        prContentCache = prContentCache.filter { $0.key.sessionID != sessionID }
+    }
+
     func session(_ id: String) -> PRSession? {
         prSessions.first { $0.id == id }
     }
@@ -264,6 +291,8 @@ final class AppState: ObservableObject {
             prSessions[index].reviewComments = comments
             prSessions[index].threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
             prSessions[index].updateAvailable = false
+            // Cached document text may predate the new head; views refill it.
+            dropPRContentCache(sessionID: sessionID)
             updateRecentPRStatus(ref: ref, status: PRStatus(details: details))
         } catch {
             lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
@@ -349,6 +378,7 @@ final class AppState: ObservableObject {
 
     func removePR(_ id: String) {
         prSessions.removeAll { $0.id == id }
+        dropPRContentCache(sessionID: id)
         switch selection {
         case .prOverview(let s):
             if s == id { selection = nil }

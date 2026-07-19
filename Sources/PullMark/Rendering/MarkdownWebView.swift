@@ -39,6 +39,9 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Word count / reading time computed from the rendered text
     /// (document mode only — diffs never post stats).
     var onStats: ((DocumentStats) -> Void)?
+    /// Called after each page finishes loading (navigation committed and the
+    /// page scripts have run) — e.g. to drive find-in-page on a fresh page.
+    var onPageLoaded: (() -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
     /// False for the Settings theme-preview cards: the web view refuses all
@@ -159,6 +162,10 @@ struct MarkdownWebView: NSViewRepresentable {
             default:
                 break
             }
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            parent.onPageLoaded?()
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,

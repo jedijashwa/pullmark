@@ -49,6 +49,9 @@ struct ContentView: View {
         .sheet(isPresented: $state.showAddPR) {
             AddPRSheet()
         }
+        .sheet(isPresented: $state.searchPaletteVisible) {
+            SearchPalette()
+        }
         .sheet(isPresented: $updates.showReleaseNotes) {
             ReleaseNotesSheet(
                 title: "What's New in PullMark \(updates.availableVersion ?? "")",
