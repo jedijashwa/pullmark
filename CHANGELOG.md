@@ -6,6 +6,17 @@ section current as features land.
 
 ## Unreleased
 
+- Editing grew up: click the pencil — or just double-click any block — and
+  the block becomes an editor right inside the rendered page. ⌘↩ saves
+  through the same guarded path as ever (collision check, edit history,
+  autosave or ⌘S per Settings), Esc puts the rendered block back untouched.
+- Doc Doctor (File → Check Documentation…, ⇧⌘D): scans the whole folder for
+  broken relative links, dead heading anchors, missing images, and orphan
+  pages nothing links to. Issues are listed per file; clicking one opens the
+  file with the offending target highlighted.
+- Timeline: in the compare menu, scrub a document through its git history
+  with a slider — the rendered diff against today updates live, commit by
+  commit.
 - A review-request inbox: pull requests awaiting your review appear at the
   top of the sidebar with unread indicators and a Markdown-file-count badge
   (PRs with no Markdown are dimmed — PullMark will open them, but the
