@@ -1143,17 +1143,29 @@
       revealState = null;
     }
 
-    function commitReveal() {
-      if (!revealState) { return; }
-      if (revealState.ta.value === revealState.seed) { closeReveal(); return; }
-      revealState.ta.disabled = true;
+    function commitReveal(nextRevealLine) {
+      var st = revealState;
+      if (!st) { return; }
+      if (st.ta.value === st.seed) { closeReveal(); return; }
+      st.ta.disabled = true;
+      // Nulled BEFORE posting: the blur timer must never double-commit
+      // (duplicate write + duplicate history snapshot, or a spurious
+      // "changed underneath" notice after a successful save).
+      revealState = null;
+      var message = { type: "editLocal",
+                      lineStart: st.lo, lineEnd: st.hi,
+                      replacement: st.ta.value, seed: st.seed };
+      if (nextRevealLine) { message.nextRevealLine = nextRevealLine; }
+      // editLocal FIRST: the deferred-reload release (editingState) must
+      // not let a stale disk read beat the edit into displayText.
+      post(message);
       post({ type: "editingState", active: false });
-      post({ type: "editLocal",
-             lineStart: revealState.lo, lineEnd: revealState.hi,
-             replacement: revealState.ta.value, seed: revealState.seed });
-      // The page re-renders from the committed text; a refused save calls
-      // __pmCancelInlineEdit from Swift instead.
-      window.__pmCancelInlineEdit = closeReveal;
+      var cleanup = st;
+      window.__pmCancelInlineEdit = function () {
+        cleanup.hidden.forEach(function (el) { el.style.display = ""; });
+        cleanup.wrap.remove();
+        window.__pmCancelInlineEdit = null;
+      };
     }
 
     function expandUp() {
@@ -1205,17 +1217,12 @@
         var st = revealState;
         if (!st) { return; }
         if (st.ta.value !== st.seed) {
-          // Changed: commit, and tell Swift where the caret goes after the
-          // reload (line numbers shift by the edit's line delta).
+          // Changed: commit, telling Swift where the caret continues after
+          // the reload. The landing line is approximate (separator counts
+          // vary) — __pmRevealAtLine snaps to the nearest block.
           var newLines = st.ta.value.split("\n").length;
           var target = direction > 0 ? st.lo + newLines + 1 : st.lo - 1;
-          st.ta.disabled = true;
-          post({ type: "editingState", active: false });
-          post({ type: "editLocal", lineStart: st.lo, lineEnd: st.hi,
-                 replacement: st.ta.value, seed: st.seed,
-                 nextRevealLine: direction > 0 ? target : -target });
-          window.__pmCancelInlineEdit = closeReveal;
-          revealState = null;
+          commitReveal(direction > 0 ? target : -target);
           return;
         }
         // Anchor on a block that survives closeReveal (the wrap itself is
@@ -1240,7 +1247,7 @@
         if (event.key === "Escape") {
           event.preventDefault();
           event.stopPropagation();
-          commitReveal();
+          closeReveal(); // revert — leaving the block is what commits
         }
         if (event.key === "Backspace"
             && ta.selectionStart === 0 && ta.selectionEnd === 0) {
@@ -1273,19 +1280,33 @@
     window.__pmRevealAtLine = function (signedLine) {
       var line = Math.abs(signedLine);
       var atEnd = signedLine < 0;
+      // The requested line is approximate (blank separators vary): exact
+      // containment wins, else snap to the nearest block in the travel
+      // direction — downward takes the first block at/after the line,
+      // upward the last block at/before it.
+      var exact = null, after = null, before = null;
       for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
         var r = ((el.getAttribute && el.getAttribute("data-pm-lines")) || "").split("-");
         if (r.length !== 2 || !el.classList.contains("pm-editable")) { continue; }
-        if (parseInt(r[0], 10) <= line && line <= parseInt(r[1], 10)) {
-          reveal(el, parseInt(r[0], 10), parseInt(r[1], 10));
-          if (revealState && atEnd) {
-            var n = revealState.ta.value.length;
-            revealState.ta.setSelectionRange(n, n);
-          }
-          return;
-        }
+        var lo = parseInt(r[0], 10), hi = parseInt(r[1], 10);
+        if (lo <= line && line <= hi) { exact = el; break; }
+        if (lo > line && !after) { after = el; }
+        if (hi < line) { before = el; }
+      }
+      var target = exact || (atEnd ? before : after) || (atEnd ? after : before);
+      if (!target) { return; }
+      var parts = target.getAttribute("data-pm-lines").split("-");
+      reveal(target, parseInt(parts[0], 10), parseInt(parts[1], 10));
+      if (revealState && atEnd) {
+        var n = revealState.ta.value.length;
+        revealState.ta.setSelectionRange(n, n);
       }
     };
+
+    // Swift calls this before any state flip that re-renders the page
+    // (⌘E off, theme change): an open reveal must commit synchronously or
+    // the draft dies with the page.
+    window.__pmCommitNow = function () { commitReveal(); };
 
     if (payload.editable && linesAnnotated) {
       document.documentElement.classList.add("pm-edit-mode");
@@ -1293,13 +1314,52 @@
         var range = (ec.getAttribute("data-pm-lines") || "").split("-");
         if (range.length === 2) { ec.classList.add("pm-editable"); }
       }
+      // End-of-document affordance: an empty doc has nothing to click,
+      // and appending after the last block deserves one obvious target.
+      var phantom = document.createElement("div");
+      phantom.className = "pm-append";
+      phantom.textContent = "+";
+      phantom.title = "Write at the end of the document";
+      content.append(phantom);
+      phantom.addEventListener("click", function (event) {
+        event.stopPropagation();
+        if (revealState) { commitReveal(); return; }
+        var last = null;
+        for (var e = content.firstElementChild; e; e = e.nextElementSibling) {
+          if (e.classList.contains("pm-editable")) { last = e; }
+        }
+        if (last) {
+          var parts = last.getAttribute("data-pm-lines").split("-");
+          reveal(last, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        } else {
+          var total = (payload.markdown || "").split("\n").length;
+          reveal(phantom, 1, Math.max(1, total));
+        }
+        if (revealState) {
+          var ta2 = revealState.ta;
+          if (ta2.value !== "") { ta2.value += "\n\n"; }
+          ta2.dispatchEvent(new Event("input"));
+          ta2.setSelectionRange(ta2.value.length, ta2.value.length);
+        }
+      });
+
       content.addEventListener("click", function (event) {
         if (event.target.closest("a, textarea, button, .pm-reveal")) { return; }
         var host = event.target.closest(".pm-editable[data-pm-lines]");
         if (revealState) {
-          var changed = revealState.ta.value !== revealState.seed;
+          var st = revealState;
+          var changed = st.ta.value !== st.seed;
+          if (changed) {
+            var next = 0;
+            if (host && host.style.display !== "none") {
+              var hostLo = parseInt(host.getAttribute("data-pm-lines").split("-")[0], 10);
+              var delta = st.ta.value.split("\n").length - (st.hi - st.lo + 1);
+              next = hostLo > st.hi ? hostLo + delta : hostLo;
+            }
+            commitReveal(next || undefined);
+            return; // reload continues the reveal at the clicked block
+          }
           commitReveal();
-          if (changed) { return; } // page reload incoming; re-click after
         }
         if (!host || host.style.display === "none") { return; }
         var parts = host.getAttribute("data-pm-lines").split("-");

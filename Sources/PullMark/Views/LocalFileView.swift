@@ -173,7 +173,22 @@ struct LocalFileView: View {
     }
 
     private var editToggle: some View {
-        Toggle(isOn: $editMode) {
+        Toggle(isOn: Binding(
+            get: { editMode },
+            set: { newValue in
+                // Commit any open reveal FIRST (the flip re-renders the
+                // page — an uncommitted draft would die with it), keep the
+                // scroll position, and force-release the reload deferral:
+                // the torn-down page can never post editingState itself.
+                proxy.commitInlineEdit()
+                proxy.scrollFraction { fraction in
+                    Task { @MainActor in
+                        if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
+                        editMode = newValue
+                        handleEditingState(false)
+                    }
+                }
+            })) {
             Label("Edit", systemImage: "pencil")
         }
         .keyboardShortcut("e")
@@ -230,6 +245,7 @@ struct LocalFileView: View {
     private var subtitle: String {
         var parts = PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path)
         if let currentBranch { parts += " · \(currentBranch)" }
+        if editMode { parts += " · editing" }
         if state.editedText[file.url] != nil { parts += " · edited" }
         return parts
     }
@@ -310,13 +326,15 @@ struct LocalFileView: View {
                 == target.seed else {
             state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
                 + "this block — nothing was saved. Re-open the block to edit the current version."
-            proxy.cancelInlineEdit()
+            pendingRevealLine = nil  // a refused save must not leave a
+            proxy.cancelInlineEdit() // reveal armed for a later reload
             return
         }
         guard let newText = TextLines.replacing(in: displayText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
                                                 with: replacement) else {
+            pendingRevealLine = nil
             proxy.cancelInlineEdit()
             return
         }

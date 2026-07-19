@@ -752,6 +752,9 @@ mark.pm-find.pm-find-current {
   margin: 2px -14px;
   padding: 2px 14px;
 }
+/* The reveal must sit where the rendered block sat — same
+   16px/1.5 metrics (mono face is the only shift), no box, a hairline
+   accent, no extra vertical mass, so nothing below jumps on open/close. */
 .pm-reveal textarea {
   display: block;
   width: 100%;
@@ -760,12 +763,13 @@ mark.pm-find.pm-find-current {
   outline: none;
   resize: none;
   overflow: hidden;
-  background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
-  border-radius: 6px;
-  box-shadow: inset 3px 0 0 rgba(9, 105, 218, 0.45);
-  font: 14px/1.7 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(128, 128, 128, 0.03);
+  border-radius: 4px;
+  box-shadow: inset 2px 0 0 rgba(9, 105, 218, 0.4);
+  font: 16px/1.5 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   color: inherit;
-  padding: 6px 10px;
+  caret-color: var(--fgColor-accent, #0969da);
+  padding: 0 0 0 10px;
 }
 /* A quiet cue that the page is writable in edit mode. */
 :root.pm-edit-mode .pm-editable:hover {
@@ -773,3 +777,15 @@ mark.pm-find.pm-find-current {
   border-radius: 6px;
   cursor: text;
 }
+.pm-append {
+  margin: 8px 0 24px;
+  padding: 4px 0;
+  text-align: center;
+  font: 500 18px/1 -apple-system, sans-serif;
+  color: rgba(128, 128, 128, 0.4);
+  border: 1px dashed rgba(128, 128, 128, 0.25);
+  border-radius: 8px;
+  cursor: text;
+  user-select: none;
+}
+.pm-append:hover { color: rgba(9, 105, 218, 0.7); border-color: rgba(9, 105, 218, 0.35); }

@@ -12,6 +12,14 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Commits any open in-place reveal synchronously — called before
+    /// state flips that re-render the page (a draft must not die with it).
+    func commitInlineEdit() {
+        webView?.evaluateJavaScript(
+            "window.__pmCommitNow && window.__pmCommitNow();",
+            completionHandler: nil)
+    }
+
     /// Continues arrow-key editing navigation after a commit reload.
     func revealAtLine(_ signedLine: Int) {
         webView?.evaluateJavaScript(
