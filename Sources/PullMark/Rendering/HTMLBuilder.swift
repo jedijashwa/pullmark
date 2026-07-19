@@ -123,7 +123,15 @@ enum HTMLBuilder {
     /// into the script-data-escaped states, and the JS line separators
     /// U+2028/U+2029 are escaped on top of that.
     static func jsonLiteral<T: Encodable>(_ value: T) -> String {
-        guard let data = try? JSONEncoder().encode(value),
+        let encoder = JSONEncoder()
+        // Deterministic key order is LOAD-BEARING: the web view reloads
+        // whenever the page string changes, and SwiftUI recomputes pages on
+        // unrelated state changes (scroll-spy, timers). Foundation's
+        // encoder otherwise randomizes object key order per encode, which
+        // made every recompute a byte-different page — reloading the web
+        // view and yanking the reader back to the top mid-scroll.
+        encoder.outputFormatting = .sortedKeys
+        guard let data = try? encoder.encode(value),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
         }

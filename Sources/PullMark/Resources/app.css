@@ -734,3 +734,15 @@ mark.pm-find.pm-find-current {
   padding: 3px 2px 0;
   user-select: none;
 }
+.pm-inline-edit-hint { display: flex; align-items: center; gap: 8px; }
+.pm-inline-edit-btn {
+  font: 500 11.5px -apple-system, sans-serif;
+  color: inherit;
+  background: var(--bgColor-default, #fff);
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.pm-inline-edit-btn:hover { border-color: rgba(128, 128, 128, 0.9); }
+.pm-inline-edit-save { font-weight: 600; }
