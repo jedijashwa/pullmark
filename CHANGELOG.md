@@ -21,6 +21,10 @@ section current as features land.
 - Re-renders (blame arriving, external file changes) wait while you're
   editing and keep your place after; an editor can never lose a draft to
   a background refresh.
+- A keyboard pass across the app: ⌘G/⇧⌘G step find matches, arrows drive
+  the all-files search palette, review requests appear in ⌘K, ⌘1/2/3 pick
+  a PR file's view, ⌥⌘L flips the diff layout, ⌥⌘O toggles the outline,
+  ⌘R reloads — and ⌘E inside an open editor commits and exits edit mode.
 
 ## 0.13.0 - 2026-07-19
 
