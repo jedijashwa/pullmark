@@ -621,9 +621,9 @@ footer .note { margin-left: auto; }
         What's New sheet catches you up after.</li>
       <li><strong>Source at a keystroke</strong> — <kbd>⌥⌘U</kbd> flips any document to its raw
         Markdown and back; Quick Look can prefer raw source too.</li>
-      <li><strong>The page is the editor</strong> — click a block's pencil and it becomes an
-        editor right in the rendered page (autosave or ⌘S, every write revertible);
-        <kbd>⌃⌘K</kbd> commits, with branch-guarding on main and optional push.</li>
+      <li><strong>The page is the editor</strong> — <kbd>⌘E</kbd> and you're typing: blocks
+        reveal their source in place, and leaving a block saves it (guarded,
+        revertible); <kbd>⌃⌘K</kbd> commits, with branch-guarding on main and optional push.</li>
       <li><strong>A review inbox</strong> — PRs awaiting your review sit atop the sidebar with
         unread dots and a Markdown-file count.</li>
       <li><strong>Open Quickly</strong> — <kbd>⌘K</kbd> jumps to any heading, file, or PR,
@@ -635,6 +635,20 @@ footer .note { margin-left: auto; }
       <li><strong>Windows &amp; tabs</strong> — <kbd>⌘N</kbd> for independent windows, merged
         into native macOS tabs when you want one frame.</li>
     </ul>
+
+    <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">Edit in place.
+      Read like PullMark.</h3>
+    <p class="prose">Press <kbd>⌘E</kbd> and the page becomes the editor: the block under your
+    cursor reveals its raw Markdown in place — same type, same position, nothing jumps — and
+    you're typing immediately. Arrow through blocks, merge with Backspace, split with a blank
+    line; leaving a block saves it through the same guarded, versioned path as everything else.
+    Reading stays the default; the mode boundary is the save gesture.</p>
+
+    <figure class="shot shot-narrow" style="max-width: 860px;">
+      <img src="img/app-edit.png" width="860" height="420" loading="lazy"
+        alt="A rendered document in edit mode: one paragraph revealed as raw Markdown source in place, surrounded by rendered content">
+      <figcaption>Edit mode: the active block shows its source; everything else stays rendered.</figcaption>
+    </figure>
 
     <figure class="shot shot-narrow">
       <img src="img/app-themes.png?v=2" width="792" height="740" loading="lazy"
