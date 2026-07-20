@@ -1144,17 +1144,31 @@
       return event.key.length === 1 ? event.key.toLowerCase() : null;
     }
 
+    // event.code is a US-QWERTY physical position, so it only stands in
+    // for the character when Option composed the character away ("ç" for
+    // ⌥C). Consulting it otherwise would fire on the wrong key for anyone
+    // on Dvorak or AZERTY.
+    var codeToKey = {
+      Backquote: "`", Minus: "-", Equal: "=", BracketLeft: "[",
+      BracketRight: "]", Backslash: "\\", Semicolon: ";", Quote: "'",
+      Comma: ",", Period: ".", Slash: "/",
+    };
+
+    function physicalKey(event) {
+      var code = event.code || "";
+      var m = /^Key([A-Z])$/.exec(code);
+      if (m) { return m[1].toLowerCase(); }
+      m = /^Digit([0-9])$/.exec(code);
+      if (m) { return m[1]; }
+      return codeToKey[code] || null;
+    }
+
     function matchesEditToggle(event) {
       if (!editToggleKey) { return false; }
-      // With ⌥ held, event.key is the option-composed character ("ç" for
-      // ⌥C) — event.code ("KeyC", "Digit1") recovers the physical key.
-      var codeKey = null;
-      var m = /^Key([A-Z])$/.exec(event.code || "");
-      if (m) { codeKey = m[1].toLowerCase(); }
-      m = /^Digit([0-9])$/.exec(event.code || "");
-      if (m) { codeKey = m[1]; }
       var key = canonicalEventKey(event);
-      return (key === editToggleKey.key || codeKey === editToggleKey.key)
+      var matched = key === editToggleKey.key
+        || (event.altKey && physicalKey(event) === editToggleKey.key);
+      return matched
         && event.metaKey === !!editToggleKey.meta
         && event.ctrlKey === !!editToggleKey.ctrl
         && event.altKey === !!editToggleKey.alt

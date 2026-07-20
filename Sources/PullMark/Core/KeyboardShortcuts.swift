@@ -67,9 +67,36 @@ struct KeyCombo: Codable, Equatable, Hashable {
     /// function keys stand alone.
     var isBindable: Bool { command || control || isFunctionKey }
 
-    /// Standard commands this combo would shadow — rebinding onto Quit,
-    /// Copy, Undo and friends breaks muscle memory app-wide. nil when free.
+    /// What already owns this combo — a standard app command, something
+    /// the system swallows before the app ever sees it, or one of the
+    /// fixed sheet keys. nil when the combo is free to take.
     var reservedFor: String? {
+        // Swallowed above the app: binding these produces a row that looks
+        // right and a key that never fires.
+        if command, !option, !control, !shift {
+            switch key {
+            case "space": return "Spotlight"
+            case "tab": return "the app switcher"
+            case "`": return "cycling windows"
+            default: break
+            }
+        }
+        if control, !command, !option, ["up", "down", "left", "right"].contains(key) {
+            return "Mission Control"
+        }
+        // Fixed keys the app's own sheets and palettes own (Esc to
+        // dismiss, ⌘↩ to commit) — they can't be rebound, so nothing
+        // else may claim them either.
+        if !command, !option, !control, !shift, key == "escape" {
+            return "dismissing sheets"
+        }
+        if command, !option, !control, !shift, key == "return" {
+            return "confirming sheets"
+        }
+        if command, shift, !option, !control {
+            let shifted = ["z": "Redo", "/": "the Help menu"]
+            return shifted[key]
+        }
         guard command, !option, !control, !shift else { return nil }
         let reserved = [
             "q": "Quit", "w": "Close Window", "h": "Hide", "m": "Minimize",
@@ -137,6 +164,22 @@ enum ShortcutAction: String, CaseIterable, Codable {
 
     /// Categories in the order the Keyboard settings tab shows them.
     static let categories = ["File", "Edit", "View", "Pull Requests"]
+
+    /// Where the action works, for the ones with no menu-bar item —
+    /// otherwise the settings list implies they fire anywhere, and a key
+    /// that does nothing reads as a bug.
+    var scopeNote: String? {
+        switch self {
+        case .toggleOutline, .reloadDocument, .editMode:
+            return "In a local document"
+        case .findNext, .findPrevious:
+            return "While the find bar is open"
+        case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
+            return "In a pull request file"
+        default:
+            return nil
+        }
+    }
 
     /// The shipped binding; nil means the action has no shortcut until the
     /// user records one (it still appears in menus and settings).

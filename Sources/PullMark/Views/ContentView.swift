@@ -5,6 +5,8 @@ struct ContentView: View {
     /// which is what makes ⌘N windows and native tabs independent.
     @StateObject private var state = AppState()
     @EnvironmentObject private var updates: UpdateChecker
+    /// Observed so the toolbar's shortcut hints follow a rebind.
+    @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @Environment(\.controlActiveState) private var controlActiveState
 
@@ -28,7 +30,7 @@ struct ContentView: View {
                     Label("Open File or Folder", systemImage: "folder")
                 }
                 .help("Open local Markdown files or a folder"
-                    + ShortcutStore.shared.hint(.openFile))
+                    + shortcuts.hint(.openFile))
 
                 Button {
                     state.showAddPR = true
@@ -36,7 +38,7 @@ struct ContentView: View {
                     Label("Open Pull Request", systemImage: "arrow.triangle.pull")
                 }
                 .help("Open a GitHub pull request"
-                    + ShortcutStore.shared.hint(.openPullRequest))
+                    + shortcuts.hint(.openPullRequest))
 
                 Menu {
                     Picker("Appearance", selection: $appearanceRaw) {

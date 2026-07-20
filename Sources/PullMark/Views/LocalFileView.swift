@@ -124,8 +124,10 @@ struct LocalFileView: View {
         // The in-editor edit-mode toggle key lives in the page's JS (the
         // web view owns focus while a reveal is open) — keep it in sync
         // with the rebindable shortcut.
-        .onReceive(shortcuts.$overrides) { _ in
-            proxy.setEditToggleKey(shortcuts.combo(for: .editMode))
+        // Read the emitted value, not the store: @Published fires in
+        // willSet, so shortcuts.overrides is still the OLD binding here.
+        .onReceive(shortcuts.$overrides) { updated in
+            proxy.setEditToggleKey(updated.combo(for: .editMode))
         }
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)

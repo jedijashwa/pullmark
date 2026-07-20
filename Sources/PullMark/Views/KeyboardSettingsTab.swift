@@ -94,10 +94,18 @@ struct KeyboardSettingsTab: View {
 
         func body(content: Content) -> some View {
             if #available(macOS 14.0, *) {
-                content
-                    .onKeyPress(.return) { onRecord(); return .handled }
-                    .onKeyPress(.space) { onRecord(); return .handled }
-                    .onKeyPress(.delete) { onClear(); return .handled }
+                // The phases form carries modifiers: the bare-key overload
+                // would also fire on ⌘⌫ and ⌥⌫, wiping a binding while the
+                // user was reaching for something else.
+                content.onKeyPress(phases: .down) { press in
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    switch press.key {
+                    case .return, .space: onRecord()
+                    case .delete, .deleteForward: onClear()
+                    default: return .ignored
+                    }
+                    return .handled
+                }
             } else {
                 content
             }
@@ -123,7 +131,18 @@ struct KeyboardSettingsTab: View {
     @ViewBuilder
     private func row(for action: ShortcutAction) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            LabeledContent(action.title) { recorder(for: action) }
+            LabeledContent {
+                recorder(for: action)
+            } label: {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(action.title)
+                    if let scope = action.scopeNote {
+                        Text(scope)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
             if recording == action, let refusal {
                 refusalNotice(refusal, for: action)
             }
@@ -135,9 +154,10 @@ struct KeyboardSettingsTab: View {
         .focusable()
         .focused($focusedRow, equals: action)
         .modifier(RowKeys(onRecord: { startRecording(action) },
-                          onClear: { shortcuts.assign(nil, to: action) }))
+                          onClear: { clearBinding(for: action) }))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(action.title) shortcut")
+        .accessibilityLabel("\(action.title) shortcut"
+            + (action.scopeNote.map { ", \($0.lowercased())" } ?? ""))
         .accessibilityValue(shortcuts.combo(for: action)?.spoken ?? "None")
         .accessibilityHint("Press Return, then type the new key combination. "
             + "Delete removes it, Escape cancels.")
@@ -217,22 +237,36 @@ struct KeyboardSettingsTab: View {
 
     // MARK: - Recording
 
+    /// ⌫ on a focused row. Announced and beeped, because otherwise the
+    /// only sign anything happened is a combo quietly becoming "None".
+    private func clearBinding(for action: ShortcutAction) {
+        guard shortcuts.combo(for: action) != nil else {
+            NSSound.beep() // already unbound — say nothing happened
+            return
+        }
+        stopRecording()
+        shortcuts.assign(nil, to: action)
+        announce("\(action.title) shortcut removed.")
+    }
+
     private func startRecording(_ action: ShortcutAction) {
         stopRecording()
         recording = action
         focusedRow = action
         refusal = nil
         liveModifiers = nil
+        // If nothing is key, take every event rather than none: scoping to
+        // a nil window would wedge the row with no way to press Esc.
         let window = NSApp.keyWindow
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Only capture keys aimed at the Settings window this recording
             // started in — otherwise an armed row eats the whole app's keys.
-            guard event.window === window else { return event }
+            guard window == nil || event.window === window else { return event }
             handleKeyDown(event, for: action)
             return nil
         }
         flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
-            guard event.window === window else { return event }
+            guard window == nil || event.window === window else { return event }
             let flags = event.modifierFlags
             let held = KeyCombo(key: "",
                                 command: flags.contains(.command),

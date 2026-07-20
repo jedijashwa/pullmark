@@ -77,8 +77,16 @@ final class ShortcutStore: ObservableObject {
         return nil
     }
 
+    /// Restores an action's default. The default can collide with a combo
+    /// the user moved elsewhere in the meantime, so whoever else holds it
+    /// is unbound — two actions sharing one combo would leave AppKit to
+    /// pick a winner arbitrarily.
     func reset(_ action: ShortcutAction) {
         overrides.reset(action)
+        if let combo = overrides.combo(for: action),
+           let clash = overrides.conflict(with: combo, excluding: action) {
+            overrides.set(nil, for: clash)
+        }
         persist()
     }
 
@@ -145,9 +153,15 @@ final class ShortcutStore: ObservableObject {
             combo.key = named
             return combo
         }
-        // charactersIgnoringModifiers still applies Shift for letters on
-        // some layouts; lowercase to keep the canonical form.
-        guard let chars = event.charactersIgnoringModifiers?.lowercased(),
+        // charactersIgnoringModifiers ignores every modifier EXCEPT Shift,
+        // so ⇧⌘1 would arrive as "!" and store both the shifted glyph and
+        // the shift flag — two representations of one physical key that
+        // never compare equal. Ask for the character with no modifiers at
+        // all, and keep shift as a flag.
+        let unshifted = event.characters(byApplyingModifiers: [])
+        guard let chars = (unshifted?.isEmpty == false
+                           ? unshifted
+                           : event.charactersIgnoringModifiers)?.lowercased(),
               let first = chars.first,
               !first.isWhitespace, first.asciiValue.map({ $0 >= 32 }) ?? true
         else { return nil }

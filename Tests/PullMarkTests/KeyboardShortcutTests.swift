@@ -152,6 +152,70 @@ struct KeyboardShortcutTests {
         #expect(overrides.combo(for: .openQuickly) == cmdK)
     }
 
+    @Test("Restoring a default never leaves two actions on one combo")
+    func resetResolvesConflicts() {
+        // Reload Document steals Find in Page's ⌘F, then Find in Page is
+        // reverted to its default — both would claim ⌘F unguarded.
+        var overrides = ShortcutOverrides()
+        let cmdF = KeyCombo(key: "f", command: true)
+        overrides.set(nil, for: .findInPage)
+        overrides.set(cmdF, for: .reloadDocument)
+
+        overrides.reset(.findInPage)
+        if let combo = overrides.combo(for: .findInPage),
+           let clash = overrides.conflict(with: combo, excluding: .findInPage) {
+            overrides.set(nil, for: clash)
+        }
+        #expect(overrides.combo(for: .findInPage) == cmdF)
+        #expect(overrides.combo(for: .reloadDocument) == nil)
+        #expect(uniqueBindings(overrides))
+    }
+
+    @Test("Restore Defaults leaves the pristine, conflict-free set")
+    func resetAllIsClean() {
+        var overrides = ShortcutOverrides()
+        overrides.set(KeyCombo(key: "f", command: true), for: .reloadDocument)
+        overrides.set(nil, for: .findInPage)
+        overrides.resetAll()
+        #expect(overrides.isEmpty)
+        #expect(uniqueBindings(overrides))
+    }
+
+    /// No combo is claimed by two actions at once.
+    private func uniqueBindings(_ overrides: ShortcutOverrides) -> Bool {
+        var seen = Set<KeyCombo>()
+        for action in ShortcutAction.allCases {
+            guard let combo = overrides.combo(for: action) else { continue }
+            if !seen.insert(combo).inserted { return false }
+        }
+        return true
+    }
+
+    @Test("System-owned and sheet-fixed combos are refused with a reason")
+    func systemOwnedCombos() {
+        // Swallowed before the app sees them.
+        #expect(KeyCombo(key: "space", command: true).reservedFor == "Spotlight")
+        #expect(KeyCombo(key: "tab", command: true).reservedFor == "the app switcher")
+        #expect(KeyCombo(key: "up", control: true).reservedFor == "Mission Control")
+        // Shifted standards the old ⌘-only check let through.
+        #expect(KeyCombo(key: "z", command: true, shift: true).reservedFor == "Redo")
+        // The app's own fixed sheet keys, which the pane lists as built-in.
+        #expect(KeyCombo(key: "return", command: true).reservedFor == "confirming sheets")
+        #expect(KeyCombo(key: "escape").reservedFor == "dismissing sheets")
+        // Still free.
+        #expect(KeyCombo(key: "j", command: true).reservedFor == nil)
+        #expect(KeyCombo(key: "return", command: true, shift: true).reservedFor == nil)
+    }
+
+    @Test("Contextual actions say where they work")
+    func scopeNotes() {
+        #expect(ShortcutAction.findNext.scopeNote == "While the find bar is open")
+        #expect(ShortcutAction.prResult.scopeNote == "In a pull request file")
+        // Menu-bar commands work anywhere and need no note.
+        #expect(ShortcutAction.openFile.scopeNote == nil)
+        #expect(ShortcutAction.printDocument.scopeNote == nil)
+    }
+
     @Test("Garbage persistence data falls back to defaults")
     func decodeGarbage() {
         let garbage = ShortcutOverrides.decoded(from: Data("not json".utf8))
