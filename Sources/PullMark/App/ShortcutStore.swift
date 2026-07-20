@@ -34,19 +34,42 @@ final class ShortcutStore: ObservableObject {
 
     var anyCustomized: Bool { !overrides.isEmpty }
 
-    /// Records a combo (or nil to remove the binding). Returns a
-    /// user-facing refusal when the combo is reserved or taken.
-    @discardableResult
-    func assign(_ combo: KeyCombo?, to action: ShortcutAction) -> String? {
-        if let combo {
-            guard combo.isBindable else {
+    /// Why a combo couldn't be recorded. `.taken` is recoverable — the UI
+    /// offers to move the shortcut — the others are hard refusals.
+    enum Refusal: Equatable {
+        case notBindable
+        case reserved(KeyCombo, command: String)
+        case taken(KeyCombo, ShortcutAction)
+
+        var message: String {
+            switch self {
+            case .notBindable:
                 return "Shortcuts need ⌘ or ⌃ (function keys can stand alone)."
+            case .reserved(let combo, let command):
+                return "\(combo.display) is reserved for \(command)."
+            case .taken(let combo, let action):
+                return "\(combo.display) is already used by “\(action.title)”."
             }
-            if combo.isReserved {
-                return "\(combo.display) is reserved by macOS."
+        }
+    }
+
+    /// Records a combo (or nil to remove the binding). Returns why it was
+    /// refused, or nil on success. `stealing` reassigns a combo another
+    /// action holds, unbinding that action.
+    @discardableResult
+    func assign(_ combo: KeyCombo?, to action: ShortcutAction,
+                stealing: Bool = false) -> Refusal? {
+        if let combo {
+            guard combo.isBindable else { return .notBindable }
+            if let command = combo.reservedFor {
+                return .reserved(combo, command: command)
             }
             if let taken = overrides.conflict(with: combo, excluding: action) {
-                return "\(combo.display) is already used by “\(taken.title)”."
+                guard stealing else { return .taken(combo, taken) }
+                // Unbind the previous owner; the revert arrow makes it
+                // recoverable and the row shows "None", so the change is
+                // visible rather than silent.
+                overrides.set(nil, for: taken)
             }
         }
         overrides.set(combo, for: action)

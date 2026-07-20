@@ -58,6 +58,35 @@ struct KeyboardShortcutTests {
         #expect(!KeyCombo(key: "q", command: true, shift: true).isReserved)
     }
 
+    @Test("Reserved combos name the command they belong to")
+    func reservedNames() {
+        // "Reserved by macOS" would be a lie about ⌘Z — say what owns it.
+        #expect(KeyCombo(key: "z", command: true).reservedFor == "Undo")
+        #expect(KeyCombo(key: "q", command: true).reservedFor == "Quit")
+        #expect(KeyCombo(key: "c", command: true).reservedFor == "Copy")
+        #expect(KeyCombo(key: "e", command: true).reservedFor == nil)
+    }
+
+    @Test("Spoken forms name the modifiers for VoiceOver")
+    func spokenForms() {
+        #expect(KeyCombo(key: "o", command: true, shift: true).spoken == "Shift Command O")
+        #expect(KeyCombo(key: "k", command: true, control: true).spoken == "Control Command K")
+        #expect(KeyCombo(key: "escape").spoken == "Escape")
+        #expect(KeyCombo(key: "up", command: true).spoken == "Command Up Arrow")
+    }
+
+    @Test("Actions carry the menu titles the menu bar shows")
+    func titlesMatchMenus() {
+        // The list is only trustworthy if a row's name is findable in the
+        // menu bar; ellipses included.
+        #expect(ShortcutAction.openQuickly.title == "Open Quickly…")
+        #expect(ShortcutAction.searchAllFiles.title == "Search All Files…")
+        #expect(ShortcutAction.commitChanges.title == "Commit Changes…")
+        // Revert Last Edit sits in the File menu next to Commit Changes.
+        #expect(ShortcutAction.revertLastEdit.category == "File")
+        #expect(ShortcutAction.findInPage.category == "Edit")
+    }
+
     @Test("Overrides: set, reset, remove, and round-trip through JSON")
     func overridesRoundTrip() {
         var overrides = ShortcutOverrides()
@@ -104,6 +133,23 @@ struct KeyboardShortcutTests {
         // …and its new home conflicts.
         #expect(overrides.conflict(with: KeyCombo(key: "j", command: true),
                                    excluding: .editMode) == .openQuickly)
+    }
+
+    @Test("Stealing a taken combo unbinds the previous owner")
+    func stealing() {
+        var overrides = ShortcutOverrides()
+        let cmdK = KeyCombo(key: "k", command: true) // Open Quickly's default
+        // Simulates ShortcutStore.assign(stealing: true).
+        let taken = overrides.conflict(with: cmdK, excluding: .editMode)
+        #expect(taken == .openQuickly)
+        overrides.set(nil, for: .openQuickly)
+        overrides.set(cmdK, for: .editMode)
+        #expect(overrides.combo(for: .editMode) == cmdK)
+        #expect(overrides.combo(for: .openQuickly) == nil)
+        #expect(overrides.isCustomized(.openQuickly), "must show as changed, not silently gone")
+        // The unbound owner is recoverable.
+        overrides.reset(.openQuickly)
+        #expect(overrides.combo(for: .openQuickly) == cmdK)
     }
 
     @Test("Garbage persistence data falls back to defaults")
