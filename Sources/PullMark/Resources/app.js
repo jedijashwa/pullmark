@@ -1279,7 +1279,7 @@
         }
       });
       ta.addEventListener("blur", function () {
-        // Leaving the block commits (the exit-saves behavior). Clicks on
+        // Leaving the block commits — leaving is the save gesture. Clicks on
         // other blocks are handled synchronously first; this covers
         // focus wandering anywhere else.
         setTimeout(function () {

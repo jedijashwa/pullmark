@@ -208,7 +208,7 @@ section current as features land.
 - `[toc]`: a paragraph containing exactly `[toc]` renders as a linked table
   of contents built from the document's headings — in documents, diffs, and
   Quick Look previews.
-- in-place inline marks (#11): `==highlight==` → highlighted text,
+- Extended inline marks (#11): `==highlight==` → highlighted text,
   `~sub~` → subscript, `^sup^` → superscript. `~~strikethrough~~` is
   unaffected.
 - Custom themes: drop `.css` files into

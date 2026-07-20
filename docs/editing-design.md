@@ -7,7 +7,7 @@ code — the editing model deserves a decision, not a default.
 
 ## What "full editing" actually means here
 
-The seamless editors' core trick: **the document is always rendered, and the block you're
+The trick the seamless Markdown editors share: **the document is always rendered, and the block you're
 touching temporarily reveals its source.** Type `## Heading` and it becomes a
 heading when you leave it. No mode switch, no preview pane — reading and
 writing are the same surface. For PullMark that thesis fits perfectly: we
@@ -50,7 +50,7 @@ Rendered blocks; the block containing the caret swaps to its raw source
 (styled, monospace) in place, and re-renders on caret exit. Arrow keys and
 clicks move the "revealed" block; Enter splits, Backspace merges — but
 implemented over the source lines, not DOM inversion.
-- **For:** seamless feel without DOM→Markdown inversion (source is
+- **For:** the seamless feel without DOM→Markdown inversion (source is
   always the truth; render is per-block); add/delete/split/merge are line
   operations on the existing block model; incremental path from A.
 - **Against:** cross-block *rich* selection still limited (source-level
@@ -80,7 +80,7 @@ per-block source mapping is a prerequisite for B anyway, so no work is lost.
    your expectation, or do you want inline rich editing (bold stays
    bold while typing) — i.e., is B the real bar?
 2. Should editing be a mode (toggle, like the old plan) or always-on for
-   local files ? Always-on changes the reading posture.
+   local files? Always-on changes the reading posture.
 3. Tables and mermaid: edit as source blocks (simple) or need structured
    editing eventually?
 

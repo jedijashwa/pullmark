@@ -752,7 +752,7 @@ mark.pm-find.pm-find-current {
   margin: 2px -14px;
   padding: 2px 14px;
 }
-/* The reveal must sit where the rendered block sat — same
+/* The reveal must sit exactly where the rendered block sat — same
    16px/1.5 metrics (mono face is the only shift), no box, a hairline
    accent, no extra vertical mass, so nothing below jumps on open/close. */
 .pm-reveal textarea {

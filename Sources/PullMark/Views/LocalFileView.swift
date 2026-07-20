@@ -33,7 +33,7 @@ struct LocalFileView: View {
     @State private var branches: [String] = []
     @State private var currentBranch: String?
     @State private var didRestorePosition = false
-    /// in-place edit mode: reading is the default; the toolbar pencil
+    /// In-place edit mode: reading is the default; the toolbar pencil
     /// (⌘E) makes the page writable — click any block to reveal its source.
     @State private var editMode = false
     @State private var remoteBranches: [String] = []
