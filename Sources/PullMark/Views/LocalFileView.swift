@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// A block region picked for in-place editing: 1-based inclusive source
+/// lines plus the text the editor started from (the commit's seed guard).
+struct BlockEditTarget: Identifiable {
+    let id = UUID()
+    let lineStart: Int
+    let lineEnd: Int
+    let seed: String
+}
+
 struct LocalFileView: View {
     @EnvironmentObject private var state: AppState
     let file: LocalFile
@@ -110,15 +119,6 @@ struct LocalFileView: View {
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
-        // The platform dirty indicator (dot in the close button) — subtitle
-        // text alone is too quiet for unsaved manual-mode edits.
-        .onAppear { NSApp.mainWindow?.isDocumentEdited = state.editedText[file.url] != nil }
-        .onChange(of: state.editedText[file.url] != nil) { dirty in
-            NSApp.mainWindow?.isDocumentEdited = dirty
-        }
-        // Overlay changes must re-register: export and Copy-as-Markdown
-        // read ActiveDocument.markdown, and line ranges shift with edits.
-        .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
         .toolbar { toolbarItems }
         .onAppear {
@@ -241,17 +241,12 @@ struct LocalFileView: View {
                         : "Not inside a git repository")
     }
 
-    /// Unsaved manual-mode edits win over the on-disk text everywhere the
-    /// document is shown, exported, or copied.
-    private var displayText: String { state.editedText[file.url] ?? currentText }
-
     /// "~/Code/pullmark · main · edited" — folder, branch, and unsaved-edit
     /// state in the titlebar, where the eye already goes for context.
     private var subtitle: String {
         var parts = PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path)
         if let currentBranch { parts += " · \(currentBranch)" }
         if editMode { parts += " · editing" }
-        if state.editedText[file.url] != nil { parts += " · edited" }
         return parts
     }
 
@@ -296,38 +291,36 @@ struct LocalFileView: View {
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
-            let segments = DiffPageBuilder.segments(old: compareText, new: displayText)
+            let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
                                         title: file.url.lastPathComponent,
                                         theme: style.theme,
                                         customCSS: style.customCSS)
         }
         if state.sourceViewVisible {
-            return HTMLBuilder.sourcePage(markdown: displayText,
+            return HTMLBuilder.sourcePage(markdown: currentText,
                                           title: file.url.lastPathComponent,
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
-        return HTMLBuilder.documentPage(markdown: displayText,
+        return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
                                         theme: style.theme,
                                         customCSS: style.customCSS,
                                         editable: editMode,
-                                        autosave: UserDefaults.standard
-                                            .object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
     }
 
-    /// Block-editor apply: autosave writes straight to disk (the watcher
-    /// re-renders); manual mode parks the result in the AppState overlay
-    /// until ⌘S.
+    /// Block-editor apply: edit-mode commits write straight to disk — the
+    /// mode boundary is the save gesture (seed-guarded; one history
+    /// snapshot per editing session).
     private func applyBlockEdit(_ target: BlockEditTarget, replacement: String) {
         // Optimistic concurrency: if the file changed underneath the open
         // editor (another editor, an agent), the seed no longer matches its
         // line range — abort rather than splice into the wrong lines.
-        guard TextLines.lines(in: displayText, from: target.lineStart, to: target.lineEnd)
+        guard TextLines.lines(in: currentText, from: target.lineStart, to: target.lineEnd)
                 == target.seed else {
             state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
                 + "this block — nothing was saved. Re-open the block to edit the current version."
@@ -335,7 +328,7 @@ struct LocalFileView: View {
             proxy.cancelInlineEdit() // reveal armed for a later reload
             return
         }
-        guard let newText = TextLines.replacing(in: displayText,
+        guard let newText = TextLines.replacing(in: currentText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
                                                 with: replacement) else {
@@ -343,34 +336,15 @@ struct LocalFileView: View {
             proxy.cancelInlineEdit()
             return
         }
-        if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
-            if state.editedText[file.url] != nil {
-                // Manual-mode leftovers plus autosave: route through the
-                // guarded save so the disk-changed-underneath confirmation
-                // still runs (and the overlay/base clear together).
-                state.editedText[file.url] = newText
-                state.saveEdits(for: file.url)
-                return
+        do {
+            if !sessionSnapshotTaken {
+                EditHistory.snapshot(file.url)
+                sessionSnapshotTaken = true
             }
-            do {
-                if !sessionSnapshotTaken {
-                    EditHistory.snapshot(file.url)
-                    sessionSnapshotTaken = true
-                }
-                try newText.write(to: file.url, atomically: true, encoding: .utf8)
-                state.editedText[file.url] = nil
-                state.editedBase[file.url] = nil
-            } catch {
-                state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
-                proxy.cancelInlineEdit()
-            }
-        } else {
-            // First overlay for this file: remember the disk text it was
-            // based on, so ⌘S can detect a collision before overwriting.
-            if state.editedText[file.url] == nil {
-                state.editedBase[file.url] = currentText
-            }
-            state.editedText[file.url] = newText
+            try newText.write(to: file.url, atomically: true, encoding: .utf8)
+        } catch {
+            state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+            proxy.cancelInlineEdit()
         }
     }
 
@@ -388,7 +362,7 @@ struct LocalFileView: View {
             exportBaseName: file.url.deletingPathExtension().lastPathComponent,
             // The overlay, not the disk text — export and ⌥⌘C must match
             // what the page is actually rendering.
-            markdown: displayText,
+            markdown: currentText,
             proxy: proxy,
             localRoot: file.resourceRoot
         ))
@@ -467,14 +441,6 @@ struct LocalFileView: View {
         } catch {
             currentText = "> [!CAUTION]\n> Could not read `\(PathAbbreviator.abbreviate(file.url.path))`: \(error.localizedDescription)"
         }
-        // Heads-up the moment the underlying file diverges from what an
-        // unsaved overlay was based on (another editor, an agent) — ⌘S
-        // will also require explicit confirmation before overwriting.
-        if state.editedText[file.url] != nil,
-           let base = state.editedBase[file.url], currentText != base {
-            state.lastNotice = "\(file.url.lastPathComponent) changed on disk while you have "
-                + "unsaved edits. Saving (⌘S) will ask before overwriting."
-        }
     }
 
     private func loadGitInfo() {
@@ -535,5 +501,4 @@ struct LocalFileView: View {
         compare = nil
         compareText = nil
     }
-
 }

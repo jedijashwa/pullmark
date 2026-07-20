@@ -28,9 +28,6 @@ enum DefaultsKeys {
     /// Quick Look previews render Markdown (true, default) or show the raw
     /// source (false). Mirrored into the shared app-group suite for the appex.
     static let qlRendered = "pm.qlRendered"
-    /// Block edits write straight to disk (true, default) or accumulate in
-    /// memory until File → Save (⌘S).
-    static let autosaveEdits = "pm.autosaveEdits"
     /// Repo roots where the commit sheet should stop asking about
     /// committing directly to main/master.
     static let commitToMainAllowed = "pm.commitToMainAllowed"
