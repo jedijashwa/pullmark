@@ -54,6 +54,7 @@ struct SearchPalette: View {
     @State private var searched = false
     @State private var expanded: Set<String> = []
     @State private var searchTask: Task<Void, Never>?
+    @State private var selectedIndex = 0
     @FocusState private var focused: Bool
 
     private static let collapsedMatchLimit = 5
@@ -68,7 +69,7 @@ struct SearchPalette: View {
                     .textFieldStyle(.plain)
                     .font(.title3)
                     .focused($focused)
-                    .onSubmit { openTopResult() }
+                    .onSubmit { openSelectedResult() }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -80,7 +81,15 @@ struct SearchPalette: View {
             DispatchQueue.main.async { focused = true }
         }
         .onExitCommand { dismiss() }
+        .onMoveCommand { direction in
+            switch direction {
+            case .down: selectedIndex = min(selectedIndex + 1, max(0, results.count - 1))
+            case .up: selectedIndex = max(selectedIndex - 1, 0)
+            default: break
+            }
+        }
         .onChange(of: query) { newValue in
+            selectedIndex = 0
             scheduleSearch(newValue)
         }
         .onDisappear { searchTask?.cancel() }
@@ -94,8 +103,10 @@ struct SearchPalette: View {
         } else {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(results) { result in
+                    ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
                         fileGroup(result)
+                            .background(index == selectedIndex
+                                ? Color.accentColor.opacity(0.12) : Color.clear)
                     }
                 }
                 .padding(.vertical, 6)
@@ -316,9 +327,9 @@ struct SearchPalette: View {
 
     // MARK: - Opening results
 
-    private func openTopResult() {
-        guard let first = results.first else { return }
-        open(first)
+    private func openSelectedResult() {
+        guard results.indices.contains(selectedIndex) else { return }
+        open(results[selectedIndex])
     }
 
     private func open(_ result: FileSearchResult) {

@@ -12,6 +12,29 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Entering edit mode: reveal the selection's block (or the first)
+    /// so ⌘E lands ready to type.
+    func revealFocused() {
+        webView?.evaluateJavaScript(
+            "window.__pmRevealFocused && window.__pmRevealFocused();",
+            completionHandler: nil)
+    }
+
+    /// Commits any open in-place reveal synchronously — called before
+    /// state flips that re-render the page (a draft must not die with it).
+    func commitInlineEdit() {
+        webView?.evaluateJavaScript(
+            "window.__pmCommitNow && window.__pmCommitNow();",
+            completionHandler: nil)
+    }
+
+    /// Continues arrow-key editing navigation after a commit reload.
+    func revealAtLine(_ signedLine: Int) {
+        webView?.evaluateJavaScript(
+            "window.__pmRevealAtLine && window.__pmRevealAtLine(\(signedLine));",
+            completionHandler: nil)
+    }
+
     /// Releases a stuck in-place editor after Swift refuses/fails a save —
     /// an unchanged document never re-renders, so the page can't recover
     /// on its own.

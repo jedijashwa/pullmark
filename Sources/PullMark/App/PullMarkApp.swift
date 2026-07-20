@@ -117,13 +117,8 @@ struct PullMarkApp: App {
                 }
             }
             CommandGroup(replacing: .saveItem) {
-                // Manual-save mode: writes the active document's pending
-                // block edits; a no-op (disabled) when nothing is dirty.
-                Button("Save") {
-                    if let url = activeLocalFileURL { state?.saveEdits(for: url) }
-                }
-                .keyboardShortcut("s")
-                .disabled(activeLocalFileURL.map { state?.editedText[$0] == nil } ?? true)
+                // Edit-mode commits write to disk as they land — the mode
+                // boundary is the save gesture, so there is no ⌘S.
                 Button("Commit Changes…") {
                     guard let url = activeLocalFileURL else { return }
                     if let root = LocalGit.repoRoot(for: url) {
@@ -139,10 +134,6 @@ struct PullMarkApp: App {
                     guard let url = activeLocalFileURL else { return }
                     do {
                         try EditHistory.revertLastEdit(for: url)
-                        // A pending manual-mode overlay would mask the
-                        // revert on screen and ⌘S would write it back.
-                        state?.editedText[url] = nil
-                        state?.editedBase[url] = nil
                         state?.lastNotice = "Reverted the last edit to \(url.lastPathComponent)."
                     } catch {
                         state?.lastError = "Couldn't revert: \(error.localizedDescription)"

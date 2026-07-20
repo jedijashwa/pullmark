@@ -1116,122 +1116,298 @@
     // rendered block for an editor right in the page. ⌘↩ commits through
     // the bridge (Swift applies it with the same guarded, versioned write
     // path as ever), Esc restores the rendered block untouched.
-    function beginInlineEdit(el, lo, hi) {
-      if (document.querySelector(".pm-inline-edit")) { return; } // one at a time
-      var seed = (payload.markdown || "").split("\n").slice(lo - 1, hi).join("\n");
+    // ---- Edit mode: in-place source reveal ----
+    // Click a rendered block and it reveals its source in place; leaving
+    // the block (blur/Esc/click elsewhere) commits through the guarded
+    // bridge. Backspace at the very start swallows the previous block into
+    // the edit region (merge); blank lines typed inside split into blocks
+    // on commit via the normal re-render. Deleting the region's text
+    // deletes those lines.
+    var revealState = null;
+
+    function regionSource(lo, hi) {
+      return (payload.markdown || "").split("\n").slice(lo - 1, hi).join("\n");
+    }
+
+    function autoGrow(ta) {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    }
+
+    function closeReveal() {
+      if (!revealState) { return; }
+      post({ type: "editingState", active: false });
+      revealState.hidden.forEach(function (el) { el.style.display = ""; });
+      revealState.wrap.remove();
+      window.__pmCancelInlineEdit = null;
+      revealState = null;
+    }
+
+    function commitReveal(nextRevealLine) {
+      var st = revealState;
+      if (!st) { return; }
+      if (st.ta.value === st.seed) { closeReveal(); return; }
+      st.ta.disabled = true;
+      // Nulled BEFORE posting: the blur timer must never double-commit
+      // (duplicate write + duplicate history snapshot, or a spurious
+      // "changed underneath" notice after a successful save).
+      revealState = null;
+      var message = { type: "editLocal",
+                      lineStart: st.lo, lineEnd: st.hi,
+                      replacement: st.ta.value, seed: st.seed };
+      if (nextRevealLine) { message.nextRevealLine = nextRevealLine; }
+      // editLocal FIRST: the deferred-reload release (editingState) must
+      // not let a stale disk read beat the edit into displayText.
+      post(message);
+      post({ type: "editingState", active: false });
+      var cleanup = st;
+      window.__pmCancelInlineEdit = function () {
+        cleanup.hidden.forEach(function (el) { el.style.display = ""; });
+        cleanup.wrap.remove();
+        window.__pmCancelInlineEdit = null;
+      };
+    }
+
+    function expandUp() {
+      var st = revealState;
+      if (!st) { return; }
+      var prev = null;
+      for (var el = content.firstElementChild; el && el !== st.wrap; el = el.nextElementSibling) {
+        var r = ((el.getAttribute && el.getAttribute("data-pm-lines")) || "").split("-");
+        if (el !== st.wrap && el.style.display !== "none" && r.length === 2
+            && el.classList.contains("pm-editable")) {
+          prev = el;
+        }
+      }
+      if (!prev) { return; }
+      var newLo = parseInt(prev.getAttribute("data-pm-lines").split("-")[0], 10);
+      var prefix = regionSource(newLo, st.lo - 1);
+      var caret = prefix.length + 1;
+      st.ta.value = prefix + "\n" + st.ta.value;
+      st.lo = newLo;
+      st.seed = regionSource(st.lo, st.hi);
+      prev.style.display = "none";
+      st.hidden.push(prev);
+      st.wrap.setAttribute("data-pm-lines", st.lo + "-" + st.hi);
+      autoGrow(st.ta);
+      st.ta.setSelectionRange(caret, caret);
+    }
+
+    function reveal(el, lo, hi) {
       var wrap = document.createElement("div");
-      wrap.className = "pm-inline-edit";
-      // Carries the block's lines so the blame gutter measures the editor
-      // while the rendered block is hidden.
+      wrap.className = "pm-reveal";
       wrap.setAttribute("data-pm-lines", lo + "-" + hi);
       var ta = document.createElement("textarea");
+      var seed = regionSource(lo, hi);
       ta.value = seed;
       ta.spellcheck = false;
-      ta.rows = Math.min(24, seed.split("\n").length + 1);
-      var hint = document.createElement("div");
-      hint.className = "pm-inline-edit-hint";
-      var saveBtn = document.createElement("button");
-      saveBtn.type = "button";
-      saveBtn.className = "pm-inline-edit-btn pm-inline-edit-save";
-      saveBtn.textContent = "Save";
-      saveBtn.title = "\u2318\u21A9";
-      var cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "pm-inline-edit-btn";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.title = "\u238B";
-      var hintText = document.createElement("span");
-      hintText.textContent = "\u2318\u21A9 save \u00B7 \u238B cancel"
-        + (payload.autosaveEdits === false ? " \u00B7 saves in the window, \u2318S writes" : "");
-      hint.append(saveBtn, cancelBtn, hintText);
-      function cancel() {
-        window.__pmCancelInlineEdit = null;
-        post({ type: "editingState", active: false });
-        wrap.remove();
-        el.style.display = "";
-      }
-      // Swift calls this when a save is refused (file changed underneath,
-      // write failure) — without it the disabled editor would be stuck,
-      // since an unchanged document never re-renders.
-      window.__pmCancelInlineEdit = cancel;
+      wrap.append(ta);
+      el.style.display = "none";
+      el.after(wrap);
+      revealState = { wrap: wrap, ta: ta, lo: lo, hi: hi, seed: seed, hidden: [el] };
+      window.__pmCancelInlineEdit = closeReveal;
       post({ type: "editingState", active: true });
-      function commit() {
-        if (ta.value === seed) { cancel(); return; }
-        ta.disabled = true;
-        saveBtn.disabled = true;
-        cancelBtn.disabled = true;
-        hintText.textContent = "saving\u2026";
-        post({ type: "editLocal", lineStart: lo, lineEnd: hi,
-               replacement: ta.value, seed: seed });
+      autoGrow(ta);
+      ta.focus();
+      ta.addEventListener("input", function () { autoGrow(ta); });
+      function caretLine() {
+        return ta.value.slice(0, ta.selectionStart).split("\n").length;
+      }
+      function navigate(direction) {
+        var st = revealState;
+        if (!st) { return; }
+        if (st.ta.value !== st.seed) {
+          // Changed: commit, telling Swift where the caret continues after
+          // the reload. The landing line is approximate (separator counts
+          // vary) — __pmRevealAtLine snaps to the nearest block.
+          var newLines = st.ta.value.split("\n").length;
+          var target = direction > 0 ? st.lo + newLines + 1 : st.lo - 1;
+          commitReveal(direction > 0 ? target : -target);
+          return;
+        }
+        // Anchor on a block that survives closeReveal (the wrap itself is
+        // removed by it): downward from the original block, upward from the
+        // topmost block the region swallowed.
+        var anchor = direction > 0 ? st.hidden[0] : st.hidden[st.hidden.length - 1];
+        closeReveal();
+        var el = direction > 0 ? anchor.nextElementSibling : anchor.previousElementSibling;
+        while (el && (!el.classList || !el.classList.contains("pm-editable"))) {
+          el = direction > 0 ? el.nextElementSibling : el.previousElementSibling;
+        }
+        if (!el) {
+          // Walked past the last block: continue into the append target.
+          if (direction > 0 && window.__pmAppendReveal) { window.__pmAppendReveal(); }
+          return;
+        }
+        var parts = el.getAttribute("data-pm-lines").split("-");
+        reveal(el, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        if (revealState) {
+          // Arriving from above: caret at the start; from below: at the end.
+          var n = direction > 0 ? 0 : revealState.ta.value.length;
+          revealState.ta.setSelectionRange(n, n);
+        }
       }
       ta.addEventListener("keydown", function (event) {
+        if ((event.metaKey || event.ctrlKey) && (event.key === "e" || event.key === "E")) {
+          // The toolbar toggle's key equivalent never wins against a
+          // focused text field — handle ⌘E here: commit and leave the mode.
+          event.preventDefault();
+          event.stopPropagation();
+          commitReveal();
+          post({ type: "toggleEditMode" });
+          return;
+        }
         if (event.key === "Escape") {
           event.preventDefault();
           event.stopPropagation();
-          cancel();
+          closeReveal(); // revert — leaving the block is what commits
         }
-        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        if (event.key === "Backspace"
+            && ta.selectionStart === 0 && ta.selectionEnd === 0) {
           event.preventDefault();
-          commit();
+          expandUp();
+        }
+        if (event.key === "ArrowDown" && ta.selectionStart === ta.selectionEnd
+            && caretLine() === ta.value.split("\n").length) {
+          event.preventDefault();
+          navigate(1);
+        }
+        if (event.key === "ArrowUp" && ta.selectionStart === ta.selectionEnd
+            && caretLine() === 1) {
+          event.preventDefault();
+          navigate(-1);
         }
       });
-      saveBtn.addEventListener("click", commit);
-      cancelBtn.addEventListener("click", cancel);
-      wrap.append(ta, hint);
-      el.style.display = "none";
-      el.after(wrap);
-      ta.focus();
-      ta.setSelectionRange(0, 0);
+      ta.addEventListener("blur", function () {
+        // Leaving the block commits (the exit-saves behavior). Clicks on
+        // other blocks are handled synchronously first; this covers
+        // focus wandering anywhere else.
+        setTimeout(function () {
+          if (revealState && revealState.ta === ta) { commitReveal(); }
+        }, 100);
+      });
     }
 
-    // The block for a line range, resolved at interaction time — enhance()
-    // replaces some elements (mermaid) after the pencils are attached, so
-    // captured references would go stale.
-    function editableBlockFor(lines) {
-      var found = null;
+    // Continue keyboard navigation across a commit-triggered reload:
+    // Swift calls this after the page loads. Negative line = caret at end.
+    window.__pmRevealAtLine = function (signedLine) {
+      var line = Math.abs(signedLine);
+      var atEnd = signedLine < 0;
+      // The requested line is approximate (blank separators vary): exact
+      // containment wins, else snap to the nearest block in the travel
+      // direction — downward takes the first block at/after the line,
+      // upward the last block at/before it.
+      var exact = null, after = null, before = null;
       for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
-        if (el.classList.contains("pm-editable")
-            && el.getAttribute("data-pm-lines") === lines) { found = el; }
+        var r = ((el.getAttribute && el.getAttribute("data-pm-lines")) || "").split("-");
+        if (r.length !== 2 || !el.classList.contains("pm-editable")) { continue; }
+        var lo = parseInt(r[0], 10), hi = parseInt(r[1], 10);
+        if (lo <= line && line <= hi) { exact = el; break; }
+        if (lo > line && !after) { after = el; }
+        if (hi < line) { before = el; }
       }
-      return found;
-    }
+      var target = exact || (atEnd ? before : after) || (atEnd ? after : before);
+      if (!target) { return; }
+      var parts = target.getAttribute("data-pm-lines").split("-");
+      reveal(target, parseInt(parts[0], 10), parseInt(parts[1], 10));
+      if (revealState && atEnd) {
+        var n = revealState.ta.value.length;
+        revealState.ta.setSelectionRange(n, n);
+      }
+    };
+
+    // ⌘E lands ready to type: reveal the block under the selection, or
+    // the first block — no click needed after entering edit mode.
+    window.__pmRevealFocused = function () {
+      if (revealState) { return; }
+      var host = null;
+      var selection = window.getSelection();
+      if (selection && selection.anchorNode) {
+        var node = selection.anchorNode.nodeType === 1
+          ? selection.anchorNode : selection.anchorNode.parentElement;
+        host = node && node.closest && node.closest(".pm-editable[data-pm-lines]");
+      }
+      if (!host) {
+        for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+          if (el.classList.contains("pm-editable")) { host = el; break; }
+        }
+      }
+      if (!host) {
+        if (window.__pmAppendReveal) { window.__pmAppendReveal(); }
+        return;
+      }
+      var parts = host.getAttribute("data-pm-lines").split("-");
+      reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
+    };
+
+    // Swift calls this before any state flip that re-renders the page
+    // (⌘E off, theme change): an open reveal must commit synchronously or
+    // the draft dies with the page.
+    window.__pmCommitNow = function () { commitReveal(); };
 
     if (payload.editable && linesAnnotated) {
+      document.documentElement.classList.add("pm-edit-mode");
       for (var ec = content.firstElementChild; ec; ec = ec.nextElementSibling) {
         var range = (ec.getAttribute("data-pm-lines") || "").split("-");
-        if (range.length !== 2) { continue; }
-        ec.classList.add("pm-editable");
-        var btn = document.createElement("button");
-        btn.className = "pm-comment-btn pm-edit-btn pm-edit-local";
-        btn.type = "button";
-        btn.innerHTML = EDIT_ICON;
-        btn.title = "Edit this block in place (lines " + range[0] + "\u2013" + range[1] + ")";
-        btn.setAttribute("aria-label", btn.title);
-        ec.append(btn);
+        if (range.length === 2) { ec.classList.add("pm-editable"); }
       }
-      // Delegated: survives enhance() replacing individual blocks.
-      content.addEventListener("click", function (event) {
-        var pencil = event.target.closest(".pm-edit-local");
-        if (!pencil) { return; }
+      // End-of-document affordance: an empty doc has nothing to click,
+      // and appending after the last block deserves one obvious target.
+      var phantom = document.createElement("div");
+      phantom.className = "pm-append";
+      phantom.textContent = "+";
+      phantom.title = "Write at the end of the document";
+      content.append(phantom);
+      function appendReveal() {
+        if (revealState) { commitReveal(); return; }
+        var last = null;
+        for (var e = content.firstElementChild; e; e = e.nextElementSibling) {
+          if (e.classList.contains("pm-editable")) { last = e; }
+        }
+        if (last) {
+          var parts = last.getAttribute("data-pm-lines").split("-");
+          reveal(last, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        } else {
+          var total = (payload.markdown || "").split("\n").length;
+          reveal(phantom, 1, Math.max(1, total));
+        }
+        if (revealState) {
+          var ta2 = revealState.ta;
+          if (ta2.value !== "") { ta2.value += "\n\n"; }
+          ta2.dispatchEvent(new Event("input"));
+          ta2.setSelectionRange(ta2.value.length, ta2.value.length);
+        }
+      }
+      window.__pmAppendReveal = appendReveal;
+      phantom.addEventListener("click", function (event) {
         event.stopPropagation();
-        var host = pencil.closest("[data-pm-lines]");
-        var lines = host && host.getAttribute("data-pm-lines");
-        var el = lines && editableBlockFor(lines);
-        if (!el) { return; }
-        var parts = lines.split("-");
-        beginInlineEdit(el, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        appendReveal();
       });
-      content.addEventListener("dblclick", function (event) {
-        // Double-click-to-select-a-word is bedrock macOS: only a dblclick
-        // that selected NOTHING (padding, blank space) opens the editor.
-        if (event.target.closest("a, textarea, button")) { return; }
-        if (String(window.getSelection()).length > 0) { return; }
+
+      content.addEventListener("click", function (event) {
+        if (event.target.closest("a, textarea, button, .pm-reveal")) { return; }
         var host = event.target.closest(".pm-editable[data-pm-lines]");
-        if (!host) { return; }
+        if (revealState) {
+          var st = revealState;
+          var changed = st.ta.value !== st.seed;
+          if (changed) {
+            var next = 0;
+            if (host && host.style.display !== "none") {
+              var hostLo = parseInt(host.getAttribute("data-pm-lines").split("-")[0], 10);
+              var delta = st.ta.value.split("\n").length - (st.hi - st.lo + 1);
+              next = hostLo > st.hi ? hostLo + delta : hostLo;
+            }
+            commitReveal(next || undefined);
+            return; // reload continues the reveal at the clicked block
+          }
+          commitReveal();
+        }
+        if (!host || host.style.display === "none") { return; }
         var parts = host.getAttribute("data-pm-lines").split("-");
-        beginInlineEdit(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
+        reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
       });
     }
+
     var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;
     if (fm) {
       var fmDetails = frontMatterEl(fm.lines, false);

@@ -24,6 +24,12 @@ struct MarkdownWebView: NSViewRepresentable {
     /// An in-place editor opened (true) or closed (false) — re-renders are
     /// deferred while one is open so the draft can't be destroyed.
     var onEditingState: ((Bool) -> Void)?
+    /// Arrow navigation committed an edit: after the reload, re-open the
+    /// reveal at this line (negative = caret at end).
+    var onNextReveal: ((Int) -> Void)?
+    /// ⌘E pressed inside a reveal — the focused text field beats the
+    /// toolbar toggle's key equivalent, so the page forwards it.
+    var onToggleEditMode: (() -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -142,10 +148,15 @@ struct MarkdownWebView: NSViewRepresentable {
                       let seed = dict["seed"] as? String
                 else { return }
                 parent.onEditLocal?(lineStart, lineEnd, seed, replacement)
+                if let next = dict["nextRevealLine"] as? Int {
+                    parent.onNextReveal?(next)
+                }
             case "editingState":
                 if let active = dict["active"] as? Bool {
                     parent.onEditingState?(active)
                 }
+            case "toggleEditMode":
+                parent.onToggleEditMode?()
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in

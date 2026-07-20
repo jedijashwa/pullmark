@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// A block region picked for in-place editing: 1-based inclusive source
+/// lines plus the text the editor started from (the commit's seed guard).
+struct BlockEditTarget: Identifiable {
+    let id = UUID()
+    let lineStart: Int
+    let lineEnd: Int
+    let seed: String
+}
+
 struct LocalFileView: View {
     @EnvironmentObject private var state: AppState
     let file: LocalFile
@@ -24,6 +33,9 @@ struct LocalFileView: View {
     @State private var branches: [String] = []
     @State private var currentBranch: String?
     @State private var didRestorePosition = false
+    /// in-place edit mode: reading is the default; the toolbar pencil
+    /// (⌘E) makes the page writable — click any block to reveal its source.
+    @State private var editMode = false
     @State private var remoteBranches: [String] = []
     @State private var compare: CompareTarget?
     @State private var compareText: String?
@@ -35,6 +47,14 @@ struct LocalFileView: View {
     /// Scroll fraction to restore after an intentional re-render (an edit
     /// save or an external file change) — reloads land at the top otherwise.
     @State private var pendingScrollRestore: Double?
+    /// Arrow navigation across a commit: reveal here after the reload.
+    @State private var pendingRevealLine: Int?
+    /// Autosave takes ONE history snapshot per edit-mode session — a
+    /// 25-block editing walk must not churn the whole 20-snapshot Revert
+    /// history with intermediate states.
+    @State private var sessionSnapshotTaken = false
+    /// ⌘E just enabled edit mode: auto-reveal once the editable page loads.
+    @State private var pendingAutoReveal = false
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -42,98 +62,68 @@ struct LocalFileView: View {
     @State private var blameNote: String?
     @State private var historyRequest: BlameHistoryRequest?
 
-    var body: some View {
-        VStack(spacing: 0) {
-            if let compare {
-                HStack(spacing: 10) {
-                    Image(systemName: "clock.arrow.circlepath")
-                    Text("Comparing with \(compare.label)")
-                    Spacer()
-                    Button("Done") { stopComparing() }
-                }
-                .font(.callout)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.blue.opacity(0.14))
-            }
-            if state.findBarVisible {
-                FindBar(proxy: proxy, seed: $findSeed)
-            }
-            HSplitView {
-                MarkdownWebView(
-                    html: html,
-                    onEditLocal: handleEditLocal,
-                    onEditingState: { active in
-                        inlineEditing = active
-                        if !active, reloadDeferred {
-                            reloadDeferred = false
-                            load()
-                        }
-                    },
-                    localResourceRoot: file.resourceRoot,
-                    onOpenLocalFile: { url in state.add(url: url) },
-                    onOutline: { outline = $0 },
-                    onActiveSection: {
-                        activeSection = $0.isEmpty ? nil : $0
-                        // Scroll-spy doubles as a progress heartbeat, so a
-                        // plain ⌘Q (no onDisappear) still keeps the spot.
-                        throttledPositionSave()
-                    },
-                    onBlameHistory: { start, end in
-                        historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
-                    },
-                    onStats: { stats = $0 },
-                    onPageLoaded: { handlePageLoaded() },
-                    proxy: proxy
-                )
+    private var documentWebView: MarkdownWebView {
+        MarkdownWebView(
+            html: html,
+            onEditLocal: handleEditLocal,
+            onEditingState: handleEditingState,
+            onNextReveal: handleNextReveal,
+            localResourceRoot: file.resourceRoot,
+            onOpenLocalFile: handleOpenLocalFile,
+            onOutline: handleOutline,
+            onActiveSection: handleActiveSection,
+            onBlameHistory: handleBlameHistory,
+            onStats: handleStats,
+            onPageLoaded: handlePageLoaded,
+            proxy: proxy
+        )
+    }
+
+    private var contentSplit: some View {
+        HSplitView {
+            documentWebView
                 .overlay(alignment: .bottomTrailing) {
                     if compare == nil, let stats {
                         DocumentStatsPill(stats: stats)
                     }
                 }
                 .layoutPriority(1)
-                if outlineVisible {
-                    OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
-                }
+            if outlineVisible {
+                OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var compareBanner: some View {
+        if let compare {
+            HStack(spacing: 10) {
+                Image(systemName: "clock.arrow.circlepath")
+                Text("Comparing with \(compare.label)")
+                Spacer()
+                Button("Done") { stopComparing() }
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.14))
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            compareBanner
+            if state.findBarVisible {
+                FindBar(proxy: proxy, seed: $findSeed)
+            }
+            keyboardViewButtons
+            contentSplit
         }
         .background(Color(nsColor: .textBackgroundColor))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
-        // The platform dirty indicator (dot in the close button) — subtitle
-        // text alone is too quiet for unsaved manual-mode edits.
-        .onAppear { NSApp.mainWindow?.isDocumentEdited = state.editedText[file.url] != nil }
-        .onChange(of: state.editedText[file.url] != nil) { dirty in
-            NSApp.mainWindow?.isDocumentEdited = dirty
-        }
-        // Overlay changes must re-register: export and Copy-as-Markdown
-        // read ActiveDocument.markdown, and line ranges shift with edits.
-        .onChange(of: state.editedText[file.url]) { _ in updateActiveDocument() }
         .onDisappear { saveReadingPosition() }
-        .toolbar {
-            ToolbarItem {
-                compareMenu
-            }
-            // No git context, no Blame button: the toggle only appears for
-            // files inside a repository.
-            if inGitRepo {
-                ToolbarItem {
-                    BlameToggle(visible: $blameVisible)
-                        .disabled(compare != nil)
-                }
-            }
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-            ToolbarItem {
-                Button {
-                    load()
-                } label: {
-                    Label("Reload", systemImage: "arrow.clockwise")
-                }
-                .help("Reload from disk")
-            }
-        }
+        .toolbar { toolbarItems }
         .onAppear {
             load()
             loadGitInfo()
@@ -160,6 +150,74 @@ struct LocalFileView: View {
                                                 lineEnd: request.lineEnd)
             }
         }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+            ToolbarItem { editToggle }
+            ToolbarItem {
+                compareMenu
+            }
+            // No git context, no Blame button: the toggle only appears for
+            // files inside a repository.
+            if inGitRepo {
+                ToolbarItem {
+                    BlameToggle(visible: $blameVisible)
+                        .disabled(compare != nil)
+                }
+            }
+            ToolbarItem {
+                OutlineToggle(visible: $outlineVisible)
+            }
+            ToolbarItem {
+                Button {
+                    load()
+                } label: {
+                    Label("Reload", systemImage: "arrow.clockwise")
+                }
+                .help("Reload from disk")
+            }
+    }
+
+    /// Keyboard access to toolbar state: ⌥⌘O outline, ⌘R reload.
+    private var keyboardViewButtons: some View {
+        Group {
+            Button("") { outlineVisible.toggle() }
+                .keyboardShortcut("o", modifiers: [.command, .option])
+            Button("") { load() }.keyboardShortcut("r")
+        }
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+    }
+
+    private var editToggle: some View {
+        Toggle(isOn: Binding(
+            get: { editMode },
+            set: { newValue in
+                // Commit any open reveal FIRST (the flip re-renders the
+                // page — an uncommitted draft would die with it), keep the
+                // scroll position, and force-release the reload deferral:
+                // the torn-down page can never post editingState itself.
+                proxy.commitInlineEdit()
+                proxy.scrollFraction { fraction in
+                    Task { @MainActor in
+                        if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
+                        editMode = newValue
+                        if newValue {
+                            sessionSnapshotTaken = false
+                            pendingAutoReveal = true
+                        }
+                        handleEditingState(false)
+                    }
+                }
+            })) {
+            Label("Edit", systemImage: "pencil")
+        }
+        .keyboardShortcut("e")
+        .help(editMode ? "Done editing (⌘E)"
+                       : "Edit this document (⌘E) — then click any block")
+        .disabled(compare != nil || state.sourceViewVisible)
     }
 
     @ViewBuilder
@@ -201,22 +259,52 @@ struct LocalFileView: View {
                         : "Not inside a git repository")
     }
 
-    /// Unsaved manual-mode edits win over the on-disk text everywhere the
-    /// document is shown, exported, or copied.
-    private var displayText: String { state.editedText[file.url] ?? currentText }
-
     /// "~/Code/pullmark · main · edited" — folder, branch, and unsaved-edit
     /// state in the titlebar, where the eye already goes for context.
     private var subtitle: String {
         var parts = PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path)
         if let currentBranch { parts += " · \(currentBranch)" }
-        if state.editedText[file.url] != nil { parts += " · edited" }
+        if editMode { parts += " · editing" }
         return parts
     }
 
     /// In-place editor commit from the page. The seed is the text the
     /// editor was opened with — applyBlockEdit's guard compares it against
     /// the current lines, so a file changed underneath still aborts.
+    private func handleOpenLocalFile(_ url: URL) { state.add(url: url) }
+    private func handleOutline(_ items: [OutlineItem]) { outline = items }
+    private func handleStats(_ documentStats: DocumentStats) { stats = documentStats }
+    private func handleBlameHistory(_ start: Int, _ end: Int) {
+        historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
+    }
+    private func handleActiveSection(_ id: String) {
+        activeSection = id.isEmpty ? nil : id
+        // Scroll-spy doubles as a progress heartbeat, so a plain ⌘Q (no
+        // onDisappear) still keeps the spot.
+        throttledPositionSave()
+    }
+
+    private func handleToggleEditMode() {
+        editMode.toggle()
+        if editMode {
+            sessionSnapshotTaken = false
+            pendingAutoReveal = true
+        }
+        handleEditingState(false)
+    }
+
+    private func handleNextReveal(_ line: Int) {
+        pendingRevealLine = line
+    }
+
+    private func handleEditingState(_ active: Bool) {
+        inlineEditing = active
+        if !active, reloadDeferred {
+            reloadDeferred = false
+            load()
+        }
+    }
+
     private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
         proxy.scrollFraction { fraction in
             Task { @MainActor in
@@ -230,76 +318,60 @@ struct LocalFileView: View {
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
-            let segments = DiffPageBuilder.segments(old: compareText, new: displayText)
+            let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
                                         title: file.url.lastPathComponent,
                                         theme: style.theme,
                                         customCSS: style.customCSS)
         }
         if state.sourceViewVisible {
-            return HTMLBuilder.sourcePage(markdown: displayText,
+            return HTMLBuilder.sourcePage(markdown: currentText,
                                           title: file.url.lastPathComponent,
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
-        return HTMLBuilder.documentPage(markdown: displayText,
+        return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
                                         theme: style.theme,
                                         customCSS: style.customCSS,
-                                        editable: true,
-                                        autosave: UserDefaults.standard
-                                            .object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true,
+                                        editable: editMode,
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil)
     }
 
-    /// Block-editor apply: autosave writes straight to disk (the watcher
-    /// re-renders); manual mode parks the result in the AppState overlay
-    /// until ⌘S.
+    /// Block-editor apply: edit-mode commits write straight to disk — the
+    /// mode boundary is the save gesture (seed-guarded; one history
+    /// snapshot per editing session).
     private func applyBlockEdit(_ target: BlockEditTarget, replacement: String) {
         // Optimistic concurrency: if the file changed underneath the open
         // editor (another editor, an agent), the seed no longer matches its
         // line range — abort rather than splice into the wrong lines.
-        guard TextLines.lines(in: displayText, from: target.lineStart, to: target.lineEnd)
+        guard TextLines.lines(in: currentText, from: target.lineStart, to: target.lineEnd)
                 == target.seed else {
             state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
                 + "this block — nothing was saved. Re-open the block to edit the current version."
-            proxy.cancelInlineEdit()
+            pendingRevealLine = nil  // a refused save must not leave a
+            proxy.cancelInlineEdit() // reveal armed for a later reload
             return
         }
-        guard let newText = TextLines.replacing(in: displayText,
+        guard let newText = TextLines.replacing(in: currentText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
                                                 with: replacement) else {
+            pendingRevealLine = nil
             proxy.cancelInlineEdit()
             return
         }
-        if UserDefaults.standard.object(forKey: DefaultsKeys.autosaveEdits) as? Bool ?? true {
-            if state.editedText[file.url] != nil {
-                // Manual-mode leftovers plus autosave: route through the
-                // guarded save so the disk-changed-underneath confirmation
-                // still runs (and the overlay/base clear together).
-                state.editedText[file.url] = newText
-                state.saveEdits(for: file.url)
-                return
-            }
-            do {
+        do {
+            if !sessionSnapshotTaken {
                 EditHistory.snapshot(file.url)
-                try newText.write(to: file.url, atomically: true, encoding: .utf8)
-                state.editedText[file.url] = nil
-                state.editedBase[file.url] = nil
-            } catch {
-                state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
-                proxy.cancelInlineEdit()
+                sessionSnapshotTaken = true
             }
-        } else {
-            // First overlay for this file: remember the disk text it was
-            // based on, so ⌘S can detect a collision before overwriting.
-            if state.editedText[file.url] == nil {
-                state.editedBase[file.url] = currentText
-            }
-            state.editedText[file.url] = newText
+            try newText.write(to: file.url, atomically: true, encoding: .utf8)
+        } catch {
+            state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+            proxy.cancelInlineEdit()
         }
     }
 
@@ -317,13 +389,22 @@ struct LocalFileView: View {
             exportBaseName: file.url.deletingPathExtension().lastPathComponent,
             // The overlay, not the disk text — export and ⌥⌘C must match
             // what the page is actually rendering.
-            markdown: displayText,
+            markdown: currentText,
             proxy: proxy,
             localRoot: file.resourceRoot
         ))
     }
 
     private func handlePageLoaded() {
+        if let line = pendingRevealLine {
+            pendingRevealLine = nil
+            pendingAutoReveal = false
+            proxy.revealAtLine(line)
+        }
+        if pendingAutoReveal, editMode {
+            pendingAutoReveal = false
+            proxy.revealFocused()
+        }
         if let fraction = pendingScrollRestore {
             // An edit save or external change re-rendered the page — put
             // the reader back where they were.
@@ -392,14 +473,6 @@ struct LocalFileView: View {
         } catch {
             currentText = "> [!CAUTION]\n> Could not read `\(PathAbbreviator.abbreviate(file.url.path))`: \(error.localizedDescription)"
         }
-        // Heads-up the moment the underlying file diverges from what an
-        // unsaved overlay was based on (another editor, an agent) — ⌘S
-        // will also require explicit confirmation before overwriting.
-        if state.editedText[file.url] != nil,
-           let base = state.editedBase[file.url], currentText != base {
-            state.lastNotice = "\(file.url.lastPathComponent) changed on disk while you have "
-                + "unsaved edits. Saving (⌘S) will ask before overwriting."
-        }
     }
 
     private func loadGitInfo() {
@@ -460,5 +533,4 @@ struct LocalFileView: View {
         compare = nil
         compareText = nil
     }
-
 }

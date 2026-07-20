@@ -23,7 +23,6 @@ struct GeneralSettingsTab: View {
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
-    @AppStorage(DefaultsKeys.autosaveEdits) private var autosaveEdits = true
     @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
     @AppStorage(DefaultsKeys.restoreSession) private var restoreSession = true
     @State private var updateStatus: String?
@@ -62,15 +61,6 @@ struct GeneralSettingsTab: View {
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
-            }
-
-            Section("Editing") {
-            Picker("Saving edits:", selection: $autosaveEdits) {
-                Text("Automatically").tag(true)
-                Text("Manually (⌘S)").tag(false)
-            }
-            .pickerStyle(.segmented)
-            .help("Whether editing a block writes to the file immediately or waits for File → Save")
             }
 
             Section("System") {

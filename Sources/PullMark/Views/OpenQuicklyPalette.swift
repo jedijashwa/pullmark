@@ -124,6 +124,14 @@ struct OpenQuicklyPalette: View {
                     action: { state.selection = .prFile(session.id, file.filename) }))
             }
         }
+        for item in state.inbox {
+            items.append(QuickItem(
+                id: "in:" + item.id,
+                title: item.title,
+                subtitle: "Review requested · \(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)",
+                icon: "tray",
+                action: { state.openInboxItem(item) }))
+        }
         for recent in state.recents {
             items.append(QuickItem(
                 id: "r:" + recent.id,
