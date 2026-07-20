@@ -14,6 +14,11 @@ section current as features land.
   the system swallows like ⌘Space, or another PullMark action, which offers
   to hand the keys over. The pane is fully keyboard-operable, and the fixed
   editing and sheet keys are listed so it's clear why they aren't editable.
+- Every keyboard shortcut now has a menu item. Find Next/Previous and Edit
+  Mode joined the Edit menu; Show Outline, Reload Document, and the pull
+  request Rendered/Source/Result switch and diff-layout flip joined View.
+  They were invisible commands before — no menu entry, no greying out when
+  they didn't apply, nothing for VoiceOver to find.
 - Checking for updates no longer shoves the button away from the window
   edge when the "you're up to date" line appears.
 
