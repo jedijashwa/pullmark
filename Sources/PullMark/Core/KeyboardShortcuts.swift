@@ -165,9 +165,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
     /// Categories in the order the Keyboard settings tab shows them.
     static let categories = ["File", "Edit", "View", "Pull Requests"]
 
-    /// Where the action works, for the ones with no menu-bar item —
-    /// otherwise the settings list implies they fire anywhere, and a key
-    /// that does nothing reads as a bug.
+    /// Where the action applies. Every action has a menu item that greys
+    /// out when it doesn't apply; this says so in the settings list too,
+    /// where there is no menu to look at.
     var scopeNote: String? {
         switch self {
         case .toggleOutline, .reloadDocument, .editMode:

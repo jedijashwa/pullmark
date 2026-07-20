@@ -32,14 +32,14 @@ struct FindBar: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
+            // The keys live on Edit → Find Next/Previous; these are the
+            // pointer affordance for the same actions.
             Button { step("prev") } label: { Image(systemName: "chevron.up") }
                 .buttonStyle(.borderless)
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .findPrevious))
                 .disabled(total == 0)
                 .help("Previous match" + shortcuts.hint(.findPrevious))
             Button { step("next") } label: { Image(systemName: "chevron.down") }
                 .buttonStyle(.borderless)
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .findNext))
                 .disabled(total == 0)
                 .help("Next match" + shortcuts.hint(.findNext))
             Button("Done") { close() }
@@ -55,6 +55,11 @@ struct FindBar: View {
             DispatchQueue.main.async { focused = true }
         }
         .onChange(of: seed?.wrappedValue) { _ in consumeSeed() }
+        .onChange(of: state.documentCommand) { request in
+            guard request != nil else { return }
+            if state.take(.findNext) { step("next") }
+            if state.take(.findPrevious) { step("prev") }
+        }
         .onExitCommand { close() }
     }
 

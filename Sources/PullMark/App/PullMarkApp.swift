@@ -43,6 +43,37 @@ struct PullMarkApp: App {
     /// Observed so recording a new shortcut in Settings re-keys the menus.
     @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
+    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
+    @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+
+    /// True when a pull request's file (not the overview) is on screen —
+    /// the view-mode commands act on it.
+    private var prFileSelected: Bool {
+        if case .prFile = state?.selection { return true }
+        return false
+    }
+
+    /// View menu: the PR file's rendered/source/result switch and the
+    /// inline-vs-side-by-side flip. Disabled when no PR file is showing,
+    /// so the keys are discoverable without pretending to work everywhere.
+    @ViewBuilder
+    private var prViewCommands: some View {
+        Button("Rendered Diff") { state?.send(.showRenderedDiff) }
+            .keyboardShortcut(shortcuts.keyboardShortcut(for: .prRenderedDiff))
+            .disabled(!prFileSelected)
+        Button("Source Diff") { state?.send(.showSourceDiff) }
+            .keyboardShortcut(shortcuts.keyboardShortcut(for: .prSourceDiff))
+            .disabled(!prFileSelected)
+        Button("Result") { state?.send(.showResult) }
+            .keyboardShortcut(shortcuts.keyboardShortcut(for: .prResult))
+            .disabled(!prFileSelected)
+        Button(diffLayoutRaw == PRFileView.DiffLayout.inline.rawValue
+               ? "Side-by-Side Diffs" : "Inline Diffs") {
+            state?.send(.flipDiffLayout)
+        }
+        .keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
+        .disabled(!prFileSelected)
+    }
 
     private func open(_ urlString: String) {
         if let url = URL(string: urlString) {
@@ -179,8 +210,19 @@ struct PullMarkApp: App {
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state?.findBarVisible = true }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .findInPage))
+                Button("Find Next") { state?.send(.findNext) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .findNext))
+                    .disabled(state?.findBarVisible != true)
+                Button("Find Previous") { state?.send(.findPrevious) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .findPrevious))
+                    .disabled(state?.findBarVisible != true)
                 Button("Search All Files…") { state?.searchPaletteVisible = true }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .searchAllFiles))
+                Divider()
+                Button("Edit Mode") { state?.send(.toggleEditMode) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .editMode))
+                    .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
+                    .help("Make the page writable — then click any block")
             }
             CommandGroup(replacing: .help) {
                 Button("PullMark Website") {
@@ -211,6 +253,17 @@ struct PullMarkApp: App {
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleSource))
                 .disabled(state?.activeDocument == nil)
                 .help("Temporarily show the raw Markdown behind the rendered document")
+                Button(outlineVisible ? "Hide Outline" : "Show Outline") {
+                    outlineVisible.toggle()
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleOutline))
+                .help("The document's headings, in a sidebar")
+                Button("Reload Document") { state?.send(.reload) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
+                    .disabled(activeLocalFileURL == nil)
+                    .help("Re-read this file from disk")
+                Divider()
+                prViewCommands
             }
         }
         Settings {

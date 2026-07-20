@@ -204,24 +204,16 @@ struct PRFileView: View {
     @State private var mode: Mode = .renderedDiff
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
-    /// Keyboard access to toolbar state (the pickers have no key
-    /// equivalents): view pickers and layout flip, rebindable in
-    /// Settings → Keyboard (⌘1/2/3 and ⌥⌘L by default).
-    private var keyboardModeButtons: some View {
-        Group {
-            Button("") { mode = .renderedDiff }
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prRenderedDiff))
-            Button("") { mode = .sourceDiff }
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prSourceDiff))
-            Button("") { mode = .result }
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prResult))
-            Button("") {
-                layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
-            }.keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
+    /// View-menu commands that act on this view's own state: the toolbar
+    /// pickers have no key equivalents of their own.
+    private func handleDocumentCommand(_ request: DocumentCommandRequest?) {
+        guard request != nil else { return }
+        if state.take(.showRenderedDiff) { mode = .renderedDiff }
+        if state.take(.showSourceDiff) { mode = .sourceDiff }
+        if state.take(.showResult) { mode = .result }
+        if state.take(.flipDiffLayout) {
+            layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
         }
-        .opacity(0)
-        .frame(width: 0, height: 0)
-        .accessibilityHidden(true)
     }
     @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
@@ -351,6 +343,7 @@ struct PRFileView: View {
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
         }
+        .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .onChange(of: mode) { _ in
             loadBlameIfNeeded()

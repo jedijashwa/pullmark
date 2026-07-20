@@ -94,6 +94,24 @@ struct RecentItem: Codable, Identifiable, Equatable {
     }
 }
 
+/// Menu commands that act on state owned by a detail view rather than by
+/// AppState — the view performs them when they arrive.
+enum DocumentCommand: Equatable {
+    case reload
+    case toggleEditMode
+    case findNext
+    case findPrevious
+    case showRenderedDiff
+    case showSourceDiff
+    case showResult
+    case flipDiffLayout
+}
+
+struct DocumentCommandRequest: Equatable {
+    let id = UUID()
+    let command: DocumentCommand
+}
+
 @MainActor
 final class AppState: ObservableObject {
     @Published var localFiles: [LocalFile] = []
@@ -122,6 +140,23 @@ final class AppState: ObservableObject {
     /// See ActiveDocument; nil while a diff, the PR overview, or the empty
     /// placeholder is frontmost (export/copy menu items disable themselves).
     @Published var activeDocument: ActiveDocument?
+    /// A menu command aimed at whichever detail view is on screen. Menus
+    /// live at app level but these act on per-view state, so the command
+    /// is posted here and the view that owns the state performs it.
+    /// Carries an id so repeating the same command still fires.
+    @Published var documentCommand: DocumentCommandRequest?
+
+    /// Posts a command to the detail view and lets it clear the slot.
+    func send(_ command: DocumentCommand) {
+        documentCommand = DocumentCommandRequest(command: command)
+    }
+
+    /// Consumes the pending command if it is one this view handles.
+    func take(_ command: DocumentCommand) -> Bool {
+        guard documentCommand?.command == command else { return false }
+        documentCommand = nil
+        return true
+    }
 
     let client = GitHubClient.shared
 
@@ -623,5 +658,17 @@ final class AppState: ObservableObject {
     func clearDrafts(sessionID: String) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].drafts.removeAll()
+    }
+}
+
+/// Delivers menu commands to whichever detail view owns the state they act
+/// on. A plain `.onChange` inline in those views pushed SwiftUI's type
+/// checker over its limit, so it lives here as a modifier.
+struct DocumentCommandHandler: ViewModifier {
+    @ObservedObject var state: AppState
+    let handle: (DocumentCommandRequest?) -> Void
+
+    func body(content: Content) -> some View {
+        content.onChange(of: state.documentCommand) { handle($0) }
     }
 }

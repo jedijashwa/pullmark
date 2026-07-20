@@ -117,7 +117,6 @@ struct LocalFileView: View {
             if state.findBarVisible {
                 FindBar(proxy: proxy, seed: $findSeed)
             }
-            keyboardViewButtons
             contentSplit
         }
         .background(Color(nsColor: .textBackgroundColor))
@@ -129,6 +128,7 @@ struct LocalFileView: View {
         .onReceive(shortcuts.$overrides) { updated in
             proxy.setEditToggleKey(updated.combo(for: .editMode))
         }
+        .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
         .onDisappear { saveReadingPosition() }
@@ -188,44 +188,20 @@ struct LocalFileView: View {
             }
     }
 
-    /// Keyboard access to toolbar state: outline and reload (rebindable
-    /// in Settings → Keyboard; ⌥⌘O and ⌘R by default).
-    private var keyboardViewButtons: some View {
-        Group {
-            Button("") { outlineVisible.toggle() }
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleOutline))
-            Button("") { load() }
-                .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
-        }
-        .opacity(0)
-        .frame(width: 0, height: 0)
-        .accessibilityHidden(true)
+    /// Menu commands that act on this view's own state (View → Reload
+    /// Document, Edit → Edit Mode).
+    private func handleDocumentCommand(_ request: DocumentCommandRequest?) {
+        guard request != nil else { return }
+        if state.take(.reload) { load() }
+        if state.take(.toggleEditMode) { handleToggleEditMode() }
     }
 
     private var editToggle: some View {
-        Toggle(isOn: Binding(
-            get: { editMode },
-            set: { newValue in
-                // Commit any open reveal FIRST (the flip re-renders the
-                // page — an uncommitted draft would die with it), keep the
-                // scroll position, and force-release the reload deferral:
-                // the torn-down page can never post editingState itself.
-                proxy.commitInlineEdit()
-                proxy.scrollFraction { fraction in
-                    Task { @MainActor in
-                        if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
-                        editMode = newValue
-                        if newValue {
-                            sessionSnapshotTaken = false
-                            pendingAutoReveal = true
-                        }
-                        handleEditingState(false)
-                    }
-                }
-            })) {
+        Toggle(isOn: Binding(get: { editMode }, set: { setEditMode($0) })) {
             Label("Edit", systemImage: "pencil")
         }
-        .keyboardShortcut(shortcuts.keyboardShortcut(for: .editMode))
+        // The key equivalent lives on Edit → Edit Mode; binding it here too
+        // would give one combo two owners.
         .help(editMode ? "Done editing\(shortcuts.hint(.editMode))"
                        : "Edit this document\(shortcuts.hint(.editMode)) — then click any block")
         .disabled(compare != nil || state.sourceViewVisible)
@@ -295,13 +271,31 @@ struct LocalFileView: View {
         throttledPositionSave()
     }
 
-    private func handleToggleEditMode() {
-        editMode.toggle()
-        if editMode {
-            sessionSnapshotTaken = false
-            pendingAutoReveal = true
+    /// The one way in and out of edit mode — toolbar toggle, Edit → Edit
+    /// Mode, and the page's own key all land here. Commits any open reveal
+    /// FIRST (the flip re-renders the page and an uncommitted draft would
+    /// die with it), keeps the scroll position, and force-releases the
+    /// reload deferral: the torn-down page can never post editingState.
+    private func setEditMode(_ newValue: Bool) {
+        proxy.commitInlineEdit()
+        proxy.scrollFraction { fraction in
+            Task { @MainActor in
+                if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
+                editMode = newValue
+                if newValue {
+                    sessionSnapshotTaken = false
+                    pendingAutoReveal = true
+                }
+                handleEditingState(false)
+            }
         }
-        handleEditingState(false)
+    }
+
+    private func handleToggleEditMode() {
+        // Comparing a revision replaces the document with a diff; editing
+        // it would write the wrong text back.
+        guard compare == nil, !state.sourceViewVisible else { return }
+        setEditMode(!editMode)
     }
 
     private func handleNextReveal(_ line: Int) {
