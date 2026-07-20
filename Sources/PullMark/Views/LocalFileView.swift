@@ -20,6 +20,7 @@ struct LocalFileView: View {
     @State private var stats: DocumentStats?
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
+    @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
 
@@ -120,6 +121,12 @@ struct LocalFileView: View {
             contentSplit
         }
         .background(Color(nsColor: .textBackgroundColor))
+        // The in-editor edit-mode toggle key lives in the page's JS (the
+        // web view owns focus while a reveal is open) — keep it in sync
+        // with the rebindable shortcut.
+        .onReceive(shortcuts.$overrides) { _ in
+            proxy.setEditToggleKey(shortcuts.combo(for: .editMode))
+        }
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
         .onDisappear { saveReadingPosition() }
@@ -179,12 +186,14 @@ struct LocalFileView: View {
             }
     }
 
-    /// Keyboard access to toolbar state: ⌥⌘O outline, ⌘R reload.
+    /// Keyboard access to toolbar state: outline and reload (rebindable
+    /// in Settings → Keyboard; ⌥⌘O and ⌘R by default).
     private var keyboardViewButtons: some View {
         Group {
             Button("") { outlineVisible.toggle() }
-                .keyboardShortcut("o", modifiers: [.command, .option])
-            Button("") { load() }.keyboardShortcut("r")
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleOutline))
+            Button("") { load() }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
         }
         .opacity(0)
         .frame(width: 0, height: 0)
@@ -214,9 +223,9 @@ struct LocalFileView: View {
             })) {
             Label("Edit", systemImage: "pencil")
         }
-        .keyboardShortcut("e")
-        .help(editMode ? "Done editing (⌘E)"
-                       : "Edit this document (⌘E) — then click any block")
+        .keyboardShortcut(shortcuts.keyboardShortcut(for: .editMode))
+        .help(editMode ? "Done editing\(shortcuts.hint(.editMode))"
+                       : "Edit this document\(shortcuts.hint(.editMode)) — then click any block")
         .disabled(compare != nil || state.sourceViewVisible)
     }
 
@@ -396,6 +405,8 @@ struct LocalFileView: View {
     }
 
     private func handlePageLoaded() {
+        // Fresh page, fresh JS state: re-teach it the edit-mode toggle key.
+        proxy.setEditToggleKey(shortcuts.combo(for: .editMode))
         if let line = pendingRevealLine {
             pendingRevealLine = nil
             pendingAutoReveal = false

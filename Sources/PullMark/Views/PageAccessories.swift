@@ -12,6 +12,7 @@ struct FindBar: View {
     @State private var current = 0
     @State private var total = 0
     @FocusState private var focused: Bool
+    @ObservedObject private var shortcuts = ShortcutStore.shared
 
     var body: some View {
         HStack(spacing: 8) {
@@ -33,14 +34,14 @@ struct FindBar: View {
             }
             Button { step("prev") } label: { Image(systemName: "chevron.up") }
                 .buttonStyle(.borderless)
-                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .findPrevious))
                 .disabled(total == 0)
-                .help("Previous match (⇧⌘G)")
+                .help("Previous match" + shortcuts.hint(.findPrevious))
             Button { step("next") } label: { Image(systemName: "chevron.down") }
                 .buttonStyle(.borderless)
-                .keyboardShortcut("g", modifiers: .command)
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .findNext))
                 .disabled(total == 0)
-                .help("Next match (⌘G)")
+                .help("Next match" + shortcuts.hint(.findNext))
             Button("Done") { close() }
                 .buttonStyle(.borderless)
         }

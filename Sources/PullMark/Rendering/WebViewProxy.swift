@@ -44,6 +44,32 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// Teaches the page the (rebindable) edit-mode toggle combo, so pressing
+    /// it inside an open block editor still commits and exits — the web view
+    /// owns key events while a reveal has focus, so SwiftUI never sees them.
+    func setEditToggleKey(_ combo: KeyCombo?) {
+        let json: String
+        if let combo, let data = try? JSONEncoder().encode(
+            EditToggleKey(key: combo.key, meta: combo.command, ctrl: combo.control,
+                          alt: combo.option, shift: combo.shift)),
+           let encoded = String(data: data, encoding: .utf8) {
+            json = encoded
+        } else {
+            json = "null"
+        }
+        webView?.evaluateJavaScript(
+            "window.__pmSetEditToggleKey && window.__pmSetEditToggleKey(\(json));",
+            completionHandler: nil)
+    }
+
+    private struct EditToggleKey: Encodable {
+        let key: String
+        let meta: Bool
+        let ctrl: Bool
+        let alt: Bool
+        let shift: Bool
+    }
+
     /// Current scroll position as a 0–1 fraction of the scrollable height.
     func scrollFraction(_ completion: @escaping (Double?) -> Void) {
         guard let webView else { return completion(nil) }

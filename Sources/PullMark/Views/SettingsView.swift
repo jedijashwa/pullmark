@@ -4,12 +4,20 @@ import SwiftUI
 /// a Themes tab whose live preview cards render a fixed sample document
 /// through the real WKWebView pipeline, one per theme.
 struct SettingsView: View {
+    /// Persisted so Settings reopens on the tab you last used.
+    @AppStorage(DefaultsKeys.settingsTab) private var tab = "general"
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             GeneralSettingsTab()
                 .tabItem { Label("General", systemImage: "gearshape") }
+                .tag("general")
             ThemeSettingsTab()
                 .tabItem { Label("Themes", systemImage: "paintpalette") }
+                .tag("themes")
+            KeyboardSettingsTab()
+                .tabItem { Label("Keyboard", systemImage: "keyboard") }
+                .tag("keyboard")
         }
         .frame(width: 680)
     }
@@ -100,18 +108,21 @@ struct GeneralSettingsTab: View {
             }
 
             LabeledContent("Updates:") {
-                VStack(alignment: .leading, spacing: 6) {
+                // Trailing-aligned: the status line appearing must not widen
+                // the column and shove the button away from the right edge.
+                VStack(alignment: .trailing, spacing: 6) {
                     HStack(spacing: 8) {
-                        Button("Check for Updates…") { check() }
-                            .disabled(checking)
                         if checking {
                             ProgressView().controlSize(.small)
                         }
+                        Button("Check for Updates…") { check() }
+                            .disabled(checking)
                     }
                     if let updateStatus {
                         Text(updateStatus)
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

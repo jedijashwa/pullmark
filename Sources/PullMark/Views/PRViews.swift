@@ -202,17 +202,22 @@ struct PRFileView: View {
     }
 
     @State private var mode: Mode = .renderedDiff
+    @ObservedObject private var shortcuts = ShortcutStore.shared
 
     /// Keyboard access to toolbar state (the pickers have no key
-    /// equivalents): ⌘1/2/3 pick the view, ⌥⌘L flips the diff layout.
+    /// equivalents): view pickers and layout flip, rebindable in
+    /// Settings → Keyboard (⌘1/2/3 and ⌥⌘L by default).
     private var keyboardModeButtons: some View {
         Group {
-            Button("") { mode = .renderedDiff }.keyboardShortcut("1")
-            Button("") { mode = .sourceDiff }.keyboardShortcut("2")
-            Button("") { mode = .result }.keyboardShortcut("3")
+            Button("") { mode = .renderedDiff }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prRenderedDiff))
+            Button("") { mode = .sourceDiff }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prSourceDiff))
+            Button("") { mode = .result }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .prResult))
             Button("") {
                 layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
-            }.keyboardShortcut("l", modifiers: [.command, .option])
+            }.keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
         }
         .opacity(0)
         .frame(width: 0, height: 0)

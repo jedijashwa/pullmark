@@ -44,4 +44,8 @@ enum DefaultsKeys {
     static let sessionSnapshot = "pm.sessionSnapshot"
     /// Reading positions: document key → scroll fraction.
     static let readingPositions = "pm.readingPositions"
+    /// JSON-encoded `ShortcutOverrides`: the user's keyboard customizations.
+    static let shortcutOverrides = "pm.shortcutOverrides"
+    /// Settings window: the last-selected tab ("general"/"themes"/"keyboard").
+    static let settingsTab = "pm.settingsTab"
 }

@@ -1,0 +1,201 @@
+import Foundation
+
+/// A concrete key combination: one key plus modifier flags. `key` is either
+/// a single lowercase character ("e", "1", ",") or a named special key
+/// ("escape", "return", "up", "f5", …). Pure and Codable so the registry,
+/// persistence, and conflict logic stay unit-testable without AppKit.
+struct KeyCombo: Codable, Equatable, Hashable {
+    var key: String
+    var command = false
+    var shift = false
+    var option = false
+    var control = false
+
+    /// Named special keys this app understands, in canonical storage form.
+    static let namedKeys: Set<String> = [
+        "escape", "return", "tab", "space", "delete", "forwarddelete",
+        "up", "down", "left", "right", "home", "end", "pageup", "pagedown",
+        "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
+    ]
+
+    private static let keyGlyphs: [String: String] = [
+        "escape": "⎋", "return": "↩", "tab": "⇥", "space": "Space",
+        "delete": "⌫", "forwarddelete": "⌦",
+        "up": "↑", "down": "↓", "left": "←", "right": "→",
+        "home": "↖", "end": "↘", "pageup": "⇞", "pagedown": "⇟",
+    ]
+
+    var isFunctionKey: Bool { key.hasPrefix("f") && Int(key.dropFirst()) != nil }
+
+    /// Menu-bar style rendering: modifier symbols in canonical order, then
+    /// the key ("⌃⌥⇧⌘E", "⇧⌘G", "F5").
+    var display: String {
+        var out = ""
+        if control { out += "⌃" }
+        if option { out += "⌥" }
+        if shift { out += "⇧" }
+        if command { out += "⌘" }
+        if let glyph = Self.keyGlyphs[key] {
+            out += glyph
+        } else {
+            out += key.uppercased()
+        }
+        return out
+    }
+
+    /// A combo a menu item or button can actually own. Bare characters
+    /// would type into text fields, so character keys need ⌘ or ⌃;
+    /// function keys stand alone.
+    var isBindable: Bool { command || control || isFunctionKey }
+
+    /// Combos macOS or the app's text plumbing owns outright — rebinding
+    /// these would shadow Quit, Close, Copy/Paste, etc.
+    var isReserved: Bool {
+        guard command, !option, !control else { return false }
+        let reserved: Set<String> = ["q", "h", "m", ",", "c", "v", "x", "a", "z", "w", "n", "t"]
+        return !shift && reserved.contains(key)
+    }
+}
+
+/// Every user-facing keyboard action in the app. Raw values are the
+/// persistence keys — never change one once shipped.
+enum ShortcutAction: String, CaseIterable, Codable {
+    case openFile, openPullRequest, openQuickly, commitChanges, revertLastEdit
+    case printDocument, exportPDF, exportHTML
+    case editMode, copyAsMarkdown
+    case findInPage, findNext, findPrevious, searchAllFiles
+    case toggleOutline, toggleSource, reloadDocument
+    case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
+
+    var title: String {
+        switch self {
+        case .openFile: return "Open…"
+        case .openPullRequest: return "Open Pull Request…"
+        case .openQuickly: return "Open Quickly"
+        case .commitChanges: return "Commit Changes…"
+        case .revertLastEdit: return "Revert Last Edit"
+        case .printDocument: return "Print…"
+        case .exportPDF: return "Export as PDF…"
+        case .exportHTML: return "Export as HTML…"
+        case .editMode: return "Edit Mode"
+        case .copyAsMarkdown: return "Copy as Markdown"
+        case .findInPage: return "Find in Page"
+        case .findNext: return "Find Next"
+        case .findPrevious: return "Find Previous"
+        case .searchAllFiles: return "Search All Files"
+        case .toggleOutline: return "Show/Hide Outline"
+        case .toggleSource: return "Show/Hide Markdown Source"
+        case .reloadDocument: return "Reload Document"
+        case .prRenderedDiff: return "PR File: Rendered Diff"
+        case .prSourceDiff: return "PR File: Source Diff"
+        case .prResult: return "PR File: Result"
+        case .prFlipLayout: return "PR File: Flip Diff Layout"
+        }
+    }
+
+    var category: String {
+        switch self {
+        case .openFile, .openPullRequest, .openQuickly, .commitChanges,
+             .printDocument, .exportPDF, .exportHTML:
+            return "File"
+        case .editMode, .copyAsMarkdown, .revertLastEdit:
+            return "Editing"
+        case .findInPage, .findNext, .findPrevious, .searchAllFiles:
+            return "Find"
+        case .toggleOutline, .toggleSource, .reloadDocument:
+            return "View"
+        case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
+            return "Pull Requests"
+        }
+    }
+
+    /// Categories in the order the Keyboard settings tab shows them.
+    static let categories = ["File", "Editing", "Find", "View", "Pull Requests"]
+
+    /// The shipped binding; nil means the action has no shortcut until the
+    /// user records one (it still appears in menus and settings).
+    var defaultCombo: KeyCombo? {
+        switch self {
+        case .openFile: return KeyCombo(key: "o", command: true)
+        case .openPullRequest: return KeyCombo(key: "o", command: true, shift: true)
+        case .openQuickly: return KeyCombo(key: "k", command: true)
+        case .commitChanges: return KeyCombo(key: "k", command: true, control: true)
+        case .revertLastEdit: return nil
+        case .printDocument: return KeyCombo(key: "p", command: true)
+        case .exportPDF: return nil
+        case .exportHTML: return nil
+        case .editMode: return KeyCombo(key: "e", command: true)
+        case .copyAsMarkdown: return KeyCombo(key: "c", command: true, option: true)
+        case .findInPage: return KeyCombo(key: "f", command: true)
+        case .findNext: return KeyCombo(key: "g", command: true)
+        case .findPrevious: return KeyCombo(key: "g", command: true, shift: true)
+        case .searchAllFiles: return KeyCombo(key: "f", command: true, shift: true)
+        case .toggleOutline: return KeyCombo(key: "o", command: true, option: true)
+        case .toggleSource: return KeyCombo(key: "u", command: true, option: true)
+        case .reloadDocument: return KeyCombo(key: "r", command: true)
+        case .prRenderedDiff: return KeyCombo(key: "1", command: true)
+        case .prSourceDiff: return KeyCombo(key: "2", command: true)
+        case .prResult: return KeyCombo(key: "3", command: true)
+        case .prFlipLayout: return KeyCombo(key: "l", command: true, option: true)
+        }
+    }
+}
+
+/// The user's customizations: absent = default, `combo: nil` = shortcut
+/// removed, otherwise the recorded combo. Pure so encoding and conflict
+/// resolution are testable.
+struct ShortcutOverrides: Codable, Equatable {
+    /// Wrapper so "explicitly no shortcut" survives JSON round-trips
+    /// (a bare optional value would be dropped from the dictionary).
+    struct Value: Codable, Equatable {
+        var combo: KeyCombo?
+    }
+
+    private var values: [String: Value] = [:]
+
+    var isEmpty: Bool { values.isEmpty }
+
+    func isCustomized(_ action: ShortcutAction) -> Bool {
+        values[action.rawValue] != nil
+    }
+
+    /// The effective combo for an action after overrides.
+    func combo(for action: ShortcutAction) -> KeyCombo? {
+        if let value = values[action.rawValue] { return value.combo }
+        return action.defaultCombo
+    }
+
+    mutating func set(_ combo: KeyCombo?, for action: ShortcutAction) {
+        if combo == action.defaultCombo {
+            values[action.rawValue] = nil
+        } else {
+            values[action.rawValue] = Value(combo: combo)
+        }
+    }
+
+    mutating func reset(_ action: ShortcutAction) {
+        values[action.rawValue] = nil
+    }
+
+    mutating func resetAll() {
+        values = [:]
+    }
+
+    /// The other action currently holding `combo`, if any.
+    func conflict(with combo: KeyCombo, excluding action: ShortcutAction) -> ShortcutAction? {
+        ShortcutAction.allCases.first { $0 != action && self.combo(for: $0) == combo }
+    }
+
+    func encoded() -> Data? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return try? encoder.encode(self)
+    }
+
+    static func decoded(from data: Data?) -> ShortcutOverrides {
+        guard let data,
+              let decoded = try? JSONDecoder().decode(ShortcutOverrides.self, from: data)
+        else { return ShortcutOverrides() }
+        return decoded
+    }
+}

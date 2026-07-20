@@ -27,14 +27,16 @@ struct ContentView: View {
                 } label: {
                     Label("Open File or Folder", systemImage: "folder")
                 }
-                .help("Open local Markdown files or a folder (⌘O)")
+                .help("Open local Markdown files or a folder"
+                    + ShortcutStore.shared.hint(.openFile))
 
                 Button {
                     state.showAddPR = true
                 } label: {
                     Label("Open Pull Request", systemImage: "arrow.triangle.pull")
                 }
-                .help("Open a GitHub pull request (⇧⌘O)")
+                .help("Open a GitHub pull request"
+                    + ShortcutStore.shared.hint(.openPullRequest))
 
                 Menu {
                     Picker("Appearance", selection: $appearanceRaw) {

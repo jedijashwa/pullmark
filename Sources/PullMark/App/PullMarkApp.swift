@@ -40,6 +40,8 @@ struct PullMarkApp: App {
     private var state: AppState? { focusedState }
     @StateObject private var updates = UpdateChecker()
     @StateObject private var defaultApp = DefaultAppManager()
+    /// Observed so recording a new shortcut in Settings re-keys the menus.
+    @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
 
     private func open(_ urlString: String) {
@@ -99,11 +101,11 @@ struct PullMarkApp: App {
             }
             CommandGroup(after: .newItem) {
                 Button("Open…") { state?.openFileOrFolder() }
-                    .keyboardShortcut("o")
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .openFile))
                 Button("Open Pull Request…") { state?.showAddPR = true }
-                    .keyboardShortcut("o", modifiers: [.command, .shift])
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .openPullRequest))
                 Button("Open Quickly…") { state?.openQuicklyVisible = true }
-                    .keyboardShortcut("k")
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .openQuickly))
                     .disabled(state == nil)
                     .help("Jump to any file, heading, or pull request")
                 Menu("Open Recent") {
@@ -127,7 +129,7 @@ struct PullMarkApp: App {
                         state?.lastNotice = "\(url.lastPathComponent) isn't inside a git repository."
                     }
                 }
-                .keyboardShortcut("k", modifiers: [.command, .control])
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .commitChanges))
                 .disabled(activeLocalFileURL == nil)
                 .help("Stage and commit changes in this file's repository")
                 Button("Revert Last Edit") {
@@ -139,12 +141,13 @@ struct PullMarkApp: App {
                         state?.lastError = "Couldn't revert: \(error.localizedDescription)"
                     }
                 }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .revertLastEdit))
                 .disabled(activeLocalFileURL.map { EditHistory.lastSnapshot(for: $0) == nil } ?? true)
                 .help("Restore the file as it was before PullMark's last edit")
             }
             CommandGroup(replacing: .printItem) {
                 Button("Print…") { state?.activeDocument?.proxy.printDocument() }
-                    .keyboardShortcut("p")
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .printDocument))
                     .disabled(state?.activeDocument == nil)
                     .help("Print the rendered document")
             }
@@ -153,12 +156,14 @@ struct PullMarkApp: App {
                     guard let document = state?.activeDocument else { return }
                     DocumentExport.exportPDF(document) { state?.lastError = $0 }
                 }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .exportPDF))
                 .disabled(state?.activeDocument == nil)
                 .help("Save the rendered document as a PDF")
                 Button("Export as HTML…") {
                     guard let document = state?.activeDocument else { return }
                     DocumentExport.exportHTML(document) { state?.lastError = $0 }
                 }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .exportHTML))
                 .disabled(state?.activeDocument == nil)
                 .help("Save the rendered document as a self-contained HTML file")
             }
@@ -166,16 +171,16 @@ struct PullMarkApp: App {
             // rich HTML + plain text on the pasteboard for the selection.
             CommandGroup(after: .pasteboard) {
                 Button("Copy as Markdown") { copyAsMarkdown() }
-                    .keyboardShortcut("c", modifiers: [.command, .option])
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .copyAsMarkdown))
                     .disabled(state?.activeDocument == nil)
                     .help("Copies the Markdown source of the selected blocks "
                         + "(whole blocks — or the whole document when nothing is selected)")
             }
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state?.findBarVisible = true }
-                    .keyboardShortcut("f")
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .findInPage))
                 Button("Search All Files…") { state?.searchPaletteVisible = true }
-                    .keyboardShortcut("f", modifiers: [.command, .shift])
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .searchAllFiles))
             }
             CommandGroup(replacing: .help) {
                 Button("PullMark Website") {
@@ -203,7 +208,7 @@ struct PullMarkApp: App {
                 Button(state?.sourceViewVisible == true ? "Hide Markdown Source" : "Show Markdown Source") {
                     state?.sourceViewVisible.toggle()
                 }
-                .keyboardShortcut("u", modifiers: [.command, .option])
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleSource))
                 .disabled(state?.activeDocument == nil)
                 .help("Temporarily show the raw Markdown behind the rendered document")
             }
@@ -272,7 +277,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         Appearance.applyCurrent()
-        SharedTheme.startMirroring()
         let cliURLs = LaunchArguments.consumeFileURLs()
         if !cliURLs.isEmpty {
             OpenURLRouter.shared.deliver(cliURLs)

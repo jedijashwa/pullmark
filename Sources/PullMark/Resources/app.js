@@ -1125,6 +1125,42 @@
     // deletes those lines.
     var revealState = null;
 
+    // The edit-mode toggle combo, pushed by Swift on page load (users can
+    // rebind it in Settings → Keyboard). Shape: {key, meta, ctrl, alt,
+    // shift} with `key` in the app's canonical form ("e", "escape", "f5").
+    var editToggleKey = { key: "e", meta: true, ctrl: false, alt: false, shift: false };
+    window.__pmSetEditToggleKey = function (combo) { editToggleKey = combo; };
+
+    function canonicalEventKey(event) {
+      var named = {
+        "Escape": "escape", "Enter": "return", "Tab": "tab", " ": "space",
+        "Backspace": "delete", "Delete": "forwarddelete",
+        "ArrowUp": "up", "ArrowDown": "down", "ArrowLeft": "left",
+        "ArrowRight": "right", "Home": "home", "End": "end",
+        "PageUp": "pageup", "PageDown": "pagedown",
+      };
+      if (named[event.key]) { return named[event.key]; }
+      if (/^F([1-9]|1[0-2])$/.test(event.key)) { return event.key.toLowerCase(); }
+      return event.key.length === 1 ? event.key.toLowerCase() : null;
+    }
+
+    function matchesEditToggle(event) {
+      if (!editToggleKey) { return false; }
+      // With ⌥ held, event.key is the option-composed character ("ç" for
+      // ⌥C) — event.code ("KeyC", "Digit1") recovers the physical key.
+      var codeKey = null;
+      var m = /^Key([A-Z])$/.exec(event.code || "");
+      if (m) { codeKey = m[1].toLowerCase(); }
+      m = /^Digit([0-9])$/.exec(event.code || "");
+      if (m) { codeKey = m[1]; }
+      var key = canonicalEventKey(event);
+      return (key === editToggleKey.key || codeKey === editToggleKey.key)
+        && event.metaKey === !!editToggleKey.meta
+        && event.ctrlKey === !!editToggleKey.ctrl
+        && event.altKey === !!editToggleKey.alt
+        && event.shiftKey === !!editToggleKey.shift;
+    }
+
     function regionSource(lo, hi) {
       return (payload.markdown || "").split("\n").slice(lo - 1, hi).join("\n");
     }
@@ -1248,9 +1284,10 @@
         }
       }
       ta.addEventListener("keydown", function (event) {
-        if ((event.metaKey || event.ctrlKey) && (event.key === "e" || event.key === "E")) {
+        if (matchesEditToggle(event)) {
           // The toolbar toggle's key equivalent never wins against a
-          // focused text field — handle ⌘E here: commit and leave the mode.
+          // focused text field — handle the edit-mode key (⌘E unless
+          // rebound) here: commit and leave the mode.
           event.preventDefault();
           event.stopPropagation();
           commitReveal();
