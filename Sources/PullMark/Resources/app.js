@@ -1303,6 +1303,27 @@
       }
     };
 
+    // ⌘E lands ready to type: reveal the block under the selection, or
+    // the first block — no click needed after entering edit mode.
+    window.__pmRevealFocused = function () {
+      if (revealState) { return; }
+      var host = null;
+      var selection = window.getSelection();
+      if (selection && selection.anchorNode) {
+        var node = selection.anchorNode.nodeType === 1
+          ? selection.anchorNode : selection.anchorNode.parentElement;
+        host = node && node.closest && node.closest(".pm-editable[data-pm-lines]");
+      }
+      if (!host) {
+        for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+          if (el.classList.contains("pm-editable")) { host = el; break; }
+        }
+      }
+      if (!host) { return; }
+      var parts = host.getAttribute("data-pm-lines").split("-");
+      reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
+    };
+
     // Swift calls this before any state flip that re-renders the page
     // (⌘E off, theme change): an open reveal must commit synchronously or
     // the draft dies with the page.

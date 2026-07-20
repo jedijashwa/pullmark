@@ -12,6 +12,14 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// Entering edit mode: reveal the selection's block (or the first)
+    /// so ⌘E lands ready to type.
+    func revealFocused() {
+        webView?.evaluateJavaScript(
+            "window.__pmRevealFocused && window.__pmRevealFocused();",
+            completionHandler: nil)
+    }
+
     /// Commits any open in-place reveal synchronously — called before
     /// state flips that re-render the page (a draft must not die with it).
     func commitInlineEdit() {

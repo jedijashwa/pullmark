@@ -53,6 +53,8 @@ struct LocalFileView: View {
     /// 25-block editing walk must not churn the whole 20-snapshot Revert
     /// history with intermediate states.
     @State private var sessionSnapshotTaken = false
+    /// ⌘E just enabled edit mode: auto-reveal once the editable page loads.
+    @State private var pendingAutoReveal = false
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -189,7 +191,10 @@ struct LocalFileView: View {
                     Task { @MainActor in
                         if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
                         editMode = newValue
-                        if newValue { sessionSnapshotTaken = false }
+                        if newValue {
+                            sessionSnapshotTaken = false
+                            pendingAutoReveal = true
+                        }
                         handleEditingState(false)
                     }
                 }
@@ -371,7 +376,12 @@ struct LocalFileView: View {
     private func handlePageLoaded() {
         if let line = pendingRevealLine {
             pendingRevealLine = nil
+            pendingAutoReveal = false
             proxy.revealAtLine(line)
+        }
+        if pendingAutoReveal, editMode {
+            pendingAutoReveal = false
+            proxy.revealFocused()
         }
         if let fraction = pendingScrollRestore {
             // An edit save or external change re-rendered the page — put
