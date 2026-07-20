@@ -4,6 +4,19 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Settings gained a Keyboard tab: every keyboard action in the app, grouped
+  by the menu it belongs to, each one rebindable. Click a shortcut (or
+  select a row and press Return) and type the new keys; Delete removes a
+  shortcut, Esc cancels. Combos already owned by something else are refused
+  with the name of what owns them — a standard command like Undo, something
+  the system swallows like ⌘Space, or another PullMark action, which offers
+  to hand the keys over. The pane is fully keyboard-operable, and the fixed
+  editing and sheet keys are listed so it's clear why they aren't editable.
+- Checking for updates no longer shoves the button away from the window
+  edge when the "you're up to date" line appears.
+
 ## 0.14.0 - 2026-07-20
 
 - Edit mode: press ⌘E (or the toolbar pencil) and the page becomes the
