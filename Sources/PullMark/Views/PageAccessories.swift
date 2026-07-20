@@ -33,10 +33,14 @@ struct FindBar: View {
             }
             Button { step("prev") } label: { Image(systemName: "chevron.up") }
                 .buttonStyle(.borderless)
+                .keyboardShortcut("g", modifiers: [.command, .shift])
                 .disabled(total == 0)
+                .help("Previous match (⇧⌘G)")
             Button { step("next") } label: { Image(systemName: "chevron.down") }
                 .buttonStyle(.borderless)
+                .keyboardShortcut("g", modifiers: .command)
                 .disabled(total == 0)
+                .help("Next match (⌘G)")
             Button("Done") { close() }
                 .buttonStyle(.borderless)
         }

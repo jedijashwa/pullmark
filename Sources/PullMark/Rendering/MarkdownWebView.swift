@@ -27,6 +27,9 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Arrow navigation committed an edit: after the reload, re-open the
     /// reveal at this line (negative = caret at end).
     var onNextReveal: ((Int) -> Void)?
+    /// ⌘E pressed inside a reveal — the focused text field beats the
+    /// toolbar toggle's key equivalent, so the page forwards it.
+    var onToggleEditMode: (() -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -152,6 +155,8 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let active = dict["active"] as? Bool {
                     parent.onEditingState?(active)
                 }
+            case "toggleEditMode":
+                parent.onToggleEditMode?()
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in

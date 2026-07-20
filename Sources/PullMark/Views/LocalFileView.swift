@@ -116,6 +116,7 @@ struct LocalFileView: View {
             if state.findBarVisible {
                 FindBar(proxy: proxy, seed: $findSeed)
             }
+            keyboardViewButtons
             contentSplit
         }
         .background(Color(nsColor: .textBackgroundColor))
@@ -176,6 +177,18 @@ struct LocalFileView: View {
                 }
                 .help("Reload from disk")
             }
+    }
+
+    /// Keyboard access to toolbar state: ⌥⌘O outline, ⌘R reload.
+    private var keyboardViewButtons: some View {
+        Group {
+            Button("") { outlineVisible.toggle() }
+                .keyboardShortcut("o", modifiers: [.command, .option])
+            Button("") { load() }.keyboardShortcut("r")
+        }
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
     }
 
     private var editToggle: some View {
@@ -269,6 +282,15 @@ struct LocalFileView: View {
         // Scroll-spy doubles as a progress heartbeat, so a plain ⌘Q (no
         // onDisappear) still keeps the spot.
         throttledPositionSave()
+    }
+
+    private func handleToggleEditMode() {
+        editMode.toggle()
+        if editMode {
+            sessionSnapshotTaken = false
+            pendingAutoReveal = true
+        }
+        handleEditingState(false)
     }
 
     private func handleNextReveal(_ line: Int) {

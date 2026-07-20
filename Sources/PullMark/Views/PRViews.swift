@@ -202,6 +202,22 @@ struct PRFileView: View {
     }
 
     @State private var mode: Mode = .renderedDiff
+
+    /// Keyboard access to toolbar state (the pickers have no key
+    /// equivalents): ⌘1/2/3 pick the view, ⌥⌘L flips the diff layout.
+    private var keyboardModeButtons: some View {
+        Group {
+            Button("") { mode = .renderedDiff }.keyboardShortcut("1")
+            Button("") { mode = .sourceDiff }.keyboardShortcut("2")
+            Button("") { mode = .result }.keyboardShortcut("3")
+            Button("") {
+                layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
+            }.keyboardShortcut("l", modifiers: [.command, .option])
+        }
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+    }
     @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?

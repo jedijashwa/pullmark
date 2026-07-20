@@ -4,6 +4,24 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Edit mode: press ⌘E (or the toolbar pencil) and the page becomes the
+  editor. The block under your selection reveals its raw
+  Markdown in place — matching the rendered type so nothing jumps — and
+  you're ready to type immediately. Click away or arrow onward to commit;
+  Esc reverts. Down/Up at a block's edge walks editing through the
+  document; Backspace at a block's start merges it into the previous one;
+  blank lines split into new blocks; a quiet + at the end appends (and
+  makes empty documents writable). Reading remains the default posture.
+- Saving is the mode: leaving a block writes it (guarded against the file
+  changing underneath), and Revert Last Edit undoes the whole editing
+  session. The old Automatic/Manual saving setting and ⌘S are gone —
+  with an explicit edit mode, the mode boundary is the save gesture.
+- Re-renders (blame arriving, external file changes) wait while you're
+  editing and keep your place after; an editor can never lose a draft to
+  a background refresh.
+
 ## 0.13.0 - 2026-07-19
 
 - Editing grew up: click a block's pencil and it becomes an editor right

@@ -1234,7 +1234,11 @@
         while (el && (!el.classList || !el.classList.contains("pm-editable"))) {
           el = direction > 0 ? el.nextElementSibling : el.previousElementSibling;
         }
-        if (!el) { return; }
+        if (!el) {
+          // Walked past the last block: continue into the append target.
+          if (direction > 0 && window.__pmAppendReveal) { window.__pmAppendReveal(); }
+          return;
+        }
         var parts = el.getAttribute("data-pm-lines").split("-");
         reveal(el, parseInt(parts[0], 10), parseInt(parts[1], 10));
         if (revealState) {
@@ -1244,6 +1248,15 @@
         }
       }
       ta.addEventListener("keydown", function (event) {
+        if ((event.metaKey || event.ctrlKey) && (event.key === "e" || event.key === "E")) {
+          // The toolbar toggle's key equivalent never wins against a
+          // focused text field — handle ⌘E here: commit and leave the mode.
+          event.preventDefault();
+          event.stopPropagation();
+          commitReveal();
+          post({ type: "toggleEditMode" });
+          return;
+        }
         if (event.key === "Escape") {
           event.preventDefault();
           event.stopPropagation();
@@ -1319,7 +1332,10 @@
           if (el.classList.contains("pm-editable")) { host = el; break; }
         }
       }
-      if (!host) { return; }
+      if (!host) {
+        if (window.__pmAppendReveal) { window.__pmAppendReveal(); }
+        return;
+      }
       var parts = host.getAttribute("data-pm-lines").split("-");
       reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
     };
@@ -1342,8 +1358,7 @@
       phantom.textContent = "+";
       phantom.title = "Write at the end of the document";
       content.append(phantom);
-      phantom.addEventListener("click", function (event) {
-        event.stopPropagation();
+      function appendReveal() {
         if (revealState) { commitReveal(); return; }
         var last = null;
         for (var e = content.firstElementChild; e; e = e.nextElementSibling) {
@@ -1362,6 +1377,11 @@
           ta2.dispatchEvent(new Event("input"));
           ta2.setSelectionRange(ta2.value.length, ta2.value.length);
         }
+      }
+      window.__pmAppendReveal = appendReveal;
+      phantom.addEventListener("click", function (event) {
+        event.stopPropagation();
+        appendReveal();
       });
 
       content.addEventListener("click", function (event) {
