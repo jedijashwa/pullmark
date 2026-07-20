@@ -70,7 +70,7 @@ struct GeneralSettingsTab: View {
                 Text("Manually (⌘S)").tag(false)
             }
             .pickerStyle(.segmented)
-            .help("Whether editing a block writes to the file immediately or waits for File → Save")
+            .help("Automatic writes each edit to disk as you leave a block; Manual keeps edits in the window (dirty dot) until ⌘S — the editor's model")
             }
 
             Section("System") {

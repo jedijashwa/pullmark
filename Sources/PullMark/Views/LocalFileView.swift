@@ -40,6 +40,10 @@ struct LocalFileView: View {
     @State private var pendingScrollRestore: Double?
     /// Arrow navigation across a commit: reveal here after the reload.
     @State private var pendingRevealLine: Int?
+    /// Autosave takes ONE history snapshot per edit-mode session — a
+    /// 25-block editing walk must not churn the whole 20-snapshot Revert
+    /// history with intermediate states.
+    @State private var sessionSnapshotTaken = false
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
@@ -185,6 +189,7 @@ struct LocalFileView: View {
                     Task { @MainActor in
                         if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
                         editMode = newValue
+                        if newValue { sessionSnapshotTaken = false }
                         handleEditingState(false)
                     }
                 }
@@ -348,7 +353,10 @@ struct LocalFileView: View {
                 return
             }
             do {
-                EditHistory.snapshot(file.url)
+                if !sessionSnapshotTaken {
+                    EditHistory.snapshot(file.url)
+                    sessionSnapshotTaken = true
+                }
                 try newText.write(to: file.url, atomically: true, encoding: .utf8)
                 state.editedText[file.url] = nil
                 state.editedBase[file.url] = nil
