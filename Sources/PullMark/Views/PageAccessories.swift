@@ -93,6 +93,10 @@ struct OutlineSidebar: View {
     let items: [OutlineItem]
     let proxy: WebViewProxy
     var activeID: String? = nil
+    /// HSplitView never persists its divider, so the panel remembers its
+    /// own width: the stored value seeds idealWidth (which the split view
+    /// honors on first layout) and live resizes write back through it.
+    @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 230
 
     var body: some View {
         List {
@@ -124,7 +128,19 @@ struct OutlineSidebar: View {
             }
         }
         .listStyle(.sidebar)
-        .frame(minWidth: 170, idealWidth: 230, maxWidth: 340)
+        .frame(minWidth: 170,
+               idealWidth: CGFloat(min(max(storedWidth, 170), 340)),
+               maxWidth: 340)
+        .background(
+            GeometryReader { geometry in
+                Color.clear.onChange(of: geometry.size.width) { width in
+                    let rounded = Int(width.rounded())
+                    if rounded >= 170, rounded <= 340, rounded != storedWidth {
+                        storedWidth = rounded
+                    }
+                }
+            }
+        )
     }
 
     private func font(for level: Int) -> Font {

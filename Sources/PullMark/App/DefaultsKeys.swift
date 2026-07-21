@@ -51,6 +51,12 @@ enum DefaultsKeys {
     static let shortcutOverrides = "pm.shortcutOverrides"
     /// Settings window: the last-selected tab ("general"/"themes"/"keyboard").
     static let settingsTab = "pm.settingsTab"
+    /// Outline panel width in points (the HSplitView divider has no
+    /// built-in persistence, unlike the sidebar column).
+    static let outlineWidth = "pm.outlineWidth"
+    /// A window was full screen at quit — SwiftUI restores frames but not
+    /// full-screen state, so the app re-enters it manually at launch.
+    static let windowWasFullScreen = "pm.windowWasFullScreen"
     /// Sidebar sections: expansion state (default expanded).
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"

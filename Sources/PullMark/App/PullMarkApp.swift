@@ -343,6 +343,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         DMGGreeter.runAtLaunch()
         registerQuickLookExtension()
+        restoreFullScreenIfNeeded()
     }
 
     /// Brew's delete-and-replace upgrade can drop the Quick Look appex's
@@ -375,5 +376,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // window — mid-session didSet snapshots proved racy (a restore's
         // own adds overwrote the snapshot it was restoring from).
         AppState.keyInstance?.snapshotSession()
+        // SwiftUI restores window frames but not full-screen state, so
+        // remember it ourselves (⌘Q from full screen still has the window
+        // alive here; closing the window first leaves full screen anyway).
+        UserDefaults.standard.set(
+            NSApp.windows.contains { $0.styleMask.contains(.fullScreen) },
+            forKey: DefaultsKeys.windowWasFullScreen)
+    }
+
+    /// Re-enters full screen at launch when the app was quit that way.
+    /// Polls briefly: SwiftUI creates the window a beat after
+    /// applicationDidFinishLaunching.
+    func restoreFullScreenIfNeeded(attempt: Int = 0) {
+        guard UserDefaults.standard.bool(forKey: DefaultsKeys.windowWasFullScreen) else { return }
+        if let window = NSApp.windows.first(where: {
+            $0.frame.height > 200 && !$0.styleMask.contains(.fullScreen)
+        }) {
+            window.toggleFullScreen(nil)
+        } else if attempt < 15, !NSApp.windows.contains(where: { $0.styleMask.contains(.fullScreen) }) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.restoreFullScreenIfNeeded(attempt: attempt + 1)
+            }
+        }
     }
 }

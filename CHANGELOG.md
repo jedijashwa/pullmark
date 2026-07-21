@@ -4,6 +4,12 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- The outline panel remembers its width across launches (the sidebar
+  always did; the outline's divider had no memory of its own), and a
+  window quit in full screen comes back in full screen.
+
 ## 0.16.1 - 2026-07-21
 
 - Actually killed the white flash while pages load. 0.16.0 fixed the
