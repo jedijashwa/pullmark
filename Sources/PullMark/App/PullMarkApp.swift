@@ -124,8 +124,15 @@ struct PullMarkApp: App {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {
                     Task {
+                        // An alert, not the focused window's error state: the
+                        // result must land even when Settings is key or no
+                        // window is open at all (state is nil in both).
                         if let message = await updates.checkManually() {
-                            state?.lastError = message
+                            let alert = NSAlert()
+                            alert.messageText = "Check for Updates"
+                            alert.informativeText = message
+                            NSApp.activate(ignoringOtherApps: true)
+                            alert.runModal()
                         }
                     }
                 }

@@ -4,6 +4,13 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Check for Updates (PullMark menu) now reports its result in an alert.
+  Before, the "you're up to date" reply went to the focused document
+  window — and was silently dropped when Settings was key or no window
+  was open, making the menu item look like it did nothing.
+
 ## 0.15.2 - 2026-07-21
 
 - Fresh installs now actually default to the Editorial reading theme. The
