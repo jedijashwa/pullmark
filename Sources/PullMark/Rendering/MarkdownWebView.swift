@@ -91,7 +91,11 @@ struct MarkdownWebView: NSViewRepresentable {
         // API for this; the KVC is guarded so a future WebKit that drops the
         // property degrades to a white flash instead of an NSUnknownKey
         // crash, and the supported under-page color covers overscroll.
-        if webView.responds(to: Selector(("setDrawsBackground:"))) {
+        // Modern WebKit renamed the setter to _setDrawsBackground: (KVC's
+        // setter search still finds it) — the old selector-only guard made
+        // this whole call a silent no-op, which WAS the dark-mode flash.
+        if webView.responds(to: Selector(("setDrawsBackground:")))
+            || webView.responds(to: Selector(("_setDrawsBackground:"))) {
             webView.setValue(false, forKey: "drawsBackground")
         }
         webView.underPageBackgroundColor = .clear

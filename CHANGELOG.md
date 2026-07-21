@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Actually killed the white flash while pages load. 0.16.0 fixed the
+  first paint's color but the web view itself still painted opaque white
+  for an instant before that on current macOS — the transparency call
+  was silently skipped because WebKit renamed the private setter it
+  checks for. Both spellings are accepted now, so loading shows the
+  theme's paper color from the very first frame.
+
 ## 0.16.0 - 2026-07-21
 
 - The sidebar is yours to arrange around: every section collapses with a
