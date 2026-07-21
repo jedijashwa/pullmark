@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.16.1 - 2026-07-21
 
 - Actually killed the white flash while pages load. 0.16.0 fixed the
   first paint's color but the web view itself still painted opaque white
