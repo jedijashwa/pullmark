@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.15.2 - 2026-07-21
 
 - Fresh installs now actually default to the Editorial reading theme. The
   default was changed to Editorial some releases ago, but the views' own
