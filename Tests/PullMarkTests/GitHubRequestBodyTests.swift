@@ -43,5 +43,24 @@ import Testing
             commitID: "sha", body: "Looks good", event: "APPROVE", drafts: []))
         #expect(object["event"] as? String == "APPROVE")
         #expect(object["body"] as? String == "Looks good")
+        // A draft-less review (the overview's verdict-only path) must omit
+        // the optional comments parameter, not send [].
+        #expect(object["comments"] == nil)
+    }
+
+    @Test func fileCommentBodyCarriesSubjectType() throws {
+        let object = try json(GitHubClient.fileCommentRequestBody(
+            commitID: "sha9", path: "docs/guide.md", body: "whole-file note"))
+        #expect(object["body"] as? String == "whole-file note")
+        #expect(object["commit_id"] as? String == "sha9")
+        #expect(object["path"] as? String == "docs/guide.md")
+        #expect(object["subject_type"] as? String == "file")
+        #expect(object["line"] == nil)
+    }
+
+    @Test func issueCommentBodyIsJustTheBody() throws {
+        let object = try json(GitHubClient.issueCommentRequestBody(body: "hello"))
+        #expect(object.count == 1)
+        #expect(object["body"] as? String == "hello")
     }
 }

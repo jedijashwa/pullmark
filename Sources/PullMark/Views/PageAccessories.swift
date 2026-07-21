@@ -319,7 +319,7 @@ struct ReleaseNotesSheet: View {
                     theme: style.theme, customCSS: style.customCSS
                 )
             }())
-                .background(Color(nsColor: .textBackgroundColor))
+                .background(ThemePaper.color(for: themeRaw))
         }
         .frame(width: 640, height: 520)
     }

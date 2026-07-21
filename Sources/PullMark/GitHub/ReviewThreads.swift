@@ -9,9 +9,13 @@ struct ReviewThread: Equatable {
     var path: String { root.path }
     var anchorLine: Int? { root.line }
     var anchorSide: String { root.side ?? "RIGHT" }
-    var isOutdated: Bool { root.line == nil }
+    /// Whole-file comments have no line by design — never anchored, never
+    /// outdated.
+    var isFileLevel: Bool { root.subjectType == "file" }
+    var isOutdated: Bool { root.line == nil && !isFileLevel }
 
     var lineLabel: String {
+        if isFileLevel { return "Whole file" }
         if let line = root.line {
             let which = anchorSide == "LEFT" ? "old" : "new"
             return "Line \(line) (\(which))"

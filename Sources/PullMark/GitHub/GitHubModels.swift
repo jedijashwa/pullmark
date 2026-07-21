@@ -48,6 +48,9 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     let side: String?
     let startLine: Int?
     let originalLine: Int?
+    /// "file" for whole-file comments (no line anchor by design — they are
+    /// not outdated, they were never anchored).
+    let subjectType: String?
     let inReplyToId: Int?
     let user: User?
     let createdAt: String?

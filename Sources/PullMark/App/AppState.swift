@@ -198,10 +198,6 @@ final class AppState: ObservableObject {
 
     init() {
         if Self.keyInstance == nil { Self.keyInstance = self }
-        // Registering also flushes any open-file events that arrived before
-        // any state existed (cold launch with a document). The handler
-        // routes through keyInstance so re-registration by later windows
-        // is harmless.
         OpenURLRouter.shared.onOpen { urls in
             Task { @MainActor in AppState.deliverExternalOpens(urls) }
         }

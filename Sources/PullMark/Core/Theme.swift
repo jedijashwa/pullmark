@@ -40,4 +40,16 @@ enum Theme: String, CaseIterable, Identifiable {
     static func current(from raw: String?) -> Theme {
         raw.flatMap(Theme.init(rawValue:)) ?? .standard
     }
+
+    /// (light, dark) page paper colors, mirroring the `body { background }`
+    /// values in app.css per theme — the source of the pre-CSS first paint
+    /// and the SwiftUI backdrop behind the web view. Custom themes build on
+    /// the GitHub base, so unknown raw values use the GitHub paper.
+    static func paperHex(for raw: String) -> (light: String, dark: String) {
+        switch Theme(rawValue: raw) {
+        case .editorial: return ("#fbfaf8", "#10151c")
+        case .terminal: return ("#f4f6f4", "#0a0f0c")
+        case .github, .none: return ("#ffffff", "#0d1117")
+        }
+    }
 }

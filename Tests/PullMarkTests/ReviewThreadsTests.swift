@@ -4,10 +4,25 @@ import Testing
 
 @Suite struct ReviewThreadsTests {
     private func comment(id: Int, path: String = "a.md", line: Int? = 5, side: String? = "RIGHT",
-                         originalLine: Int? = nil, replyTo: Int? = nil) -> ReviewComment {
+                         originalLine: Int? = nil, subjectType: String? = nil,
+                         replyTo: Int? = nil) -> ReviewComment {
         ReviewComment(id: id, path: path, body: "c\(id)", line: line, side: side,
-                      startLine: nil, originalLine: originalLine, inReplyToId: replyTo,
+                      startLine: nil, originalLine: originalLine, subjectType: subjectType,
+                      inReplyToId: replyTo,
                       user: .init(login: "alice"), createdAt: "2026-07-18T12:00:00Z", htmlUrl: nil)
+    }
+
+    @Test func fileLevelCommentsAreNotOutdated() {
+        let thread = ReviewThreads.group([
+            comment(id: 9, line: nil, side: nil, subjectType: "file"),
+        ])[0]
+        #expect(thread.isFileLevel)
+        #expect(!thread.isOutdated)
+        #expect(thread.lineLabel == "Whole file")
+        // A line comment whose anchor vanished stays outdated.
+        let outdated = ReviewThreads.group([comment(id: 10, line: nil, originalLine: 4)])[0]
+        #expect(outdated.isOutdated)
+        #expect(outdated.lineLabel == "Outdated — was line 4")
     }
 
     private func segment(_ kind: String, _ start: Int, _ end: Int, side: String = "RIGHT") -> DiffSegmentPayload {

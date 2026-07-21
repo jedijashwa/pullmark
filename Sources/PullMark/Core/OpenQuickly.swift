@@ -77,4 +77,38 @@ enum OpenQuickly {
         }
         return result
     }
+
+    /// A ⌘K query that IS a destination rather than a search term: a GitHub
+    /// pull request URL/reference, or an absolute (or `~`-, or `file://`-)
+    /// path that exists on disk. The palette offers these as an "Open …" row
+    /// above the fuzzy matches. `fileExists` is injectable so the parsing
+    /// stays unit-testable without touching the real filesystem.
+    enum DirectDestination: Equatable {
+        /// Expanded, standardized absolute path, verified to exist.
+        case path(String)
+        case pullRequest(PullRequestRef)
+    }
+
+    static func directDestination(
+        for query: String,
+        fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }
+    ) -> DirectDestination? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if let ref = PullRequestRef.parse(trimmed) {
+            return .pullRequest(ref)
+        }
+        var path = trimmed
+        if path.lowercased().hasPrefix("file://"),
+           let url = URL(string: path), url.isFileURL {
+            path = url.path
+        }
+        if path.hasPrefix("~") {
+            path = (path as NSString).expandingTildeInPath
+        }
+        guard path.hasPrefix("/") else { return nil }
+        let standardized = (path as NSString).standardizingPath
+        guard fileExists(standardized) else { return nil }
+        return .path(standardized)
+    }
 }

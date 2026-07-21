@@ -6,6 +6,38 @@ section current as features land.
 
 ## Unreleased
 
+- The sidebar is yours to arrange around: every section collapses with a
+  click on its header (state remembered), and Review Requests moved below
+  Local Files and Pull Requests — what you opened yourself outranks what
+  was assigned to you.
+- Open Quickly (⌘K) now also opens things that aren't open yet: paste a
+  GitHub pull request URL (or owner/repo#123) or type an absolute path
+  (/…, ~/…) and the first row offers to open it directly.
+- A brand-new file in a pull request no longer tints every block green —
+  one note at the top says the whole document is new, and the added/
+  removed highlights stay reserved for actual changes in changed files.
+- The comment and suggestion sheet got room to breathe: helper text moved
+  out of the button row, buttons no longer squish or truncate, and Add to
+  Review is now the prominent ⌘↩ default (Comment Now moved to ⇧⌘↩) —
+  batching a review is what a review app should encourage.
+- Comment on exactly the lines you mean: when a comment targets a
+  multi-line block, the sheet lists the block's source lines — click one
+  to target just it, shift-click to extend. Suggestions re-seed to the
+  narrowed lines while untouched.
+- Review a pull request without writing line comments: the overview's
+  Review box now always offers Approve, Request Changes, and Comment
+  (with an optional summary), matching GitHub's review flow. A separate
+  field posts plain conversation comments, and every PR file's toolbar
+  gained "Comment on File" for whole-file notes.
+- Getting around a pull request no longer needs the sidebar: a PR file's
+  toolbar now has a back-to-overview button, previous/next file arrows,
+  and a "2 of 5" jump menu.
+- The review-request inbox now shows only pull requests that change
+  Markdown by default (Settings → General can bring back the rest), and
+  carries an unread count in its header even while collapsed.
+- No more white flash while pages load in dark mode: the first paint now
+  uses the current theme's paper color in both appearances, and the
+  backdrop behind loading pages matches it.
 - Check for Updates (PullMark menu) now reports its result in an alert.
   Before, the "you're up to date" reply went to the focused document
   window — and was silently dropped when Settings was key or no window

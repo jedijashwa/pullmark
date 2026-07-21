@@ -9,6 +9,8 @@ struct PROverviewView: View {
     @State private var reviewSummary = ""
     @State private var submitting = false
     @State private var confirmation: String?
+    @State private var conversationText = ""
+    @State private var postingComment = false
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
@@ -25,11 +27,9 @@ struct PROverviewView: View {
                 header(session)
                     .padding([.horizontal, .top], 20)
                     .padding(.bottom, 12)
-                if !session.drafts.isEmpty {
-                    draftsSection(session)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)
-                }
+                reviewSection(session)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
                 Divider()
                 let style = ThemeSelection.pageStyle(from: themeRaw)
                 MarkdownWebView(
@@ -50,7 +50,7 @@ struct PROverviewView: View {
                     },
                     proxy: proxy
                 )
-                .background(Color(nsColor: .textBackgroundColor))
+                .background(ThemePaper.color(for: themeRaw))
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
         } else {
@@ -88,60 +88,115 @@ struct PROverviewView: View {
         }
     }
 
-    private func draftsSection(_ session: PRSession) -> some View {
+    /// The whole verdict lives here: drafts (when any), an optional
+    /// summary, and first-class Approve / Request Changes / Comment —
+    /// available with zero comments too, like GitHub's own Review button.
+    private func reviewSection(_ session: PRSession) -> some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(session.drafts) { draft in
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(draft.path) · \(draft.lineDescription)")
-                                        .font(.caption.bold())
-                                        .foregroundStyle(.secondary)
-                                    Text(draft.body)
-                                        .lineLimit(3)
+                if !session.drafts.isEmpty {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(session.drafts) { draft in
+                                HStack(alignment: .top) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(draft.path) · \(draft.lineDescription)")
+                                            .font(.caption.bold())
+                                            .foregroundStyle(.secondary)
+                                        Text(draft.body)
+                                            .lineLimit(3)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        state.removeDraft(sessionID: sessionID, draftID: draft.id)
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .help("Discard this draft comment")
                                 }
-                                Spacer()
-                                Button {
-                                    state.removeDraft(sessionID: sessionID, draftID: draft.id)
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .buttonStyle(.borderless)
-                                .help("Discard this draft comment")
+                                .padding(6)
+                                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
                             }
-                            .padding(6)
-                            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
                         }
                     }
+                    .frame(maxHeight: 180)
                 }
-                .frame(maxHeight: 180)
 
                 TextField("Review summary (optional)", text: $reviewSummary, axis: .vertical)
                     .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
 
-                HStack {
-                    Menu("Submit Review") {
-                        Button("Comment") { submit(event: "COMMENT") }
-                        Button("Approve") { submit(event: "APPROVE") }
-                        Button("Request Changes") { submit(event: "REQUEST_CHANGES") }
+                HStack(spacing: 10) {
+                    if !session.drafts.isEmpty {
+                        Button("Save as Pending on GitHub") { submit(event: nil) }
+                            .fixedSize()
+                            .help("Uploads the comments as a pending (draft) review you can finish on GitHub")
                     }
-                    .fixedSize()
-                    Button("Save as Pending on GitHub") { submit(event: nil) }
-                        .help("Uploads the comments as a pending (draft) review you can finish on GitHub")
-                    if submitting {
-                        ProgressView().controlSize(.small)
-                    }
+                    ProgressView()
+                        .controlSize(.small)
+                        .opacity(submitting ? 1 : 0)
                     Spacer()
+                    Button("Comment") { submit(event: "COMMENT") }
+                        .fixedSize()
+                        .disabled(!reviewActionable(session))
+                        .help("Submit the review without a verdict")
+                    Button("Request Changes") { submit(event: "REQUEST_CHANGES") }
+                        .fixedSize()
+                        .disabled(!reviewActionable(session))
+                        .help("Ask for changes before this can merge")
+                    Button("Approve") { submit(event: "APPROVE") }
+                        .buttonStyle(.borderedProminent)
+                        .fixedSize()
+                        .help("Approve this pull request")
                 }
                 .disabled(submitting)
+
+                // Conversation comments post immediately to the PR's
+                // timeline — separate from any review verdict.
+                HStack(spacing: 10) {
+                    TextField("Comment on the pull request conversation…",
+                              text: $conversationText, axis: .vertical)
+                        .lineLimit(1...4)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Post") { postConversationComment() }
+                        .fixedSize()
+                        .disabled(conversationText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || postingComment)
+                        .help("Post to the PR conversation right away (not part of a review)")
+                }
             }
             .padding(4)
         } label: {
-            Label("Review draft — \(session.drafts.count) comment\(session.drafts.count == 1 ? "" : "s")",
+            Label(session.drafts.isEmpty
+                    ? "Review"
+                    : "Review — \(session.drafts.count) draft comment\(session.drafts.count == 1 ? "" : "s")",
                   systemImage: "text.bubble")
+        }
+    }
+
+    /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries
+    /// neither a body nor comments; Approve stands on its own.
+    private func reviewActionable(_ session: PRSession) -> Bool {
+        !session.drafts.isEmpty
+            || !reviewSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func postConversationComment() {
+        guard let session = state.session(sessionID) else { return }
+        let body = conversationText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty else { return }
+        postingComment = true
+        confirmation = nil
+        Task {
+            do {
+                try await state.client.createIssueComment(session.ref, body: body)
+                conversationText = ""
+                confirmation = "Comment posted to the conversation."
+            } catch {
+                state.lastError = error.localizedDescription
+            }
+            postingComment = false
         }
     }
 
@@ -221,6 +276,7 @@ struct PRFileView: View {
     @State private var loading = true
     @State private var loadError: String?
     @State private var commentTarget: CommentTarget?
+    @State private var fileCommentVisible = false
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
@@ -239,135 +295,75 @@ struct PRFileView: View {
     private var session: PRSession? { state.session(sessionID) }
     private var file: PullRequestFile? { session?.files.first { $0.filename == path } }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            if session?.updateAvailable == true {
-                PRUpdateBanner(sessionID: sessionID)
-            }
-            if state.findBarVisible {
-                FindBar(proxy: proxy, seed: $findSeed)
-            }
-            if loading {
-                ProgressView("Loading \(path)…")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let loadError {
-                VStack(spacing: 10) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 36))
-                        .foregroundStyle(.orange)
-                    Text(loadError)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 480)
-                    Button("Retry") { Task { await load() } }
-                }
+    private var loadTaskID: String {
+        sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")
+    }
+
+    private func modeChanged(_ newMode: Mode) {
+        loadBlameIfNeeded()
+        updateActiveDocument()
+    }
+
+    @ViewBuilder
+    private var stackedContent: some View {
+        if session?.updateAvailable == true {
+            PRUpdateBanner(sessionID: sessionID)
+        }
+        if state.findBarVisible {
+            FindBar(proxy: proxy, seed: $findSeed)
+        }
+        if loading {
+            ProgressView("Loading \(path)…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                HSplitView {
-                    MarkdownWebView(
-                        html: html,
-                        onCommentRequest: { message in
-                            let seed = suggestionSeed(for: message)
-                            commentTarget = CommentTarget(
-                                lineStart: message.lineStart,
-                                lineEnd: message.lineEnd,
-                                side: message.side,
-                                suggestionSeed: seed,
-                                // Pencil without a seed (head text not loaded
-                                // yet) degrades to the plain composer.
-                                editSuggestion: message.edit && seed != nil
-                            )
-                        },
-                        remoteContext: remoteContext,
-                        onOpenRemoteFile: { repoPath in
-                            state.openRemoteDoc(sessionID: sessionID, path: repoPath)
-                        },
-                        onOutline: { outline = $0 },
-                        onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
-                        onThreadReply: { replyTarget = ReplyTarget(id: $0) },
-                        onThreadResolve: { rootID, resolved in
-                            setThreadResolved(rootID: rootID, resolved: resolved)
-                        },
-                        onBlameHistory: { start, end in
-                            historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
-                        },
-                        onStats: { stats = $0 },
-                        onPageLoaded: { handlePageLoaded() },
-                        proxy: proxy
-                    )
-                    .overlay(alignment: .bottomTrailing) {
-                        if mode == .result, let stats {
-                            DocumentStatsPill(stats: stats)
-                        }
-                    }
-                    .layoutPriority(1)
-                    if outlineVisible {
-                        OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
-                    }
-                }
-                .background(Color(nsColor: .textBackgroundColor))
+        } else if let loadError {
+            VStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 36))
+                    .foregroundStyle(.orange)
+                Text(loadError)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 480)
+                Button("Retry") { Task { await load() } }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            documentArea
         }
-        .navigationTitle(path)
-        .toolbar {
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-            ToolbarItem(placement: .principal) {
-                Picker("View", selection: $mode) {
-                    ForEach(Mode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            ToolbarItem {
-                if mode == .renderedDiff {
-                    Picker("Layout", selection: $layoutRaw) {
-                        ForEach(DiffLayout.allCases) { layout in
-                            Text(layout.rawValue).tag(layout.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .help("Inline or side-by-side rendered diff")
-                }
-            }
-            ToolbarItem {
-                if mode == .result {
-                    BlameToggle(visible: $blameVisible)
-                }
-            }
-        }
-        .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
-            await load()
-        }
-        .onDisappear {
-            state.unregisterActiveDocument(id: activeDocumentID)
-        }
-        .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
-        .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
-        .onChange(of: mode) { _ in
-            loadBlameIfNeeded()
-            updateActiveDocument()
-        }
-        .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
-                                        consume: consumePendingSearch))
-        .sheet(item: $commentTarget) { target in
-            CommentComposer(sessionID: sessionID, path: path, target: target)
-        }
-        .sheet(item: $replyTarget) { target in
-            ThreadReplyComposer(sessionID: sessionID, rootID: target.id)
-        }
-        .sheet(item: $historyRequest) { _ in
-            let ref = session?.ref
-            let sha = session?.details.head.sha
-            BlameHistorySheet {
-                guard let ref, let sha else {
+    }
+
+    var body: some View {
+        VStack(spacing: 0) { stackedContent }
+            .navigationTitle(path)
+            .toolbar { fileToolbar }
+            .task(id: loadTaskID) { await load() }
+            .onDisappear { state.unregisterActiveDocument(id: activeDocumentID) }
+            .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
+            .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
+            .onChange(of: mode, perform: modeChanged)
+            .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
+                                            consume: consumePendingSearch))
+            .modifier(fileSheets)
+    }
+
+    /// The four sheets, bundled off the main modifier chain (type-checker
+    /// budget again).
+    private var fileSheets: PRFileSheets {
+        PRFileSheets(
+            commentTarget: $commentTarget,
+            fileCommentVisible: $fileCommentVisible,
+            replyTarget: $replyTarget,
+            historyRequest: $historyRequest,
+            sessionID: sessionID,
+            path: path,
+            history: { [weak state] in
+                guard let state, let session = state.session(sessionID) else {
                     throw GitHubClient.APIError(status: -1, message: "The PR session is no longer available.")
                 }
-                return try await BlameService.remoteHistory(client: state.client, ref: ref,
-                                                            path: path, sha: sha)
+                return try await BlameService.remoteHistory(
+                    client: state.client, ref: session.ref,
+                    path: path, sha: session.details.head.sha)
             }
-        }
+        )
     }
 
     private var activeDocumentID: String { "prFile:" + sessionID + "|" + path }
@@ -452,19 +448,134 @@ struct PRFileView: View {
             let placed = ReviewThreads.place(threads, in: segments,
                                              meta: session?.threadMeta ?? [:])
             segments = placed.segments
-            let outdated = placed.outdated.map { thread in
+            func payload(_ thread: ReviewThread) -> ThreadPayload {
                 ThreadPayload(lineLabel: thread.lineLabel,
                               comments: thread.comments.map(CommentPayload.init),
                               rootID: thread.root.id,
                               resolved: session?.threadMeta[thread.root.id]?.isResolved)
             }
+            // Whole-file comments were never anchored — their own section,
+            // not the outdated bucket.
+            let fileThreads = placed.outdated.filter(\.isFileLevel).map(payload)
+            let outdated = placed.outdated.filter { !$0.isFileLevel }.map(payload)
+            let allNew = file.status == "added"
             return HTMLBuilder.diffPage(segments: segments,
                                         outdatedThreads: outdated,
-                                        layout: layout == .split ? "split" : "inline",
+                                        fileThreads: fileThreads,
+                                        layout: (layout == .split && !allNew) ? "split" : "inline",
                                         remote: HTMLBuilder.RemoteAssets(filePath: path),
                                         title: path,
                                         theme: theme,
-                                        customCSS: style.customCSS)
+                                        customCSS: style.customCSS,
+                                        allNew: allNew)
+        }
+    }
+
+    /// The web view + optional outline column (extracted from body for the
+    /// type-checker).
+    private var documentArea: some View {
+        HSplitView {
+            MarkdownWebView(
+                html: html,
+                onCommentRequest: { commentTarget = makeCommentTarget(from: $0) },
+                remoteContext: remoteContext,
+                onOpenRemoteFile: { repoPath in
+                    state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                },
+                onOutline: { outline = $0 },
+                onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
+                onThreadReply: { replyTarget = ReplyTarget(id: $0) },
+                onThreadResolve: { rootID, resolved in
+                    setThreadResolved(rootID: rootID, resolved: resolved)
+                },
+                onBlameHistory: { start, end in
+                    historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
+                },
+                onStats: { stats = $0 },
+                onPageLoaded: { handlePageLoaded() },
+                proxy: proxy
+            )
+            .overlay(alignment: .bottomTrailing) {
+                if mode == .result, let stats {
+                    DocumentStatsPill(stats: stats)
+                }
+            }
+            .layoutPriority(1)
+            if outlineVisible {
+                OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
+            }
+        }
+        .background(ThemePaper.color(for: themeRaw))
+    }
+
+    private func makeCommentTarget(from message: BridgeMessage) -> CommentTarget {
+        let seed = suggestionSeed(for: message)
+        let sideText = message.side == "RIGHT" ? headText : baseText
+        return CommentTarget(
+            lineStart: message.lineStart,
+            lineEnd: message.lineEnd,
+            side: message.side,
+            suggestionSeed: seed,
+            // Pencil without a seed (head text not loaded yet) degrades to
+            // the plain composer.
+            editSuggestion: message.edit && seed != nil,
+            sourceText: sideText.flatMap {
+                TextLines.lines(in: $0, from: message.lineStart, to: message.lineEnd)
+            }
+        )
+    }
+
+    /// Extracted from body so the modifier chain stays inside the
+    /// type-checker's budget.
+    @ToolbarContentBuilder
+    private var fileToolbar: some ToolbarContent {
+        ToolbarItem {
+            OutlineToggle(visible: $outlineVisible)
+        }
+        ToolbarItem(placement: .principal) {
+            Picker("View", selection: $mode) {
+                ForEach(Mode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        ToolbarItem {
+            if mode == .renderedDiff {
+                Picker("Layout", selection: $layoutRaw) {
+                    ForEach(DiffLayout.allCases) { layout in
+                        Text(layout.rawValue).tag(layout.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                // A brand-new file renders inline regardless: split
+                // mode would show an all-hatched old column against
+                // the untinted document — half the pane saying nothing.
+                .disabled(file?.status == "added")
+                .help(file?.status == "added"
+                    ? "New files always render inline — there is no old side to compare"
+                    : "Inline or side-by-side rendered diff")
+            }
+        }
+        ToolbarItem {
+            if mode == .result {
+                BlameToggle(visible: $blameVisible)
+            }
+        }
+        ToolbarItem {
+            Button {
+                fileCommentVisible = true
+            } label: {
+                Label("Comment on File", systemImage: "plus.bubble")
+            }
+            .help("Comment on this file as a whole, not a specific line")
+        }
+        // The sidebar shouldn't be the only way around a PR: back to
+        // the overview, and step or jump between its Markdown files.
+        ToolbarItemGroup(placement: .navigation) {
+            if let session {
+                PRFileNavigation(sessionID: sessionID, path: path, session: session)
+            }
         }
     }
 
@@ -553,6 +664,14 @@ struct CommentTarget: Identifiable {
     /// Edit-as-suggestion: the composer opens as an editor on the block's
     /// source and submits the change wrapped in a ```suggestion block.
     var editSuggestion = false
+    /// The block's source on the target side, one string; feeds the
+    /// composer's line picker so a comment can narrow to specific lines.
+    var sourceText: String?
+
+    /// The block's lines, indexed so row i is source line `lineStart + i`.
+    var sourceLines: [String] {
+        sourceText.map { $0.components(separatedBy: "\n") } ?? []
+    }
 }
 
 // MARK: - Comment composer
@@ -570,6 +689,20 @@ struct CommentComposer: View {
     @State private var posting = false
     @State private var error: String?
     @FocusState private var replacementFocused: Bool
+    /// The targeted line range — starts as the whole block, narrowable
+    /// through the line picker. 1-based source line numbers.
+    @State private var selStart: Int
+    @State private var selEnd: Int
+    /// Last plainly-clicked line; shift-click extends from here.
+    @State private var anchor: Int?
+
+    init(sessionID: String, path: String, target: CommentTarget) {
+        self.sessionID = sessionID
+        self.path = path
+        self.target = target
+        _selStart = State(initialValue: target.lineStart)
+        _selEnd = State(initialValue: target.lineEnd)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -577,9 +710,13 @@ struct CommentComposer: View {
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Text(draft.lineDescription)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if target.lineEnd > target.lineStart, !target.sourceLines.isEmpty {
+                linePicker
+            } else {
+                Text(draft.lineDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             if target.editSuggestion {
                 // The block's source, ready to edit; submitted as a
@@ -623,13 +760,16 @@ struct CommentComposer: View {
                     .textSelection(.enabled)
             }
 
-            HStack {
+            // Helpers live above the action row — sharing one row with
+            // three buttons squeezed everything until labels truncated.
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
                 if !target.editSuggestion, target.suggestionSeed != nil {
                     Button {
                         insertSuggestion()
                     } label: {
                         Label("Insert Suggestion", systemImage: "plus.diamond")
                     }
+                    .fixedSize()
                     .help("Insert a ```suggestion block pre-filled with the current lines")
                 }
                 // Out-of-diff targets fail at post time (or reject the whole
@@ -639,32 +779,160 @@ struct CommentComposer: View {
                     : "Comments must target lines that are part of the PR diff.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+
+            // HIG order: primary rightmost with Cancel beside it, the
+            // alternative commit further left. Reviewing is this app's whole
+            // point, so batching into the pending review is the default.
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                    .opacity(posting ? 1 : 0)
                 Spacer()
+                Button(target.editSuggestion ? "Suggest Now" : "Comment Now") { postNow() }
+                    .keyboardShortcut(.return, modifiers: [.command, .shift])
+                    .disabled(!submittable || posting)
+                    .fixedSize()
+                    .help("Post immediately, outside any pending review (⇧⌘↩)")
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                    .fixedSize()
                 Button("Add to Review") {
                     state.addDraft(sessionID: sessionID, draft)
                     dismiss()
                 }
+                .buttonStyle(.borderedProminent)
+                // ⌘↩ — Return alone inserts a newline while an editor
+                // has focus, so plain .defaultAction would never fire.
+                .keyboardShortcut(.return, modifiers: .command)
                 .disabled(!submittable || posting)
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                Button(target.editSuggestion ? "Suggest Now" : "Comment Now") { postNow() }
-                    // ⌘↩ — Return alone inserts a newline while an editor
-                    // has focus, so plain .defaultAction would never fire.
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(!submittable || posting)
-                ProgressView()
-                    .controlSize(.small)
-                    .opacity(posting ? 1 : 0)
+                .fixedSize()
+                .help("Queue in your pending review — it posts when you submit the review (⌘↩)")
             }
         }
         .padding(20)
-        .frame(minWidth: target.editSuggestion ? 560 : 500)
+        .frame(minWidth: 580)
         .onAppear {
-            if target.editSuggestion, let seed = target.suggestionSeed {
+            if target.editSuggestion, let seed = currentSeed {
                 replacement = seed
                 replacementFocused = true
             }
         }
+    }
+
+    // MARK: Line targeting
+
+    private var narrowed: Bool {
+        selStart != target.lineStart || selEnd != target.lineEnd
+    }
+
+    /// The picker locks once a suggestion is in play with content the
+    /// selection no longer matches: in suggestion mode after the seed has
+    /// been edited (silently re-seeding would discard the user's work),
+    /// and in plain mode once an inserted ```suggestion fence exists (a
+    /// suggestion replaces exactly the lines the comment targets, so
+    /// narrowing afterwards would corrupt the file when applied).
+    private var pickerLocked: Bool {
+        if target.editSuggestion {
+            return replacement != (currentSeed ?? "")
+        }
+        return text.contains("```suggestion")
+    }
+
+    private var linePicker: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(draft.lineDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if narrowed, !pickerLocked {
+                    Button("All Lines") { select(target.lineStart, target.lineEnd) }
+                        .buttonStyle(.link)
+                        .font(.subheadline)
+                }
+                Spacer()
+                Text(pickerLocked
+                    ? (target.editSuggestion
+                        ? "Line selection is locked while your edit is in progress."
+                        : "Line selection is locked while a suggestion block is in the comment.")
+                    : "Click a line to target just it; shift-click extends the range.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(target.sourceLines.enumerated()), id: \.offset) { offset, line in
+                        pickerRow(number: target.lineStart + offset, text: line)
+                    }
+                }
+            }
+            .frame(maxHeight: 132)
+            .background(Color(nsColor: .textBackgroundColor),
+                        in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+        }
+    }
+
+    private func pickerRow(number: Int, text lineText: String) -> some View {
+        let selected = number >= selStart && number <= selEnd
+        return Button {
+            rowClicked(number)
+        } label: {
+            HStack(spacing: 8) {
+                Text("\(number)")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(selected ? .secondary : .tertiary)
+                    .frame(width: 36, alignment: .trailing)
+                Text(lineText.isEmpty ? " " : lineText)
+                    .font(.system(.caption, design: .monospaced))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 2)
+            .padding(.horizontal, 6)
+            .contentShape(Rectangle())
+            .background(selected ? Color.accentColor.opacity(0.14) : .clear)
+        }
+        .buttonStyle(.plain)
+        .disabled(pickerLocked)
+        .accessibilityLabel("Line \(number): \(lineText)")
+        .accessibilityValue(selected ? "targeted" : "")
+        .accessibilityHint("Click to target only this line; shift-click to extend the range")
+    }
+
+    private func rowClicked(_ number: Int) {
+        let shift = NSApp.currentEvent?.modifierFlags.contains(.shift) ?? false
+        if shift, let anchor {
+            select(min(anchor, number), max(anchor, number))
+        } else {
+            anchor = number
+            select(number, number)
+        }
+    }
+
+    private func select(_ start: Int, _ end: Int) {
+        let wasSeed = replacement == (currentSeed ?? "")
+        selStart = start
+        selEnd = end
+        // Suggestions replace exactly the targeted lines, so an untouched
+        // seed follows the selection.
+        if target.editSuggestion, wasSeed {
+            replacement = currentSeed ?? ""
+        }
+    }
+
+    /// The current content of the targeted lines (new side), narrowed with
+    /// the selection.
+    private var currentSeed: String? {
+        guard target.suggestionSeed != nil else { return nil }
+        let lines = target.sourceLines
+        guard !lines.isEmpty else { return target.suggestionSeed }
+        let lower = max(0, selStart - target.lineStart)
+        let upper = min(lines.count - 1, selEnd - target.lineStart)
+        guard lower <= upper else { return target.suggestionSeed }
+        return lines[lower...upper].joined(separator: "\n")
     }
 
     private var trimmed: String {
@@ -675,7 +943,7 @@ struct CommentComposer: View {
     /// identical to the current lines would be a no-op review comment.
     private var submittable: Bool {
         if target.editSuggestion {
-            return replacement != (target.suggestionSeed ?? "") || !trimmed.isEmpty
+            return replacement != (currentSeed ?? "") || !trimmed.isEmpty
         }
         return !trimmed.isEmpty
     }
@@ -691,13 +959,13 @@ struct CommentComposer: View {
     /// GitHub applies the suggestion in place of the commented lines, so the
     /// block starts as their current content for the user to edit.
     private func insertSuggestion() {
-        guard let seed = target.suggestionSeed else { return }
+        guard let seed = currentSeed else { return }
         if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
         text += "```suggestion\n\(seed)\n```\n"
     }
 
     private var draft: DraftComment {
-        DraftComment(path: path, lineStart: target.lineStart, lineEnd: target.lineEnd,
+        DraftComment(path: path, lineStart: selStart, lineEnd: selEnd,
                      side: target.side, body: composedBody)
     }
 
@@ -719,6 +987,106 @@ struct CommentComposer: View {
             }
             posting = false
         }
+    }
+}
+
+/// PRFileView's sheets as one modifier — keeps the view's main chain
+/// inside the type-checker's budget.
+private struct PRFileSheets: ViewModifier {
+    @Binding var commentTarget: CommentTarget?
+    @Binding var fileCommentVisible: Bool
+    @Binding var replyTarget: ReplyTarget?
+    @Binding var historyRequest: BlameHistoryRequest?
+    let sessionID: String
+    let path: String
+    let history: () async throws -> HistoryPanelData
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: $commentTarget) { target in
+                CommentComposer(sessionID: sessionID, path: path, target: target)
+            }
+            .sheet(isPresented: $fileCommentVisible) {
+                FileCommentComposer(sessionID: sessionID, path: path)
+            }
+            .sheet(item: $replyTarget) { target in
+                ThreadReplyComposer(sessionID: sessionID, rootID: target.id)
+            }
+            .sheet(item: $historyRequest) { _ in
+                BlameHistorySheet(load: history)
+            }
+    }
+}
+
+/// Toolbar navigation for a PR file: back to the overview, previous/next
+/// Markdown file, and a jump menu — the sidebar stays optional. Extracted
+/// from PRFileView's toolbar to keep the type-checker solvent.
+private struct PRFileNavigation: View {
+    @EnvironmentObject private var state: AppState
+    let sessionID: String
+    let path: String
+    let session: PRSession
+
+    var body: some View {
+        Button {
+            state.selection = .prOverview(sessionID)
+        } label: {
+            // Icon-only: the toolbar also holds the mode picker, layout,
+            // and comment buttons — a titled back button overflows the
+            // whole strip at the minimum window width.
+            Label("Back to \(session.ref.repo) #\(session.ref.number)",
+                  systemImage: "chevron.backward")
+                .labelStyle(.iconOnly)
+        }
+        .help("Back to the pull request overview (\(session.ref.repo) #\(session.ref.number))")
+        if session.markdownFiles.count > 1 {
+            Button { step(-1) } label: {
+                Label("Previous File", systemImage: "chevron.up")
+            }
+            .disabled(!canStep(-1))
+            .help("Previous Markdown file in this pull request")
+            Button { step(1) } label: {
+                Label("Next File", systemImage: "chevron.down")
+            }
+            .disabled(!canStep(1))
+            .help("Next Markdown file in this pull request")
+            Menu {
+                ForEach(session.markdownFiles) { file in
+                    Button {
+                        state.selection = .prFile(sessionID, file.filename)
+                    } label: {
+                        if file.filename == path {
+                            Label(file.filename, systemImage: "checkmark")
+                        } else {
+                            Text(file.filename)
+                        }
+                    }
+                }
+            } label: {
+                Text(positionLabel)
+                    .monospacedDigit()
+            }
+            .help("Jump to another Markdown file in this pull request")
+        }
+    }
+
+    private var index: Int? {
+        session.markdownFiles.firstIndex { $0.filename == path }
+    }
+
+    private func canStep(_ delta: Int) -> Bool {
+        guard let index else { return false }
+        return session.markdownFiles.indices.contains(index + delta)
+    }
+
+    private func step(_ delta: Int) {
+        guard let index, session.markdownFiles.indices.contains(index + delta) else { return }
+        state.selection = .prFile(sessionID, session.markdownFiles[index + delta].filename)
+    }
+
+    private var positionLabel: String {
+        guard let index else { return "\(session.markdownFiles.count) files" }
+        return "\(index + 1) of \(session.markdownFiles.count)"
     }
 }
 
@@ -810,7 +1178,7 @@ struct PRDocView: View {
                         OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
                     }
                 }
-                .background(Color(nsColor: .textBackgroundColor))
+                .background(ThemePaper.color(for: themeRaw))
             }
         }
         .navigationTitle(path)
@@ -921,6 +1289,87 @@ struct PRDocView: View {
 
 struct ReplyTarget: Identifiable {
     let id: Int
+}
+
+/// A comment on a whole file — no line anchor. GitHub only accepts these
+/// on the immediate-comment endpoint, so there is no "Add to Review" here.
+struct FileCommentComposer: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    let sessionID: String
+    let path: String
+
+    @State private var text = ""
+    @State private var posting = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Comment on \(path)")
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Text("Applies to the whole file, not a specific line")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            TextEditor(text: $text)
+                .font(.body)
+                .scrollContentBackground(.hidden)
+                .padding(6)
+                .background(Color(nsColor: .textBackgroundColor),
+                            in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                .frame(minHeight: 120, maxHeight: 280)
+            if let error {
+                Text(error)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
+            }
+            HStack(spacing: 10) {
+                Text("Posts immediately — file comments can't join a pending review.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ProgressView()
+                    .controlSize(.small)
+                    .opacity(posting ? 1 : 0)
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                    .fixedSize()
+                Button("Comment") { post() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
+                    .fixedSize()
+            }
+        }
+        .padding(20)
+        .frame(minWidth: 520)
+    }
+
+    private func post() {
+        guard let session = state.session(sessionID) else { return }
+        posting = true
+        error = nil
+        Task {
+            do {
+                try await state.client.createFileComment(
+                    session.ref,
+                    commitID: session.details.head.sha,
+                    path: path,
+                    body: text.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+                await state.reloadComments(sessionID: sessionID)
+                dismiss()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            posting = false
+        }
+    }
 }
 
 struct ThreadReplyComposer: View {

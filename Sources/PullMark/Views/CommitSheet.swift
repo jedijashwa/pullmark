@@ -120,20 +120,26 @@ struct CommitSheet: View {
                     .textSelection(.enabled)
             }
 
-            HStack {
+            // Same footer grammar as the comment composer: leading
+            // opacity-reserved spinner, prominent primary rightmost with
+            // Cancel beside it, buttons never compressed.
+            HStack(spacing: 10) {
                 if hasRemote {
                     Toggle("Push to origin after committing", isOn: $pushAfterCommit)
                         .font(.caption)
                 }
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                Button(commitButtonTitle) { commit() }
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(!submittable || committing)
                 ProgressView()
                     .controlSize(.small)
                     .opacity(committing ? 1 : 0)
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                    .fixedSize()
+                Button(commitButtonTitle) { commit() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(!submittable || committing)
+                    .fixedSize()
             }
         }
         .padding(20)

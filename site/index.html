@@ -541,14 +541,19 @@ footer .note { margin-left: auto; }
     <h2>The whole docs review, from the rendered page.</h2>
     <p class="prose">Switch between <strong>inline</strong> and <strong>side-by-side</strong>
     layouts, drop to the raw <em>Source Diff</em>, or preview the final <em>Result</em> — all from
-    the toolbar. YAML front matter renders as a <strong>quiet metadata table</strong>, not a wall
-    of bold prose — so config-heavy docs diff cleanly too. Existing review threads appear under
-    the blocks they discuss. Hover any block, click the bubble, and reply — or start something
-    new. Open PRs are checked every minute; if the branch moves, one click refreshes and your
-    drafts survive.</p>
+    the toolbar, which also walks you file to file and back to the PR without touching the
+    sidebar. YAML front matter renders as a <strong>quiet metadata table</strong>, not a wall
+    of bold prose — so config-heavy docs diff cleanly too. A brand-new document reads as a
+    document — one note says it's all new, instead of tinting every block green. Existing review
+    threads appear under the blocks they discuss. Hover any block, click the bubble, and comment
+    on the whole block or <strong>exactly the lines you pick</strong>. When you're done,
+    <strong>Approve</strong>, <strong>Request Changes</strong>, or <strong>Comment</strong> right
+    from the overview — with or without line comments — and drop file-level or plain conversation
+    comments too. Open PRs are checked every minute; if the branch moves, one click refreshes and
+    your drafts survive.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-diff.png?v=2" width="1392" height="912" loading="lazy"
+      <img src="img/app-diff.png?v=3" width="1393" height="959" loading="lazy"
         alt="PullMark reviewing a real GitHub pull request: the removed front matter renders as a red metadata table of keys and values, while the added version below it renders as a green wall of bold prose — showing the patch accidentally broke the front matter">
       <figcaption>A real patch to <code>github/docs</code>, in PullMark: the rendered diff makes it
       obvious at a glance that the edit broke the front matter — invisible in a
@@ -557,14 +562,14 @@ footer .note { margin-left: auto; }
 
     <div class="trio">
       <div class="act">
-        <div class="act-name">Comment Now</div>
-        <p>Posts a single review comment immediately, anchored to the exact lines behind the
-        rendered block.</p>
+        <div class="act-name">Add to Review</div>
+        <p>The default: collects drafts locally. Submit them together — Comment, Approve, or
+        Request Changes — or save a pending review to finish on github.com.</p>
       </div>
       <div class="act">
-        <div class="act-name">Add to Review</div>
-        <p>Collects drafts locally. Submit them together — Comment, Approve, or Request Changes —
-        or save a pending review to finish on github.com.</p>
+        <div class="act-name">Comment Now</div>
+        <p>Posts a single review comment immediately, anchored to the block — or narrowed to
+        just the lines you select in the composer.</p>
       </div>
       <div class="act">
         <div class="act-name">Edit as Suggestion</div>
@@ -594,10 +599,11 @@ footer .note { margin-left: auto; }
       <code>[toc]</code>, and YAML front matter folded into a tidy metadata table.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-doc.png?v=3" width="1392" height="912" loading="lazy"
-        alt="PullMark rendering a local Markdown file: the sidebar shows local files and pull requests, and the document displays a collapsed front-matter bar, formatted headings, inline code, footnote references, and nested ordered lists, with a word-count pill in the corner">
-      <figcaption>Front matter folds into a quiet bar, the outline tracks your reading, the
-      titlebar knows your branch — and a words&nbsp;·&nbsp;minutes pill keeps score.</figcaption>
+      <img src="img/app-doc.png?v=4" width="1052" height="784" loading="lazy"
+        alt="PullMark rendering a local Markdown file: the sidebar shows local files, pull requests, and a review-request inbox with unread counts and Markdown-file badges; the document displays a collapsed front-matter bar, formatted headings, inline code, footnote references, and nested ordered lists, with a word-count pill in the corner">
+      <figcaption>Front matter folds into a quiet bar, review requests wait quietly in the
+      sidebar, the titlebar knows your branch — and a words&nbsp;·&nbsp;minutes pill keeps
+      score.</figcaption>
     </figure>
 
     <ul class="readlist">
@@ -624,10 +630,11 @@ footer .note { margin-left: auto; }
       <li><strong>The page is the editor</strong> — <kbd>⌘E</kbd> and you're typing: blocks
         reveal their source in place, and leaving a block saves it (guarded,
         revertible); <kbd>⌃⌘K</kbd> commits, with branch-guarding on main and optional push.</li>
-      <li><strong>A review inbox</strong> — PRs awaiting your review sit atop the sidebar with
-        unread dots and a Markdown-file count.</li>
+      <li><strong>A review inbox</strong> — PRs awaiting your review, filtered to the ones that
+        actually change Markdown, with unread counts; every sidebar section collapses and
+        remembers.</li>
       <li><strong>Open Quickly</strong> — <kbd>⌘K</kbd> jumps to any heading, file, or PR,
-        fuzzy-matched.</li>
+        fuzzy-matched — or paste a PR URL or a file path and it opens that directly.</li>
       <li><strong>Moved means moved</strong> — a paragraph relocated verbatim renders once with
         a quiet violet chip, not red-plus-green noise.</li>
       <li><strong>Picks up where you left off</strong> — your files, PRs, and reading position

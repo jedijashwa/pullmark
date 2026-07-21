@@ -38,6 +38,9 @@ enum DefaultsKeys {
     static let inboxEnabled = "pm.inboxEnabled"
     /// Inbox unread tracking: PR id → updatedAt last seen.
     static let inboxSeen = "pm.inboxSeen"
+    /// Inbox shows only PRs that touch Markdown (default on) — PullMark
+    /// has nothing to render for the rest.
+    static let inboxMarkdownOnly = "pm.inboxMarkdownOnly"
     /// Restore the previous session's files and PRs at launch (default on).
     static let restoreSession = "pm.restoreSession"
     /// Persisted session: local file paths + PR refs from last quit.
@@ -48,4 +51,9 @@ enum DefaultsKeys {
     static let shortcutOverrides = "pm.shortcutOverrides"
     /// Settings window: the last-selected tab ("general"/"themes"/"keyboard").
     static let settingsTab = "pm.settingsTab"
+    /// Sidebar sections: expansion state (default expanded).
+    static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
+    static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
+    static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
+    static let sidebarRecentExpanded = "pm.sidebar.recentExpanded"
 }

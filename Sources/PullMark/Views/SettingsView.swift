@@ -32,6 +32,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
     @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
+    @AppStorage(DefaultsKeys.inboxMarkdownOnly) private var inboxMarkdownOnly = true
     @AppStorage(DefaultsKeys.restoreSession) private var restoreSession = true
     @State private var updateStatus: String?
     @State private var checking = false
@@ -64,6 +65,10 @@ struct GeneralSettingsTab: View {
 
             Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
                 .help("Open pull requests where your review is requested")
+            Toggle("Only requests that change Markdown", isOn: $inboxMarkdownOnly)
+                .disabled(!inboxEnabled)
+                .padding(.leading, 20)
+                .help("Hide review requests with no Markdown files — PullMark has nothing to show for them")
             }
 
             Section("Reading") {

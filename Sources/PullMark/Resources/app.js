@@ -1076,6 +1076,15 @@
   }
 
   function appendOutdated() {
+    // Whole-file comments first (deliberately unanchored), then the
+    // genuinely outdated line threads.
+    var fileThreads = payload.fileThreads || [];
+    if (fileThreads.length) {
+      var fileHeading = document.createElement("h2");
+      fileHeading.className = "pm-outdated-heading";
+      fileHeading.textContent = "File comments";
+      content.append(fileHeading, threadsEl(fileThreads));
+    }
     var threads = payload.outdatedThreads || [];
     if (!threads.length) { return; }
     var heading = document.createElement("h2");
@@ -1477,11 +1486,23 @@
     if (blameAnnotated) { setupBlameGutter(payload.blame); }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];
-    if (!segments.length) {
+    if (!segments.length && !payload.allNew) {
       var note = document.createElement("p");
       note.className = "pm-empty-note";
       note.textContent = "This file is empty on both sides of the diff.";
       content.append(note);
+    }
+    if (payload.allNew) {
+      // A brand-new file: tinting every block green says nothing — one
+      // note up top carries the fact, and the CSS drops the per-block
+      // added styling (comments and suggestions still work as usual).
+      content.classList.add("pm-all-new");
+      var newNote = document.createElement("div");
+      newNote.className = "pm-newfile-note";
+      newNote.textContent = segments.length
+        ? "New file — everything here is added by the pull request."
+        : "This new file is empty.";
+      content.append(newNote);
     }
     if (payload.layout === "split") {
       renderSplit(segments);

@@ -16,8 +16,14 @@ enum HTMLBuilder {
         /// pullmark-local:// scheme served by LocalResourceSchemeHandler.
         var localResources: Bool?
         var outdatedThreads: [ThreadPayload]?
+        /// Whole-file review comments (subject_type "file") — rendered in
+        /// their own section, distinct from outdated line threads.
+        var fileThreads: [ThreadPayload]?
         /// Diff layout: "inline" (default) or "split" (side by side).
         var layout: String?
+        /// The whole file is new in this PR: render one note up top and
+        /// skip the per-block added tint (it would cover every block).
+        var allNew: Bool?
         /// False for diffs without a review target (local comparisons).
         var commentable: Bool?
         /// Remote (PR) documents: rewrite relative images and links to the
@@ -111,16 +117,20 @@ enum HTMLBuilder {
 
     static func diffPage(segments: [DiffSegmentPayload],
                          outdatedThreads: [ThreadPayload] = [],
+                         fileThreads: [ThreadPayload] = [],
                          layout: String = "inline",
                          remote: RemoteAssets? = nil,
                          commentable: Bool = true,
                          title: String = "",
                          theme: String = "github",
                          customCSS: String? = nil,
-                         preview: Bool = false) -> String {
+                         preview: Bool = false,
+                         allNew: Bool = false) -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
+                                    fileThreads: fileThreads.isEmpty ? nil : fileThreads,
                                     layout: layout,
+                                    allNew: allNew ? true : nil,
                                     commentable: commentable ? nil : false,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
@@ -212,6 +222,18 @@ enum HTMLBuilder {
         return "<style id=\"pm-custom-theme\">\(safe)</style>\n"
     }
 
+    /// Inline critical CSS: the page's paper color, present before any
+    /// linked stylesheet arrives, so the first paint is never a white
+    /// flash in dark mode (or a wrong-paper flash in a warm theme).
+    /// body only, never html: a custom theme restyles `body { background }`
+    /// and relies on propagation to the canvas — painting html would pin
+    /// the overscroll to the base paper.
+    static func criticalBackgroundStyle(theme: String) -> String {
+        let (light, dark) = Theme.paperHex(for: theme)
+        return "<style>body{background:\(light)}"
+            + "@media(prefers-color-scheme:dark){body{background:\(dark)}}</style>"
+    }
+
     private static func page(payload: RenderPayload, title: String,
                              customCSS: String? = nil) -> String {
         """
@@ -221,6 +243,7 @@ enum HTMLBuilder {
         <meta charset="utf-8">
         <meta http-equiv="Content-Security-Policy" content="\(contentSecurityPolicy)">
         <title>\(escapeHTML(title))</title>
+        \(criticalBackgroundStyle(theme: payload.theme ?? "github"))
         <link rel="stylesheet" href="vendor/github-markdown.css">
         <link rel="stylesheet" media="(prefers-color-scheme: light)" href="vendor/hljs-github.min.css">
         <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="vendor/hljs-github-dark.min.css">

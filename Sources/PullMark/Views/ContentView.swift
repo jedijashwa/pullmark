@@ -132,17 +132,19 @@ struct SidebarView: View {
     @EnvironmentObject private var state: AppState
 
     @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
+    @AppStorage(DefaultsKeys.inboxMarkdownOnly) private var inboxMarkdownOnly = true
+    // Per-window like the rest of the sidebar (@AppStorage would live-sync
+    // a collapse in one window into every other window).
+    @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var localExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarPRsExpanded) private var prsExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
 
+    // What you opened yourself outranks what was assigned to you: the
+    // review-request inbox sits below Local Files and Pull Requests.
     var body: some View {
         List(selection: $state.selection) {
-            if inboxEnabled, !state.inbox.isEmpty {
-                Section("Review Requests") {
-                    ForEach(state.inbox) { item in
-                        InboxRow(item: item)
-                    }
-                }
-            }
-            Section("Local Files") {
+            CollapsibleSection("Local Files", isExpanded: $localExpanded) {
                 if state.localFiles.isEmpty {
                     Text("Open a file or folder to get started.")
                         .foregroundStyle(.secondary)
@@ -156,7 +158,7 @@ struct SidebarView: View {
                         }
                 }
             }
-            Section("Pull Requests") {
+            CollapsibleSection("Pull Requests", isExpanded: $prsExpanded) {
                 if state.prSessions.isEmpty {
                     Text("Open a PR to review its Markdown changes.")
                         .foregroundStyle(.secondary)
@@ -166,8 +168,18 @@ struct SidebarView: View {
                     PRSidebarGroup(session: session)
                 }
             }
+            if inboxEnabled, !visibleInbox.isEmpty {
+                // The unread count keeps demotion honest: collapsed or
+                // scrolled away, new requests still announce themselves.
+                CollapsibleSection("Review Requests", isExpanded: $inboxExpanded,
+                                   badge: visibleInbox.filter(state.inboxIsUnread).count) {
+                    ForEach(visibleInbox) { item in
+                        InboxRow(item: item)
+                    }
+                }
+            }
             if !recentItems.isEmpty {
-                Section("Recent") {
+                CollapsibleSection("Recent", isExpanded: $recentExpanded) {
                     ForEach(recentItems) { item in
                         RecentRow(item: item)
                     }
@@ -175,6 +187,14 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+    }
+
+    /// With Markdown-only on (default), review requests PullMark can't
+    /// render stay hidden; a PR whose file count is still loading shows
+    /// until the count proves it Markdown-free.
+    private var visibleInbox: [GitHubClient.InboxPR] {
+        guard inboxMarkdownOnly else { return state.inbox }
+        return state.inbox.filter { (state.inboxMDCount($0) ?? 1) > 0 }
     }
 
     /// Recents not already open in the sidebar.
@@ -189,6 +209,47 @@ struct SidebarView: View {
                 guard let ref = item.ref else { return false }
                 return !state.prSessions.contains { $0.ref == ref }
             }
+        }
+    }
+}
+
+/// A sidebar section the user can fold away. Native collapsing (chevron in
+/// the header) needs macOS 14's `Section(isExpanded:)`; on macOS 13 the
+/// section renders permanently expanded. A non-zero `badge` renders a
+/// count at the header's trailing edge (visible even while collapsed).
+private struct CollapsibleSection<Content: View>: View {
+    let title: String
+    @Binding var isExpanded: Bool
+    var badge = 0
+    @ViewBuilder let content: () -> Content
+
+    init(_ title: String, isExpanded: Binding<Bool>, badge: Int = 0,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self._isExpanded = isExpanded
+        self.badge = badge
+        self.content = content
+    }
+
+    private var header: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if badge > 0 {
+                Text("\(badge)")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("\(badge) unread")
+            }
+        }
+    }
+
+    var body: some View {
+        if #available(macOS 14.0, *) {
+            Section(isExpanded: $isExpanded) { content() } header: { header }
+        } else {
+            Section { content() } header: { header }
         }
     }
 }

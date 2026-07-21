@@ -119,7 +119,7 @@ struct LocalFileView: View {
             }
             contentSplit
         }
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(ThemePaper.color(for: themeRaw))
         // The in-editor edit-mode toggle key lives in the page's JS (the
         // web view owns focus while a reveal is open) — keep it in sync
         // with the rebindable shortcut.

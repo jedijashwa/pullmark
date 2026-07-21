@@ -38,4 +38,16 @@ import Testing
         #expect(PullRequestRef.parse("https://github.com/owner/repo/issues/5") == nil)
         #expect(PullRequestRef.parse("not a pr at all") == nil)
     }
+
+    @Test func bareFormIsAnchoredAgainstFilenames() {
+        // ⌘K feeds arbitrary queries through parse — a plausible file path
+        // must never sprout a pull request.
+        #expect(PullRequestRef.parse("docs/setup/pull/3.md") == nil)
+        #expect(PullRequestRef.parse("a/b/pull/12.backup") == nil)
+        // Real bare forms, with or without trailing URL-ish segments, still parse.
+        #expect(PullRequestRef.parse("owner/repo/pull/123")
+                == PullRequestRef(owner: "owner", repo: "repo", number: 123))
+        #expect(PullRequestRef.parse("owner/repo/pull/123/files")
+                == PullRequestRef(owner: "owner", repo: "repo", number: 123))
+    }
 }

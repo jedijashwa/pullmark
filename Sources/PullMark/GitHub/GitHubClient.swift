@@ -331,6 +331,24 @@ final class GitHubClient {
                               jsonBody: payload)
     }
 
+    /// Posts a comment attached to a whole file (no line anchor). GitHub
+    /// only supports subject_type on the standalone comment endpoint, so
+    /// file-level comments post immediately and can't join a pending review.
+    func createFileComment(_ ref: PullRequestRef, commitID: String,
+                           path: String, body: String) async throws {
+        let payload = try Self.fileCommentRequestBody(commitID: commitID, path: path, body: body)
+        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
+                              jsonBody: payload)
+    }
+
+    /// Posts a general conversation comment on the pull request (the
+    /// issue-comment timeline, not tied to any file or line).
+    func createIssueComment(_ ref: PullRequestRef, body: String) async throws {
+        let payload = try Self.issueCommentRequestBody(body: body)
+        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments",
+                              jsonBody: payload)
+    }
+
     // MARK: - Request body builders (pure, unit-tested)
 
     struct CommentBody: Encodable {
@@ -355,7 +373,9 @@ final class GitHubClient {
         let commitId: String
         let body: String?
         let event: String?
-        let comments: [Comment]
+        /// nil (omitted) when there are no drafts — the endpoint documents
+        /// the parameter as optional, and omitting beats sending [].
+        let comments: [Comment]?
     }
 
     nonisolated static func commentRequestBody(commitID: String, comment: DraftComment) throws -> Data {
@@ -384,7 +404,25 @@ final class GitHubClient {
                 startSide: multiLine ? draft.side : nil
             )
         }
-        return try encoder.encode(ReviewBody(commitId: commitID, body: body, event: event, comments: comments))
+        return try encoder.encode(ReviewBody(commitId: commitID, body: body, event: event,
+                                             comments: comments.isEmpty ? nil : comments))
+    }
+
+    struct FileCommentBody: Encodable {
+        let body: String
+        let commitId: String
+        let path: String
+        let subjectType: String
+    }
+
+    nonisolated static func fileCommentRequestBody(commitID: String, path: String,
+                                                   body: String) throws -> Data {
+        try encoder.encode(FileCommentBody(body: body, commitId: commitID,
+                                           path: path, subjectType: "file"))
+    }
+
+    nonisolated static func issueCommentRequestBody(body: String) throws -> Data {
+        try encoder.encode(["body": body])
     }
 
     // MARK: - Transport

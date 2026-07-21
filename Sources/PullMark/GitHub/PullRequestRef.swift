@@ -12,7 +12,9 @@ struct PullRequestRef: Equatable, Hashable {
         let s = input.trimmingCharacters(in: .whitespacesAndNewlines)
         let patterns = [
             #"^(?:https?://)?(?:www\.)?github\.com/([\w.-]+)/([\w.-]+)/pull/(\d+)"#,
-            #"^([\w.-]+)/([\w.-]+)/pull/(\d+)"#,
+            // Anchored so a plausible filename ("docs/setup/pull/3.md")
+            // can't parse as a PR reference — ⌘K feeds arbitrary queries here.
+            #"^([\w.-]+)/([\w.-]+)/pull/(\d+)(?:[/?#].*)?$"#,
             #"^([\w.-]+)/([\w.-]+)#(\d+)$"#,
         ]
         for pattern in patterns {
