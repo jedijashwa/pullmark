@@ -297,7 +297,7 @@ struct DefaultAppBanner: View {
 /// Sheet rendering release-notes Markdown with the app's own renderer.
 struct ReleaseNotesSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
     let title: String
     let markdown: String
 

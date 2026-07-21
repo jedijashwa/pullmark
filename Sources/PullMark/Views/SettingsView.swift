@@ -150,7 +150,7 @@ struct GeneralSettingsTab: View {
 // MARK: - Themes
 
 struct ThemeSettingsTab: View {
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
     @State private var customNames: [String] = []
 
     private var selection: ThemeSelection {

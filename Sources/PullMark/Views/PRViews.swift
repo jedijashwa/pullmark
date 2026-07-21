@@ -11,7 +11,7 @@ struct PROverviewView: View {
     @State private var confirmation: String?
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
 
     var body: some View {
         if let session = state.session(sessionID) {
@@ -228,7 +228,7 @@ struct PRFileView: View {
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
     @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
@@ -740,7 +740,7 @@ struct PRDocView: View {
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.blame) private var blameVisible = false
     @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?

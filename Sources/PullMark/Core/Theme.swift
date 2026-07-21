@@ -30,8 +30,14 @@ enum Theme: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The stored selection, falling back to the default GitHub theme.
+    /// The app-default theme. Every reader of the stored selection must
+    /// fall back to this — including the `@AppStorage(Theme.defaultsKey)`
+    /// declarations in views, whose inline defaults are what an unset key
+    /// actually resolves to (they never consult `current(from:)`).
+    static let standard: Theme = .editorial
+
+    /// The stored selection, falling back to the default Editorial theme.
     static func current(from raw: String?) -> Theme {
-        raw.flatMap(Theme.init(rawValue:)) ?? .editorial
+        raw.flatMap(Theme.init(rawValue:)) ?? .standard
     }
 }

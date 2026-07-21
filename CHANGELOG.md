@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Fresh installs now actually default to the Editorial reading theme. The
+  default was changed to Editorial some releases ago, but the views' own
+  fallback still said GitHub, so a machine that had never touched
+  Settings → Themes read documents in GitHub while Quick Look previews
+  correctly used Editorial. Machines where a theme was ever selected are
+  unaffected.
+
 ## 0.15.1 - 2026-07-21
 
 - Fixed a crash on the first markdown render on any machine other than the

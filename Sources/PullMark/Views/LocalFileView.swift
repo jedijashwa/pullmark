@@ -22,7 +22,7 @@ struct LocalFileView: View {
     @StateObject private var proxy = WebViewProxy()
     @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.github.rawValue
+    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
