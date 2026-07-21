@@ -1,5 +1,7 @@
 import Foundation
 
+private final class BundleToken {}
+
 /// Builds the small HTML documents loaded into the WKWebView. Heavy assets
 /// (marked, highlight.js, mermaid, CSS) are referenced by relative path and
 /// resolved against the bundled Resources directory via the page's baseURL,
@@ -51,9 +53,30 @@ enum HTMLBuilder {
     }
 
     /// Base URL for relative asset references in generated pages.
-    static let resourcesBaseURL: URL? = Bundle.module
-        .url(forResource: "app", withExtension: "js", subdirectory: "Resources")?
-        .deletingLastPathComponent()
+    ///
+    /// Never goes through the SwiftPM-generated `Bundle.module`: for
+    /// executable targets that accessor only checks the app-bundle root and
+    /// the absolute .build path of the machine that compiled the binary, so
+    /// a packaged app resolves assets out of the build machine's source tree
+    /// and fatalErrors on every other machine. Look where the bundle
+    /// actually ships instead, and degrade to nil rather than crash.
+    static let resourcesBaseURL: URL? = {
+        let candidates = [
+            Bundle.main.resourceURL, // packaged app: Contents/Resources
+            Bundle.main.bundleURL, // bare executable (swift run): next to the binary
+            // Tests: this code links into the .xctest bundle, which sits in
+            // the build directory next to the resource bundle.
+            Bundle(for: BundleToken.self).bundleURL.deletingLastPathComponent(),
+        ]
+        for base in candidates {
+            guard let base,
+                  let bundle = Bundle(url: base.appendingPathComponent("PullMark_PullMark.bundle")),
+                  let js = bundle.url(forResource: "app", withExtension: "js", subdirectory: "Resources")
+            else { continue }
+            return js.deletingLastPathComponent()
+        }
+        return nil
+    }()
 
     static func documentPage(markdown: String, title: String = "",
                              localResources: Bool = false,

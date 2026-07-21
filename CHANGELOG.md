@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Fixed a crash on the first markdown render on any machine other than the
+  one that built the release — Settings → Themes (whose preview cards are
+  the first render if no document is open) and opening any document were
+  both affected. Rendering assets were resolved through a build-time path
+  that only exists on the build machine; they are now loaded from inside
+  the app bundle, where they have always shipped.
+
 ## 0.15.0 - 2026-07-20
 
 - Settings gained a Keyboard tab: every keyboard action in the app, grouped

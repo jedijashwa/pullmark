@@ -1,7 +1,23 @@
 import Testing
+import Foundation
 @testable import PullMark
 
 @Suite struct HTMLBuilderTests {
+    @Test func bundledRenderingAssetsResolve() {
+        // Regression: resolving assets through the SwiftPM-generated
+        // Bundle.module accessor made a packaged app read them from the
+        // build machine's .build directory — present only there, so every
+        // other machine fatalErrored on the first render. The explicit
+        // candidate walk must find the bundle in this (test) environment
+        // without touching Bundle.module at all.
+        let base = HTMLBuilder.resourcesBaseURL
+        #expect(base != nil)
+        if let base {
+            #expect(FileManager.default.fileExists(atPath: base.appendingPathComponent("app.js").path))
+            #expect(FileManager.default.fileExists(atPath: base.appendingPathComponent("vendor").path))
+        }
+    }
+
     @Test func scriptCloseTagCannotEscapePayload() {
         let page = HTMLBuilder.documentPage(markdown: "hello </script><script>alert(1)</script>")
         #expect(!page.contains("</script><script>alert"))
