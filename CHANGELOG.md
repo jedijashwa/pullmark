@@ -10,11 +10,14 @@ section current as features land.
   the bottom center (real materials, real SF Symbols — where macOS puts
   transient media controls), the document behind the scrim is truly
   frozen while it's open, and two new buttons export exactly what you're
-  inspecting — Save As… and Share. Mermaid diagrams export as real SVG
-  files (crisp at any size, built for huge charts), images export their
-  original bytes, and formulas render at high resolution.
+  inspecting — Save As… and Share. Mermaid diagrams offer both formats
+  (real SVG — crisp at any size, built for huge charts — or a
+  high-resolution PNG), images export their original bytes, and formulas
+  render at high resolution.
 - Fresh installs now open with the window, sidebar, and outline sized
-  the way the app is meant to be read (1317×698, 278pt, 255pt).
+  the way the app is meant to be read (1317×698, 278pt, 255pt) — and a
+  narrow window squeezing the outline to its minimum no longer
+  overwrites the width you chose.
 - The word-count pill no longer overlaps the scrollbar.
 
 ## 0.18.0 - 2026-07-27

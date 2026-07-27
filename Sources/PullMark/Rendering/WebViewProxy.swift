@@ -15,6 +15,9 @@ final class WebViewProxy: ObservableObject {
     /// The page's lightbox state: nil when closed, else the current zoom
     /// percentage (bridge-reported). Drives the native control capsule.
     @Published var lightboxPercent: Int?
+    /// What the open lightbox shows ("img" / "svg" / "katex") — diagrams
+    /// get a format choice on Save/Share.
+    var lightboxKind: String?
 
     /// Drives the page's lightbox (`__pmLightbox.<call>`).
     func lightboxCommand(_ call: String) {
@@ -46,8 +49,33 @@ final class WebViewProxy: ObservableObject {
         let data: Data
     }
 
+    /// Requested export format for content that has a choice (diagrams);
+    /// nil picks the natural format per kind.
+    enum LightboxFormat {
+        case svg, png
+    }
+
     /// Captures the lightbox's rendered content for Save As…/Share.
-    func lightboxExport(completion: @escaping (LightboxExport?) -> Void) {
+    /// A PNG of a diagram renders through the page (CoreSVG can't draw
+    /// mermaid's HTML labels): briefly fit the content so none of it is
+    /// clipped by the viewport, snapshot at boosted width, restore.
+    func lightboxExport(format: LightboxFormat? = nil,
+                        completion: @escaping (LightboxExport?) -> Void) {
+        if format == .png, lightboxKind == "svg", let percent = lightboxPercent {
+            lightboxCommand("fit()")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                self?.captureExport(format: .png) { export in
+                    self?.lightboxCommand("setPercent(\(percent))")
+                    completion(export)
+                }
+            }
+            return
+        }
+        captureExport(format: format, completion: completion)
+    }
+
+    private func captureExport(format: LightboxFormat?,
+                               completion: @escaping (LightboxExport?) -> Void) {
         guard let webView else { return completion(nil) }
         webView.evaluateJavaScript(
             "window.__pmLightbox && __pmLightbox.contentRect() "
@@ -59,7 +87,8 @@ final class WebViewProxy: ObservableObject {
                                                        from: Data(json.utf8)),
                   info.w > 1, info.h > 1 else { return completion(nil) }
             // Diagrams: the vector itself, so huge charts export losslessly.
-            if info.kind == "svg", let svg = info.svg, !svg.isEmpty {
+            if info.kind == "svg", format != .png,
+               let svg = info.svg, !svg.isEmpty {
                 return completion(LightboxExport(name: info.name,
                                                  fileExtension: "svg",
                                                  data: Data(svg.utf8)))

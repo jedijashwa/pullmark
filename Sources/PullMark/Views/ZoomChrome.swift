@@ -123,9 +123,21 @@ struct LightboxBar: View {
                     proxy.lightboxCommand("fit()")
                 }
                 divider
-                control("square.and.arrow.down", "Save As…", action: saveSnapshot)
-                control("square.and.arrow.up", "Share", action: shareSnapshot)
-                    .background(AnchorReader(box: anchor))
+                if proxy.lightboxKind == "svg" {
+                    // Diagrams have a real format choice: the vector
+                    // itself, or a raster for svg-averse destinations.
+                    formatMenu("square.and.arrow.down", "Save As…",
+                               svgTitle: "Save as SVG…", pngTitle: "Save as PNG…",
+                               action: saveSnapshot)
+                    formatMenu("square.and.arrow.up", "Share",
+                               svgTitle: "Share as SVG", pngTitle: "Share as PNG",
+                               action: shareSnapshot)
+                        .background(AnchorReader(box: anchor))
+                } else {
+                    control("square.and.arrow.down", "Save As…") { saveSnapshot(format: nil) }
+                    control("square.and.arrow.up", "Share") { shareSnapshot(format: nil) }
+                        .background(AnchorReader(box: anchor))
+                }
                 divider
                 control("xmark", "Close (Esc)") {
                     proxy.lightboxCommand("close()")
@@ -140,28 +152,45 @@ struct LightboxBar: View {
             .shadow(color: .black.opacity(0.22), radius: 14, y: 5)
             .padding(.bottom, 22)
             .transition(.opacity)
+            // The web view under the capsule keeps setting the stage's
+            // grab cursor from its own mouse tracking — tell the page the
+            // pointer is on the bar so it shows an arrow here instead.
+            .onHover { over in
+                proxy.lightboxCommand("barHover(\(over))")
+            }
         }
     }
 
     private func control(_ symbol: String, _ title: String,
                          action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 30, height: 26)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .help(title)
-        .accessibilityLabel(title)
+        LightboxBarButton(symbol: symbol, title: title, action: action)
     }
 
     private var divider: some View {
         Divider().frame(height: 16).padding(.horizontal, 3)
     }
 
-    private func saveSnapshot() {
-        proxy.lightboxExport { export in
+    private func formatMenu(_ symbol: String, _ title: String,
+                            svgTitle: String, pngTitle: String,
+                            action: @escaping (WebViewProxy.LightboxFormat?) -> Void) -> some View {
+        Menu {
+            Button(svgTitle) { action(.svg) }
+            Button(pngTitle) { action(.png) }
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .medium))
+                .frame(width: 30, height: 26)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(title)
+        .accessibilityLabel(title)
+    }
+
+    private func saveSnapshot(format: WebViewProxy.LightboxFormat?) {
+        proxy.lightboxExport(format: format) { export in
             guard let export else { return }
             let panel = NSSavePanel()
             if let type = UTType(filenameExtension: export.fileExtension) {
@@ -174,8 +203,8 @@ struct LightboxBar: View {
         }
     }
 
-    private func shareSnapshot() {
-        proxy.lightboxExport { export in
+    private func shareSnapshot(format: WebViewProxy.LightboxFormat?) {
+        proxy.lightboxExport(format: format) { export in
             // A named temp file shares better than raw data (AirDrop and
             // Mail keep the filename); the temp directory keeps it out of
             // anything persistent.
@@ -188,6 +217,33 @@ struct LightboxBar: View {
             picker.show(relativeTo: anchorView.bounds, of: anchorView,
                         preferredEdge: .minY)
         }
+    }
+}
+
+/// A capsule-bar control with an explicit hover highlight — borderless
+/// buttons give no hover feedback of their own, which reads as dead over
+/// a web view.
+private struct LightboxBarButton: View {
+    let symbol: String
+    let title: String
+    let action: () -> Void
+    @State private var hovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .medium))
+                .frame(width: 30, height: 26)
+                .background(
+                    hovered ? Color.primary.opacity(0.12) : Color.clear,
+                    in: RoundedRectangle(cornerRadius: 7)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .onHover { hovered = $0 }
+        .help(title)
+        .accessibilityLabel(title)
     }
 }
 

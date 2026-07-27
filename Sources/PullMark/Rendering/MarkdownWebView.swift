@@ -269,6 +269,9 @@ struct MarkdownWebView: NSViewRepresentable {
             case "lightbox":
                 if let active = dict["active"] as? Bool {
                     (message.webView as? ZoomableWebView)?.lightboxActive = active
+                    // Kind first: the bar reads it when percent's publish
+                    // triggers its first render.
+                    parent.proxy?.lightboxKind = active ? dict["kind"] as? String : nil
                     parent.proxy?.lightboxPercent = active
                         ? (dict["percent"] as? Int ?? 100) : nil
                 }

@@ -843,6 +843,8 @@ mark.pm-find.pm-find-current {
   cursor: grab;
 }
 .pm-lightbox-stage.pm-panning { cursor: grabbing; }
+/* The native control capsule hovers here — an arrow, not a grab hand. */
+.pm-lightbox.pm-bar-hover .pm-lightbox-stage { cursor: auto; }
 
 .pm-lightbox-node {
   flex: none;

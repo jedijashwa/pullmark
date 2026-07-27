@@ -1233,7 +1233,8 @@
       var percent = Math.round(state.scale * 100);
       if (percent !== lastPercent) {
         lastPercent = percent;
-        post({ type: "lightbox", active: true, percent: percent });
+        post({ type: "lightbox", active: true, percent: percent,
+               kind: exportKind });
       }
     }
 
@@ -1317,6 +1318,8 @@
     // handlers alone can't stop momentum scrolling already in flight.
     document.documentElement.style.overflow = "hidden";
     var exportName = "content";
+    var exportKind = source.tagName === "IMG" ? "img"
+                   : source.tagName === "svg" ? "svg" : "katex";
     if (source.tagName === "IMG") {
       var srcPath = (source.getAttribute("src") || "").split(/[?#]/)[0];
       // Decode BEFORE taking the basename, then re-split and strip
@@ -1336,10 +1339,10 @@
                  toggle: function () {
                    setScale(state.scale > fitScale() * 1.05 ? fitScale() : fitScale() * 2);
                  },
+                 setPercent: function (p) { setScale(p / 100); },
                  contentRect: function () {
                    var r = node.getBoundingClientRect();
-                   var kind = source.tagName === "IMG" ? "img"
-                            : source.tagName === "svg" ? "svg" : "katex";
+                   var kind = exportKind;
                    var out = { x: r.left, y: r.top, w: r.width, h: r.height,
                                name: exportName, kind: kind,
                                src: kind === "img"
@@ -1369,8 +1372,15 @@
     zoomBy: function (factor) { if (lightbox) { lightbox.zoomBy(factor); } },
     toggle: function () { if (lightbox) { lightbox.toggle(); } },
     fit: function () { if (lightbox) { lightbox.setScale(lightbox.fitScale()); } },
+    setPercent: function (p) { if (lightbox) { lightbox.setPercent(p); } },
     close: function () { closeLightbox(); },
-    contentRect: function () { return lightbox ? lightbox.contentRect() : null; }
+    contentRect: function () { return lightbox ? lightbox.contentRect() : null; },
+    // The native control capsule floats above this page; WebKit keeps
+    // driving the cursor from the DOM underneath it, so the bar reports
+    // hover and the stage stops advertising "grab" there.
+    barHover: function (over) {
+      if (lightbox) { lightbox.overlay.classList.toggle("pm-bar-hover", !!over); }
+    }
   };
 
   document.addEventListener("click", function (event) {
