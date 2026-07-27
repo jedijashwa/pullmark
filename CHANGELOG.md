@@ -4,6 +4,19 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.19.0 - 2026-07-27
+
+- The lightbox grew up: its controls are now a native glass capsule at
+  the bottom center (real materials, real SF Symbols — where macOS puts
+  transient media controls), the document behind the scrim is truly
+  frozen while it's open, and two new buttons export exactly what you're
+  inspecting — Save As… and Share. Mermaid diagrams export as real SVG
+  files (crisp at any size, built for huge charts), images export their
+  original bytes, and formulas render at high resolution.
+- Fresh installs now open with the window, sidebar, and outline sized
+  the way the app is meant to be read (1317×698, 278pt, 255pt).
+- The word-count pill no longer overlaps the scrollbar.
+
 ## 0.18.0 - 2026-07-27
 
 - Click any image, Mermaid diagram, or block formula to inspect it: a

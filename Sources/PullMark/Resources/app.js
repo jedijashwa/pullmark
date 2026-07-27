@@ -1142,6 +1142,7 @@
     window.removeEventListener("keydown", lightbox.onKey, true);
     window.removeEventListener("mousemove", lightbox.onMove);
     window.removeEventListener("mouseup", lightbox.onUp);
+    document.documentElement.style.overflow = "";
     lightbox.overlay.remove();
     if (lightbox.restoreFocus && lightbox.restoreFocus.focus) {
       lightbox.restoreFocus.focus();
@@ -1208,30 +1209,8 @@
     stage.append(node);
     overlay.append(stage);
 
-    var bar = document.createElement("div");
-    bar.className = "pm-lightbox-bar";
-    function barButton(label, title, action) {
-      var btn = document.createElement("button");
-      btn.textContent = label;
-      btn.title = title;
-      btn.setAttribute("aria-label", title);
-      btn.addEventListener("click", function (event) {
-        event.stopPropagation();
-        action();
-      });
-      bar.append(btn);
-      return btn;
-    }
-    barButton("−", "Zoom out (-)", function () { zoomBy(0.8); });
-    var label = document.createElement("span");
-    label.className = "pm-lightbox-label";
-    bar.append(label);
-    barButton("+", "Zoom in (+)", function () { zoomBy(1.25); });
-    barButton("⤢", "Fit (0)", function () { setScale(fitScale()); });
-    barButton("✕", "Close (Esc)", closeLightbox);
-    overlay.append(bar);
-
     var state = { scale: 1, tx: 0, ty: 0 };
+    var lastPercent = -1;
 
     function fitScale() {
       var margin = 48;
@@ -1251,7 +1230,11 @@
       state.ty = Math.max(-slackY, Math.min(slackY, state.ty));
       node.style.transform = "translate(" + state.tx + "px," + state.ty + "px)"
         + " scale(" + state.scale + ")";
-      label.textContent = Math.round(state.scale * 100) + "%";
+      var percent = Math.round(state.scale * 100);
+      if (percent !== lastPercent) {
+        lastPercent = percent;
+        post({ type: "lightbox", active: true, percent: percent });
+      }
     }
 
     function setScale(next) {
@@ -1330,23 +1313,64 @@
     overlay.setAttribute("aria-modal", "true");
     var restoreFocus = document.activeElement;
     overlay.focus();
+    // True takeover: freeze the document behind the scrim — event
+    // handlers alone can't stop momentum scrolling already in flight.
+    document.documentElement.style.overflow = "hidden";
+    var exportName = "content";
+    if (source.tagName === "IMG") {
+      var srcPath = (source.getAttribute("src") || "").split(/[?#]/)[0];
+      // Decode BEFORE taking the basename, then re-split and strip
+      // leading dots: %2F-encoded slashes must not smuggle a path into
+      // the export filename.
+      var basename = decodeURIComponent(srcPath).split("/").pop() || "";
+      basename = basename.replace(/^\.+/, "");
+      exportName = (basename.replace(/\.[a-z0-9]+$/i, "") || "image");
+    } else if (source.tagName === "svg") {
+      exportName = "diagram";
+    } else {
+      exportName = "formula";
+    }
     lightbox = { overlay: overlay, onKey: onKey, onMove: onMove, onUp: onUp,
                  restoreFocus: restoreFocus, zoomBy: zoomBy,
                  setScale: setScale, fitScale: fitScale,
                  toggle: function () {
                    setScale(state.scale > fitScale() * 1.05 ? fitScale() : fitScale() * 2);
+                 },
+                 contentRect: function () {
+                   var r = node.getBoundingClientRect();
+                   var kind = source.tagName === "IMG" ? "img"
+                            : source.tagName === "svg" ? "svg" : "katex";
+                   var out = { x: r.left, y: r.top, w: r.width, h: r.height,
+                               name: exportName, kind: kind,
+                               src: kind === "img"
+                                 ? (source.currentSrc || source.getAttribute("src") || "")
+                                 : "",
+                               exportWidth: Math.min(
+                                 kind === "img" ? (source.naturalWidth || baseW)
+                                                : Math.ceil(baseW * 3),
+                                 4096) };
+                   if (kind === "svg") {
+                     // The chart's own SVG, serialized: a vector export
+                     // stays crisp at any size — a screen snapshot of a
+                     // huge diagram wouldn't.
+                     try { out.svg = new XMLSerializer().serializeToString(source); }
+                     catch (e) { out.svg = ""; }
+                   }
+                   return out;
                  } };
     // Open at fit, but never smaller than the reading-column rendering
     // and never past 300% — tiny sketches shouldn't open as billboards.
     state.scale = Math.max(Math.min(fitScale(), 3), Math.min(rect.width / baseW, 1));
     apply();
-    post({ type: "lightbox", active: true });
   }
 
   // Native gestures land here while the lightbox is open.
   window.__pmLightbox = {
     zoomBy: function (factor) { if (lightbox) { lightbox.zoomBy(factor); } },
-    toggle: function () { if (lightbox) { lightbox.toggle(); } }
+    toggle: function () { if (lightbox) { lightbox.toggle(); } },
+    fit: function () { if (lightbox) { lightbox.setScale(lightbox.fitScale()); } },
+    close: function () { closeLightbox(); },
+    contentRect: function () { return lightbox ? lightbox.contentRect() : null; }
   };
 
   document.addEventListener("click", function (event) {

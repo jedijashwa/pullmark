@@ -121,6 +121,8 @@ struct PullMarkApp: App {
         // Route file-open events into the existing window instead of
         // spawning a second one.
         .handlesExternalEvents(matching: ["*"])
+        // First-launch window size (returning windows restore their own).
+        .defaultSize(width: 1317, height: 698)
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {

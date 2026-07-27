@@ -12,6 +12,141 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// The page's lightbox state: nil when closed, else the current zoom
+    /// percentage (bridge-reported). Drives the native control capsule.
+    @Published var lightboxPercent: Int?
+
+    /// Drives the page's lightbox (`__pmLightbox.<call>`).
+    func lightboxCommand(_ call: String) {
+        webView?.evaluateJavaScript(
+            "window.__pmLightbox && window.__pmLightbox.\(call);",
+            completionHandler: nil)
+    }
+
+    /// Resource context for lightbox image exports, mirrored from the
+    /// hosting MarkdownWebView so original image bytes can be resolved.
+    var exportLocalRoot: URL?
+    var exportRemoteContext: RemoteResourceContext?
+
+    private struct LightboxContent: Decodable {
+        let x: Double, y: Double, w: Double, h: Double
+        let name: String
+        let kind: String
+        let src: String
+        let exportWidth: Double
+        let svg: String?
+    }
+
+    /// What the lightbox export produces: a vector SVG for diagrams
+    /// (crisp at any size), original bytes for images when resolvable,
+    /// or a boosted-resolution snapshot otherwise.
+    struct LightboxExport {
+        let name: String
+        let fileExtension: String
+        let data: Data
+    }
+
+    /// Captures the lightbox's rendered content for Save As…/Share.
+    func lightboxExport(completion: @escaping (LightboxExport?) -> Void) {
+        guard let webView else { return completion(nil) }
+        webView.evaluateJavaScript(
+            "window.__pmLightbox && __pmLightbox.contentRect() "
+            + "? JSON.stringify(__pmLightbox.contentRect()) : null"
+        ) { [weak self] result, _ in
+            guard let self,
+                  let json = result as? String,
+                  let info = try? JSONDecoder().decode(LightboxContent.self,
+                                                       from: Data(json.utf8)),
+                  info.w > 1, info.h > 1 else { return completion(nil) }
+            // Diagrams: the vector itself, so huge charts export losslessly.
+            if info.kind == "svg", let svg = info.svg, !svg.isEmpty {
+                return completion(LightboxExport(name: info.name,
+                                                 fileExtension: "svg",
+                                                 data: Data(svg.utf8)))
+            }
+            // Images: the original bytes when the source is on hand
+            // (natural resolution beats any screen capture).
+            if info.kind == "img", let data = self.originalImageBytes(src: info.src) {
+                return completion(LightboxExport(name: info.name,
+                                                 fileExtension: Self.imageExtension(for: info.src),
+                                                 data: data))
+            }
+            // Fallback: snapshot the content rect, re-rendered wider than
+            // on-screen so formulas and web images stay sharp. Known
+            // limit: content panned/zoomed past the viewport exports only
+            // its visible portion (the rect is clipped to bounds) — hit
+            // fit before exporting oversized unresolvable images.
+            let zoom = webView.pageZoom
+            let configuration = WKSnapshotConfiguration()
+            configuration.rect = CGRect(x: info.x * zoom, y: info.y * zoom,
+                                        width: info.w * zoom, height: info.h * zoom)
+                .intersection(webView.bounds)
+            guard !configuration.rect.isEmpty else { return completion(nil) }
+            configuration.snapshotWidth = NSNumber(
+                value: min(max(info.exportWidth, Double(configuration.rect.width)), 4096))
+            webView.takeSnapshot(with: configuration) { image, _ in
+                guard let image,
+                      let tiff = image.tiffRepresentation,
+                      let rep = NSBitmapImageRep(data: tiff),
+                      let png = rep.representation(using: .png, properties: [:])
+                else { return completion(nil) }
+                completion(LightboxExport(name: info.name,
+                                          fileExtension: "png", data: png))
+            }
+        }
+    }
+
+    /// File extension for an exported image: the source path's own, or —
+    /// for data: URIs, which have no path — the declared media type.
+    private static func imageExtension(for src: String) -> String {
+        if src.hasPrefix("data:") {
+            let mediaType = src.dropFirst("data:".count)
+                .prefix { $0 != ";" && $0 != "," }
+            switch mediaType {
+            case "image/jpeg": return "jpg"
+            case "image/gif": return "gif"
+            case "image/webp": return "webp"
+            case "image/svg+xml": return "svg"
+            default: return "png"
+            }
+        }
+        let ext = (src.split(separator: "?").first
+            .map { (String($0) as NSString).pathExtension.lowercased() })
+            .flatMap { $0.isEmpty ? nil : $0 }
+        return ext ?? "png"
+    }
+
+    /// Original bytes for a lightboxed image, resolved the same way the
+    /// scheme handlers serve the live page (plus inline data: URIs).
+    private func originalImageBytes(src: String) -> Data? {
+        guard let url = URL(string: src) else { return nil }
+        switch url.scheme {
+        case LocalResourceSchemeHandler.scheme:
+            guard let root = exportLocalRoot,
+                  let fileURL = LocalResourceSchemeHandler.resolve(url, root: root)
+            else { return nil }
+            return try? Data(contentsOf: fileURL)
+        case RemoteResourceSchemeHandler.scheme:
+            guard let context = exportRemoteContext,
+                  let path = RemoteResourceSchemeHandler.repoPath(from: url)
+            else { return nil }
+            return RemoteResourceSchemeHandler.cachedData(context: context, path: path)
+        case "data":
+            // data:[<mediatype>][;base64],<payload>
+            let string = url.absoluteString
+            guard let comma = string.firstIndex(of: ",") else { return nil }
+            let payload = String(string[string.index(after: comma)...])
+            if string[..<comma].contains(";base64") {
+                return Data(base64Encoded: payload)
+            }
+            return payload.removingPercentEncoding.map { Data($0.utf8) }
+        case "file":
+            return try? Data(contentsOf: url)
+        default:
+            return nil
+        }
+    }
+
     /// True while print/PDF capture holds the view at 100% zoom —
     /// MarkdownWebView.updateNSView leaves pageZoom alone while set, so a
     /// SwiftUI update can't re-zoom the view in the middle of a capture.

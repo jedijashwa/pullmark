@@ -204,6 +204,10 @@ struct MarkdownWebView: NSViewRepresentable {
         context.coordinator.schemeHandler.rootDirectory = localResourceRoot
         context.coordinator.remoteHandler.context = remoteContext
         proxy?.webView = webView
+        // Lightbox exports resolve original image bytes with the same
+        // context the scheme handlers use.
+        proxy?.exportLocalRoot = localResourceRoot
+        proxy?.exportRemoteContext = remoteContext
         if context.coordinator.lastHTML != html {
             context.coordinator.lastHTML = html
             RenderPageStore.removePage(context.coordinator.lastPageURL)
@@ -212,6 +216,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 // The new page starts with no lightbox — a stale flag
                 // would strand zoom gestures in a dead forwarder.
                 (webView as? ZoomableWebView)?.lightboxActive = false
+                proxy?.lightboxPercent = nil
                 webView.loadFileURL(pageURL, allowingReadAccessTo: RenderPageStore.directory)
             }
         }
@@ -264,6 +269,8 @@ struct MarkdownWebView: NSViewRepresentable {
             case "lightbox":
                 if let active = dict["active"] as? Bool {
                     (message.webView as? ZoomableWebView)?.lightboxActive = active
+                    parent.proxy?.lightboxPercent = active
+                        ? (dict["percent"] as? Int ?? 100) : nil
                 }
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
@@ -320,6 +327,7 @@ struct MarkdownWebView: NSViewRepresentable {
             // main-queue pipeline; navigation completion is ordered after
             // those, so this reset is the authoritative one.
             (webView as? ZoomableWebView)?.lightboxActive = false
+            parent.proxy?.lightboxPercent = nil
             parent.onPageLoaded?()
         }
 
