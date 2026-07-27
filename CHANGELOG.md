@@ -4,6 +4,14 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.2 - 2026-07-27
+
+- The review-request inbox no longer flashes unfiltered on refresh or
+  at launch: Markdown-file counts are resolved before the list updates
+  (published together, atomically), counts survive a PR's activity
+  bumps as placeholders while re-counting, and the cache persists
+  across launches.
+
 ## 0.20.1 - 2026-07-27
 
 - A dedicated bug hunt, all confirmed with reproductions, all fixed:
