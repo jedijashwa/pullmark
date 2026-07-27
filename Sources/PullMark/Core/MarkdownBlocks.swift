@@ -55,7 +55,9 @@ enum MarkdownBlocks {
         }
 
         for (i, line) in lines.enumerated() where i >= firstLineIndex {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            // .whitespacesAndNewlines: a CRLF file's "blank" line is "\r",
+            // and missing it collapses the whole document into one block.
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             if let marker = fenceMarker {
                 current.append(line)
                 if trimmed.hasPrefix(marker) {
@@ -99,7 +101,13 @@ enum MarkdownBlocks {
         guard lines.count >= 2, normalized(lines[0]) == "---" else { return nil }
         for i in 1..<lines.count
         where lines[i].trimmingCharacters(in: .whitespacesAndNewlines) == "---" {
-            return i
+            // A fence with no key: line is a thematic break plus content
+            // ("---" / "# Title" / "---"), not YAML metadata.
+            let hasKey = lines[1..<i].contains { line in
+                normalized(line).range(of: #"^[A-Za-z0-9_-]+\s*:"#,
+                                       options: .regularExpression) != nil
+            }
+            return hasKey ? i : nil
         }
         return nil
     }

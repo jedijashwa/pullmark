@@ -66,6 +66,10 @@ enum OpenQuickly {
             }
             guard !inFence, trimmed.hasPrefix("#") else { continue }
             var title = String(trimmed.drop { $0 == "#" }).trimmingCharacters(in: .whitespaces)
+            // ATX closing hashes ("## Title ##") are syntax, not text —
+            // the rendered id has no trailing dash for them.
+            title = title.replacingOccurrences(of: #"\s+#+\s*$"#, with: "",
+                                               options: .regularExpression)
             // Approximate the rendered textContent the page slugged: inline
             // links/images collapse to their text, code/emphasis markers drop.
             title = title.replacingOccurrences(of: #"!?\[([^\]]*)\]\([^)]*\)"#,

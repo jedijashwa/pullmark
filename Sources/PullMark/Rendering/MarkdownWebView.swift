@@ -129,6 +129,59 @@ struct MarkdownWebView: NSViewRepresentable {
             applyZoom(pageZoom * (1 + event.scrollingDeltaY * 0.005))
         }
 
+        /// The default WKWebView context menu is a browser's (Reload,
+        /// Back/Forward, page items) — keep only what makes sense in a
+        /// reading app and add our own commands.
+        override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
+            super.willOpenMenu(menu, with: event)
+            let allowed: Set<String> = [
+                "WKMenuItemIdentifierCopy",
+                "WKMenuItemIdentifierCopyLink",
+                "WKMenuItemIdentifierCopyImage",
+                "WKMenuItemIdentifierLookUp",
+                "WKMenuItemIdentifierTranslate",
+                "WKMenuItemIdentifierSearchWeb",
+                "WKMenuItemIdentifierShareMenu",
+                "WKMenuItemIdentifierSpeechMenu",
+            ]
+            let hadCopy = menu.items.contains {
+                $0.identifier?.rawValue == "WKMenuItemIdentifierCopy"
+            }
+            menu.items = menu.items.filter { item in
+                guard let id = item.identifier?.rawValue else { return false }
+                return allowed.contains(id)
+            }
+            // Our commands ride along when a selection exists (Copy is
+            // only offered on selections, so it's the reliable signal).
+            if hadCopy {
+                let item = NSMenuItem(title: "Copy as Markdown",
+                                      action: #selector(copySelectionAsMarkdown),
+                                      keyEquivalent: "")
+                item.target = self
+                if let index = menu.items.firstIndex(where: {
+                    $0.identifier?.rawValue == "WKMenuItemIdentifierCopy"
+                }) {
+                    menu.insertItem(item, at: index + 1)
+                } else {
+                    menu.addItem(item)
+                }
+            }
+            // Trailing separators left over from the filter look broken.
+            while let last = menu.items.last, last.isSeparatorItem {
+                menu.removeItem(last)
+            }
+        }
+
+        @objc private func copySelectionAsMarkdown() {
+            guard let document = AppState.keyInstance?.activeDocument else { return }
+            document.proxy.selectionSourceLineRange { range in
+                let source = MarkdownCopy.source(of: document.markdown, lineRange: range)
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(source, forType: .string)
+            }
+        }
+
         /// Edge detector for the limit haptic: true while the last request
         /// overshot the range, so the tick fires once per arrival at a
         /// limit and re-arms as soon as the gesture pulls back inside.

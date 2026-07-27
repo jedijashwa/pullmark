@@ -4,6 +4,30 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.1 - 2026-07-27
+
+- A dedicated bug hunt, all confirmed with reproductions, all fixed:
+  opening edit mode on a Windows-authored (CRLF) file no longer rewrites
+  its line endings on disk — visiting a block is a true no-op, and real
+  edits keep the file's own endings; CRLF documents now split into
+  blocks properly, so PR diffs, comment targeting, and blame regain
+  per-paragraph precision; relative links with #anchors work in local
+  documents; ⌘F no longer counts invisible math markup (searching
+  "frac" won't scroll to nothing); percent-encoded image names in PRs
+  load instead of 404ing; a GitHub hiccup now shows a "comments couldn't
+  be loaded" banner with Retry instead of silently presenting a
+  commented PR as clean; old-side review comments anchor to the right
+  block (or honestly report as outdated) instead of guessing; ⌘K
+  heading jumps work for "## Heading ##" styles; a document deleted and
+  recreated (e.g. a git checkout round-trip) picks its file watcher
+  back up; clicking the end-of-document "+" and clicking away no longer
+  appends blank lines; a document opening with a horizontal rule is no
+  longer misread as YAML metadata; and updating from an oddly-named
+  folder relaunches correctly.
+- Right-clicking rendered content now shows a reading menu — Copy, Copy
+  as Markdown, Look Up, Translate, link and image copying, sharing —
+  instead of the web view's browser menu.
+
 ## 0.20.0 - 2026-07-27
 
 - The media inspector became a true modal: clicking an image, Mermaid

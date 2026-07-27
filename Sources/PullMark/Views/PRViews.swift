@@ -21,6 +21,9 @@ struct PROverviewView: View {
                 if session.updateAvailable {
                     PRUpdateBanner(sessionID: sessionID)
                 }
+                if session.commentsUnavailable {
+                    CommentsUnavailableBanner(sessionID: sessionID)
+                }
                 if state.findBarVisible {
                     FindBar(proxy: proxy, seed: $findSeed)
                 }

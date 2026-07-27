@@ -379,10 +379,26 @@ struct LocalFileView: View {
             proxy.cancelInlineEdit() // reveal armed for a later reload
             return
         }
+        // Textareas hand back LF regardless of the file's endings: an
+        // edit that's byte-identical after normalizing must not touch the
+        // file, and a real edit must keep the file's dominant EOL rather
+        // than splicing mixed endings into a CRLF document.
+        let seedLF = target.seed
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        var effective = replacement
+        if effective == seedLF {
+            pendingRevealLine = nil
+            proxy.cancelInlineEdit()
+            return
+        }
+        if currentText.contains("\r\n") {
+            effective = effective.replacingOccurrences(of: "\n", with: "\r\n")
+        }
         guard let newText = TextLines.replacing(in: currentText,
                                                 from: target.lineStart,
                                                 to: target.lineEnd,
-                                                with: replacement) else {
+                                                with: effective) else {
             pendingRevealLine = nil
             proxy.cancelInlineEdit()
             return
