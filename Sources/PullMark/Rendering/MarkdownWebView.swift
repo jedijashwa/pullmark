@@ -15,6 +15,18 @@ struct DocumentStats: Equatable {
     let minutes: Int
 }
 
+/// A click on inspectable media (image / mermaid SVG / formula): the page
+/// reports what and where; the app presents the native lightbox.
+struct LightboxRequest {
+    let kind: String
+    let name: String
+    let src: String
+    /// Viewport-relative CSS-px rect of the clicked content.
+    let rect: CGRect
+    let exportWidth: Double
+    let svg: String?
+}
+
 struct MarkdownWebView: NSViewRepresentable {
     let html: String
     var onCommentRequest: ((BridgeMessage) -> Void)?
@@ -56,6 +68,8 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Called after each page finishes loading (navigation committed and the
     /// page scripts have run) — e.g. to drive find-in-page on a fresh page.
     var onPageLoaded: (() -> Void)?
+    /// Media clicked for inspection — present the native lightbox.
+    var onLightboxRequest: ((LightboxRequest) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
     /// False for the Settings theme-preview cards: the web view refuses all
@@ -88,31 +102,13 @@ struct MarkdownWebView: NSViewRepresentable {
         /// the zoom itself.
         private static var lastSmartZoom: CGFloat = 1.5
 
-        /// The page's lightbox is open (bridge-reported): zoom gestures
-        /// belong to it, not the document — WKWebView never delivers
-        /// pinches to the page, so they are forwarded as script calls.
-        var lightboxActive = false
-
-        private func forwardToLightbox(_ call: String) {
-            evaluateJavaScript("window.__pmLightbox && window.__pmLightbox.\(call);",
-                               completionHandler: nil)
-        }
-
         override func magnify(with event: NSEvent) {
-            if lightboxActive {
-                forwardToLightbox("zoomBy(\(1 + event.magnification))")
-                return
-            }
             applyZoom(pageZoom * (1 + event.magnification))
         }
 
         /// Two-finger double-tap (Safari's smart zoom): toggle between
         /// actual size and the last magnified level.
         override func smartMagnify(with event: NSEvent) {
-            if lightboxActive {
-                forwardToLightbox("toggle()")
-                return
-            }
             if DocumentZoom.isActualSize(Double(pageZoom)) {
                 applyZoom(Self.lastSmartZoom)
             } else {
@@ -128,10 +124,6 @@ struct MarkdownWebView: NSViewRepresentable {
         override func scrollWheel(with event: NSEvent) {
             guard event.modifierFlags.contains(.command) else {
                 super.scrollWheel(with: event)
-                return
-            }
-            if lightboxActive {
-                forwardToLightbox("zoomBy(\(1 + event.scrollingDeltaY * 0.005))")
                 return
             }
             applyZoom(pageZoom * (1 + event.scrollingDeltaY * 0.005))
@@ -213,10 +205,6 @@ struct MarkdownWebView: NSViewRepresentable {
             RenderPageStore.removePage(context.coordinator.lastPageURL)
             if let pageURL = RenderPageStore.writePage(html) {
                 context.coordinator.lastPageURL = pageURL
-                // The new page starts with no lightbox — a stale flag
-                // would strand zoom gestures in a dead forwarder.
-                (webView as? ZoomableWebView)?.lightboxActive = false
-                proxy?.lightboxPercent = nil
                 webView.loadFileURL(pageURL, allowingReadAccessTo: RenderPageStore.directory)
             }
         }
@@ -266,15 +254,18 @@ struct MarkdownWebView: NSViewRepresentable {
                 }
             case "toggleEditMode":
                 parent.onToggleEditMode?()
-            case "lightbox":
-                if let active = dict["active"] as? Bool {
-                    (message.webView as? ZoomableWebView)?.lightboxActive = active
-                    // Kind first: the bar reads it when percent's publish
-                    // triggers its first render.
-                    parent.proxy?.lightboxKind = active ? dict["kind"] as? String : nil
-                    parent.proxy?.lightboxPercent = active
-                        ? (dict["percent"] as? Int ?? 100) : nil
-                }
+            case "lightboxRequest":
+                guard let kind = dict["kind"] as? String,
+                      let x = dict["x"] as? Double, let y = dict["y"] as? Double,
+                      let w = dict["w"] as? Double, let h = dict["h"] as? Double
+                else { return }
+                parent.onLightboxRequest?(LightboxRequest(
+                    kind: kind,
+                    name: dict["name"] as? String ?? "content",
+                    src: dict["src"] as? String ?? "",
+                    rect: CGRect(x: x, y: y, width: w, height: h),
+                    exportWidth: dict["exportWidth"] as? Double ?? 1024,
+                    svg: dict["svg"] as? String))
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in
@@ -325,12 +316,6 @@ struct MarkdownWebView: NSViewRepresentable {
             // skips the first composited frame for an occluded/busy view.
             // Marking the view dirty after navigation forces that frame.
             DispatchQueue.main.async { webView.needsDisplay = true }
-            // The updateNSView reset can be undone by a straggling
-            // "lightbox open" message from the OLD page still in the
-            // main-queue pipeline; navigation completion is ordered after
-            // those, so this reset is the authoritative one.
-            (webView as? ZoomableWebView)?.lightboxActive = false
-            parent.proxy?.lightboxPercent = nil
             parent.onPageLoaded?()
         }
 

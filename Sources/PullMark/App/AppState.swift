@@ -119,6 +119,8 @@ final class AppState: ObservableObject {
     @Published var selection: SidebarSelection?
     @Published var showAddPR = false
     @Published var lastError: String?
+    /// The native media inspector (click an image/diagram/formula).
+    @Published var lightbox: LightboxContent?
     /// Informational, non-error messages ("no Markdown files here") — shown
     /// as a plain notice, never behind the "Something went wrong" title.
     @Published var lastNotice: String?

@@ -48,10 +48,21 @@ struct PROverviewView: View {
                             findSeed = query
                         }
                     },
+                    onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                     proxy: proxy
                 )
                 .background(ThemePaper.color(for: themeRaw))
-                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
+                .overlay {
+                    if let content = state.lightbox {
+                        LightboxModal(content: content,
+                                      onContentFrame: { proxy.setInspectRegion($0) },
+                                      onUIHover: { proxy.setInspectUIHover($0) }) {
+                            state.lightbox = nil
+                            proxy.setInspecting(false)
+                        }
+                            .id(content.id)
+                    }
+                }
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
             .toolbar {
@@ -481,7 +492,7 @@ struct PRFileView: View {
     /// The web view + optional outline column (extracted from body for the
     /// type-checker).
     private var documentArea: some View {
-        HSplitView {
+        HStack(spacing: 0) {
             MarkdownWebView(
                 html: html,
                 onCommentRequest: { commentTarget = makeCommentTarget(from: $0) },
@@ -500,20 +511,31 @@ struct PRFileView: View {
                 },
                 onStats: { stats = $0 },
                 onPageLoaded: { handlePageLoaded() },
+                onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                 proxy: proxy
             )
             .overlay(alignment: .bottomTrailing) {
-                if mode == .result, proxy.lightboxPercent == nil, let stats {
+                if mode == .result, state.lightbox == nil, let stats {
                     DocumentStatsPill(stats: stats)
                 }
             }
+            .overlay {
+                if let content = state.lightbox {
+                    LightboxModal(content: content,
+                                      onContentFrame: { proxy.setInspectRegion($0) },
+                                      onUIHover: { proxy.setInspectUIHover($0) }) {
+                            state.lightbox = nil
+                            proxy.setInspecting(false)
+                        }
+                            .id(content.id)
+                }
+            }
             .layoutPriority(1)
-            if outlineVisible {
+            if outlineVisible, state.lightbox == nil {
                 OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
             }
         }
         .background(ThemePaper.color(for: themeRaw))
-        .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
     }
 
     private func makeCommentTarget(from message: BridgeMessage) -> CommentTarget {
@@ -1158,7 +1180,7 @@ struct PRDocView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                HSplitView {
+                HStack(spacing: 0) {
                     MarkdownWebView(
                         html: html,
                         remoteContext: session.map {
@@ -1174,20 +1196,31 @@ struct PRDocView: View {
                         },
                         onStats: { stats = $0 },
                         onPageLoaded: { handlePageLoaded() },
+                        onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                         proxy: proxy
                     )
                     .overlay(alignment: .bottomTrailing) {
-                        if proxy.lightboxPercent == nil, let stats {
+                        if state.lightbox == nil, let stats {
                             DocumentStatsPill(stats: stats)
                         }
                     }
+                    .overlay {
+                        if let content = state.lightbox {
+                            LightboxModal(content: content,
+                                      onContentFrame: { proxy.setInspectRegion($0) },
+                                      onUIHover: { proxy.setInspectUIHover($0) }) {
+                            state.lightbox = nil
+                            proxy.setInspecting(false)
+                        }
+                            .id(content.id)
+                        }
+                    }
                     .layoutPriority(1)
-                    if outlineVisible {
+                    if outlineVisible, state.lightbox == nil {
                         OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
                     }
                 }
                 .background(ThemePaper.color(for: themeRaw))
-                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
             }
         }
         .navigationTitle(path)

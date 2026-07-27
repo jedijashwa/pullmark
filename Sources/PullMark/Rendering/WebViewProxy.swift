@@ -12,17 +12,37 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
-    /// The page's lightbox state: nil when closed, else the current zoom
-    /// percentage (bridge-reported). Drives the native control capsule.
-    @Published var lightboxPercent: Int?
-    /// What the open lightbox shows ("img" / "svg" / "katex") — diagrams
-    /// get a format choice on Save/Share.
-    var lightboxKind: String?
-
-    /// Drives the page's lightbox (`__pmLightbox.<call>`).
-    func lightboxCommand(_ call: String) {
+    /// The native inspector is covering this page: stop advertising the
+    /// zoom-in cursor (the web view keeps driving the pointer from its
+    /// own tracking even under native overlays).
+    func setInspecting(_ inspecting: Bool) {
         webView?.evaluateJavaScript(
-            "window.__pmLightbox && window.__pmLightbox.\(call);",
+            "document.documentElement.classList.toggle('pm-inspecting', \(inspecting));",
+            completionHandler: nil)
+    }
+
+    /// The inspector's content frame (view points): the page shows the
+    /// grab hand exactly there. nil clears the region.
+    func setInspectRegion(_ rect: CGRect?) {
+        guard let webView else { return }
+        guard let rect else {
+            webView.evaluateJavaScript(
+                "window.__pmInspectRegion && __pmInspectRegion(null);",
+                completionHandler: nil)
+            return
+        }
+        let zoom = max(webView.pageZoom, 0.01)
+        webView.evaluateJavaScript(
+            "window.__pmInspectRegion && __pmInspectRegion("
+            + "\(rect.minX / zoom),\(rect.minY / zoom),"
+            + "\(rect.width / zoom),\(rect.height / zoom));",
+            completionHandler: nil)
+    }
+
+    /// The pointer is over the inspector's own chrome — arrow, not grab.
+    func setInspectUIHover(_ over: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmInspectHoverUI && __pmInspectHoverUI(\(over));",
             completionHandler: nil)
     }
 
@@ -31,103 +51,30 @@ final class WebViewProxy: ObservableObject {
     var exportLocalRoot: URL?
     var exportRemoteContext: RemoteResourceContext?
 
-    private struct LightboxContent: Decodable {
-        let x: Double, y: Double, w: Double, h: Double
-        let name: String
-        let kind: String
-        let src: String
-        let exportWidth: Double
-        let svg: String?
-    }
-
-    /// What the lightbox export produces: a vector SVG for diagrams
-    /// (crisp at any size), original bytes for images when resolvable,
-    /// or a boosted-resolution snapshot otherwise.
-    struct LightboxExport {
-        let name: String
-        let fileExtension: String
-        let data: Data
-    }
-
-    /// Requested export format for content that has a choice (diagrams);
-    /// nil picks the natural format per kind.
-    enum LightboxFormat {
-        case svg, png
-    }
-
-    /// Captures the lightbox's rendered content for Save As…/Share.
-    /// A PNG of a diagram renders through the page (CoreSVG can't draw
-    /// mermaid's HTML labels): briefly fit the content so none of it is
-    /// clipped by the viewport, snapshot at boosted width, restore.
-    func lightboxExport(format: LightboxFormat? = nil,
-                        completion: @escaping (LightboxExport?) -> Void) {
-        if format == .png, lightboxKind == "svg", let percent = lightboxPercent {
-            lightboxCommand("fit()")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-                self?.captureExport(format: .png) { export in
-                    self?.lightboxCommand("setPercent(\(percent))")
-                    completion(export)
-                }
-            }
-            return
+    /// Snapshot of a viewport-relative CSS-px rect, re-rendered at
+    /// `exportWidth` so vector-ish content (formulas) stays sharp.
+    func snapshotRect(_ cssRect: CGRect, exportWidth: Double,
+                      completion: @escaping (NSImage?) -> Void) {
+        guard let webView, cssRect.width > 1, cssRect.height > 1 else {
+            return completion(nil)
         }
-        captureExport(format: format, completion: completion)
-    }
-
-    private func captureExport(format: LightboxFormat?,
-                               completion: @escaping (LightboxExport?) -> Void) {
-        guard let webView else { return completion(nil) }
-        webView.evaluateJavaScript(
-            "window.__pmLightbox && __pmLightbox.contentRect() "
-            + "? JSON.stringify(__pmLightbox.contentRect()) : null"
-        ) { [weak self] result, _ in
-            guard let self,
-                  let json = result as? String,
-                  let info = try? JSONDecoder().decode(LightboxContent.self,
-                                                       from: Data(json.utf8)),
-                  info.w > 1, info.h > 1 else { return completion(nil) }
-            // Diagrams: the vector itself, so huge charts export losslessly.
-            if info.kind == "svg", format != .png,
-               let svg = info.svg, !svg.isEmpty {
-                return completion(LightboxExport(name: info.name,
-                                                 fileExtension: "svg",
-                                                 data: Data(svg.utf8)))
-            }
-            // Images: the original bytes when the source is on hand
-            // (natural resolution beats any screen capture).
-            if info.kind == "img", let data = self.originalImageBytes(src: info.src) {
-                return completion(LightboxExport(name: info.name,
-                                                 fileExtension: Self.imageExtension(for: info.src),
-                                                 data: data))
-            }
-            // Fallback: snapshot the content rect, re-rendered wider than
-            // on-screen so formulas and web images stay sharp. Known
-            // limit: content panned/zoomed past the viewport exports only
-            // its visible portion (the rect is clipped to bounds) — hit
-            // fit before exporting oversized unresolvable images.
-            let zoom = webView.pageZoom
-            let configuration = WKSnapshotConfiguration()
-            configuration.rect = CGRect(x: info.x * zoom, y: info.y * zoom,
-                                        width: info.w * zoom, height: info.h * zoom)
-                .intersection(webView.bounds)
-            guard !configuration.rect.isEmpty else { return completion(nil) }
-            configuration.snapshotWidth = NSNumber(
-                value: min(max(info.exportWidth, Double(configuration.rect.width)), 4096))
-            webView.takeSnapshot(with: configuration) { image, _ in
-                guard let image,
-                      let tiff = image.tiffRepresentation,
-                      let rep = NSBitmapImageRep(data: tiff),
-                      let png = rep.representation(using: .png, properties: [:])
-                else { return completion(nil) }
-                completion(LightboxExport(name: info.name,
-                                          fileExtension: "png", data: png))
-            }
+        let zoom = webView.pageZoom
+        let configuration = WKSnapshotConfiguration()
+        configuration.rect = CGRect(x: cssRect.minX * zoom, y: cssRect.minY * zoom,
+                                    width: cssRect.width * zoom,
+                                    height: cssRect.height * zoom)
+            .intersection(webView.bounds)
+        guard !configuration.rect.isEmpty else { return completion(nil) }
+        configuration.snapshotWidth = NSNumber(
+            value: min(max(exportWidth, Double(configuration.rect.width)), 4096))
+        webView.takeSnapshot(with: configuration) { image, _ in
+            completion(image)
         }
     }
 
     /// File extension for an exported image: the source path's own, or —
     /// for data: URIs, which have no path — the declared media type.
-    private static func imageExtension(for src: String) -> String {
+    static func imageExtension(for src: String) -> String {
         if src.hasPrefix("data:") {
             let mediaType = src.dropFirst("data:".count)
                 .prefix { $0 != ";" && $0 != "," }
@@ -147,7 +94,7 @@ final class WebViewProxy: ObservableObject {
 
     /// Original bytes for a lightboxed image, resolved the same way the
     /// scheme handlers serve the live page (plus inline data: URIs).
-    private func originalImageBytes(src: String) -> Data? {
+    func originalImageBytes(src: String) -> Data? {
         guard let url = URL(string: src) else { return nil }
         switch url.scheme {
         case LocalResourceSchemeHandler.scheme:

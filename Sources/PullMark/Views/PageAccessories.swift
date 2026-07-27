@@ -93,20 +93,63 @@ struct OutlineSidebar: View {
     let items: [OutlineItem]
     let proxy: WebViewProxy
     var activeID: String? = nil
-    /// HSplitView never persists its divider, so the panel remembers its
-    /// own width: the stored value seeds idealWidth (which the split view
-    /// honors on first layout) and live resizes write back through it.
+    /// The panel owns its width outright — a drag handle writes it, the
+    /// frame reads it. (It used to ride an HSplitView divider and seed
+    /// idealWidth, but the split view ignored the seed at first layout —
+    /// the document pane's priority squeezed the panel to its minimum on
+    /// every launch, no matter what width was remembered.)
     @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 255
     /// Follows the document zoom (damped) so headings stay readable next
-    /// to a magnified page; the width ceiling stretches with it (the
-    /// floor stays put — a scaled minimum would eat the document at high
-    /// zoom and force resizes the user never made).
+    /// to a magnified page; the width ceiling stretches with it.
     @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @State private var dragBaseWidth: CGFloat?
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
     private var maxWidth: CGFloat { (340 * fonts.factor).rounded() }
+    private var panelWidth: CGFloat {
+        min(max(CGFloat(storedWidth), 170), maxWidth)
+    }
 
     var body: some View {
+        // The grab gutter overlays the panel's leading edge (half in, half
+        // out) so no bare strip sits outside the sidebar background.
+        list
+            .frame(width: panelWidth)
+            .overlay(alignment: .leading) {
+                Rectangle()
+                    .fill(Color(nsColor: .separatorColor))
+                    .frame(width: 1)
+            }
+            .overlay(alignment: .leading) { resizeHandle.offset(x: -4) }
+    }
+
+    /// A comfortable grab gutter on the divider line: dragging left widens
+    /// the panel. Only drags write the stored width — layout can never
+    /// silently rewrite the user's choice again.
+    private var resizeHandle: some View {
+        Color.clear
+            .frame(width: 9)
+            .contentShape(Rectangle())
+        .onHover { hovering in
+            if hovering {
+                NSCursor.resizeLeftRight.set()
+            } else {
+                NSCursor.arrow.set()
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { value in
+                    let base = dragBaseWidth ?? panelWidth
+                    dragBaseWidth = base
+                    let physical = min(max(base - value.translation.width, 170), maxWidth)
+                    storedWidth = Int(physical.rounded())
+                }
+                .onEnded { _ in dragBaseWidth = nil }
+        )
+    }
+
+    private var list: some View {
         List {
             Section {
                 if items.isEmpty {
@@ -139,27 +182,6 @@ struct OutlineSidebar: View {
             }
         }
         .listStyle(.sidebar)
-        // The stored width is in unzoomed points (normalized by the
-        // chrome factor) — a zoomed session must not rewrite the width
-        // an unzoomed session comes back to.
-        .frame(minWidth: 170,
-               idealWidth: min(CGFloat(min(max(storedWidth, 170), 340)) * fonts.factor,
-                               maxWidth),
-               maxWidth: maxWidth)
-        .background(
-            GeometryReader { geometry in
-                Color.clear.onChange(of: geometry.size.width) { width in
-                    let normalized = Int((width / fonts.factor).rounded())
-                    // Strictly above the floor: a narrow window squeezes
-                    // the panel to its minimum through layout, and that
-                    // must not overwrite the width the user actually
-                    // chose (it silently reset a remembered width once).
-                    if normalized > 170, normalized <= 340, normalized != storedWidth {
-                        storedWidth = normalized
-                    }
-                }
-            }
-        )
     }
 
     private func font(for level: Int) -> Font? {
