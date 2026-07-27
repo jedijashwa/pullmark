@@ -62,6 +62,9 @@ struct MarkdownWebView: NSViewRepresentable {
     /// mouse events (AppKit-level, since WKWebView sits above SwiftUI's hit
     /// testing) so clicks fall through to the enclosing card.
     var interactive: Bool = true
+    /// Document magnification (View → Zoom). Non-interactive views (theme
+    /// preview cards) stay at actual size — they are already miniatures.
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -70,6 +73,33 @@ struct MarkdownWebView: NSViewRepresentable {
     /// WKWebView that ignores the mouse entirely (theme preview cards).
     private final class PassthroughWebView: WKWebView {
         override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    }
+
+    /// WKWebView that turns the pinch gesture (and ⌘-scroll, the browser
+    /// convention) into pageZoom — reflowing browser zoom, matching the
+    /// menu commands — instead of WebKit's own scale-the-canvas
+    /// magnification. Every step persists immediately: the stored value
+    /// and the live view never diverge, so updateNSView's sync can't
+    /// snap the zoom back mid-gesture, other windows follow live, and
+    /// the HUD counts along.
+    private final class ZoomableWebView: WKWebView {
+        override func magnify(with event: NSEvent) {
+            applyZoom(pageZoom * (1 + event.magnification))
+        }
+
+        override func scrollWheel(with event: NSEvent) {
+            guard event.modifierFlags.contains(.command) else {
+                super.scrollWheel(with: event)
+                return
+            }
+            applyZoom(pageZoom * (1 + event.scrollingDeltaY * 0.005))
+        }
+
+        private func applyZoom(_ value: CGFloat) {
+            let clamped = DocumentZoom.clamped(value)
+            pageZoom = clamped
+            UserDefaults.standard.set(Double(clamped), forKey: DefaultsKeys.zoom)
+        }
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -83,7 +113,7 @@ struct MarkdownWebView: NSViewRepresentable {
         configuration.setURLSchemeHandler(context.coordinator.remoteHandler,
                                           forURLScheme: RemoteResourceSchemeHandler.scheme)
         let webView = interactive
-            ? WKWebView(frame: .zero, configuration: configuration)
+            ? ZoomableWebView(frame: .zero, configuration: configuration)
             : PassthroughWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         // Let the SwiftUI background show through so there is no white flash
@@ -99,11 +129,23 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.setValue(false, forKey: "drawsBackground")
         }
         webView.underPageBackgroundColor = .clear
+        if interactive {
+            webView.pageZoom = DocumentZoom.clamped(zoom)
+        }
         return webView
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
         context.coordinator.parent = self
+        // Not while an export/print holds the view at 100% — a SwiftUI
+        // update landing between its async hops (the save panel closing
+        // causes one) would re-zoom the view mid-capture.
+        if interactive, proxy?.zoomHold != true {
+            let target = DocumentZoom.clamped(zoom)
+            if abs(webView.pageZoom - target) > 0.0005 {
+                webView.pageZoom = target
+            }
+        }
         context.coordinator.schemeHandler.rootDirectory = localResourceRoot
         context.coordinator.remoteHandler.context = remoteContext
         proxy?.webView = webView
