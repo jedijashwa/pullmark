@@ -88,6 +88,9 @@ struct LocalFileView: View {
                         DocumentStatsPill(stats: stats)
                     }
                 }
+                // On the pane, not the outer stack: the bar should center
+                // on the page even with the outline panel open.
+                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
                 .layoutPriority(1)
             if outlineVisible {
                 OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)

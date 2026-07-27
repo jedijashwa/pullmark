@@ -16,7 +16,7 @@ struct ContentView: View {
             // scaled minimums would eat the document at high zoom, and
             // AppKit's autosaved width would ratchet and never come back.
             SidebarView()
-                .navigationSplitViewColumnWidth(min: 220, ideal: 270)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 278)
         } detail: {
             VStack(spacing: 0) {
                 AppUpdateBanner()

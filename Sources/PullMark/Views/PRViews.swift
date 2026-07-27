@@ -51,6 +51,7 @@ struct PROverviewView: View {
                     proxy: proxy
                 )
                 .background(ThemePaper.color(for: themeRaw))
+                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
             .toolbar {
@@ -512,6 +513,7 @@ struct PRFileView: View {
             }
         }
         .background(ThemePaper.color(for: themeRaw))
+        .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
     }
 
     private func makeCommentTarget(from message: BridgeMessage) -> CommentTarget {
@@ -1185,6 +1187,7 @@ struct PRDocView: View {
                     }
                 }
                 .background(ThemePaper.color(for: themeRaw))
+                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
             }
         }
         .navigationTitle(path)

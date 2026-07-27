@@ -96,7 +96,7 @@ struct OutlineSidebar: View {
     /// HSplitView never persists its divider, so the panel remembers its
     /// own width: the stored value seeds idealWidth (which the split view
     /// honors on first layout) and live resizes write back through it.
-    @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 230
+    @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 255
     /// Follows the document zoom (damped) so headings stay readable next
     /// to a magnified page; the width ceiling stretches with it (the
     /// floor stays put — a scaled minimum would eat the document at high
@@ -183,7 +183,9 @@ struct DocumentStatsPill: View {
             .overlay(
                 Capsule().strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
             )
-            .padding(10)
+            // Extra trailing room so the pill clears a visible scrollbar.
+            .padding([.leading, .vertical], 10)
+            .padding(.trailing, 26)
             .allowsHitTesting(false)
             .accessibilityLabel("\(stats.words) words, about \(stats.minutes) minute read")
     }
