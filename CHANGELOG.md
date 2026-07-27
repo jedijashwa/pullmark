@@ -4,6 +4,29 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.0 - 2026-07-27
+
+- The media inspector became a true modal: clicking an image, Mermaid
+  diagram, or formula now takes over the whole reading area (only the
+  sidebar stays live) with a native glass scrim — the document behind
+  it is completely covered, the outline folds away, and everything on
+  screen is native: pan and zoom gestures, the control capsule, an
+  editable zoom percentage, a fit that actually re-centers, an
+  actual-size button, and an interactive minimap when you're zoomed
+  past the edges (drag it to pan — diagrams generate their own
+  thumbnail for it). Diagrams open at their intrinsic size and render
+  as live vectors — crisp at any zoom — and Save As…/Share still
+  export SVG or PNG for diagrams, original bytes for images, and
+  high-resolution captures for formulas. ⌘+/⌘−/⌘0 control the
+  inspector while it's open instead of the app behind it, the cursor
+  reads right (open hand over content, closed while dragging, arrow on
+  the controls), and the format menus unfold upward, clear of the
+  capsule.
+- The outline panel now genuinely remembers its width: the old split
+  view ignored the remembered width at launch and opened at minimum no
+  matter what. The panel now owns its width with its own drag handle,
+  flush against the panel edge, and only your drags can change it.
+
 ## 0.19.0 - 2026-07-27
 
 - The lightbox grew up: its controls are now a native glass capsule at

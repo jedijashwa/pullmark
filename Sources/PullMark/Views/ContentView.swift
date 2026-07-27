@@ -24,6 +24,7 @@ struct ContentView: View {
                 DetailView()
                     .overlay(alignment: .top) { ZoomHUD().padding(.top, 10) }
             }
+
         }
         // Physical "⌘+" (⇧⌘=) zooms in like the menu's ⌘= — see the catcher.
         .background(ZoomKeyCatcher())

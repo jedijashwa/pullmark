@@ -810,7 +810,7 @@ mark.pm-find.pm-find-current {
 }
 .pm-append:hover { color: rgba(9, 105, 218, 0.7); border-color: rgba(9, 105, 218, 0.35); }
 
-/* ---- Lightbox: click media to inspect it with pan & zoom ---- */
+/* ---- Lightbox: click media to inspect it (rendered natively) ---- */
 
 :root.pm-lightbox-enabled #content img,
 :root.pm-lightbox-enabled .mermaid svg,
@@ -820,39 +820,10 @@ mark.pm-find.pm-find-current {
 :root.pm-lightbox-enabled #content a img {
   cursor: pointer; /* linked images keep navigating */
 }
-
-.pm-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(252, 252, 251, 0.88);
-  -webkit-backdrop-filter: blur(26px) saturate(1.3);
-  backdrop-filter: blur(26px) saturate(1.3);
+/* The native inspector is open above this page — its cursor rules win. */
+:root.pm-inspecting #content img,
+:root.pm-inspecting .mermaid svg,
+:root.pm-inspecting .katex-display,
+:root.pm-inspecting #content a img {
+  cursor: auto !important;
 }
-@media (prefers-color-scheme: dark) {
-  .pm-lightbox { background: rgba(10, 13, 18, 0.88); }
-}
-
-.pm-lightbox-stage {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  cursor: grab;
-}
-.pm-lightbox-stage.pm-panning { cursor: grabbing; }
-/* The native control capsule hovers here — an arrow, not a grab hand. */
-.pm-lightbox.pm-bar-hover .pm-lightbox-stage { cursor: auto; }
-
-.pm-lightbox-node {
-  flex: none;
-  transform-origin: center center;
-  will-change: transform;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.pm-lightbox-node img { -webkit-user-drag: none; display: block; }
-.pm-lightbox-node .katex-display { margin: 0; }
-

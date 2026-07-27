@@ -76,25 +76,35 @@ struct LocalFileView: View {
             onBlameHistory: handleBlameHistory,
             onStats: handleStats,
             onPageLoaded: handlePageLoaded,
+            onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
             proxy: proxy
         )
     }
 
     private var contentSplit: some View {
-        HSplitView {
+        HStack(spacing: 0) {
             documentWebView
                 .overlay(alignment: .bottomTrailing) {
-                    // Native overlays float above the page's lightbox
-                    // scrim, so the pill steps aside while it's open.
-                    if compare == nil, proxy.lightboxPercent == nil, let stats {
+                    if compare == nil, state.lightbox == nil, let stats {
                         DocumentStatsPill(stats: stats)
                     }
                 }
-                // On the pane, not the outer stack: the bar should center
-                // on the page even with the outline panel open.
-                .overlay(alignment: .bottom) { LightboxBar(proxy: proxy) }
+                // The modal lives on the web-view chain — the one spot
+                // SwiftUI reliably layers above the platform web view.
+                .overlay {
+                    if let content = state.lightbox {
+                        LightboxModal(content: content,
+                                      onContentFrame: { proxy.setInspectRegion($0) },
+                                      onUIHover: { proxy.setInspectUIHover($0) }) {
+                            state.lightbox = nil
+                            proxy.setInspecting(false)
+                        }
+                            .id(content.id)
+                    }
+                }
                 .layoutPriority(1)
-            if outlineVisible {
+            // Full takeover: the outline folds away while inspecting.
+            if outlineVisible, state.lightbox == nil {
                 OutlineSidebar(items: outline, proxy: proxy, activeID: activeSection)
             }
         }
