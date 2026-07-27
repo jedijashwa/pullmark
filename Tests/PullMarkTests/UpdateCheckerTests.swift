@@ -212,7 +212,7 @@ import Testing
 
     @Test func relaunchCommandSleepsThenReopens() {
         #expect(BrewUpdate.relaunchShellCommand(appPath: "/Applications/PullMark.app")
-            == "sleep 1; open -a \"/Applications/PullMark.app\"")
+            == "sleep 1; open -a '/Applications/PullMark.app'")
     }
 }
 

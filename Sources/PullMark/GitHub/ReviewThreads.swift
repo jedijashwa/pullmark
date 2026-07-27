@@ -60,9 +60,31 @@ enum ReviewThreads {
                 continue
             }
             let side = thread.anchorSide
-            let index = annotated.firstIndex {
-                $0.side == side && $0.lineStart <= line && line <= $0.lineEnd
-            } ?? nearestIndex(in: annotated, line: line, side: side)
+            // LEFT anchors are old-file line numbers: match the old-side
+            // ranges carried by removed/unchanged/modified segments. A
+            // cross-side "nearest" would compare old numbers against new
+            // ranges and pin the thread to an arbitrary block.
+            let match: Int?
+            if side == "LEFT" {
+                match = annotated.firstIndex { segment in
+                    if segment.side == "LEFT",
+                       segment.lineStart <= line, line <= segment.lineEnd {
+                        return true
+                    }
+                    if let start = segment.oldLineStart {
+                        return start <= line && line <= (segment.oldLineEnd ?? start)
+                    }
+                    return false
+                }
+            } else {
+                match = annotated.firstIndex {
+                    $0.side == side && $0.lineStart <= line && line <= $0.lineEnd
+                } ?? nearestIndex(in: annotated, line: line, side: side)
+            }
+            guard let index = match else {
+                outdated.append(thread)
+                continue
+            }
             let payload = ThreadPayload(
                 lineLabel: thread.lineLabel,
                 comments: thread.comments.map(CommentPayload.init),

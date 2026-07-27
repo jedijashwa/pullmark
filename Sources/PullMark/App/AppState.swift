@@ -22,6 +22,9 @@ struct PRSession: Identifiable {
     var browsedDocs: [String] = []
     /// Set when the PR's head moved on GitHub since it was loaded.
     var updateAvailable = false
+    /// Review comments/threads failed to load — the diff must not
+    /// silently masquerade as an uncommented PR.
+    var commentsUnavailable = false
 
     var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
     var markdownFiles: [PullRequestFile] { files.filter(\.isMarkdown) }
@@ -503,8 +506,13 @@ final class AppState: ObservableObject {
             // Fall back to the base tip; only matters when the base branch moved.
         }
         var session = PRSession(ref: ref, details: details, mergeBaseSHA: mergeBase, files: files)
-        session.reviewComments = (try? await client.reviewComments(ref)) ?? []
-        session.threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
+        do {
+            session.reviewComments = try await client.reviewComments(ref)
+            session.threadMeta = try await client.reviewThreadMeta(ref)
+        } catch {
+            // A blip must not render as "no comments on this PR".
+            session.commentsUnavailable = true
+        }
         prSessions.append(session)
         selection = .prOverview(session.id)
         noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
@@ -541,13 +549,24 @@ final class AppState: ObservableObject {
             let files = try await client.files(ref)
             let mergeBase = (try? await client.mergeBaseSHA(ref, base: details.base.sha, head: details.head.sha))
                 ?? details.base.sha
-            let comments = (try? await client.reviewComments(ref)) ?? []
+            var comments: [ReviewComment] = []
+            var meta: [Int: ThreadMeta] = [:]
+            var commentsUnavailable = false
+            do {
+                comments = try await client.reviewComments(ref)
+                meta = try await client.reviewThreadMeta(ref)
+            } catch {
+                commentsUnavailable = true
+            }
             guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
             prSessions[index].details = details
             prSessions[index].files = files
             prSessions[index].mergeBaseSHA = mergeBase
-            prSessions[index].reviewComments = comments
-            prSessions[index].threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
+            if !commentsUnavailable {
+                prSessions[index].reviewComments = comments
+                prSessions[index].threadMeta = meta
+            }
+            prSessions[index].commentsUnavailable = commentsUnavailable
             prSessions[index].updateAvailable = false
             // Cached document text may predate the new head; views refill it.
             dropPRContentCache(sessionID: sessionID)

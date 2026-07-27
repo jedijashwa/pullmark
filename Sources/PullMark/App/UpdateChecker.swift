@@ -160,7 +160,10 @@ enum BrewUpdate {
     /// Shell command spawned detached before terminating, so the new version
     /// starts once this process has exited.
     static func relaunchShellCommand(appPath: String) -> String {
-        "sleep 1; open -a \"\(appPath)\""
+        // Single-quote the path for the shell: double quotes still expand
+        // $ and backticks, and an Applications folder path is user input.
+        let quoted = "'" + appPath.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        return "sleep 1; open -a \(quoted)"
     }
 
     /// Real runner: executes a command and reports success. Blocks — call

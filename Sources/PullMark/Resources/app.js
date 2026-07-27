@@ -74,20 +74,31 @@
 
   // ---- Local resources (relative images/links in local documents) ----
 
+  // Decode-then-encode a path segment: idempotent for already-encoded
+  // names, correct for raw ones.
+  function encodeSegment(segment) {
+    var decoded = segment;
+    try { decoded = decodeURIComponent(segment); } catch (e) { /* keep raw */ }
+    return encodeURIComponent(decoded);
+  }
+
   function rewriteLocalResources(root) {
     if (!payload.localResources) { return; }
     var absolute = /^([a-z][a-z0-9+.\-]*:|\/\/|#)/i;
-    function encodeSegment(segment) {
-      var decoded = segment;
-      try { decoded = decodeURIComponent(segment); } catch (e) { /* keep raw */ }
-      return encodeURIComponent(decoded);
-    }
     root.querySelectorAll("img[src], a[href]").forEach(function (el) {
       var attr = el.tagName === "IMG" ? "src" : "href";
       var value = el.getAttribute(attr);
       if (!value || absolute.test(value)) { return; }
+      // The fragment/query must not be encoded into the filename —
+      // "notes.md#heading" is notes.md plus an anchor, not a filename.
+      var suffix = "";
+      if (attr === "href") {
+        var cut = value.search(/[#?]/);
+        if (cut !== -1) { suffix = value.slice(cut); value = value.slice(0, cut); }
+      }
       var path = value.replace(/^\//, "");
-      el.setAttribute(attr, "pullmark-local:///" + path.split("/").map(encodeSegment).join("/"));
+      el.setAttribute(attr, "pullmark-local:///"
+        + path.split("/").map(encodeSegment).join("/") + suffix);
     });
   }
 
@@ -127,8 +138,10 @@
       }
       var resolved = resolveRepoPath(baseDir, value);
       if (!resolved) { return; }
+      // encodeSegment (decode-then-encode) so author-percent-encoded
+      // names aren't double-encoded into a 404.
       el.setAttribute(attr, "pullmark-remote:///" +
-        resolved.split("/").map(encodeURIComponent).join("/") + fragment);
+        resolved.split("/").map(encodeSegment).join("/") + fragment);
     });
   }
 
@@ -193,13 +206,24 @@
   // Document mode: split leading front matter off the source. Returns
   // { lines, rest, endLine } (endLine = 1-based line of the closing fence)
   // or null when the document has no front matter.
+  function fmLooksLikeYAML(inner) {
+    // A fence with no key: value line is a thematic break + content
+    // (`---` / `# Title` / `---`), not metadata.
+    for (var i = 0; i < inner.length; i++) {
+      if (/^[A-Za-z0-9_-]+\s*:/.test(inner[i].replace(/\r$/, ""))) { return true; }
+    }
+    return false;
+  }
+
   function fmParse(markdown) {
     var lines = (markdown || "").split("\n");
     if (lines.length < 2 || lines[0].replace(/\r$/, "") !== "---") { return null; }
     for (var i = 1; i < lines.length; i++) {
       if (lines[i].trim() === "---") {
+        var inner = lines.slice(1, i);
+        if (!fmLooksLikeYAML(inner)) { return null; }
         return {
-          lines: lines.slice(1, i),
+          lines: inner,
           rest: lines.slice(i + 1).join("\n"),
           endLine: i + 1
         };
@@ -215,7 +239,8 @@
     var lines = (text || "").split("\n");
     if (lines.length < 2 || lines[0].replace(/\r$/, "") !== "---") { return null; }
     if (lines[lines.length - 1].trim() !== "---") { return null; }
-    return lines.slice(1, -1);
+    var inner = lines.slice(1, -1);
+    return fmLooksLikeYAML(inner) ? inner : null;
   }
 
   // One table row per line: simple `key: value` lines split on the first
@@ -484,6 +509,11 @@
           var el = node.parentElement;
           var tag = el && el.tagName ? el.tagName.toLowerCase() : "";
           if (!el || tag === "style" || tag === "script" || tag === "noscript") {
+            return NodeFilter.FILTER_REJECT;
+          }
+          // KaTeX ships an invisible MathML tree carrying the raw TeX —
+          // matches there inflate the count and scroll to nothing.
+          if (el.closest && el.closest(".katex-mathml")) {
             return NodeFilter.FILTER_REJECT;
           }
           return NodeFilter.FILTER_ACCEPT;
@@ -1334,10 +1364,18 @@
       revealState = null;
     }
 
+    // Textareas normalize CRLF to LF on seed, so a byte-equal compare
+    // "changes" every CRLF block just by visiting it; trailing blank
+    // lines are block separators, not content.
+    function seedUnchanged(value, seed) {
+      var norm = function (t) { return t.replace(/\r\n?/g, "\n").replace(/\s+$/, ""); };
+      return norm(value) === norm(seed);
+    }
+
     function commitReveal(nextRevealLine) {
       var st = revealState;
       if (!st) { return; }
-      if (st.ta.value === st.seed) { closeReveal(); return; }
+      if (seedUnchanged(st.ta.value, st.seed)) { closeReveal(); return; }
       st.ta.disabled = true;
       // Nulled BEFORE posting: the blur timer must never double-commit
       // (duplicate write + duplicate history snapshot, or a spurious
@@ -1407,7 +1445,7 @@
       function navigate(direction) {
         var st = revealState;
         if (!st) { return; }
-        if (st.ta.value !== st.seed) {
+        if (!seedUnchanged(st.ta.value, st.seed)) {
           // Changed: commit, telling Swift where the caret continues after
           // the reload. The landing line is approximate (separator counts
           // vary) — __pmRevealAtLine snaps to the nearest block.
@@ -1581,7 +1619,7 @@
         var host = event.target.closest(".pm-editable[data-pm-lines]");
         if (revealState) {
           var st = revealState;
-          var changed = st.ta.value !== st.seed;
+          var changed = !seedUnchanged(st.ta.value, st.seed);
           if (changed) {
             var next = 0;
             if (host && host.style.display !== "none") {

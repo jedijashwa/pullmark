@@ -384,6 +384,37 @@ struct ReleaseNotesSheet: View {
     }
 }
 
+/// Banner shown when review comments/threads failed to load: the diff
+/// must not silently look like an uncommented PR.
+struct CommentsUnavailableBanner: View {
+    @EnvironmentObject private var state: AppState
+    let sessionID: String
+    @State private var retrying = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.bubble")
+            Text("Review comments couldn't be loaded — existing threads may be missing.")
+            Button("Retry") {
+                retrying = true
+                Task {
+                    await state.refreshPR(sessionID: sessionID)
+                    retrying = false
+                }
+            }
+            .disabled(retrying)
+            if retrying {
+                ProgressView().controlSize(.small)
+            }
+            Spacer()
+        }
+        .font(.callout)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Color.yellow.opacity(0.22))
+    }
+}
+
 /// Banner shown when the PR's head moved on GitHub since it was loaded.
 struct PRUpdateBanner: View {
     @EnvironmentObject private var state: AppState

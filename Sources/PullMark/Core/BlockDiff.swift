@@ -123,6 +123,10 @@ struct DiffSegmentPayload: Encodable, Equatable {
     var fmOldText = false
     /// For kind "moved": the 1-based old-file line the block came from.
     var movedFromLine: Int? = nil
+    /// Old-file line range for segments that also exist in the old file
+    /// (unchanged/modified/moved) — LEFT-side review comments anchor here.
+    var oldLineStart: Int? = nil
+    var oldLineEnd: Int? = nil
     /// Existing review threads anchored to this segment (attached later by
     /// ReviewThreads.place, hence mutable).
     var threads: [ThreadPayload]? = nil
@@ -136,10 +140,11 @@ extension DiffSegment {
     /// RIGHT; only fully removed blocks target LEFT.
     var payload: DiffSegmentPayload {
         switch self {
-        case .unchanged(_, let new):
+        case .unchanged(let old, let new):
             return DiffSegmentPayload(kind: "unchanged", text: new.text, oldText: nil,
                                       lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
-                                      fmText: MarkdownBlocks.isFrontMatter(new))
+                                      fmText: MarkdownBlocks.isFrontMatter(new),
+                                      oldLineStart: old.startLine, oldLineEnd: old.endLine)
         case .added(let block):
             return DiffSegmentPayload(kind: "added", text: block.text, oldText: nil,
                                       lineStart: block.startLine, lineEnd: block.endLine, side: "RIGHT",
@@ -152,12 +157,14 @@ extension DiffSegment {
             return DiffSegmentPayload(kind: "modified", text: new.text, oldText: old.text,
                                       lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
                                       fmText: MarkdownBlocks.isFrontMatter(new),
-                                      fmOldText: MarkdownBlocks.isFrontMatter(old))
+                                      fmOldText: MarkdownBlocks.isFrontMatter(old),
+                                      oldLineStart: old.startLine, oldLineEnd: old.endLine)
         case .moved(let old, let new):
             return DiffSegmentPayload(kind: "moved", text: new.text, oldText: nil,
                                       lineStart: new.startLine, lineEnd: new.endLine, side: "RIGHT",
                                       fmText: MarkdownBlocks.isFrontMatter(new),
-                                      movedFromLine: old.startLine)
+                                      movedFromLine: old.startLine,
+                                      oldLineStart: old.startLine, oldLineEnd: old.endLine)
         }
     }
 }
