@@ -218,6 +218,7 @@ final class AppState: ObservableObject {
             }
         }
         loadRecents()
+        loadInboxCounts()
         Task { @MainActor [weak self] in
             // Brief grace so launch-time opens (CLI, Finder) land first —
             // restore skips itself when anything is already open.
@@ -231,7 +232,14 @@ final class AppState: ObservableObject {
 
     @Published var inbox: [GitHubClient.InboxPR] = []
     /// Markdown-file counts per inbox id, cached per update stamp.
+    /// Markdown-file counts keyed by PR id. A count from a previous
+    /// updatedAt keeps serving as a placeholder while the refresh
+    /// re-counts — invalidating on every activity bump made the whole
+    /// inbox flash unfiltered for a beat. Persisted so launches don't
+    /// flash either.
     @Published var inboxMDCounts: [String: Int] = [:]
+    /// id → the updatedAt the count was computed for.
+    private var inboxCountStamps: [String: String] = [:]
     private var lastInboxRefresh: Date?
 
     var inboxEnabled: Bool {
@@ -247,21 +255,43 @@ final class AppState: ObservableObject {
         if let last = lastInboxRefresh, Date().timeIntervalSince(last) < 300 { return }
         lastInboxRefresh = Date()
         guard let items = try? await client.reviewRequests() else { return }
-        inbox = items
-        // Badge counts: top 15 only, cache pruned to live entries.
-        let liveKeys = Set(items.map { $0.id + "@" + $0.updatedAt })
-        inboxMDCounts = inboxMDCounts.filter { liveKeys.contains($0.key) }
-        for item in items.prefix(15) {
-            let cacheKey = item.id + "@" + item.updatedAt
-            if inboxMDCounts[cacheKey] == nil,
-               let count = try? await client.markdownFileCount(item.ref) {
-                inboxMDCounts[cacheKey] = count
+        // Counts FIRST, list after, published together: the visible list
+        // must never show an item its filter hasn't judged yet — that
+        // was the flash of unfiltered requests on every refresh. Counts
+        // from an older updatedAt serve as placeholders (top 15 counted;
+        // the long tail shows uncounted by design).
+        let liveIDs = Set(items.map(\.id))
+        var counts = inboxMDCounts.filter { liveIDs.contains($0.key) }
+        var stamps = inboxCountStamps.filter { liveIDs.contains($0.key) }
+        for item in items.prefix(15) where stamps[item.id] != item.updatedAt {
+            if let count = try? await client.markdownFileCount(item.ref) {
+                counts[item.id] = count
+                stamps[item.id] = item.updatedAt
             }
         }
+        inboxMDCounts = counts
+        inboxCountStamps = stamps
+        inbox = items
+        persistInboxCounts()
     }
 
     func inboxMDCount(_ item: GitHubClient.InboxPR) -> Int? {
-        inboxMDCounts[item.id + "@" + item.updatedAt]
+        inboxMDCounts[item.id]
+    }
+
+    private func persistInboxCounts() {
+        UserDefaults.standard.set(inboxMDCounts, forKey: DefaultsKeys.inboxMDCounts)
+        UserDefaults.standard.set(inboxCountStamps, forKey: DefaultsKeys.inboxCountStamps)
+    }
+
+    func loadInboxCounts() {
+        let defaults = UserDefaults.standard
+        if let counts = defaults.dictionary(forKey: DefaultsKeys.inboxMDCounts) as? [String: Int] {
+            inboxMDCounts = counts
+        }
+        if let stamps = defaults.dictionary(forKey: DefaultsKeys.inboxCountStamps) as? [String: String] {
+            inboxCountStamps = stamps
+        }
     }
 
     func inboxIsUnread(_ item: GitHubClient.InboxPR) -> Bool {

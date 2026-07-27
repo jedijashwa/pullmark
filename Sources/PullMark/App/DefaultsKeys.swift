@@ -41,6 +41,11 @@ enum DefaultsKeys {
     /// Inbox shows only PRs that touch Markdown (default on) — PullMark
     /// has nothing to render for the rest.
     static let inboxMarkdownOnly = "pm.inboxMarkdownOnly"
+    /// Cached inbox Markdown-file counts (PR id → count) and the
+    /// updatedAt each was computed for — placeholders that stop the
+    /// inbox flashing unfiltered at launch and on refresh.
+    static let inboxMDCounts = "pm.inboxMDCounts"
+    static let inboxCountStamps = "pm.inboxCountStamps"
     /// Restore the previous session's files and PRs at launch (default on).
     static let restoreSession = "pm.restoreSession"
     /// Persisted session: local file paths + PR refs from last quit.
