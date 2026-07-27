@@ -4,6 +4,11 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.3 - 2026-07-27
+
+- The review-request unread count no longer hugs the sidebar's edge —
+  it aligns with the section's rows.
+
 ## 0.20.2 - 2026-07-27
 
 - The review-request inbox no longer flashes unfiltered on refresh or

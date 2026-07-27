@@ -264,6 +264,9 @@ private struct CollapsibleSection<Content: View>: View {
                     .font(fonts.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
+                    // Header content ignores the rows' trailing inset —
+                    // unpadded, the count hugs the sidebar's edge.
+                    .padding(.trailing, 10)
                     .accessibilityLabel("\(badge) unread")
             }
         }
