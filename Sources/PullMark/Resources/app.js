@@ -1107,6 +1107,260 @@
     content.append(pre);
   }
 
+  // ---- Lightbox: click an image, diagram, or formula to inspect it ----
+  // A focused overlay with pan and zoom, for the diagrams that never fit
+  // the reading column. Wheel pans, pinch/⌘-wheel zooms (the native side
+  // forwards gestures here while the lightbox is open), drag pans,
+  // double-click toggles, Esc or the scrim closes.
+
+  var lightbox = null;
+
+  function lightboxSource(node) {
+    if (!node || !node.closest) { return null; }
+    // Linked images navigate; edit mode owns clicks entirely; the blame
+    // gutter's avatars are UI (they open the history sheet), not content.
+    if (node.closest("a")) { return null; }
+    if (document.documentElement.classList.contains("pm-edit-mode")) { return null; }
+    if (node.closest(".pm-lightbox")) { return null; }
+    if (node.closest(".pm-blame-gutter")) { return null; }
+    var img = node.closest("img");
+    if (img && img.closest("#content")) {
+      // A broken image would open a lightbox of its alt-text box.
+      return img.naturalWidth ? img : null;
+    }
+    var mermaid = node.closest(".mermaid");
+    if (mermaid) { return mermaid.querySelector("svg"); }
+    var katex = node.closest(".katex-display");
+    // The inner .katex box hugs the formula; the display block spans the
+    // whole reading column and would inflate the fit math with margin.
+    if (katex) { return katex.querySelector(".katex") || katex; }
+    return null;
+  }
+
+  function closeLightbox() {
+    if (!lightbox) { return; }
+    window.removeEventListener("keydown", lightbox.onKey, true);
+    window.removeEventListener("mousemove", lightbox.onMove);
+    window.removeEventListener("mouseup", lightbox.onUp);
+    lightbox.overlay.remove();
+    if (lightbox.restoreFocus && lightbox.restoreFocus.focus) {
+      lightbox.restoreFocus.focus();
+    }
+    lightbox = null;
+    post({ type: "lightbox", active: false });
+  }
+
+  function openLightbox(source) {
+    closeLightbox();
+    // Base size: images at their natural pixel size (scale 1 = real
+    // pixels), vector/formula content at its rendered size.
+    var rect = source.getBoundingClientRect();
+    var baseW = rect.width || 1;
+    var baseH = rect.height || 1;
+    if (source.tagName === "IMG" && source.naturalWidth) {
+      baseW = source.naturalWidth;
+      baseH = source.naturalHeight;
+    } else if (source.classList && source.classList.contains("katex")) {
+      // KaTeX blocks span the whole column; the union of the rendered
+      // line boxes (the katex-html's direct children — class names vary
+      // across KaTeX versions) is the formula's real footprint.
+      var tight = null;
+      source.querySelectorAll(".katex-html > span").forEach(function (base) {
+        var r = base.getBoundingClientRect();
+        if (!r.width) { return; }
+        tight = tight ? { left: Math.min(tight.left, r.left),
+                          top: Math.min(tight.top, r.top),
+                          right: Math.max(tight.right, r.right),
+                          bottom: Math.max(tight.bottom, r.bottom) }
+                      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+      });
+      if (tight) {
+        baseW = tight.right - tight.left;
+        baseH = tight.bottom - tight.top;
+      }
+    }
+
+    var overlay = document.createElement("div");
+    overlay.className = "pm-lightbox";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-label", "Zoomed view — Escape closes");
+
+    var stage = document.createElement("div");
+    stage.className = "pm-lightbox-stage";
+    var node = document.createElement("div");
+    node.className = "pm-lightbox-node";
+    node.style.width = baseW + "px";
+    node.style.height = baseH + "px";
+    var clone = source.cloneNode(true);
+    if (clone.tagName === "IMG") {
+      // Ids are only shed where they can't hurt: a mermaid SVG's inline
+      // stylesheet selects by the SVG's own id, so stripping it there
+      // renders the clone unstyled.
+      clone.removeAttribute("id");
+      clone.style.width = "100%";
+      clone.style.height = "100%";
+    } else if (clone.tagName === "svg") {
+      clone.setAttribute("width", baseW);
+      clone.setAttribute("height", baseH);
+      clone.style.maxWidth = "none";
+    }
+    node.append(clone);
+    stage.append(node);
+    overlay.append(stage);
+
+    var bar = document.createElement("div");
+    bar.className = "pm-lightbox-bar";
+    function barButton(label, title, action) {
+      var btn = document.createElement("button");
+      btn.textContent = label;
+      btn.title = title;
+      btn.setAttribute("aria-label", title);
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        action();
+      });
+      bar.append(btn);
+      return btn;
+    }
+    barButton("−", "Zoom out (-)", function () { zoomBy(0.8); });
+    var label = document.createElement("span");
+    label.className = "pm-lightbox-label";
+    bar.append(label);
+    barButton("+", "Zoom in (+)", function () { zoomBy(1.25); });
+    barButton("⤢", "Fit (0)", function () { setScale(fitScale()); });
+    barButton("✕", "Close (Esc)", closeLightbox);
+    overlay.append(bar);
+
+    var state = { scale: 1, tx: 0, ty: 0 };
+
+    function fitScale() {
+      var margin = 48;
+      return Math.min(
+        (window.innerWidth - margin * 2) / baseW,
+        (window.innerHeight - margin * 2) / baseH
+      );
+    }
+
+    function apply() {
+      // Keep at least a hand-hold of the content inside the viewport.
+      var halfW = (baseW * state.scale) / 2;
+      var halfH = (baseH * state.scale) / 2;
+      var slackX = halfW + window.innerWidth / 2 - 60;
+      var slackY = halfH + window.innerHeight / 2 - 60;
+      state.tx = Math.max(-slackX, Math.min(slackX, state.tx));
+      state.ty = Math.max(-slackY, Math.min(slackY, state.ty));
+      node.style.transform = "translate(" + state.tx + "px," + state.ty + "px)"
+        + " scale(" + state.scale + ")";
+      label.textContent = Math.round(state.scale * 100) + "%";
+    }
+
+    function setScale(next) {
+      var clamped = Math.max(0.1, Math.min(10, next));
+      // Pan proportionally so the visible center stays put.
+      var factor = clamped / state.scale;
+      state.tx *= factor;
+      state.ty *= factor;
+      state.scale = clamped;
+      apply();
+    }
+
+    function zoomBy(factor) { setScale(state.scale * factor); }
+
+    // Wheel pans (the natural two-finger gesture); pinch and ⌘-wheel
+    // arrive via the bridge from the native side and zoom.
+    overlay.addEventListener("wheel", function (event) {
+      event.preventDefault();
+      state.tx -= event.deltaX;
+      state.ty -= event.deltaY;
+      apply();
+    }, { passive: false });
+
+    var drag = null;
+    stage.addEventListener("mousedown", function (event) {
+      if (event.button !== 0) { return; }
+      drag = { x: event.clientX, y: event.clientY, moved: false };
+      stage.classList.add("pm-panning");
+      event.preventDefault();
+    });
+    // Window-level so a pan survives leaving the stage; removed in
+    // closeLightbox with the rest, or they pile up per open.
+    function onMove(event) {
+      if (!drag) { return; }
+      var dx = event.clientX - drag.x;
+      var dy = event.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 2) { drag.moved = true; }
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      state.tx += dx;
+      state.ty += dy;
+      apply();
+    }
+    function onUp(event) {
+      if (!drag) { return; }
+      var wasClick = !drag.moved;
+      drag = null;
+      stage.classList.remove("pm-panning");
+      // A plain click on the scrim (not a pan, not on the content or
+      // buttons) closes, like every lightbox.
+      if (wasClick && event.target === stage) { closeLightbox(); }
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    stage.addEventListener("dblclick", function (event) {
+      event.preventDefault();
+      setScale(state.scale > fitScale() * 1.05 ? fitScale() : fitScale() * 2);
+    });
+
+    function onKey(event) {
+      if (event.metaKey || event.ctrlKey || event.altKey) { return; }
+      if (event.key === "Escape") { event.preventDefault(); closeLightbox(); }
+      else if (event.key === "+" || event.key === "=") { event.preventDefault(); zoomBy(1.25); }
+      else if (event.key === "-") { event.preventDefault(); zoomBy(0.8); }
+      else if (event.key === "0") { event.preventDefault(); setScale(fitScale()); }
+      else if ([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+                "PageUp", "PageDown", "Home", "End"].indexOf(event.key) !== -1) {
+        // Don't scroll the document under the scrim.
+        event.preventDefault();
+      }
+    }
+    window.addEventListener("keydown", onKey, true);
+
+    document.body.append(overlay);
+    overlay.tabIndex = -1;
+    overlay.setAttribute("aria-modal", "true");
+    var restoreFocus = document.activeElement;
+    overlay.focus();
+    lightbox = { overlay: overlay, onKey: onKey, onMove: onMove, onUp: onUp,
+                 restoreFocus: restoreFocus, zoomBy: zoomBy,
+                 setScale: setScale, fitScale: fitScale,
+                 toggle: function () {
+                   setScale(state.scale > fitScale() * 1.05 ? fitScale() : fitScale() * 2);
+                 } };
+    // Open at fit, but never smaller than the reading-column rendering
+    // and never past 300% — tiny sketches shouldn't open as billboards.
+    state.scale = Math.max(Math.min(fitScale(), 3), Math.min(rect.width / baseW, 1));
+    apply();
+    post({ type: "lightbox", active: true });
+  }
+
+  // Native gestures land here while the lightbox is open.
+  window.__pmLightbox = {
+    zoomBy: function (factor) { if (lightbox) { lightbox.zoomBy(factor); } },
+    toggle: function () { if (lightbox) { lightbox.toggle(); } }
+  };
+
+  document.addEventListener("click", function (event) {
+    var source = lightboxSource(event.target);
+    if (!source) { return; }
+    event.preventDefault();
+    event.stopPropagation();
+    openLightbox(source);
+  }, true);
+
+  if (!payload.editable) {
+    document.documentElement.classList.add("pm-lightbox-enabled");
+  }
+
   // ---- Entry point ----
 
   setupLinkPreview();

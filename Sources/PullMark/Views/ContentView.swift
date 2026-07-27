@@ -27,6 +27,9 @@ struct ContentView: View {
         }
         // Physical "⌘+" (⇧⌘=) zooms in like the menu's ⌘= — see the catcher.
         .background(ZoomKeyCatcher())
+        // Titlebar proxy icon + ⌘-click path menu for the open local file.
+        // macOS 14 gets the real API (navigationDocument); 13 the fallback.
+        .modifier(DocumentProxyModifier(url: selectedLocalURL))
         .frame(minWidth: 940, minHeight: 620)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -117,6 +120,11 @@ struct ContentView: View {
         .onOpenURL { url in
             if AppState.gateOpen(url) { state.add(url: url) }
         }
+    }
+
+    private var selectedLocalURL: URL? {
+        if case .local(let url) = state.selection { return url }
+        return nil
     }
 
     private var errorPresented: Binding<Bool> {

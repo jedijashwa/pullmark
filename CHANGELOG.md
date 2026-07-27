@@ -4,9 +4,28 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.18.0 - 2026-07-27
+
+- Click any image, Mermaid diagram, or block formula to inspect it: a
+  focused overlay opens with pan and zoom (drag or scroll to pan; pinch,
+  ⌘-scroll, +/− or a double-tap to zoom; Esc or a click outside to
+  close) — complex diagrams no longer have to fit the reading column.
+- A "feels more Mac" round: the title bar carries the open document's
+  proxy icon (drag it anywhere, ⌘-click the title for the folder path),
+  documents you open show up in the Dock icon's right-click menu and
+  Apple → Recent Items, and a Share button on documents and pull
+  requests sends the file (or the PR link) to Mail, Messages, AirDrop,
+  and friends.
+- Zoom niceties: a two-finger double-tap smart-zooms between 100% and
+  your last level (Safari-style), a quiet haptic tick marks the end of
+  the range, and the zoom pill and outline scrolling respect the
+  system's Reduce Motion setting.
+- File → Page Setup… (⇧⌘P) — paper size and orientation now carry into
+  Print.
+
 ## 0.17.0 - 2026-07-27
 
-- Magnification (#12): ⌘+ / ⌘− zoom the document in browser style — text,
+- Magnification ([#12](https://github.com/jedijashwa/pullmark/issues/12)): ⌘+ / ⌘− zoom the document in browser style — text,
   images, and the content column all scale together, reflowing to the
   window and never past its edge — and ⌘0 (View → Actual Size) resets.
   Pinch and ⌘-scroll zoom the page too, a brief pill shows the level

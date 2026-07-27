@@ -160,8 +160,12 @@ final class WebViewProxy: ObservableObject {
     private(set) var activeFindQuery: String?
 
     func scrollToAnchor(_ id: String) {
+        // Jump instead of glide when the user asked the system for less
+        // motion (the behavior parameter ignores prefers-reduced-motion).
+        let behavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            ? "auto" : "smooth"
         let js = "document.getElementById(\(HTMLBuilder.jsStringLiteral(id)))"
-            + "?.scrollIntoView({behavior: \"smooth\", block: \"start\"});"
+            + "?.scrollIntoView({behavior: \"\(behavior)\", block: \"start\"});"
         webView?.evaluateJavaScript(js)
     }
 

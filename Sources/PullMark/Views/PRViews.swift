@@ -53,6 +53,12 @@ struct PROverviewView: View {
                 .background(ThemePaper.color(for: themeRaw))
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
+            .toolbar {
+                ToolbarItem {
+                    ShareLink(item: session.details.htmlUrl)
+                        .help("Share a link to this pull request")
+                }
+            }
         } else {
             EmptyView()
         }
