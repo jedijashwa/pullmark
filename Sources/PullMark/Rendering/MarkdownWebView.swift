@@ -83,8 +83,46 @@ struct MarkdownWebView: NSViewRepresentable {
     /// snap the zoom back mid-gesture, other windows follow live, and
     /// the HUD counts along.
     private final class ZoomableWebView: WKWebView {
+        /// Where smart magnify returns to after toggling down to 100%.
+        /// Shared across web views — it is one reading preference, like
+        /// the zoom itself.
+        private static var lastSmartZoom: CGFloat = 1.5
+
+        /// The page's lightbox is open (bridge-reported): zoom gestures
+        /// belong to it, not the document — WKWebView never delivers
+        /// pinches to the page, so they are forwarded as script calls.
+        var lightboxActive = false
+
+        private func forwardToLightbox(_ call: String) {
+            evaluateJavaScript("window.__pmLightbox && window.__pmLightbox.\(call);",
+                               completionHandler: nil)
+        }
+
         override func magnify(with event: NSEvent) {
+            if lightboxActive {
+                forwardToLightbox("zoomBy(\(1 + event.magnification))")
+                return
+            }
             applyZoom(pageZoom * (1 + event.magnification))
+        }
+
+        /// Two-finger double-tap (Safari's smart zoom): toggle between
+        /// actual size and the last magnified level.
+        override func smartMagnify(with event: NSEvent) {
+            if lightboxActive {
+                forwardToLightbox("toggle()")
+                return
+            }
+            if DocumentZoom.isActualSize(Double(pageZoom)) {
+                applyZoom(Self.lastSmartZoom)
+            } else {
+                // Remember only meaningful magnification — a zoomed-out
+                // or hair-above-100% level would turn the toggle into a
+                // zoom-out (or a visible no-op). From those, the return
+                // trip keeps the previous magnified level.
+                if pageZoom >= 1.1 { Self.lastSmartZoom = pageZoom }
+                applyZoom(1.0)
+            }
         }
 
         override func scrollWheel(with event: NSEvent) {
@@ -92,11 +130,28 @@ struct MarkdownWebView: NSViewRepresentable {
                 super.scrollWheel(with: event)
                 return
             }
+            if lightboxActive {
+                forwardToLightbox("zoomBy(\(1 + event.scrollingDeltaY * 0.005))")
+                return
+            }
             applyZoom(pageZoom * (1 + event.scrollingDeltaY * 0.005))
         }
 
+        /// Edge detector for the limit haptic: true while the last request
+        /// overshot the range, so the tick fires once per arrival at a
+        /// limit and re-arms as soon as the gesture pulls back inside.
+        private var atLimit = false
+
         private func applyZoom(_ value: CGFloat) {
             let clamped = DocumentZoom.clamped(value)
+            let hitLimit = clamped != value
+            // A quiet tick when a gesture runs into the end of the range —
+            // otherwise a pinch past 300% just feels ignored.
+            if hitLimit, !atLimit {
+                NSHapticFeedbackManager.defaultPerformer
+                    .perform(.alignment, performanceTime: .default)
+            }
+            atLimit = hitLimit
             pageZoom = clamped
             UserDefaults.standard.set(Double(clamped), forKey: DefaultsKeys.zoom)
         }
@@ -154,6 +209,9 @@ struct MarkdownWebView: NSViewRepresentable {
             RenderPageStore.removePage(context.coordinator.lastPageURL)
             if let pageURL = RenderPageStore.writePage(html) {
                 context.coordinator.lastPageURL = pageURL
+                // The new page starts with no lightbox — a stale flag
+                // would strand zoom gestures in a dead forwarder.
+                (webView as? ZoomableWebView)?.lightboxActive = false
                 webView.loadFileURL(pageURL, allowingReadAccessTo: RenderPageStore.directory)
             }
         }
@@ -203,6 +261,10 @@ struct MarkdownWebView: NSViewRepresentable {
                 }
             case "toggleEditMode":
                 parent.onToggleEditMode?()
+            case "lightbox":
+                if let active = dict["active"] as? Bool {
+                    (message.webView as? ZoomableWebView)?.lightboxActive = active
+                }
             case "outline":
                 guard let raw = dict["items"] as? [[String: Any]] else { return }
                 let items = raw.compactMap { item -> OutlineItem? in
@@ -253,6 +315,11 @@ struct MarkdownWebView: NSViewRepresentable {
             // skips the first composited frame for an occluded/busy view.
             // Marking the view dirty after navigation forces that frame.
             DispatchQueue.main.async { webView.needsDisplay = true }
+            // The updateNSView reset can be undone by a straggling
+            // "lightbox open" message from the OLD page still in the
+            // main-queue pipeline; navigation completion is ordered after
+            // those, so this reset is the authoritative one.
+            (webView as? ZoomableWebView)?.lightboxActive = false
             parent.onPageLoaded?()
         }
 

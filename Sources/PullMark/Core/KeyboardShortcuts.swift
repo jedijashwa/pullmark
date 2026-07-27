@@ -113,7 +113,7 @@ struct KeyCombo: Codable, Equatable, Hashable {
 /// persistence keys — never change one once shipped.
 enum ShortcutAction: String, CaseIterable, Codable {
     case openFile, openPullRequest, openQuickly, commitChanges, revertLastEdit
-    case printDocument, exportPDF, exportHTML
+    case pageSetup, printDocument, exportPDF, exportHTML
     case editMode, copyAsMarkdown
     case findInPage, findNext, findPrevious, searchAllFiles
     case toggleOutline, toggleSource, reloadDocument
@@ -127,6 +127,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .openQuickly: return "Open Quickly…"
         case .commitChanges: return "Commit Changes…"
         case .revertLastEdit: return "Revert Last Edit"
+        case .pageSetup: return "Page Setup…"
         case .printDocument: return "Print…"
         case .exportPDF: return "Export as PDF…"
         case .exportHTML: return "Export as HTML…"
@@ -154,7 +155,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     var category: String {
         switch self {
         case .openFile, .openPullRequest, .openQuickly, .commitChanges,
-             .revertLastEdit, .printDocument, .exportPDF, .exportHTML:
+             .revertLastEdit, .pageSetup, .printDocument, .exportPDF, .exportHTML:
             return "File"
         case .editMode, .copyAsMarkdown,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
@@ -195,6 +196,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .openQuickly: return KeyCombo(key: "k", command: true)
         case .commitChanges: return KeyCombo(key: "k", command: true, control: true)
         case .revertLastEdit: return nil
+        case .pageSetup: return KeyCombo(key: "p", command: true, shift: true)
         case .printDocument: return KeyCombo(key: "p", command: true)
         case .exportPDF: return nil
         case .exportHTML: return nil

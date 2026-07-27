@@ -163,6 +163,10 @@ struct LocalFileView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
+            ToolbarItem {
+                ShareLink(item: file.url)
+                    .help("Share this document")
+            }
             ToolbarItem { editToggle }
             ToolbarItem {
                 compareMenu

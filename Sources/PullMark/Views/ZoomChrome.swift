@@ -105,12 +105,13 @@ struct ZoomHUD: View {
         .allowsHitTesting(false)
         .accessibilityHidden(true) // announced app-wide below instead
         .onChange(of: zoom) { newValue in
-            withAnimation(.easeOut(duration: 0.1)) { visible = true }
+            let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.1)) { visible = true }
             hideTask?.cancel()
             hideTask = Task {
                 try? await Task.sleep(nanoseconds: 1_300_000_000)
                 guard !Task.isCancelled else { return }
-                withAnimation(.easeOut(duration: 0.35)) { visible = false }
+                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.35)) { visible = false }
             }
             // VoiceOver can't see a transient pill (and pinch never goes
             // near a labeled menu item) — say where the zoom landed. Key

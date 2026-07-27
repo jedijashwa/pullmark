@@ -374,6 +374,12 @@ final class AppState: ObservableObject {
                     resourceRoot: url.deletingLastPathComponent())
             noteRecent(RecentItem(kind: .file, path: url.path,
                                   title: url.lastPathComponent, lastOpened: Date()))
+            // The system's recents too, so the Dock icon's right-click
+            // menu and Apple → Recent Items know about PullMark documents
+            // — the in-app Recents section alone is invisible from the
+            // Finder side. Files only: a folder in Recent Items would
+            // reopen in Finder, not here.
+            NSDocumentController.shared.noteNewRecentDocumentURL(url)
         }
     }
 

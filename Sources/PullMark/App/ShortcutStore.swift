@@ -12,8 +12,20 @@ final class ShortcutStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        overrides = ShortcutOverrides.decoded(
+        var decoded = ShortcutOverrides.decoded(
             from: defaults.data(forKey: DefaultsKeys.shortcutOverrides))
+        // A new release can ship a default binding for a combo the user
+        // had already recorded elsewhere (Page Setup's ⇧⌘P landed long
+        // after users could have claimed it). The recording wins — the
+        // newcomer starts unbound instead of silently double-binding the
+        // key and letting AppKit pick a winner.
+        for action in ShortcutAction.allCases where !decoded.isCustomized(action) {
+            guard let combo = decoded.combo(for: action),
+                  let clash = decoded.conflict(with: combo, excluding: action),
+                  decoded.isCustomized(clash) else { continue }
+            decoded.set(nil, for: action)
+        }
+        overrides = decoded
     }
 
     private let defaults: UserDefaults

@@ -223,6 +223,27 @@ struct KeyboardShortcutTests {
         #expect(ShortcutOverrides.decoded(from: nil).isEmpty)
     }
 
+    @Test("A new default that collides with a user recording starts unbound")
+    @MainActor
+    func newDefaultYieldsToUserRecording() {
+        // Simulates upgrading to a release that ships Page Setup on ⇧⌘P
+        // after the user already recorded ⇧⌘P for Export as PDF.
+        let suite = "pm.test.shortcut-migration"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        var recorded = ShortcutOverrides()
+        recorded.set(KeyCombo(key: "p", command: true, shift: true), for: .exportPDF)
+        defaults.set(recorded.encoded(), forKey: DefaultsKeys.shortcutOverrides)
+
+        let store = ShortcutStore(defaults: defaults)
+        #expect(store.combo(for: .exportPDF)
+                == KeyCombo(key: "p", command: true, shift: true),
+                "the user's recording wins")
+        #expect(store.combo(for: .pageSetup) == nil,
+                "the newcomer must not silently double-bind the key")
+        defaults.removePersistentDomain(forName: suite)
+    }
+
     @Test("Encoding is deterministic")
     func deterministicEncoding() {
         var overrides = ShortcutOverrides()

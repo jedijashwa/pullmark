@@ -185,6 +185,9 @@ struct PullMarkApp: App {
                 .help("Restore the file as it was before PullMark's last edit")
             }
             CommandGroup(replacing: .printItem) {
+                Button("Page Setup…") { NSApp.runPageLayout(nil) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .pageSetup))
+                    .help("Paper size and orientation for printing")
                 Button("Print…") { state?.activeDocument?.proxy.printDocument() }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .printDocument))
                     .disabled(state?.activeDocument == nil)
