@@ -84,7 +84,9 @@ struct LocalFileView: View {
         HSplitView {
             documentWebView
                 .overlay(alignment: .bottomTrailing) {
-                    if compare == nil, let stats {
+                    // Native overlays float above the page's lightbox
+                    // scrim, so the pill steps aside while it's open.
+                    if compare == nil, proxy.lightboxPercent == nil, let stats {
                         DocumentStatsPill(stats: stats)
                     }
                 }

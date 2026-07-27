@@ -150,7 +150,11 @@ struct OutlineSidebar: View {
             GeometryReader { geometry in
                 Color.clear.onChange(of: geometry.size.width) { width in
                     let normalized = Int((width / fonts.factor).rounded())
-                    if normalized >= 170, normalized <= 340, normalized != storedWidth {
+                    // Strictly above the floor: a narrow window squeezes
+                    // the panel to its minimum through layout, and that
+                    // must not overwrite the width the user actually
+                    // chose (it silently reset a remembered width once).
+                    if normalized > 170, normalized <= 340, normalized != storedWidth {
                         storedWidth = normalized
                     }
                 }

@@ -503,7 +503,7 @@ struct PRFileView: View {
                 proxy: proxy
             )
             .overlay(alignment: .bottomTrailing) {
-                if mode == .result, let stats {
+                if mode == .result, proxy.lightboxPercent == nil, let stats {
                     DocumentStatsPill(stats: stats)
                 }
             }
@@ -1177,7 +1177,7 @@ struct PRDocView: View {
                         proxy: proxy
                     )
                     .overlay(alignment: .bottomTrailing) {
-                        if let stats {
+                        if proxy.lightboxPercent == nil, let stats {
                             DocumentStatsPill(stats: stats)
                         }
                     }
