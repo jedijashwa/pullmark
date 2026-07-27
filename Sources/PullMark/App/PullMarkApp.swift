@@ -45,6 +45,7 @@ struct PullMarkApp: App {
     @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -269,6 +270,21 @@ struct PullMarkApp: App {
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
                     .disabled(activeLocalFileURL == nil)
                     .help("Re-read this file from disk")
+                Divider()
+                // Zoom sits below the show/hide cluster with Actual Size
+                // first — the Safari/Preview View-menu convention.
+                Button("Actual Size") { zoom = 1.0 }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .actualSize))
+                    .disabled(state == nil || DocumentZoom.isActualSize(zoom))
+                    .help("Reset the zoom to 100%")
+                Button("Zoom In") { zoom = DocumentZoom.zoomIn(from: zoom) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .zoomIn))
+                    .disabled(state == nil || zoom >= DocumentZoom.maximum)
+                    .help("Make the document bigger — text, images, and the content column scale together")
+                Button("Zoom Out") { zoom = DocumentZoom.zoomOut(from: zoom) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .zoomOut))
+                    .disabled(state == nil || zoom <= DocumentZoom.minimum)
+                    .help("Make the document smaller")
                 Divider()
                 prViewCommands
             }

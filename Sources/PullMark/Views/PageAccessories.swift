@@ -97,13 +97,21 @@ struct OutlineSidebar: View {
     /// own width: the stored value seeds idealWidth (which the split view
     /// honors on first layout) and live resizes write back through it.
     @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 230
+    /// Follows the document zoom (damped) so headings stay readable next
+    /// to a magnified page; the width ceiling stretches with it (the
+    /// floor stays put — a scaled minimum would eat the document at high
+    /// zoom and force resizes the user never made).
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+    private var maxWidth: CGFloat { (340 * fonts.factor).rounded() }
 
     var body: some View {
         List {
-            Section("Outline") {
+            Section {
                 if items.isEmpty {
                     Text("No headings")
-                        .font(.callout)
+                        .font(fonts.callout)
                         .foregroundStyle(.secondary)
                 }
                 ForEach(items) { item in
@@ -125,29 +133,36 @@ struct OutlineSidebar: View {
                         in: RoundedRectangle(cornerRadius: 5)
                     )
                 }
+            } header: {
+                Text("Outline")
+                    .font(fonts.sectionHeader)
             }
         }
         .listStyle(.sidebar)
+        // The stored width is in unzoomed points (normalized by the
+        // chrome factor) — a zoomed session must not rewrite the width
+        // an unzoomed session comes back to.
         .frame(minWidth: 170,
-               idealWidth: CGFloat(min(max(storedWidth, 170), 340)),
-               maxWidth: 340)
+               idealWidth: min(CGFloat(min(max(storedWidth, 170), 340)) * fonts.factor,
+                               maxWidth),
+               maxWidth: maxWidth)
         .background(
             GeometryReader { geometry in
                 Color.clear.onChange(of: geometry.size.width) { width in
-                    let rounded = Int(width.rounded())
-                    if rounded >= 170, rounded <= 340, rounded != storedWidth {
-                        storedWidth = rounded
+                    let normalized = Int((width / fonts.factor).rounded())
+                    if normalized >= 170, normalized <= 340, normalized != storedWidth {
+                        storedWidth = normalized
                     }
                 }
             }
         )
     }
 
-    private func font(for level: Int) -> Font {
+    private func font(for level: Int) -> Font? {
         switch level {
-        case 1: return .callout.weight(.semibold)
-        case 2: return .callout
-        default: return .footnote
+        case 1: return fonts.calloutSemibold
+        case 2: return fonts.callout
+        default: return fonts.footnote
         }
     }
 }

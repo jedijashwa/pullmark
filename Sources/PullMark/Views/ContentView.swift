@@ -12,6 +12,9 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
+            // The column's limits deliberately don't follow the zoom:
+            // scaled minimums would eat the document at high zoom, and
+            // AppKit's autosaved width would ratchet and never come back.
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 220, ideal: 270)
         } detail: {
@@ -19,8 +22,11 @@ struct ContentView: View {
                 AppUpdateBanner()
                 DefaultAppBanner()
                 DetailView()
+                    .overlay(alignment: .top) { ZoomHUD().padding(.top, 10) }
             }
         }
+        // Physical "⌘+" (⇧⌘=) zooms in like the menu's ⌘= — see the catcher.
+        .background(ZoomKeyCatcher())
         .frame(minWidth: 940, minHeight: 620)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -131,6 +137,7 @@ struct ContentView: View {
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
 
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
     @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
     @AppStorage(DefaultsKeys.inboxMarkdownOnly) private var inboxMarkdownOnly = true
     // Per-window like the rest of the sidebar (@AppStorage would live-sync
@@ -142,16 +149,19 @@ struct SidebarView: View {
 
     // What you opened yourself outranks what was assigned to you: the
     // review-request inbox sits below Local Files and Pull Requests.
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
     var body: some View {
         List(selection: $state.selection) {
             CollapsibleSection("Local Files", isExpanded: $localExpanded) {
                 if state.localFiles.isEmpty {
                     Text("Open a file or folder to get started.")
                         .foregroundStyle(.secondary)
-                        .font(.callout)
+                        .font(fonts.callout)
                 }
                 ForEach(state.localFiles) { file in
                     Label(file.displayName, systemImage: "doc.text")
+                        .font(fonts.row)
                         .tag(SidebarSelection.local(file.url))
                         .contextMenu {
                             Button("Remove from Sidebar") { state.removeLocalFile(file) }
@@ -162,7 +172,7 @@ struct SidebarView: View {
                 if state.prSessions.isEmpty {
                     Text("Open a PR to review its Markdown changes.")
                         .foregroundStyle(.secondary)
-                        .font(.callout)
+                        .font(fonts.callout)
                 }
                 ForEach(state.prSessions) { session in
                     PRSidebarGroup(session: session)
@@ -222,6 +232,7 @@ private struct CollapsibleSection<Content: View>: View {
     @Binding var isExpanded: Bool
     var badge = 0
     @ViewBuilder let content: () -> Content
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
 
     init(_ title: String, isExpanded: Binding<Bool>, badge: Int = 0,
          @ViewBuilder content: @escaping () -> Content) {
@@ -231,13 +242,17 @@ private struct CollapsibleSection<Content: View>: View {
         self.content = content
     }
 
+    // Headers follow the zoom with their rows — an 11pt header over 20pt
+    // rows would read as a layout bug.
     private var header: some View {
-        HStack {
+        let fonts = ChromeFonts(zoom: zoom)
+        return HStack {
             Text(title)
+                .font(fonts.sectionHeader)
             Spacer()
             if badge > 0 {
                 Text("\(badge)")
-                    .font(.caption)
+                    .font(fonts.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .accessibilityLabel("\(badge) unread")
@@ -259,9 +274,11 @@ private struct CollapsibleSection<Content: View>: View {
 /// can open it, but the reading room has nothing to show).
 private struct InboxRow: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
     let item: GitHubClient.InboxPR
 
     var body: some View {
+        let fonts = ChromeFonts(zoom: zoom)
         Button {
             state.openInboxItem(item)
         } label: {
@@ -273,16 +290,17 @@ private struct InboxRow: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(item.title)
                         .lineLimit(1)
+                        .font(fonts.row)
                         .fontWeight(state.inboxIsUnread(item) ? .semibold : .regular)
                     Text("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"
                         + (item.draft ? " · draft" : ""))
-                        .font(.caption)
+                        .font(fonts.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let count = state.inboxMDCount(item), count > 0 {
                     Label("\(count)", systemImage: "doc.text")
-                        .font(.caption)
+                        .font(fonts.caption)
                         .foregroundStyle(.secondary)
                         .labelStyle(.titleAndIcon)
                         .help(count == 1 ? "1 Markdown file" : "\(count) Markdown files")
@@ -297,9 +315,11 @@ private struct InboxRow: View {
 
 private struct RecentRow: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
     let item: RecentItem
 
     var body: some View {
+        let fonts = ChromeFonts(zoom: zoom)
         Button {
             state.openRecent(item)
         } label: {
@@ -307,9 +327,10 @@ private struct RecentRow: View {
                 HStack(spacing: 4) {
                     Text(item.title)
                         .lineLimit(1)
+                        .font(fonts.row)
                     if item.kind == .pr, let status = item.prStatus, status != .open {
                         Text(status.label)
-                            .font(.caption2)
+                            .font(fonts.caption2)
                             .foregroundStyle(status.color)
                     }
                 }
@@ -348,8 +369,11 @@ private struct RecentRow: View {
 
 private struct PRSidebarGroup: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
     let session: PRSession
     @State private var expanded = true
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
@@ -362,6 +386,7 @@ private struct PRSidebarGroup: View {
                     Image(systemName: icon(for: file.status))
                         .foregroundStyle(color(for: file.status))
                 }
+                .font(fonts.row)
                 .tag(SidebarSelection.prFile(session.id, file.filename))
             }
             ForEach(session.browsedDocs, id: \.self) { path in
@@ -373,6 +398,7 @@ private struct PRSidebarGroup: View {
                     Image(systemName: "doc.text")
                         .foregroundStyle(.secondary)
                 }
+                .font(fonts.row)
                 .tag(SidebarSelection.prDoc(session.id, path))
             }
         } label: {
@@ -386,6 +412,7 @@ private struct PRSidebarGroup: View {
                 Image(systemName: status.systemImage)
                     .foregroundStyle(status.color)
             }
+            .font(fonts.row)
             .tag(SidebarSelection.prOverview(session.id))
             .help(status.label)
             .contextMenu {
@@ -414,6 +441,7 @@ private struct PRSidebarGroup: View {
 
 struct DetailView: View {
     @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
 
     var body: some View {
         switch state.selection {
@@ -450,12 +478,16 @@ struct DetailView: View {
         }
     }
 
+    /// Sits in the document area, so it follows the document zoom at full
+    /// rate — an empty window should answer Zoom In visibly too.
     private var placeholder: some View {
-        VStack(spacing: 12) {
+        let factor = DocumentZoom.clamped(zoom)
+        return VStack(spacing: 12 * factor) {
             Image(systemName: "doc.richtext")
-                .font(.system(size: 42))
+                .font(.system(size: 42 * factor))
                 .foregroundStyle(.secondary)
             Text("Open a Markdown file or a GitHub pull request")
+                .font(.system(size: 13 * factor))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

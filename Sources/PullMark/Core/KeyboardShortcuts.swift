@@ -117,6 +117,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     case editMode, copyAsMarkdown
     case findInPage, findNext, findPrevious, searchAllFiles
     case toggleOutline, toggleSource, reloadDocument
+    case zoomIn, zoomOut, actualSize
     case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
 
     var title: String {
@@ -138,6 +139,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .toggleOutline: return "Show/Hide Outline"
         case .toggleSource: return "Show/Hide Markdown Source"
         case .reloadDocument: return "Reload Document"
+        case .zoomIn: return "Zoom In"
+        case .zoomOut: return "Zoom Out"
+        case .actualSize: return "Actual Size"
         case .prRenderedDiff: return "Rendered Diff"
         case .prSourceDiff: return "Source Diff"
         case .prResult: return "Result"
@@ -155,7 +159,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .editMode, .copyAsMarkdown,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
             return "Edit"
-        case .toggleOutline, .toggleSource, .reloadDocument:
+        case .toggleOutline, .toggleSource, .reloadDocument,
+             .zoomIn, .zoomOut, .actualSize:
             return "View"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
             return "Pull Requests"
@@ -202,6 +207,14 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .toggleOutline: return KeyCombo(key: "o", command: true, option: true)
         case .toggleSource: return KeyCombo(key: "u", command: true, option: true)
         case .reloadDocument: return KeyCombo(key: "r", command: true)
+        // The unshifted key: ⌘= is what a physical "⌘+" press starts as,
+        // and the menu bar joins VS Code in labeling it that way (Safari
+        // shows ⌘+, but one binding can't match both spellings here).
+        // ⇧⌘= — holding shift for a literal "+" — is honored by
+        // ZoomKeyCatcher while the binding is at its default.
+        case .zoomIn: return KeyCombo(key: "=", command: true)
+        case .zoomOut: return KeyCombo(key: "-", command: true)
+        case .actualSize: return KeyCombo(key: "0", command: true)
         case .prRenderedDiff: return KeyCombo(key: "1", command: true)
         case .prSourceDiff: return KeyCombo(key: "2", command: true)
         case .prResult: return KeyCombo(key: "3", command: true)

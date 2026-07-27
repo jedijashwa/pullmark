@@ -12,6 +12,29 @@ struct OutlineItem: Identifiable, Equatable {
 final class WebViewProxy: ObservableObject {
     weak var webView: WKWebView?
 
+    /// True while print/PDF capture holds the view at 100% zoom —
+    /// MarkdownWebView.updateNSView leaves pageZoom alone while set, so a
+    /// SwiftUI update can't re-zoom the view in the middle of a capture.
+    private(set) var zoomHold = false
+
+    /// Runs `capture` with the view at actual size and puts the window
+    /// zoom back afterwards (from the *current* stored value — the user
+    /// may have zoomed elsewhere meanwhile). The JavaScript no-op
+    /// round-trips through the web process after it re-lays-out, so the
+    /// capture sees the 100% layout.
+    private func atActualSize(_ webView: WKWebView,
+                              capture: @escaping (_ done: @escaping () -> Void) -> Void) {
+        zoomHold = true
+        webView.pageZoom = 1
+        webView.evaluateJavaScript("1") { [weak self] _, _ in
+            capture {
+                let stored = UserDefaults.standard.object(forKey: DefaultsKeys.zoom) as? Double ?? 1.0
+                webView.pageZoom = DocumentZoom.clamped(stored)
+                self?.zoomHold = false
+            }
+        }
+    }
+
     /// Entering edit mode: reveal the selection's block (or the first)
     /// so ⌘E lands ready to type.
     func revealFocused() {
@@ -88,20 +111,46 @@ final class WebViewProxy: ObservableObject {
     }
 
     /// ⌘P: prints the rendered document through the standard panel.
+    /// At actual size, like PDF export — paper doesn't inherit the
+    /// window's zoom.
     func printDocument() {
         guard let webView, let window = webView.window else { return }
-        let info = NSPrintInfo.shared
-        info.horizontalPagination = .fit
-        info.verticalPagination = .automatic
-        info.topMargin = 36; info.bottomMargin = 36
-        info.leftMargin = 36; info.rightMargin = 36
-        let operation = webView.printOperation(with: info)
-        operation.showsPrintPanel = true
-        operation.showsProgressPanel = true
-        // WKWebView's print view starts zero-sized; without this the panel
-        // previews an empty page.
-        operation.view?.frame = webView.bounds
-        operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
+        atActualSize(webView) { [weak self] done in
+            let info = NSPrintInfo.shared
+            info.horizontalPagination = .fit
+            info.verticalPagination = .automatic
+            info.topMargin = 36; info.bottomMargin = 36
+            info.leftMargin = 36; info.rightMargin = 36
+            let operation = webView.printOperation(with: info)
+            operation.showsPrintPanel = true
+            operation.showsProgressPanel = true
+            // WKWebView's print view starts zero-sized; without this the
+            // panel previews an empty page.
+            operation.view?.frame = webView.bounds
+            // The sheet returns control immediately; the zoom comes back
+            // when the panel is done (printed or cancelled).
+            let restorer = PrintRestorer {
+                self?.printRestorer = nil
+                done()
+            }
+            self?.printRestorer = restorer
+            operation.runModal(for: window, delegate: restorer,
+                               didRun: #selector(PrintRestorer.printOperationDidRun(_:success:contextInfo:)),
+                               contextInfo: nil)
+        }
+    }
+
+    /// Keeps the print sheet's did-run target alive until it fires.
+    private var printRestorer: PrintRestorer?
+
+    private final class PrintRestorer: NSObject {
+        let onDone: () -> Void
+        init(onDone: @escaping () -> Void) { self.onDone = onDone }
+
+        @objc func printOperationDidRun(_ operation: NSPrintOperation, success: Bool,
+                                        contextInfo: UnsafeMutableRawPointer?) {
+            onDone()
+        }
     }
 
     /// The query currently highlighted by find-in-page, if any. Tracked so
@@ -124,16 +173,21 @@ final class WebViewProxy: ObservableObject {
             completion(.failure(MessageError(message: "No rendered document to export.")))
             return
         }
-        webView.evaluateJavaScript(
-            "Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)"
-        ) { result, _ in
-            let configuration = WKPDFConfiguration()
-            let height = (result as? NSNumber).map { CGFloat(truncating: $0) } ?? 0
-            if height > 0 {
-                configuration.rect = CGRect(x: 0, y: 0, width: webView.bounds.width, height: height)
-            }
-            webView.createPDF(configuration: configuration) { pdfResult in
-                completion(pdfResult)
+        // Export at actual size regardless of the window's zoom — a zoomed
+        // export would bake enlarged text into the file.
+        atActualSize(webView) { done in
+            webView.evaluateJavaScript(
+                "Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)"
+            ) { result, _ in
+                let configuration = WKPDFConfiguration()
+                let height = (result as? NSNumber).map { CGFloat(truncating: $0) } ?? 0
+                if height > 0 {
+                    configuration.rect = CGRect(x: 0, y: 0, width: webView.bounds.width, height: height)
+                }
+                webView.createPDF(configuration: configuration) { pdfResult in
+                    done()
+                    completion(pdfResult)
+                }
             }
         }
     }

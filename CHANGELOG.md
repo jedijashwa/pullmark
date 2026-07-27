@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.17.0 - 2026-07-27
+
+- Magnification (#12): ⌘+ / ⌘− zoom the document in browser style — text,
+  images, and the content column all scale together, reflowing to the
+  window and never past its edge — and ⌘0 (View → Actual Size) resets.
+  Pinch and ⌘-scroll zoom the page too, a brief pill shows the level
+  (VoiceOver announces it), and the setting sticks across launches,
+  app-wide. The sidebar and outline grow along with the reading size (at
+  a gentler rate, so navigation never turns into a billboard), while
+  print and PDF export stay at 100% regardless. Zoom In/Out/Actual Size
+  are rebindable in Settings → Keyboard like every other command.
+
 ## 0.16.2 - 2026-07-21
 
 - The outline panel remembers its width across launches (the sidebar
