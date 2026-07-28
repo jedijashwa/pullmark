@@ -4,6 +4,13 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.5 - 2026-07-28
+
+- Toggling edit mode keeps your place in the document. Entering edit
+  mode now auto-reveals the block you were reading instead of the first
+  block, so long documents no longer snap back to the top; leaving edit
+  mode restores your scroll position too.
+
 ## 0.20.4 - 2026-07-28
 
 - The Compare menu (and blame, and the titlebar branch) now notice

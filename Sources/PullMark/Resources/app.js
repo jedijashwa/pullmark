@@ -1518,6 +1518,18 @@
       });
     }
 
+    // The source line of the topmost block still visible in the viewport —
+    // Swift captures it before an edit-mode flip so the re-rendered page
+    // can put the reader back on the block they were reading.
+    window.__pmFirstVisibleLine = function () {
+      for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+        var r = ((el.getAttribute && el.getAttribute("data-pm-lines")) || "").split("-");
+        if (r.length !== 2) { continue; }
+        if (el.getBoundingClientRect().bottom > 12) { return parseInt(r[0], 10); }
+      }
+      return null;
+    };
+
     // Continue keyboard navigation across a commit-triggered reload:
     // Swift calls this after the page loads. Negative line = caret at end.
     window.__pmRevealAtLine = function (signedLine) {

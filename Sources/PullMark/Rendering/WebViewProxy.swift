@@ -162,6 +162,15 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// The source line of the topmost block visible in the viewport — the
+    /// anchor for keeping the reader's place across an edit-mode flip.
+    func firstVisibleLine(_ completion: @escaping (Int?) -> Void) {
+        guard let webView else { return completion(nil) }
+        webView.evaluateJavaScript(
+            "window.__pmFirstVisibleLine && window.__pmFirstVisibleLine();"
+        ) { value, _ in completion(value as? Int) }
+    }
+
     /// Continues arrow-key editing navigation after a commit reload.
     func revealAtLine(_ signedLine: Int) {
         webView?.evaluateJavaScript(
