@@ -365,14 +365,25 @@ struct LocalFileView: View {
     private func setEditMode(_ newValue: Bool) {
         proxy.commitInlineEdit()
         proxy.scrollFraction { fraction in
-            Task { @MainActor in
-                if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
-                editMode = newValue
-                if newValue {
-                    sessionSnapshotTaken = false
-                    pendingAutoReveal = true
+            proxy.firstVisibleLine { line in
+                Task { @MainActor in
+                    let scrolled = (fraction ?? 0) > 0.02
+                    if scrolled, let fraction { pendingScrollRestore = fraction }
+                    editMode = newValue
+                    if newValue {
+                        sessionSnapshotTaken = false
+                        // From a scrolled position, auto-reveal the block
+                        // the reader is on — the first-block default would
+                        // drag them to the top (the revealed editor's
+                        // focus scroll outlives the fraction restore).
+                        if scrolled, let line {
+                            pendingRevealLine = line
+                        } else {
+                            pendingAutoReveal = true
+                        }
+                    }
+                    handleEditingState(false)
                 }
-                handleEditingState(false)
             }
         }
     }
