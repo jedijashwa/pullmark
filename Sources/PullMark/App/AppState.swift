@@ -135,6 +135,10 @@ final class AppState: ObservableObject {
     @Published var openQuicklyVisible = false
     /// Presents the commit sheet for a repo root (File → Commit Changes…).
     @Published var commitRequest: CommitRequest?
+    /// Bumped after an in-app commit lands. Views holding git-derived state
+    /// (compare menus, blame, titlebar branch) reload on change — a commit
+    /// alters history without touching the file, so file watchers miss it.
+    @Published var gitStateTick = 0
     @Published var findBarVisible = false
     @Published var recents: [RecentItem] = []
     @Published var searchPaletteVisible = false

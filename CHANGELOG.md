@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.4 - 2026-07-28
+
+- The Compare menu (and blame, and the titlebar branch) now notice
+  commits made while a file is open: git info refreshes when you switch
+  back to the app and after in-app commits, so a file's first commit no
+  longer leaves the menu showing only branches until reopened.
+- The Compare menu is now a native menu built fresh on every click —
+  previously the first open after history or branches changed could
+  show stale rows, or truncate new ones to the old menu's width.
+
 ## 0.20.3 - 2026-07-27
 
 - The review-request unread count no longer hugs the sidebar's edge —
