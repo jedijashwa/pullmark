@@ -29,6 +29,27 @@ struct LocalFileView: View {
         let ref: String
         let label: String
     }
+    private final class CompareAnchorBox {
+        weak var view: NSView?
+    }
+    private struct CompareAnchorReader: NSViewRepresentable {
+        let box: CompareAnchorBox
+        func makeNSView(context: Context) -> NSView {
+            let view = NSView()
+            box.view = view
+            return view
+        }
+        func updateNSView(_ nsView: NSView, context: Context) {}
+    }
+    final class CompareMenuPresenter: NSObject {
+        var actions: [() -> Void] = []
+        @objc func fire(_ sender: NSMenuItem) {
+            guard actions.indices.contains(sender.tag) else { return }
+            actions[sender.tag]()
+        }
+    }
+    @State private var compareAnchor = CompareAnchorBox()
+    @State private var comparePresenter = CompareMenuPresenter()
     @State private var inGitRepo = false
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
@@ -164,6 +185,15 @@ struct LocalFileView: View {
             updateActiveDocument()
         }
         .onChange(of: inGitRepo) { _ in loadBlame() }
+        // Commits don't touch the file, so the watcher can't see them: the
+        // compare menu, blame, and titlebar branch went stale the moment
+        // one landed. Refresh when the app returns from a terminal…
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didBecomeActiveNotification)) { _ in loadGitInfo() }
+        // …and when the in-app commit sheet lands one (no deactivation).
+        .onChange(of: state.gitStateTick) { _ in loadGitInfo() }
+        // A first commit (or a new one) changes what blame should show.
+        .onChange(of: commits) { _ in loadBlame() }
         .onChange(of: compare) { _ in updateActiveDocument() }
         .modifier(PendingSearchConsumer(target: .local(file.url),
                                         consume: consumePendingSearch))
@@ -226,43 +256,80 @@ struct LocalFileView: View {
         .disabled(compare != nil || state.sourceViewVisible)
     }
 
-    @ViewBuilder
+    /// A real button popping a native NSMenu built from live state at click
+    /// time. SwiftUI's toolbar Menu caches the menu it bridged for earlier
+    /// content: the first open after the lists refresh (a commit made in a
+    /// terminal, a new branch) showed stale rows or a stale width.
     private var compareMenu: some View {
-        Menu {
-            if !commits.isEmpty {
-                Section(commits.count >= 25 ? "History (25 most recent)" : "History") {
-                    ForEach(commits) { commit in
-                        Button("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
-                            startComparing(ref: commit.sha,
-                                           label: "\(commit.shortSHA) (\(commit.date))")
-                        }
-                    }
-                }
-            }
-            if !branches.isEmpty {
-                Section(branches.count >= 20 ? "Recent Branches" : "Branches") {
-                    ForEach(branches, id: \.self) { branch in
-                        Button(branch) { startComparing(ref: branch, label: branch) }
-                    }
-                }
-            }
-            if !remoteBranches.isEmpty {
-                Section(remoteBranches.count >= 20 ? "Recent Remote Branches" : "Remote Branches") {
-                    ForEach(remoteBranches, id: \.self) { branch in
-                        Button(branch) { startComparing(ref: branch, label: branch) }
-                    }
-                }
-            }
-            if compare != nil {
-                Divider()
-                Button("Stop Comparing") { stopComparing() }
-            }
+        Button {
+            popCompareMenu()
         } label: {
-            Label("Compare", systemImage: "clock.arrow.circlepath")
+            HStack(spacing: 3) {
+                Image(systemName: "clock.arrow.circlepath")
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .opacity(0.8)
+            }
         }
+        .accessibilityLabel("Compare")
+        .background(CompareAnchorReader(box: compareAnchor))
         .disabled(!inGitRepo)
         .help(inGitRepo ? "Compare with a previous revision or branch"
                         : "Not inside a git repository")
+    }
+
+    private func popCompareMenu() {
+        guard let view = compareAnchor.view else { return }
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        var actions: [() -> Void] = []
+        func addHeader(_ title: String) {
+            if !menu.items.isEmpty { menu.addItem(.separator()) }
+            if #available(macOS 14.0, *) {
+                menu.addItem(NSMenuItem.sectionHeader(title: title))
+            } else {
+                let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                menu.addItem(item)
+            }
+        }
+        func addAction(_ title: String, _ run: @escaping () -> Void) {
+            let item = NSMenuItem(title: title,
+                                  action: #selector(CompareMenuPresenter.fire(_:)),
+                                  keyEquivalent: "")
+            item.target = comparePresenter
+            item.tag = actions.count
+            actions.append(run)
+            menu.addItem(item)
+        }
+        if !commits.isEmpty {
+            addHeader(commits.count >= 25 ? "History (25 most recent)" : "History")
+            for commit in commits {
+                addAction("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
+                    startComparing(ref: commit.sha,
+                                   label: "\(commit.shortSHA) (\(commit.date))")
+                }
+            }
+        }
+        if !branches.isEmpty {
+            addHeader(branches.count >= 20 ? "Recent Branches" : "Branches")
+            for branch in branches {
+                addAction(branch) { startComparing(ref: branch, label: branch) }
+            }
+        }
+        if !remoteBranches.isEmpty {
+            addHeader(remoteBranches.count >= 20 ? "Recent Remote Branches"
+                                                 : "Remote Branches")
+            for branch in remoteBranches {
+                addAction(branch) { startComparing(ref: branch, label: branch) }
+            }
+        }
+        if compare != nil {
+            if !menu.items.isEmpty { menu.addItem(.separator()) }
+            addAction("Stop Comparing") { stopComparing() }
+        }
+        comparePresenter.actions = actions
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: view)
     }
 
     /// "~/Code/pullmark · main · edited" — folder, branch, and unsaved-edit

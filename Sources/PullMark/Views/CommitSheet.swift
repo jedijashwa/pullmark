@@ -269,6 +269,7 @@ struct CommitSheet: View {
                 } else {
                     state.lastNotice = committed + (push ? " and pushed to origin." : ".")
                 }
+                state.gitStateTick += 1
                 dismiss()
             }
         }
