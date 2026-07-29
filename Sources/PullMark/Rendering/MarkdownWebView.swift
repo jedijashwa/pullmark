@@ -102,6 +102,48 @@ struct MarkdownWebView: NSViewRepresentable {
         /// the zoom itself.
         private static var lastSmartZoom: CGFloat = 1.5
 
+        /// File drops on the page open the file, exactly like dropping on
+        /// the Dock icon. Left alone, WebKit's internal content view claims
+        /// the drag and swallows it (SwiftUI's window-level onDrop never
+        /// sees drops over the page — which is most of the window). So:
+        /// strip drag registration from WebKit's whole subview tree, make
+        /// the web view itself the drag destination for file URLs, and
+        /// route drops through the same open pipeline as Finder events.
+        /// Re-run after each navigation, which rebuilds content views.
+        func stripDragRegistration(_ view: NSView? = nil) {
+            let target = view ?? self
+            target.unregisterDraggedTypes()
+            for sub in target.subviews { stripDragRegistration(sub) }
+            if target === self {
+                super.registerForDraggedTypes([.fileURL])
+            }
+        }
+
+        private func fileURLs(from info: NSDraggingInfo) -> [URL] {
+            (info.draggingPasteboard.readObjects(
+                forClasses: [NSURL.self],
+                options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
+        }
+
+        override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+            fileURLs(from: sender).isEmpty ? [] : .copy
+        }
+
+        override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+            fileURLs(from: sender).isEmpty ? [] : .copy
+        }
+
+        override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+            !fileURLs(from: sender).isEmpty
+        }
+
+        override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+            let urls = fileURLs(from: sender)
+            guard !urls.isEmpty else { return false }
+            OpenURLRouter.shared.deliver(urls)
+            return true
+        }
+
         override func magnify(with event: NSEvent) {
             applyZoom(pageZoom * (1 + event.magnification))
         }
@@ -229,6 +271,7 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.setValue(false, forKey: "drawsBackground")
         }
         webView.underPageBackgroundColor = .clear
+        (webView as? ZoomableWebView)?.stripDragRegistration()
         if interactive {
             webView.pageZoom = DocumentZoom.clamped(zoom)
         }
@@ -369,6 +412,10 @@ struct MarkdownWebView: NSViewRepresentable {
             // skips the first composited frame for an occluded/busy view.
             // Marking the view dirty after navigation forces that frame.
             DispatchQueue.main.async { webView.needsDisplay = true }
+            // Navigation rebuilds WebKit's content views, re-registering
+            // them as drag destinations — strip again so file drops keep
+            // falling through to the window's onDrop.
+            (webView as? ZoomableWebView)?.stripDragRegistration()
             parent.onPageLoaded?()
         }
 

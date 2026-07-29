@@ -4,6 +4,12 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.20.6 - 2026-07-29
+
+- Dropping a Markdown file (or folder) onto the rendered document now
+  opens it, matching the sidebar and the Dock icon. The page previously
+  swallowed drops silently — and it covers most of the window.
+
 ## 0.20.5 - 2026-07-28
 
 - Toggling edit mode keeps your place in the document. Entering edit
