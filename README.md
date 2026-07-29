@@ -2,6 +2,8 @@
 
 **A native macOS app for people who think in rendered Markdown — for reading docs locally, and for reviewing documentation-heavy pull requests.**
 
+**[pullmark.app](https://pullmark.app)** · [Download](https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg) · [Releases](https://github.com/jedijashwa/pullmark/releases)
+
 ## Why PullMark exists
 
 More and more of what flows through pull requests isn't code — it's *documents*: design docs, decision records, agent and skill definitions, runbooks, READMEs. Reviewing those as walls of `+`/`-` source lines is the wrong altitude. A document is meant to be read the way readers will see it: formatted, with tables as tables and diagrams as diagrams. If you're a visual reader, a source diff of prose actively hides what changed.
