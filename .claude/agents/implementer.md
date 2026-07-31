@@ -34,8 +34,10 @@ Hard-won traps (violating these has shipped bugs before):
 
 Rules:
 - Work on the branch you were given (or create the named branch).
-- Commit locally with clear messages. Do NOT push, do NOT open PRs,
-  do NOT create releases, do NOT write to GitHub in any way.
+- Commit locally with clear messages. Do NOT push, open PRs, create
+  releases, or write to GitHub — unless your dispatch explicitly
+  instructs you to push your branch and open a PR for it (never merge,
+  never release, nothing else).
 - If you launch any app instance for a sanity check, kill what you
   launched before finishing — and never kill or script an installed
   /Applications instance you did not start.
