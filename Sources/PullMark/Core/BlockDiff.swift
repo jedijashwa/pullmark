@@ -130,6 +130,9 @@ struct DiffSegmentPayload: Encodable, Equatable {
     /// Existing review threads anchored to this segment (attached later by
     /// ReviewThreads.place, hence mutable).
     var threads: [ThreadPayload]? = nil
+    /// The viewer's pending comments anchored to this segment (attached by
+    /// PendingAnchors.place) — rendered with the yellow Pending tag.
+    var pending: [PendingPayload]? = nil
     /// Word-level markup for modified segments (attached after diffing).
     var wordDiff: WordDiff.Markup? = nil
 }

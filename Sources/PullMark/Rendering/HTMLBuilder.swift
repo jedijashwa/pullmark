@@ -52,6 +52,16 @@ enum HTMLBuilder {
         var blame: [BlameRunPayload]?
         /// One-line note shown when blame was requested but unavailable.
         var blameNote: String?
+        /// Anchored, live, new-side review threads for Result-view markers
+        /// (document mode) — the page places margin badges via the blocks'
+        /// data-pm-lines annotations.
+        var threads: [ThreadPayload]?
+        /// The viewer's pending comments for this document (Result view) —
+        /// rendered at their anchors with the Pending tag.
+        var pendingComments: [PendingPayload]?
+        /// Commented patch lines (patch mode): gutter badges that expand
+        /// the thread cards inline.
+        var patchThreads: [PatchThreadPayload]?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -97,7 +107,9 @@ enum HTMLBuilder {
                              preview: Bool = false,
                              editable: Bool = false,
                              blame: [BlameRunPayload]? = nil,
-                             blameNote: String? = nil) -> String {
+                             blameNote: String? = nil,
+                             threads: [ThreadPayload]? = nil,
+                             pending: [PendingPayload]? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -106,7 +118,9 @@ enum HTMLBuilder {
                                     preview: preview ? true : nil,
                                     editable: editable ? true : nil,
                                     blame: blame,
-                                    blameNote: blameNote),
+                                    blameNote: blameNote,
+                                    threads: threads?.isEmpty == false ? threads : nil,
+                                    pendingComments: pending?.isEmpty == false ? pending : nil),
              title: title, customCSS: customCSS)
     }
 
@@ -146,8 +160,10 @@ enum HTMLBuilder {
 
     static func patchPage(patch: String, title: String = "",
                           theme: String = "github",
-                          customCSS: String? = nil) -> String {
-        page(payload: RenderPayload(mode: "patch", patch: patch, theme: theme),
+                          customCSS: String? = nil,
+                          threads: [PatchThreadPayload]? = nil) -> String {
+        page(payload: RenderPayload(mode: "patch", patch: patch, theme: theme,
+                                    patchThreads: threads?.isEmpty == false ? threads : nil),
              title: title, customCSS: customCSS)
     }
 
