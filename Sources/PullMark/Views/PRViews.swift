@@ -224,12 +224,10 @@ struct PRFileView: View {
     @State private var headText: String?
     @State private var loading = true
     @State private var loadError: String?
-    @State private var commentTarget: CommentTarget?
     @State private var fileCommentVisible = false
     @State private var outline: [OutlineItem] = []
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
-    @State private var replyTarget: ReplyTarget?
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
@@ -304,13 +302,13 @@ struct PRFileView: View {
             .modifier(fileSheets)
     }
 
-    /// The four sheets, bundled off the main modifier chain (type-checker
-    /// budget again).
+    /// The sheets, bundled off the main modifier chain (type-checker
+    /// budget again). Line comments and thread replies compose in-page
+    /// now (spec §5) — only the whole-file composer and blame history
+    /// remain sheet-shaped.
     private var fileSheets: PRFileSheets {
         PRFileSheets(
-            commentTarget: $commentTarget,
             fileCommentVisible: $fileCommentVisible,
-            replyTarget: $replyTarget,
             historyRequest: $historyRequest,
             sessionID: sessionID,
             path: path,
@@ -365,13 +363,6 @@ struct PRFileView: View {
         return RemoteResourceContext(ref: session.ref, commitSHA: session.details.head.sha)
     }
 
-    /// Current content of the targeted new-file lines, used to pre-fill a
-    /// ```suggestion block. Only meaningful on the new side.
-    private func suggestionSeed(for message: BridgeMessage) -> String? {
-        guard message.side == "RIGHT", let headText else { return nil }
-        return TextLines.lines(in: headText, from: message.lineStart, to: message.lineEnd)
-    }
-
     /// Grouped threads for this file, and the viewer's pending comments on
     /// it — one source of truth with the review popover (spec §3).
     private var fileThreadGroups: [ReviewThread] {
@@ -386,6 +377,7 @@ struct PRFileView: View {
         guard let file else { return "" }
         let style = ThemeSelection.pageStyle(from: themeRaw)
         let theme = style.theme
+        let reviewPending = session?.reviewInProgress ?? false
         switch mode {
         case .result:
             let markdown = file.status == "removed"
@@ -408,7 +400,10 @@ struct PRFileView: View {
                                                     meta: session?.threadMeta ?? [:]),
                                             pending: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultPending(
-                                                    filePendingComments, path: path))
+                                                    filePendingComments, path: path),
+                                            commentableLines: file.status == "removed" ? nil
+                                                : CommentableLines.payload(patch: file.patch),
+                                            reviewPending: reviewPending)
         case .sourceDiff:
             let patch = file.patch ?? "No textual diff available for this file."
             return HTMLBuilder.patchPage(
@@ -419,7 +414,9 @@ struct PRFileView: View {
                 threads: PatchAnchors.place(threads: fileThreadGroups,
                                             meta: session?.threadMeta ?? [:],
                                             pending: filePendingComments,
-                                            patch: file.patch ?? "")
+                                            patch: file.patch ?? ""),
+                patchLines: file.patch.map(PatchComposerLines.payloads(patch:)),
+                reviewPending: reviewPending
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
@@ -446,7 +443,9 @@ struct PRFileView: View {
                                         title: path,
                                         theme: theme,
                                         customCSS: style.customCSS,
-                                        allNew: allNew)
+                                        allNew: allNew,
+                                        commentableLines: CommentableLines.payload(patch: file.patch),
+                                        reviewPending: reviewPending)
         }
     }
 
@@ -456,14 +455,17 @@ struct PRFileView: View {
         HStack(spacing: 0) {
             MarkdownWebView(
                 html: html,
-                onCommentRequest: { commentTarget = makeCommentTarget(from: $0) },
+                onComposerSubmit: { handleComposerSubmit($0) },
+                onComposerDraft: { key, text in saveComposerDraft(key: key, text: text) },
                 remoteContext: remoteContext,
                 onOpenRemoteFile: { repoPath in
                     state.openRemoteDoc(sessionID: sessionID, path: repoPath)
                 },
                 onOutline: { outline = $0 },
                 onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
-                onThreadReply: { replyTarget = ReplyTarget(id: $0) },
+                onThreadReplySubmit: { rootID, body, draftKey in
+                    sendThreadReply(rootID: rootID, body: body, draftKey: draftKey)
+                },
                 onThreadResolve: { rootID, resolved in
                     setThreadResolved(rootID: rootID, resolved: resolved)
                 },
@@ -501,21 +503,68 @@ struct PRFileView: View {
         .background(ThemePaper.color(for: themeRaw))
     }
 
-    private func makeCommentTarget(from message: BridgeMessage) -> CommentTarget {
-        let seed = suggestionSeed(for: message)
-        let sideText = message.side == "RIGHT" ? headText : baseText
-        return CommentTarget(
-            lineStart: message.lineStart,
-            lineEnd: message.lineEnd,
-            side: message.side,
-            suggestionSeed: seed,
-            // Pencil without a seed (head text not loaded yet) degrades to
-            // the plain composer.
-            editSuggestion: message.edit && seed != nil,
-            sourceText: sideText.flatMap {
-                TextLines.lines(in: $0, from: message.lineStart, to: message.lineEnd)
+    /// A submission from the in-page composer: "Start a review" / "Add
+    /// review comment" queue into the pending review (the existing sync
+    /// path); "Add single comment" posts immediately, outside any review.
+    /// A failed immediate post restores the text as a draft on the block
+    /// so nothing typed is ever lost.
+    private func handleComposerSubmit(_ submission: ComposerSubmission) {
+        let comment = PendingComment(path: path,
+                                     lineStart: submission.lineStart,
+                                     lineEnd: submission.lineEnd,
+                                     side: submission.side,
+                                     body: submission.body)
+        if submission.review {
+            state.addPendingComment(sessionID: sessionID, comment)
+            return
+        }
+        guard let session else { return }
+        Task {
+            do {
+                try await state.client.createComment(
+                    session.ref,
+                    commitID: session.details.head.sha,
+                    comment: comment
+                )
+                await state.reloadComments(sessionID: sessionID)
+                // If a pending review exists, GitHub may have absorbed the
+                // "immediate" comment into it — re-adopt so the app shows
+                // where the comment actually landed.
+                await state.adoptPendingReview(sessionID: sessionID)
+            } catch {
+                restoreDraftAfterFailure(key: submission.draftKey, text: submission.body)
+                state.lastError = "Could not post the comment: \(error.localizedDescription)"
             }
-        )
+        }
+    }
+
+    private func sendThreadReply(rootID: Int, body: String, draftKey: String) {
+        guard let session else { return }
+        Task {
+            do {
+                try await state.client.replyToReviewComment(session.ref, rootID: rootID,
+                                                            body: body)
+                await state.reloadComments(sessionID: sessionID)
+            } catch {
+                restoreDraftAfterFailure(key: draftKey, text: body)
+                state.lastError = "Could not post the reply: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Click-away draft sync from the page; empty text discards.
+    private func saveComposerDraft(key: String, text: String) {
+        guard let session else { return }
+        ComposerDraftStore.save(jsKey: key, text: text, ref: session.ref,
+                                headSHA: session.details.head.sha, path: path)
+    }
+
+    /// A post failed after the page already cleared its composer: put the
+    /// text back on disk AND into the live page so reopening restores it.
+    private func restoreDraftAfterFailure(key: String, text: String) {
+        guard !key.isEmpty else { return }
+        saveComposerDraft(key: key, text: text)
+        proxy.setComposerDrafts([key: text])
     }
 
     /// Extracted from body so the modifier chain stays inside the
@@ -643,6 +692,12 @@ struct PRFileView: View {
         if state.resolvedConversationsVisible {
             proxy.setResolvedConversationsVisible(true)
         }
+        // Persisted click-away drafts survive reloads and relaunches: push
+        // this file's drafts back into the page (spec §5).
+        if let session {
+            proxy.setComposerDrafts(ComposerDraftStore.load(
+                ref: session.ref, headSHA: session.details.head.sha, path: path))
+        }
         if state.pendingSearchQuery != nil {
             consumePendingSearch()
         } else if state.findBarVisible, let query = proxy.activeFindQuery {
@@ -662,351 +717,11 @@ struct PRFileView: View {
     }
 }
 
-struct CommentTarget: Identifiable {
-    let id = UUID()
-    let lineStart: Int
-    let lineEnd: Int
-    let side: String
-    var suggestionSeed: String?
-    /// Edit-as-suggestion: the composer opens as an editor on the block's
-    /// source and submits the change wrapped in a ```suggestion block.
-    var editSuggestion = false
-    /// The block's source on the target side, one string; feeds the
-    /// composer's line picker so a comment can narrow to specific lines.
-    var sourceText: String?
-
-    /// The block's lines, indexed so row i is source line `lineStart + i`.
-    var sourceLines: [String] {
-        sourceText.map { $0.components(separatedBy: "\n") } ?? []
-    }
-}
-
-// MARK: - Comment composer
-
-struct CommentComposer: View {
-    @EnvironmentObject private var state: AppState
-    @Environment(\.dismiss) private var dismiss
-
-    let sessionID: String
-    let path: String
-    let target: CommentTarget
-
-    @State private var text = ""
-    @State private var replacement = ""
-    @State private var posting = false
-    @State private var error: String?
-    @FocusState private var replacementFocused: Bool
-    /// The targeted line range — starts as the whole block, narrowable
-    /// through the line picker. 1-based source line numbers.
-    @State private var selStart: Int
-    @State private var selEnd: Int
-    /// Last plainly-clicked line; shift-click extends from here.
-    @State private var anchor: Int?
-
-    init(sessionID: String, path: String, target: CommentTarget) {
-        self.sessionID = sessionID
-        self.path = path
-        self.target = target
-        _selStart = State(initialValue: target.lineStart)
-        _selEnd = State(initialValue: target.lineEnd)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(target.editSuggestion ? "Suggest an edit to \(path)" : "Comment on \(path)")
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            if target.lineEnd > target.lineStart, !target.sourceLines.isEmpty {
-                linePicker
-            } else {
-                Text(draft.lineDescription)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if target.editSuggestion {
-                // The block's source, ready to edit; submitted as a
-                // ```suggestion the author applies with one click. Neutral
-                // chrome — the focus ring, not a colored border, signals
-                // editability on macOS.
-                TextEditor(text: $replacement)
-                    .font(.system(.body, design: .monospaced))
-                    .scrollContentBackground(.hidden)
-                    .padding(6)
-                    .background(Color(nsColor: .textBackgroundColor),
-                                in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-                    .frame(minHeight: 150, maxHeight: 320)
-                    .focused($replacementFocused)
-                if replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text("Clearing all text suggests deleting these lines.")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                TextField("", text: $text,
-                          prompt: Text("Add an optional note explaining the change"),
-                          axis: .vertical)
-                    .lineLimit(2...4)
-                    .textFieldStyle(.roundedBorder)
-            } else {
-                TextEditor(text: $text)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    .padding(6)
-                    .background(Color(nsColor: .textBackgroundColor),
-                                in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-                    .frame(minHeight: 130, maxHeight: 320)
-            }
-
-            if let error {
-                Text(error)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .textSelection(.enabled)
-            }
-
-            // Helpers live above the action row — sharing one row with
-            // three buttons squeezed everything until labels truncated.
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                if !target.editSuggestion, target.suggestionSeed != nil {
-                    Button {
-                        insertSuggestion()
-                    } label: {
-                        Label("Insert Suggestion", systemImage: "plus.diamond")
-                    }
-                    .fixedSize()
-                    .help("Insert a ```suggestion block pre-filled with the current lines")
-                }
-                // Out-of-diff targets fail at post time (or reject the whole
-                // review for drafts) — the warning matters in BOTH modes.
-                Text(target.editSuggestion
-                    ? "Suggestions must target lines that are part of the PR diff."
-                    : "Comments must target lines that are part of the PR diff.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-
-            // HIG order: primary rightmost with Cancel beside it, the
-            // alternative commit further left. Reviewing is this app's whole
-            // point, so batching into the pending review is the default.
-            HStack(spacing: 10) {
-                ProgressView()
-                    .controlSize(.small)
-                    .opacity(posting ? 1 : 0)
-                Spacer()
-                Button(target.editSuggestion ? "Suggest Now" : "Comment Now") { postNow() }
-                    .keyboardShortcut(.return, modifiers: [.command, .shift])
-                    .disabled(!submittable || posting)
-                    .fixedSize()
-                    .help("Post immediately, outside any pending review (⇧⌘↩)")
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                    .fixedSize()
-                Button("Add to Review") {
-                    state.addPendingComment(sessionID: sessionID, draft)
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                // ⌘↩ — Return alone inserts a newline while an editor
-                // has focus, so plain .defaultAction would never fire.
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(!submittable || posting)
-                .fixedSize()
-                .help("Queue in your pending review — it posts when you submit the review (⌘↩)")
-            }
-        }
-        .padding(20)
-        .frame(minWidth: 580)
-        .onAppear {
-            if target.editSuggestion, let seed = currentSeed {
-                replacement = seed
-                replacementFocused = true
-            }
-        }
-    }
-
-    // MARK: Line targeting
-
-    private var narrowed: Bool {
-        selStart != target.lineStart || selEnd != target.lineEnd
-    }
-
-    /// The picker locks once a suggestion is in play with content the
-    /// selection no longer matches: in suggestion mode after the seed has
-    /// been edited (silently re-seeding would discard the user's work),
-    /// and in plain mode once an inserted ```suggestion fence exists (a
-    /// suggestion replaces exactly the lines the comment targets, so
-    /// narrowing afterwards would corrupt the file when applied).
-    private var pickerLocked: Bool {
-        if target.editSuggestion {
-            return replacement != (currentSeed ?? "")
-        }
-        return text.contains("```suggestion")
-    }
-
-    private var linePicker: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(draft.lineDescription)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                if narrowed, !pickerLocked {
-                    Button("All Lines") { select(target.lineStart, target.lineEnd) }
-                        .buttonStyle(.link)
-                        .font(.subheadline)
-                }
-                Spacer()
-                Text(pickerLocked
-                    ? (target.editSuggestion
-                        ? "Line selection is locked while your edit is in progress."
-                        : "Line selection is locked while a suggestion block is in the comment.")
-                    : "Click a line to target just it; shift-click extends the range.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(target.sourceLines.enumerated()), id: \.offset) { offset, line in
-                        pickerRow(number: target.lineStart + offset, text: line)
-                    }
-                }
-            }
-            .frame(maxHeight: 132)
-            .background(Color(nsColor: .textBackgroundColor),
-                        in: RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-        }
-    }
-
-    private func pickerRow(number: Int, text lineText: String) -> some View {
-        let selected = number >= selStart && number <= selEnd
-        return Button {
-            rowClicked(number)
-        } label: {
-            HStack(spacing: 8) {
-                Text("\(number)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(selected ? .secondary : .tertiary)
-                    .frame(width: 36, alignment: .trailing)
-                Text(lineText.isEmpty ? " " : lineText)
-                    .font(.system(.caption, design: .monospaced))
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 2)
-            .padding(.horizontal, 6)
-            .contentShape(Rectangle())
-            .background(selected ? Color.accentColor.opacity(0.14) : .clear)
-        }
-        .buttonStyle(.plain)
-        .disabled(pickerLocked)
-        .accessibilityLabel("Line \(number): \(lineText)")
-        .accessibilityValue(selected ? "targeted" : "")
-        .accessibilityHint("Click to target only this line; shift-click to extend the range")
-    }
-
-    private func rowClicked(_ number: Int) {
-        let shift = NSApp.currentEvent?.modifierFlags.contains(.shift) ?? false
-        if shift, let anchor {
-            select(min(anchor, number), max(anchor, number))
-        } else {
-            anchor = number
-            select(number, number)
-        }
-    }
-
-    private func select(_ start: Int, _ end: Int) {
-        let wasSeed = replacement == (currentSeed ?? "")
-        selStart = start
-        selEnd = end
-        // Suggestions replace exactly the targeted lines, so an untouched
-        // seed follows the selection.
-        if target.editSuggestion, wasSeed {
-            replacement = currentSeed ?? ""
-        }
-    }
-
-    /// The current content of the targeted lines (new side), narrowed with
-    /// the selection.
-    private var currentSeed: String? {
-        guard target.suggestionSeed != nil else { return nil }
-        let lines = target.sourceLines
-        guard !lines.isEmpty else { return target.suggestionSeed }
-        let lower = max(0, selStart - target.lineStart)
-        let upper = min(lines.count - 1, selEnd - target.lineStart)
-        guard lower <= upper else { return target.suggestionSeed }
-        return lines[lower...upper].joined(separator: "\n")
-    }
-
-    private var trimmed: String {
-        text.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// Suggestion mode requires an actual change (or a note); a suggestion
-    /// identical to the current lines would be a no-op review comment.
-    private var submittable: Bool {
-        if target.editSuggestion {
-            return replacement != (currentSeed ?? "") || !trimmed.isEmpty
-        }
-        return !trimmed.isEmpty
-    }
-
-    /// The posted body: suggestion mode wraps the edited replacement (plus
-    /// the optional note) via Suggestion.body; plain mode posts the text.
-    private var composedBody: String {
-        target.editSuggestion
-            ? Suggestion.body(note: text, replacement: replacement)
-            : trimmed
-    }
-
-    /// GitHub applies the suggestion in place of the commented lines, so the
-    /// block starts as their current content for the user to edit.
-    private func insertSuggestion() {
-        guard let seed = currentSeed else { return }
-        if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
-        text += "```suggestion\n\(seed)\n```\n"
-    }
-
-    private var draft: PendingComment {
-        PendingComment(path: path, lineStart: selStart, lineEnd: selEnd,
-                       side: target.side, body: composedBody)
-    }
-
-    private func postNow() {
-        guard let session = state.session(sessionID) else { return }
-        posting = true
-        error = nil
-        Task {
-            do {
-                try await state.client.createComment(
-                    session.ref,
-                    commitID: session.details.head.sha,
-                    comment: draft
-                )
-                await state.reloadComments(sessionID: sessionID)
-                // If a pending review exists, GitHub may have absorbed the
-                // "immediate" comment into it — re-adopt so the app shows
-                // where the comment actually landed.
-                await state.adoptPendingReview(sessionID: sessionID)
-                dismiss()
-            } catch {
-                self.error = error.localizedDescription
-            }
-            posting = false
-        }
-    }
-}
-
 /// PRFileView's sheets as one modifier — keeps the view's main chain
-/// inside the type-checker's budget.
+/// inside the type-checker's budget. Line comments, suggestions, and
+/// thread replies compose in-page now (spec §5).
 private struct PRFileSheets: ViewModifier {
-    @Binding var commentTarget: CommentTarget?
     @Binding var fileCommentVisible: Bool
-    @Binding var replyTarget: ReplyTarget?
     @Binding var historyRequest: BlameHistoryRequest?
     let sessionID: String
     let path: String
@@ -1014,14 +729,8 @@ private struct PRFileSheets: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .sheet(item: $commentTarget) { target in
-                CommentComposer(sessionID: sessionID, path: path, target: target)
-            }
             .sheet(isPresented: $fileCommentVisible) {
                 FileCommentComposer(sessionID: sessionID, path: path)
-            }
-            .sheet(item: $replyTarget) { target in
-                ThreadReplyComposer(sessionID: sessionID, rootID: target.id)
             }
             .sheet(item: $historyRequest) { _ in
                 BlameHistorySheet(load: history)
@@ -1309,14 +1018,10 @@ struct PRDocView: View {
     }
 }
 
-// MARK: - Thread reply
-
-struct ReplyTarget: Identifiable {
-    let id: Int
-}
+// MARK: - Whole-file comments
 
 /// A comment on a whole file — no line anchor. GitHub only accepts these
-/// on the immediate-comment endpoint, so there is no "Add to Review" here.
+/// on the immediate-comment endpoint, so it can never join a pending review.
 struct FileCommentComposer: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.dismiss) private var dismiss
@@ -1384,67 +1089,6 @@ struct FileCommentComposer: View {
                     session.ref,
                     commitID: session.details.head.sha,
                     path: path,
-                    body: text.trimmingCharacters(in: .whitespacesAndNewlines)
-                )
-                await state.reloadComments(sessionID: sessionID)
-                dismiss()
-            } catch {
-                self.error = error.localizedDescription
-            }
-            posting = false
-        }
-    }
-}
-
-struct ThreadReplyComposer: View {
-    @EnvironmentObject private var state: AppState
-    @Environment(\.dismiss) private var dismiss
-
-    let sessionID: String
-    let rootID: Int
-
-    @State private var text = ""
-    @State private var posting = false
-    @State private var error: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Reply to thread")
-                .font(.headline)
-            TextEditor(text: $text)
-                .font(.body)
-                .frame(minHeight: 110)
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.35)))
-            if let error {
-                Text(error)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .textSelection(.enabled)
-            }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                Button("Reply") { send() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
-                if posting {
-                    ProgressView().controlSize(.small)
-                }
-            }
-        }
-        .padding(20)
-        .frame(width: 460)
-    }
-
-    private func send() {
-        guard let session = state.session(sessionID) else { return }
-        posting = true
-        error = nil
-        Task {
-            do {
-                try await state.client.replyToReviewComment(
-                    session.ref, rootID: rootID,
                     body: text.trimmingCharacters(in: .whitespacesAndNewlines)
                 )
                 await state.reloadComments(sessionID: sessionID)
