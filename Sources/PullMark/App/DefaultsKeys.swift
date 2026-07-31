@@ -72,6 +72,9 @@ enum DefaultsKeys {
     /// In-progress review summary text keyed by owner/repo#pr; cleared when
     /// the review submits or is abandoned.
     static let pendingReviewSummaries = "pm.pendingReviewSummaries"
+    /// Click-away drafts from the in-page comment composers, keyed by
+    /// PR/head/file plus the page's own draft key — see ComposerDraftStore.
+    static let composerDrafts = "pm.composerDrafts"
     /// Sidebar sections: expansion state (default expanded).
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
