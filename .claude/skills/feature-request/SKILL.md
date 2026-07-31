@@ -35,9 +35,9 @@ releases** — it ends when the spec is on record.
    - Open questions for implementation time
 5. **Check it in without releasing**: branch → `git add docs/specs/…`
    → PR titled `Spec: <feature>` → rebase-merge on approval.
-6. **Open the issue**: `gh issue create` summarizing the spec and
-   linking the committed file; note that the implementing PR should say
-   "Closes #N". Creating the issue is a GitHub write — confirm with the
-   human before posting.
+6. **Open the issue**: `gh issue create --label enhancement`
+   summarizing the spec and linking the committed file; note that the
+   implementing PR should say "Closes #N". Creating the issue is a
+   GitHub write — confirm with the human before posting.
 
 Then stop. Implementation is a separate, separately-approved effort.
