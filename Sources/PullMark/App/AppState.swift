@@ -183,6 +183,11 @@ final class AppState: ObservableObject {
 
     let client = GitHubClient.shared
 
+    /// One per window (like AppState itself): connects the window-level
+    /// review toolbar button to whichever PR surface presents the review
+    /// popover, so the popover's arrow can point at the actual button.
+    let reviewAnchor = ReviewAnchorTracker()
+
     private static let recentsKey = DefaultsKeys.recents
     private static let recentsLimit = 12
 

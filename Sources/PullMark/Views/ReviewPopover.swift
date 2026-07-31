@@ -5,43 +5,53 @@ import SwiftUI
 /// The one persistent review control, on every PR surface: quiet
 /// "Review changes" when nothing is pending, "Finish your review · N"
 /// with a badge tint when something is. It is both the status and the
-/// entry point — clicking it opens the review popover. Presentation
-/// state lives with the owning view so the Review Changes… menu command
-/// can open it too, and the popover itself is presented by
-/// `ReviewPopoverPresenter` on the surface's root view, NOT here: when
-/// the window narrows, SwiftUI collapses this button into the "»"
-/// overflow menu, the anchor leaves the window hierarchy, and a popover
-/// attached to it silently fails to present — killing every entry point
-/// at once (the overflow item, the menu command, and ⇧⌘R).
+/// entry point — clicking it opens the review popover.
+///
+/// It lives in the WINDOW-level toolbar (ContentView), not the PR
+/// surface's own: SwiftUI overflows a detail view's toolbar items into
+/// the "»" menu before any window-level item, at every width (verified
+/// empirically), so a surface-hosted review control vanished at 1281pt
+/// while the appearance menu survived — status must outlast secondary
+/// controls, the way Xcode and Safari shed their toolbars. Clicking it
+/// posts the same `.reviewChanges` command as the View menu and ⇧⌘R;
+/// the active surface presents the popover from its root view via
+/// `ReviewPopoverPresenter`, which keeps every entry point working even
+/// when the toolbar does collapse this button on very narrow windows.
 struct ReviewToolbarButton: View {
     @EnvironmentObject private var state: AppState
     @ObservedObject private var shortcuts = ShortcutStore.shared
     let sessionID: String
-    @Binding var isPresented: Bool
+    let tracker: ReviewAnchorTracker
+    let action: () -> Void
 
     var body: some View {
         let count = state.session(sessionID)?.pendingComments.count ?? 0
         Button {
-            isPresented = true
+            action()
         } label: {
             // A Label, not bare Text: the toolbar's overflow menu strips
             // the capsule tint but keeps the label's image, so the icon
             // is what carries the pending state into the collapsed
             // representation (the count survives in the title text).
+            // Expanded, the tint wraps icon and title together — one
+            // visual unit, not a glyph floating beside a pill.
             Label {
                 Text(ReviewControl.buttonLabel(pendingCount: count))
-                    .padding(.horizontal, count > 0 ? 7 : 0)
-                    .padding(.vertical, count > 0 ? 2 : 0)
-                    .background(count > 0 ? Color.yellow.opacity(0.28) : .clear,
-                                in: Capsule())
             } icon: {
                 if count > 0 {
-                    Image(systemName: "exclamationmark.bubble.fill")
+                    Image(systemName: "text.bubble.fill")
                         .foregroundStyle(.yellow)
                 }
             }
             .labelStyle(.titleAndIcon)
+            .padding(.horizontal, count > 0 ? 7 : 0)
+            .padding(.vertical, count > 0 ? 2 : 0)
+            .background(count > 0 ? Color.yellow.opacity(0.28) : .clear,
+                        in: Capsule())
         }
+        // The presenter reads this view's live toolbar frame at open time
+        // so the popover arrow can point at the actual button.
+        .background(TrackedViewCapture { tracker.buttonView = $0 })
         .help((count == 0
                 ? "Review these changes — summary, verdict, and your pending comments"
                 : "Finish your review — \(count) pending comment\(count == 1 ? "" : "s")")
@@ -49,26 +59,89 @@ struct ReviewToolbarButton: View {
     }
 }
 
-/// Presents the review popover from the surface's root view, anchored to
-/// an invisible point at the top-trailing corner so it still opens under
-/// the toolbar area where the review control lives. Root-view
-/// presentation is what keeps all three entry points working while the
-/// toolbar is overflowed (see `ReviewToolbarButton`).
+/// Live AppKit handles to the review toolbar button and the surface's
+/// root view. Frames are resolved on demand (window coordinates) at the
+/// moment the popover presents — SwiftUI preferences can't cross the
+/// NSToolbar boundary, and continuous tracking would go stale the moment
+/// the toolbar relaid itself out.
+final class ReviewAnchorTracker {
+    weak var buttonView: NSView?
+    weak var rootView: NSView?
+
+    /// The button's horizontal center in the root view's own coordinate
+    /// space, or nil while the button is overflowed/absent (collapsed
+    /// into the "»" menu removes it from the window hierarchy).
+    var buttonMidX: CGFloat? {
+        guard let button = buttonView, let root = rootView,
+              let window = button.window, window === root.window,
+              !button.isHiddenOrHasHiddenAncestor else { return nil }
+        let buttonFrame = button.convert(button.bounds, to: nil)
+        guard buttonFrame.width > 0 else { return nil }
+        let rootFrame = root.convert(root.bounds, to: nil)
+        return buttonFrame.midX - rootFrame.minX
+    }
+}
+
+/// Invisible, hit-transparent NSView that hands itself to the tracker so
+/// window-coordinate frames can be resolved on demand. The assignment is
+/// deferred out of `makeNSView` (never mutate shared state during view
+/// construction).
+private struct TrackedViewCapture: NSViewRepresentable {
+    let assign: (NSView) -> Void
+
+    final class PassthroughView: NSView {
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    }
+
+    func makeNSView(context: Context) -> PassthroughView {
+        let view = PassthroughView()
+        DispatchQueue.main.async { assign(view) }
+        return view
+    }
+
+    func updateNSView(_ nsView: PassthroughView, context: Context) {}
+}
+
+/// Presents the review popover from the surface's root view. The anchor
+/// point sits at the toolbar button's horizontal center whenever the
+/// button is actually in the window (arrow points at the button), and
+/// falls back to the top-trailing corner while the toolbar has the
+/// button overflowed. Root-view presentation is what keeps all three
+/// entry points working while the toolbar is collapsed (see
+/// `ReviewToolbarButton`).
 struct ReviewPopoverPresenter: ViewModifier {
     @EnvironmentObject private var state: AppState
     let sessionID: String
     @Binding var isPresented: Bool
 
+    private var tracker: ReviewAnchorTracker { state.reviewAnchor }
+
     func body(content: Content) -> some View {
-        content.overlay(alignment: .topTrailing) {
-            Color.clear
-                .frame(width: 1, height: 1)
-                .allowsHitTesting(false)
-                .popover(isPresented: $isPresented, arrowEdge: .bottom) {
-                    ReviewPopover(sessionID: sessionID)
-                        .environmentObject(state)
+        content
+            .background(TrackedViewCapture { [weak state] view in
+                state?.reviewAnchor.rootView = view
+            })
+            .overlay(alignment: .topLeading) {
+                GeometryReader { geo in
+                    Color.clear
+                        .frame(width: 1, height: 1)
+                        .popover(isPresented: $isPresented, arrowEdge: .bottom) {
+                            ReviewPopover(sessionID: sessionID)
+                                .environmentObject(state)
+                        }
+                        .position(x: anchorX(width: geo.size.width), y: 0.5)
                 }
+                .allowsHitTesting(false)
+            }
+    }
+
+    /// Recomputed on every body pass — in particular the one that flips
+    /// `isPresented`, so the anchor is fresh when presentation happens.
+    private func anchorX(width: CGFloat) -> CGFloat {
+        guard let midX = tracker.buttonMidX, midX > 0, midX < width else {
+            return width - 0.5
         }
+        return midX
     }
 }
 
