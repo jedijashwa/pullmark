@@ -7,6 +7,10 @@ struct PROverviewView: View {
     let sessionID: String
 
     @State private var reviewSummary = ""
+    /// The last programmatically seeded summary text — anything the field
+    /// holds beyond it means the user typed, and seeding must stop.
+    @State private var summarySeed: String?
+    @State private var summaryEdited = false
     @State private var submitting = false
     @State private var confirmAbandon = false
     @State private var confirmation: String?
@@ -76,15 +80,25 @@ struct PROverviewView: View {
                         .help("Share a link to this pull request")
                 }
             }
-            // Summary text survives quits: seeded from disk (or a pending
-            // review saved on github.com), persisted as it is typed.
+            // Summary text survives quits: seeded from a pending review
+            // saved on github.com (server truth first) or from disk,
+            // persisted as it is typed.
             .task(id: sessionID) {
-                if reviewSummary.isEmpty {
-                    reviewSummary = PendingReviewStore.loadSummary(ref: session.ref)
-                        ?? session.pendingReview?.summary ?? ""
+                if reviewSummary.isEmpty, let session = state.session(sessionID) {
+                    seedSummary(session)
+                }
+            }
+            // Adoption lands after first render (and the 60s poll can adopt
+            // an externally started review at any time): re-seed from the
+            // server summary while the user hasn't typed — a non-empty
+            // server summary beats an older disk-persisted one.
+            .onChange(of: session.pendingReview?.summary) { _ in
+                if let session = state.session(sessionID) {
+                    seedSummary(session)
                 }
             }
             .onChange(of: reviewSummary) { text in
+                if text != (summarySeed ?? "") { summaryEdited = true }
                 if let ref = state.session(sessionID)?.ref {
                     PendingReviewStore.saveSummary(
                         text.trimmingCharacters(in: .whitespacesAndNewlines), ref: ref)
@@ -240,11 +254,27 @@ struct PROverviewView: View {
                 Task {
                     await state.abandonPendingReview(sessionID: sessionID)
                     reviewSummary = ""
+                    summarySeed = nil
+                    summaryEdited = false
                 }
             }
         } message: {
             Text("All pending comments and the summary will be discarded, on GitHub too.")
         }
+    }
+
+    /// Seeds the summary field while the user hasn't typed: a non-empty
+    /// server summary wins (a review started or continued on github.com),
+    /// else the disk-persisted draft.
+    private func seedSummary(_ session: PRSession) {
+        guard !summaryEdited else { return }
+        let server = session.pendingReview?.summary ?? ""
+        let seeded = server.isEmpty
+            ? (PendingReviewStore.loadSummary(ref: session.ref) ?? "")
+            : server
+        guard !seeded.isEmpty, seeded != reviewSummary else { return }
+        summarySeed = seeded
+        reviewSummary = seeded
     }
 
     /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries
@@ -291,6 +321,8 @@ struct PROverviewView: View {
                 try await state.submitReview(sessionID: sessionID, event: event,
                                              summary: summary.isEmpty ? nil : summary)
                 reviewSummary = ""
+                summarySeed = nil
+                summaryEdited = false
                 confirmation = "Review submitted."
             } catch {
                 state.lastError = error.localizedDescription
