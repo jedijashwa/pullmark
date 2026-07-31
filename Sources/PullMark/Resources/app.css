@@ -204,6 +204,193 @@ body {
 .pm-thread-resolved {
   opacity: 0.65;
 }
+/* Resolved threads collapse to a one-line header (author · "Resolved");
+   the full card returns on click (spec §2). */
+.pm-thread-summary {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: 600 12px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  background: none;
+  border: none;
+  padding: 0;
+}
+.pm-thread-summary::before {
+  content: "▸ ";
+  font-size: 10px;
+}
+.pm-thread:not(.pm-thread-collapsed) .pm-thread-summary::before {
+  content: "▾ ";
+}
+.pm-thread:not(.pm-thread-collapsed) > .pm-thread-summary {
+  margin-bottom: 6px;
+}
+.pm-thread-collapsed {
+  padding: 7px 14px;
+}
+.pm-thread-collapsed > .pm-thread-header,
+.pm-thread-collapsed > .pm-thread-comment {
+  display: none;
+}
+
+/* ---- Pending comments at their anchors (spec §3) ---- */
+
+.pm-thread.pm-pending {
+  border-color: rgba(212, 167, 44, 0.55);
+  background: rgba(255, 212, 0, 0.05);
+}
+.pm-pending-tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pm-pending-tag {
+  font: 700 10px -apple-system, sans-serif;
+  letter-spacing: 0.02em;
+  color: #9a6700;
+  background: rgba(255, 212, 0, 0.3);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+.pm-pending-queued {
+  color: #953800;
+  background: rgba(255, 129, 71, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-pending-tag { color: #e3b341; background: rgba(187, 128, 9, 0.3); }
+  .pm-pending-queued { color: #f0883e; background: rgba(240, 136, 62, 0.2); }
+}
+
+/* ---- Result-view thread markers (spec §1) ----
+   Badge colors ride the primer variables so every reading theme and both
+   appearances adapt; the anchored range's tint follows the theme accent
+   where color-mix is available. */
+
+:root.pm-markers-on .markdown-body {
+  position: relative;
+}
+.pm-marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pm-marker {
+  position: absolute;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  color: var(--fgColor-accent, #0969da);
+  background: var(--bgColor-default, #fff);
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.4));
+  border-radius: 999px;
+  padding: 3px 7px;
+  line-height: 1;
+  font: 600 11px -apple-system, sans-serif;
+  z-index: 12;
+}
+.pm-marker:hover {
+  border-color: var(--fgColor-accent, #0969da);
+}
+.pm-marker-resolved {
+  color: var(--fgColor-muted, #6e7781);
+}
+.pm-marker-pending {
+  color: #9a6700;
+  border-color: rgba(212, 167, 44, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-marker-pending { color: #e3b341; }
+}
+.pm-marker-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle tinted highlight on the anchored range; the halo (spread shadow)
+   keeps the tint clear of the text edges. Composes with blame hover tints
+   — blame lives on the opposite gutter. */
+.pm-commented,
+.pm-pending-anchor {
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pm-commented {
+  background: rgba(9, 105, 218, 0.06);
+  box-shadow: 0 0 0 6px rgba(9, 105, 218, 0.06);
+}
+.pm-pending-anchor {
+  background: rgba(212, 167, 44, 0.1);
+  box-shadow: 0 0 0 6px rgba(212, 167, 44, 0.1);
+}
+.pm-anchor-open.pm-commented {
+  background: rgba(9, 105, 218, 0.1);
+  box-shadow: 0 0 0 6px rgba(9, 105, 218, 0.1);
+}
+@supports (background: color-mix(in srgb, red 5%, transparent)) {
+  .pm-commented {
+    background: color-mix(in srgb, var(--fgColor-accent, #0969da) 8%, transparent);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--fgColor-accent, #0969da) 8%, transparent);
+  }
+  .pm-anchor-open.pm-commented {
+    background: color-mix(in srgb, var(--fgColor-accent, #0969da) 13%, transparent);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--fgColor-accent, #0969da) 13%, transparent);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .pm-commented {
+    background: rgba(88, 166, 255, 0.09);
+    box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.09);
+  }
+  .pm-pending-anchor {
+    background: rgba(187, 128, 9, 0.14);
+    box-shadow: 0 0 0 6px rgba(187, 128, 9, 0.14);
+  }
+  .pm-anchor-open.pm-commented {
+    background: rgba(88, 166, 255, 0.15);
+    box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.15);
+  }
+}
+
+.pm-result-card {
+  margin: 12px 0 16px;
+}
+.pm-result-card .pm-threads {
+  margin: 4px 0;
+}
+
+/* Quiet end-of-document reveal for resolved conversations. */
+.pm-resolved-control {
+  display: block;
+  margin: 28px auto 0;
+  font: 500 12px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  background: none;
+  border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.pm-resolved-control:hover {
+  color: var(--fgColor-accent, #0969da);
+  border-color: currentColor;
+}
+
+/* ---- Exports: the document only ----
+   PDF capture and printing flip pm-exporting on the root; the HTML export
+   serializes through __pmExportDOM, which removes annotations outright. */
+:root.pm-exporting .pm-annotation,
+:root.pm-exporting .pm-threads {
+  display: none !important;
+}
+:root.pm-exporting .pm-commented,
+:root.pm-exporting .pm-pending-anchor {
+  background: none !important;
+  box-shadow: none !important;
+  cursor: auto;
+}
 .pm-thread-comment {
   padding: 6px 0;
   border-top: 1px solid rgba(128, 128, 128, 0.18);
@@ -554,6 +741,31 @@ mark.pm-find.pm-find-current {
 .pm-line-hunk { color: #8250df; font-weight: 600; }
 @media (prefers-color-scheme: dark) {
   .pm-line-hunk { color: #d2a8ff; }
+}
+
+/* Gutter badges on commented patch lines (spec §1, last bullet): the
+   annotated patch grows a left gutter; badges align per line from JS. */
+.pm-patch-annotated {
+  position: relative;
+  padding-left: 52px;
+}
+.pm-patch-badge {
+  left: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+.pm-patch-commented {
+  background: rgba(9, 105, 218, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-patch-commented { background: rgba(88, 166, 255, 0.12); }
+}
+/* Thread cards inside the <pre>: back to prose metrics. */
+.pm-patch-threads {
+  white-space: normal;
+  font: 14px -apple-system, sans-serif;
+  margin: 6px 0;
+  max-width: 700px;
 }
 
 /* ==== Reading themes ====================================================

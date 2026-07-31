@@ -442,8 +442,10 @@
   function reportStats(root) {
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (node) {
+        // Thread cards and marker chrome are annotations, not document
+        // content — they never count toward words or reading time.
         return node.parentElement &&
-          node.parentElement.closest(".pm-toc, .pm-frontmatter, .katex")
+          node.parentElement.closest(".pm-toc, .pm-frontmatter, .katex, .pm-annotation, .pm-threads")
           ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
       }
     });
@@ -519,6 +521,11 @@
           // KaTeX ships an invisible MathML tree carrying the raw TeX —
           // matches there inflate the count and scroll to nothing.
           if (el.closest && el.closest(".katex-mathml")) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          // Review-thread text is annotation, not the document — find
+          // stays about the content being read (spec interaction).
+          if (el.closest && el.closest(".pm-threads, .pm-annotation")) {
             return NodeFilter.FILTER_REJECT;
           }
           return NodeFilter.FILTER_ACCEPT;
@@ -893,6 +900,218 @@
     window.addEventListener("resize", positionEntries);
   }
 
+  // ---- Result-view thread markers (spec §1) ----
+  // A small comment badge in the right margin, aligned with the anchored
+  // block; the anchored range gets a subtle tinted highlight. Threads map
+  // to blocks via the data-pm-lines annotations by containment only — no
+  // nearest-block guessing (a misanchored highlight in a reading view is
+  // worse than an absent one). Multiple threads on one block cluster into
+  // a single badge; pending comments get their own, visually distinct one.
+
+  function setupThreadMarkers(threads, pendings) {
+    document.documentElement.classList.add("pm-markers-on");
+
+    var layer = document.createElement("div");
+    layer.className = "pm-marker-layer pm-annotation";
+    content.append(layer);
+
+    function blockFor(line) {
+      for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+        var m = /^(\d+)-(\d+)$/.exec(
+          (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
+        if (m && +m[1] <= line && line <= +m[2]) { return el; }
+      }
+      return null;
+    }
+
+    var clusters = [];
+    function clusterFor(el) {
+      for (var i = 0; i < clusters.length; i++) {
+        if (clusters[i].el === el) { return clusters[i]; }
+      }
+      var cluster = { el: el, threads: [], pendings: [], open: false,
+                      card: null, badge: null, pendingBadge: null };
+      clusters.push(cluster);
+      return cluster;
+    }
+    (threads || []).forEach(function (thread) {
+      var el = blockFor(thread.anchorEnd || thread.anchorStart);
+      if (el) { clusterFor(el).threads.push(thread); }
+    });
+    (pendings || []).forEach(function (item) {
+      var el = blockFor(item.lineEnd || item.lineStart);
+      if (el) { clusterFor(el).pendings.push(item); }
+    });
+
+    function visibleThreads(cluster) {
+      return cluster.threads.filter(function (t) {
+        return t.resolved !== true || resolvedShown;
+      });
+    }
+
+    function commentCount(list) {
+      return list.reduce(function (sum, t) {
+        return sum + (t.comments || []).length;
+      }, 0);
+    }
+
+    function renderCard(cluster) {
+      if (cluster.card) { cluster.card.remove(); }
+      var card = document.createElement("div");
+      card.className = "pm-result-card pm-annotation";
+      var visible = visibleThreads(cluster);
+      if (visible.length) { card.append(threadsEl(visible)); }
+      if (cluster.pendings.length) { card.append(pendingEl(cluster.pendings)); }
+      cluster.el.after(card);
+      cluster.card = card;
+    }
+
+    function collapseCluster(cluster) {
+      cluster.open = false;
+      cluster.el.classList.remove("pm-anchor-open");
+      if (cluster.card) { cluster.card.remove(); cluster.card = null; }
+      positionMarkers();
+    }
+
+    function toggleCluster(cluster) {
+      if (cluster.open) { collapseCluster(cluster); return; }
+      cluster.open = true;
+      cluster.el.classList.add("pm-anchor-open");
+      renderCard(cluster);
+      positionMarkers();
+    }
+
+    function badgeEl(cluster, pending) {
+      var badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "pm-marker" + (pending ? " pm-marker-pending" : "");
+      badge.innerHTML = COMMENT_ICON;
+      var count = document.createElement("span");
+      count.className = "pm-marker-count";
+      badge.append(count);
+      badge.addEventListener("click", function (event) {
+        event.stopPropagation();
+        toggleCluster(cluster);
+      });
+      return badge;
+    }
+
+    clusters.forEach(function (cluster) {
+      cluster.badge = badgeEl(cluster, false);
+      layer.append(cluster.badge);
+      if (cluster.pendings.length) {
+        cluster.pendingBadge = badgeEl(cluster, true);
+        layer.append(cluster.pendingBadge);
+      }
+      // Clicking the highlight expands too; links, media, buttons, and
+      // real text selections keep their own behavior.
+      cluster.el.addEventListener("click", function (event) {
+        if (event.target.closest("a, button, img, .mermaid, .katex, input, textarea")) { return; }
+        if (!cluster.el.classList.contains("pm-commented")
+            && !cluster.el.classList.contains("pm-pending-anchor")) { return; }
+        var selection = window.getSelection();
+        if (selection && !selection.isCollapsed) { return; }
+        toggleCluster(cluster);
+      });
+    });
+
+    // Quiet end-of-document control revealing resolved conversations;
+    // mirrored by View ▸ Show Resolved Conversations through the bridge.
+    var resolvedControl = null;
+    var resolvedCount = clusters.reduce(function (sum, cluster) {
+      return sum + cluster.threads.filter(function (t) {
+        return t.resolved === true;
+      }).length;
+    }, 0);
+    if (resolvedCount) {
+      resolvedControl = document.createElement("button");
+      resolvedControl.type = "button";
+      resolvedControl.className = "pm-resolved-control pm-annotation";
+      content.append(resolvedControl);
+      resolvedControl.addEventListener("click", function () {
+        window.__pmSetResolvedShown(!resolvedShown);
+        post({ type: "resolvedVisibility", visible: resolvedShown });
+      });
+    }
+    function updateResolvedControl() {
+      if (!resolvedControl) { return; }
+      resolvedControl.textContent = resolvedShown
+        ? "Hide resolved conversations"
+        : resolvedCount + " resolved conversation" + (resolvedCount === 1 ? "" : "s");
+    }
+
+    function applyVisibility() {
+      clusters.forEach(function (cluster) {
+        var visible = visibleThreads(cluster);
+        var hasThreads = visible.length > 0;
+        var hasPending = cluster.pendings.length > 0;
+        cluster.el.classList.toggle("pm-commented", hasThreads);
+        cluster.el.classList.toggle("pm-pending-anchor", hasPending);
+        cluster.badge.style.display = hasThreads ? "" : "none";
+        if (hasThreads) {
+          var count = commentCount(visible);
+          cluster.badge.querySelector(".pm-marker-count").textContent = count;
+          cluster.badge.classList.toggle("pm-marker-resolved",
+            visible.every(function (t) { return t.resolved === true; }));
+          cluster.badge.title = count + (count === 1 ? " comment" : " comments")
+            + " — click to expand";
+          cluster.badge.setAttribute("aria-label", cluster.badge.title);
+        }
+        if (cluster.pendingBadge) {
+          cluster.pendingBadge.style.display = hasPending ? "" : "none";
+          cluster.pendingBadge.querySelector(".pm-marker-count").textContent =
+            cluster.pendings.length;
+          cluster.pendingBadge.title = "Pending comment"
+            + (cluster.pendings.length === 1 ? "" : "s") + " — click to expand";
+          cluster.pendingBadge.setAttribute("aria-label", cluster.pendingBadge.title);
+        }
+        if (cluster.open) {
+          if (!hasThreads && !hasPending) { collapseCluster(cluster); }
+          else { renderCard(cluster); }
+        }
+      });
+      updateResolvedControl();
+      positionMarkers();
+    }
+
+    function positionMarkers() {
+      var cRect = content.getBoundingClientRect();
+      // In the margin when the content column leaves one; overlaying the
+      // right edge at Full width (content-width interaction).
+      var space = window.innerWidth - cRect.right;
+      var x = space >= 44 ? cRect.width + 10 : cRect.width - 36;
+      clusters.forEach(function (cluster) {
+        var rect = cluster.el.getBoundingClientRect();
+        var offset = 0;
+        [cluster.badge, cluster.pendingBadge].forEach(function (badge) {
+          if (!badge || badge.style.display === "none") { return; }
+          badge.style.left = Math.round(x) + "px";
+          badge.style.top = Math.round(rect.top - cRect.top + offset) + "px";
+          offset += 28;
+        });
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Escape") { return; }
+      var closed = false;
+      clusters.forEach(function (cluster) {
+        if (cluster.open) { collapseCluster(cluster); closed = true; }
+      });
+      if (closed) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+
+    resolvedListeners.push(applyVisibility);
+    applyVisibility();
+    if (typeof ResizeObserver === "function") {
+      new ResizeObserver(positionMarkers).observe(content);
+    }
+    window.addEventListener("resize", positionMarkers);
+  }
+
   // ---- Diff rendering ----
 
   // An added/removed block whose Markdown renders to nothing (or to an empty
@@ -953,7 +1172,23 @@
     threads.forEach(function (thread) {
       var box = document.createElement("div");
       box.className = "pm-thread";
-      if (thread.resolved === true) { box.classList.add("pm-thread-resolved"); }
+      if (thread.resolved === true) {
+        // Resolved threads collapse to a one-line header (author ·
+        // "Resolved") that expands on click — settled conversations never
+        // carry full-prominence cards (spec §2).
+        box.classList.add("pm-thread-resolved", "pm-thread-collapsed");
+        var summary = document.createElement("button");
+        summary.type = "button";
+        summary.className = "pm-thread-summary";
+        var author = (thread.comments && thread.comments[0] && thread.comments[0].author) || "";
+        summary.textContent = (author ? author + " · " : "") + "Resolved";
+        summary.setAttribute("aria-expanded", "false");
+        summary.addEventListener("click", function () {
+          var collapsed = box.classList.toggle("pm-thread-collapsed");
+          summary.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        });
+        box.append(summary);
+      }
       var header = document.createElement("div");
       header.className = "pm-thread-header";
       if (thread.lineLabel) {
@@ -1000,6 +1235,76 @@
     });
     return wrap;
   }
+
+  // The viewer's pending review comments at their anchors: always the
+  // yellow Pending tag, never Reply/Resolve (those act on published
+  // comments). One source of truth — the same pending set the review
+  // popover lists (spec §3).
+  function pendingEl(items) {
+    var wrap = document.createElement("div");
+    wrap.className = "pm-threads pm-pending-threads";
+    items.forEach(function (item) {
+      var box = document.createElement("div");
+      box.className = "pm-thread pm-pending";
+      var header = document.createElement("div");
+      header.className = "pm-thread-header";
+      var label = document.createElement("div");
+      label.className = "pm-thread-line";
+      label.textContent = item.lineLabel || "";
+      var tags = document.createElement("div");
+      tags.className = "pm-pending-tags";
+      var tag = document.createElement("span");
+      tag.className = "pm-pending-tag";
+      tag.textContent = "Pending";
+      tags.append(tag);
+      if (item.uploaded === false) {
+        var queued = document.createElement("span");
+        queued.className = "pm-pending-tag pm-pending-queued";
+        queued.textContent = "Not uploaded";
+        tags.append(queued);
+      }
+      header.append(label, tags);
+      box.append(header);
+      var comment = document.createElement("div");
+      comment.className = "pm-thread-comment";
+      var body = document.createElement("div");
+      body.className = "pm-thread-body";
+      body.innerHTML = render(item.body);
+      comment.append(body);
+      box.append(comment);
+      wrap.append(box);
+    });
+    return wrap;
+  }
+
+  // ---- Resolved-conversation visibility (Result view, spec §1) ----
+  // Hidden by default; the in-page "N resolved conversations" control and
+  // the native View menu item mirror each other through this hook.
+
+  var resolvedShown = false;
+  var resolvedListeners = [];
+  window.__pmSetResolvedShown = function (visible) {
+    visible = !!visible;
+    if (visible === resolvedShown) { return; }
+    resolvedShown = visible;
+    resolvedListeners.forEach(function (fn) { fn(visible); });
+  };
+
+  // Exports are the document only (spec): Swift serializes this instead of
+  // the raw DOM, so markers, highlights, thread cards, and controls never
+  // reach an exported file.
+  window.__pmExportDOM = function () {
+    var clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll(".pm-annotation, .pm-threads").forEach(function (el) {
+      el.remove();
+    });
+    clone.querySelectorAll(".pm-commented, .pm-pending-anchor, .pm-anchor-open")
+      .forEach(function (el) {
+        el.classList.remove("pm-commented", "pm-pending-anchor", "pm-anchor-open");
+      });
+    clone.classList.remove("pm-markers-on", "pm-exporting");
+    return clone.outerHTML;
+  };
 
   // "moved" marker: the diff engine recognized this block as relocated
   // verbatim, so it renders once — here — instead of as red + green noise.
@@ -1051,6 +1356,9 @@
       content.append(inlineSegmentEl(seg));
       if (seg.threads && seg.threads.length) {
         content.append(threadsEl(seg.threads));
+      }
+      if (seg.pending && seg.pending.length) {
+        content.append(pendingEl(seg.pending));
       }
     });
   }
@@ -1106,6 +1414,12 @@
         full.append(threadsEl(seg.threads));
         grid.append(full);
       }
+      if (seg.pending && seg.pending.length) {
+        var pendingFull = document.createElement("div");
+        pendingFull.className = "pm-split-full";
+        pendingFull.append(pendingEl(seg.pending));
+        grid.append(pendingFull);
+      }
     });
     content.append(grid);
   }
@@ -1128,18 +1442,75 @@
     content.append(heading, threadsEl(threads));
   }
 
-  function renderPatch(patch) {
+  // Source Diff with gutter badges on commented lines (spec §1, last
+  // bullet): Swift maps threads and pending comments to 0-based patch line
+  // indexes (PatchAnchors); clicking a badge expands the thread cards
+  // inline beneath the line.
+  function renderPatch(patch, rows) {
+    var byIndex = {};
+    (rows || []).forEach(function (row) { byIndex[row.lineIndex] = row; });
     var pre = document.createElement("pre");
     pre.className = "pm-patch";
-    (patch || "").split("\n").forEach(function (line) {
+    if (rows && rows.length) { pre.classList.add("pm-patch-annotated"); }
+    var placed = [];
+    (patch || "").split("\n").forEach(function (line, index) {
       var span = document.createElement("span");
       if (line.startsWith("+")) { span.className = "pm-line-add"; }
       else if (line.startsWith("-")) { span.className = "pm-line-del"; }
       else if (line.startsWith("@@")) { span.className = "pm-line-hunk"; }
       span.textContent = line;
       pre.append(span, document.createTextNode("\n"));
+      var row = byIndex[index];
+      if (!row) { return; }
+      span.classList.add("pm-patch-commented");
+      var card = document.createElement("div");
+      card.className = "pm-patch-threads pm-annotation";
+      card.style.display = "none";
+      if (row.threads && row.threads.length) { card.append(threadsEl(row.threads)); }
+      if (row.pending && row.pending.length) { card.append(pendingEl(row.pending)); }
+      pre.append(card);
+      var threadTotal = (row.threads || []).reduce(function (sum, t) {
+        return sum + (t.comments || []).length;
+      }, 0);
+      var pendingTotal = (row.pending || []).length;
+      var badge = document.createElement("button");
+      badge.type = "button";
+      badge.className = "pm-marker pm-patch-badge pm-annotation";
+      if (pendingTotal && !threadTotal) { badge.classList.add("pm-marker-pending"); }
+      if (threadTotal && (row.threads || []).every(function (t) {
+        return t.resolved === true;
+      })) { badge.classList.add("pm-marker-resolved"); }
+      badge.innerHTML = COMMENT_ICON;
+      var count = document.createElement("span");
+      count.className = "pm-marker-count";
+      count.textContent = threadTotal + pendingTotal;
+      badge.append(count);
+      badge.title = (threadTotal + pendingTotal)
+        + (threadTotal + pendingTotal === 1 ? " comment" : " comments")
+        + " — click to expand";
+      badge.setAttribute("aria-label", badge.title);
+      badge.setAttribute("aria-expanded", "false");
+      badge.addEventListener("click", function (event) {
+        event.stopPropagation();
+        var open = card.style.display === "none";
+        card.style.display = open ? "" : "none";
+        badge.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      pre.append(badge);
+      placed.push({ badge: badge, span: span });
     });
     content.append(pre);
+    // Badges sit in the patch's left gutter, aligned per line; reposition
+    // as cards open/close (and on wraps from window resizes).
+    function positionPatchBadges() {
+      placed.forEach(function (item) {
+        item.badge.style.top = item.span.offsetTop + "px";
+      });
+    }
+    positionPatchBadges();
+    if (placed.length && typeof ResizeObserver === "function") {
+      new ResizeObserver(positionPatchBadges).observe(pre);
+    }
   }
 
   // ---- Lightbox: click media to inspect it (rendered natively) ----
@@ -1671,6 +2042,10 @@
     reportStats(content);
     renderMermaid();
     if (blameAnnotated) { setupBlameGutter(payload.blame); }
+    if (linesAnnotated
+        && ((payload.threads || []).length || (payload.pendingComments || []).length)) {
+      setupThreadMarkers(payload.threads || [], payload.pendingComments || []);
+    }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];
     if (!segments.length && !payload.allNew) {
@@ -1714,6 +2089,6 @@
     content.append(sourcePre);
     if (window.hljs) { try { hljs.highlightElement(sourceCode); } catch (e) {} }
   } else if (payload.mode === "patch") {
-    renderPatch(payload.patch);
+    renderPatch(payload.patch, payload.patchThreads);
   }
 })();
