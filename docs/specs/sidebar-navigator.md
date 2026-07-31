@@ -125,8 +125,15 @@ participates in selection and keyboard navigation.
   menu: View as Tree / View as List; default Tree). The flat view
   keeps today's root-relative labels — genuinely better for small,
   shallow doc repos.
-- A refresh happens automatically on window activation and via
-  context menu **Refresh Folder**.
+- **Expanded folders are watched live.** Each folder root gets an
+  FSEvents stream (one stream covers the subtree); adds, deletes,
+  and renames in expanded directories appear in the tree as they
+  happen, coalesced so bursts (branch switches, generators) repaint
+  once. Events under collapsed directories just invalidate the lazy
+  scan so the next disclosure is fresh. If a root itself disappears,
+  its node dims like a dead recent rather than vanishing, and
+  revives if the path returns. Context-menu **Refresh Folder**
+  remains as a manual backstop.
 
 ### 3. PR file trees
 
@@ -232,9 +239,11 @@ Ranked; all in scope for this spec:
 - **Drag and drop**: the window-wide file-URL drop target must not
   swallow internal reorder drags; drops onto the sidebar add items
   as today.
-- **File watching**: the existing watcher keeps refreshing open
-  documents; folder trees refresh on activation, not via new
-  watchers.
+- **File watching**: the existing document watcher is unchanged;
+  folder roots add per-root FSEvents streams (torn down when the
+  root is removed or its window closes), and a document deleted
+  from a watched tree while open keeps its current in-document
+  error behavior.
 - **Zoom**: sidebar chrome fonts already scale; hover ✕ and badges
   scale with them and keep adequate hit targets.
 - **Review conversations (#29)**: comment-count badges on PR file
@@ -285,6 +294,9 @@ Ranked; all in scope for this spec:
 - Whether the filter field ships in this wave or trails: it is the
   most severable piece if the wave needs trimming.
 - Hit-target size for hover ✕ at the smallest chrome-font zoom step.
+- FSEvents coalescing latency and whether tree edits animate or
+  snap; also whether a live-updating tree should preserve selection
+  when the selected file's directory churns.
 
 ## Verification notes
 
