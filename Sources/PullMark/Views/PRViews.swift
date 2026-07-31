@@ -83,6 +83,11 @@ struct PROverviewView: View {
             .modifier(DocumentCommandHandler(state: state) { _ in
                 if state.take(.reviewChanges) { reviewPopoverVisible = true }
             })
+            // Presented from the root view, not the toolbar button, so it
+            // opens even while the toolbar has collapsed the review
+            // control into the overflow menu (see ReviewPopoverPresenter).
+            .modifier(ReviewPopoverPresenter(sessionID: sessionID,
+                                             isPresented: $reviewPopoverVisible))
         } else {
             EmptyView()
         }
@@ -274,6 +279,11 @@ struct PRFileView: View {
             .onChange(of: mode, perform: modeChanged)
             .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
                                             consume: consumePendingSearch))
+            // Presented from the root view, not the toolbar button, so it
+            // opens even while the toolbar has collapsed the review
+            // control into the overflow menu (see ReviewPopoverPresenter).
+            .modifier(ReviewPopoverPresenter(sessionID: sessionID,
+                                             isPresented: $reviewPopoverVisible))
             .modifier(fileSheets)
     }
 
