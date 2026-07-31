@@ -200,6 +200,26 @@ Full survey by the feature-researcher agent, July 2026. Highlights:
 - Replies keep their current lighter flow but move in-page too: the
   Reply button expands a mini-composer inside the thread card.
 
+### Emoji reactions on comments
+
+- Each published comment card shows **reaction chips** (emoji +
+  count) at its foot for any reactions present; chips the viewer has
+  pressed are tinted. Clicking a chip toggles the viewer's reaction.
+- An **add-reaction affordance** (smiley badge) on hover opens a
+  compact picker limited to GitHub's eight canonical reactions
+  (👍 👎 😄 🎉 😕 ❤️ 🚀 👀) — the chips-plus-picker pattern GitHub,
+  Slack, and Messages share.
+- Data: the REST comment payload already carries a `reactions`
+  rollup; viewer state (`viewerHasReacted`) folds into the existing
+  GraphQL thread-metadata query via `reactionGroups`. Writes use
+  `POST`/`DELETE /pulls/comments/{id}/reactions` (or the matching
+  GraphQL mutations).
+- **Pending comments show no reaction UI** — GitHub does not support
+  reactions on unsubmitted comments (platform behavior).
+- Chips render wherever thread cards do (diff views, Result view,
+  review popover) and stay visible on collapsed resolved-thread
+  headers only as a count-free omission — expanding shows them.
+
 ### 6. New-file clarity
 
 The added-file experience keeps the existing "New file — everything
@@ -245,8 +265,9 @@ indistinguishable in practice. No change to the view picker itself.
 - Implementation (separate, separately-approved effort).
 - PR timeline / issue-conversation threads beyond the existing
   overview comment box.
-- Emoji reactions, editing or deleting already-published comments,
-  and notifications.
+- Editing or deleting already-published comments, and notifications.
+- Reactions on PR-level (timeline) comments — this wave covers review
+  comments only.
 - Rendering non-Markdown files (their comments get counted, not
   displayed).
 - Multi-account or reviewing-as-a-team concerns.
@@ -263,6 +284,8 @@ indistinguishable in practice. No change to the view picker itself.
 - Marker/cluster visuals per theme, and the density expansion (badge →
   list) when many threads share a block: design-reviewer pass on
   mockups before build.
+- Reaction picker presentation (in-page popover vs native menu) and
+  whether reaction toggles need optimistic UI given API latency.
 - Whether Source Diff gutter badges land in the same wave or trail the
   Result-view work.
 - Migration: what happens to an in-memory draft queue from a session
