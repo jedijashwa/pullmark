@@ -61,6 +61,22 @@ struct ContentView: View {
                     Label("Appearance", systemImage: "circle.lefthalf.filled")
                 }
                 .help("Switch between light, dark, and system appearance")
+
+                // The morphing review control — window-level, trailing-most,
+                // on every PR surface (spec §3). Hosted here rather than in
+                // the surfaces' own toolbars because SwiftUI overflows
+                // detail-level toolbar items before window-level ones at
+                // every width: review status must survive the squeeze that
+                // rightly claims the layout picker and comment shortcut
+                // first (see ReviewToolbarButton). The click rides the same
+                // command path as the View menu and ⇧⌘R; the active surface
+                // presents the popover.
+                if let sessionID = reviewSessionID {
+                    ReviewToolbarButton(sessionID: sessionID,
+                                        tracker: state.reviewAnchor) {
+                        state.send(.reviewChanges)
+                    }
+                }
             }
         }
         .sheet(isPresented: $state.showAddPR) {
@@ -126,6 +142,17 @@ struct ContentView: View {
     private var selectedLocalURL: URL? {
         if case .local(let url) = state.selection { return url }
         return nil
+    }
+
+    /// The PR session whose review the toolbar control shows — the
+    /// surfaces that carry the review workflow (overview and file view),
+    /// matching where Review Changes… is enabled.
+    private var reviewSessionID: String? {
+        switch state.selection {
+        case .prOverview(let id): return id
+        case .prFile(let id, _): return id
+        default: return nil
+        }
     }
 
     private var errorPresented: Binding<Bool> {

@@ -69,10 +69,8 @@ struct PROverviewView: View {
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
             .toolbar {
-                ToolbarItem {
-                    ReviewToolbarButton(sessionID: sessionID,
-                                        isPresented: $reviewPopoverVisible)
-                }
+                // The review control itself is window-level (ContentView's
+                // toolbar) so it survives toolbar overflow on every surface.
                 ToolbarItem {
                     ShareLink(item: session.details.htmlUrl)
                         .help("Share a link to this pull request")
@@ -482,10 +480,23 @@ struct PRFileView: View {
 
     /// Extracted from body so the modifier chain stays inside the
     /// type-checker's budget.
+    ///
+    /// Declaration order is also collapse priority: when the window
+    /// narrows, SwiftUI moves LATER-declared items into the "»" overflow
+    /// menu first (verified empirically). Navigation (Back/step/jump) is
+    /// wayfinding and must survive the squeeze, so it comes first; the
+    /// outline toggle, layout picker, blame toggle, and comment shortcut
+    /// are the sacrificial tail — the same order Xcode and Safari shed
+    /// secondary items. (The review control outranks them all: it is
+    /// window-level, see ContentView.)
     @ToolbarContentBuilder
     private var fileToolbar: some ToolbarContent {
-        ToolbarItem {
-            OutlineToggle(visible: $outlineVisible)
+        // The sidebar shouldn't be the only way around a PR: back to
+        // the overview, and step or jump between its Markdown files.
+        ToolbarItemGroup(placement: .navigation) {
+            if let session {
+                PRFileNavigation(sessionID: sessionID, path: path, session: session)
+            }
         }
         ToolbarItem(placement: .principal) {
             Picker("View", selection: $mode) {
@@ -494,6 +505,9 @@ struct PRFileView: View {
                 }
             }
             .pickerStyle(.segmented)
+        }
+        ToolbarItem {
+            OutlineToggle(visible: $outlineVisible)
         }
         ToolbarItem {
             if mode == .renderedDiff {
@@ -524,18 +538,6 @@ struct PRFileView: View {
                 Label("Comment on File", systemImage: "plus.bubble")
             }
             .help("Comment on this file as a whole, not a specific line")
-        }
-        // The morphing review control — on every PR surface (spec §3).
-        ToolbarItem {
-            ReviewToolbarButton(sessionID: sessionID,
-                                isPresented: $reviewPopoverVisible)
-        }
-        // The sidebar shouldn't be the only way around a PR: back to
-        // the overview, and step or jump between its Markdown files.
-        ToolbarItemGroup(placement: .navigation) {
-            if let session {
-                PRFileNavigation(sessionID: sessionID, path: path, session: session)
-            }
         }
     }
 
