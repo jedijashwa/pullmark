@@ -243,7 +243,7 @@ struct PROverviewView: View {
                     commitID: session.details.head.sha,
                     body: summary.isEmpty ? nil : summary,
                     event: event,
-                    drafts: session.drafts
+                    comments: session.drafts
                 )
                 state.clearDrafts(sessionID: sessionID)
                 reviewSummary = ""
@@ -999,9 +999,9 @@ struct CommentComposer: View {
         text += "```suggestion\n\(seed)\n```\n"
     }
 
-    private var draft: DraftComment {
-        DraftComment(path: path, lineStart: selStart, lineEnd: selEnd,
-                     side: target.side, body: composedBody)
+    private var draft: PendingComment {
+        PendingComment(path: path, lineStart: selStart, lineEnd: selEnd,
+                       side: target.side, body: composedBody)
     }
 
     private func postNow() {

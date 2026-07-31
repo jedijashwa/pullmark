@@ -65,6 +65,13 @@ enum DefaultsKeys {
     /// Document magnification (WKWebView.pageZoom factor, 1.0 = actual
     /// size). App-wide: every document window reads at the same size.
     static let zoom = "pm.zoom"
+    /// Pending review comments GitHub hasn't accepted yet (offline or API
+    /// failure): JSON-encoded queues keyed by owner/repo#pr@headSHA — line
+    /// anchors are only valid against the head they were authored on.
+    static let pendingCommentQueues = "pm.pendingCommentQueues"
+    /// In-progress review summary text keyed by owner/repo#pr; cleared when
+    /// the review submits or is abandoned.
+    static let pendingReviewSummaries = "pm.pendingReviewSummaries"
     /// Sidebar sections: expansion state (default expanded).
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"

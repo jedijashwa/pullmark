@@ -315,20 +315,108 @@ final class GitHubClient {
     }
 
     /// Posts a single review comment immediately (visible right away).
-    func createComment(_ ref: PullRequestRef, commitID: String, comment: DraftComment) async throws {
+    /// Platform caveat: while the viewer has a pending review, GitHub may
+    /// absorb comments from this endpoint into it instead of publishing them
+    /// — callers re-adopt the pending review afterwards so the app never
+    /// claims a comment posted when it actually went pending.
+    func createComment(_ ref: PullRequestRef, commitID: String, comment: PendingComment) async throws {
         let body = try Self.commentRequestBody(commitID: commitID, comment: comment)
         _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
                               jsonBody: body)
     }
 
-    /// Creates a review carrying all draft comments. With `event` nil the
-    /// review is left PENDING on GitHub (a draft review); otherwise it is
-    /// submitted with that event (COMMENT / APPROVE / REQUEST_CHANGES).
+    // MARK: - Pending review (GitHub is the source of truth — spec §4)
+    //
+    // API mix, resolved after a docs/community spike: REST creates the
+    // pending review — one atomic POST /pulls/{n}/reviews with `event`
+    // omitted carries the whole first batch plus an explicit commit_id, so
+    // anchors are validated against the exact head the line numbers were
+    // computed on. REST cannot add to an existing pending review (there is
+    // no …/reviews/{id}/comments endpoint; community discussion #168380 is
+    // the open feature request), so incremental adds use GraphQL
+    // addPullRequestReviewThread with the review's node id. That mutation
+    // takes no commit SHA — GitHub anchors against the PR's current head —
+    // which is safe here because the refresh loop never swaps the loaded
+    // head under an in-progress review. Adds drain FIFO, one mutation per
+    // comment, so server order follows authorship order.
+
+    /// Creates a review carrying the given comments. With `event` nil the
+    /// review is left PENDING on GitHub; otherwise it is submitted with
+    /// that event (COMMENT / APPROVE / REQUEST_CHANGES). Fails with 422
+    /// when the viewer already has a pending review on the PR.
     func createReview(_ ref: PullRequestRef, commitID: String, body: String?,
-                      event: String?, drafts: [DraftComment]) async throws {
-        let payload = try Self.reviewRequestBody(commitID: commitID, body: body, event: event, drafts: drafts)
+                      event: String?, comments: [PendingComment]) async throws {
+        let payload = try Self.reviewRequestBody(commitID: commitID, body: body,
+                                                 event: event, comments: comments)
         _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews",
                               jsonBody: payload)
+    }
+
+    /// All reviews on the PR (paginated; includes the viewer's own PENDING
+    /// review, which no other endpoint reveals).
+    func reviews(_ ref: PullRequestRef) async throws -> [PullRequestReview] {
+        var all: [PullRequestReview] = []
+        for page in 1...30 {
+            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews",
+                                         query: [URLQueryItem(name: "per_page", value: "100"),
+                                                 URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decodeReviews(data)
+            all.append(contentsOf: batch)
+            if batch.count < 100 { break }
+        }
+        return all
+    }
+
+    /// Comments belonging to one review (paginated). The viewer's pending
+    /// comments come back only through here — the PR-wide comment list
+    /// omits them.
+    func reviewComments(_ ref: PullRequestRef, reviewID: Int) async throws -> [ReviewComment] {
+        var all: [ReviewComment] = []
+        for page in 1...30 {
+            let data = try await request(
+                "GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews/\(reviewID)/comments",
+                query: [URLQueryItem(name: "per_page", value: "100"),
+                        URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decoder.decode([ReviewComment].self, from: data)
+            all.append(contentsOf: batch)
+            if batch.count < 100 { break }
+        }
+        return all
+    }
+
+    /// Adds one comment to the viewer's existing pending review (GraphQL —
+    /// see the API-mix note above).
+    func addPendingComment(reviewNodeID: String, comment: PendingComment) async throws {
+        let mutation = """
+        mutation($input: AddPullRequestReviewThreadInput!) {
+          addPullRequestReviewThread(input: $input) { thread { id } }
+        }
+        """
+        _ = try await graphQL(mutation,
+                              variables: ["input": Self.addThreadInput(reviewNodeID: reviewNodeID,
+                                                                       comment: comment)])
+    }
+
+    /// Submits the server-side pending review with a verdict.
+    func submitReview(_ ref: PullRequestRef, reviewID: Int, event: String, body: String?) async throws {
+        let payload = try Self.submitReviewRequestBody(event: event, body: body)
+        _ = try await request("POST",
+                              "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews/\(reviewID)/events",
+                              jsonBody: payload)
+    }
+
+    /// Abandons (deletes) an unsubmitted pending review — GitHub's
+    /// "Abandon review". Submitted reviews cannot be deleted.
+    func deletePendingReview(_ ref: PullRequestRef, reviewID: Int) async throws {
+        _ = try await request("DELETE",
+                              "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews/\(reviewID)")
+    }
+
+    /// Deletes a single review comment; works on the viewer's own pending
+    /// comments too (discarding one from the pending review).
+    func deleteReviewComment(_ ref: PullRequestRef, commentID: Int) async throws {
+        _ = try await request("DELETE",
+                              "/repos/\(ref.owner)/\(ref.repo)/pulls/comments/\(commentID)")
     }
 
     /// Posts a comment attached to a whole file (no line anchor). GitHub
@@ -378,7 +466,7 @@ final class GitHubClient {
         let comments: [Comment]?
     }
 
-    nonisolated static func commentRequestBody(commitID: String, comment: DraftComment) throws -> Data {
+    nonisolated static func commentRequestBody(commitID: String, comment: PendingComment) throws -> Data {
         let multiLine = comment.lineStart < comment.lineEnd
         return try encoder.encode(CommentBody(
             body: comment.body,
@@ -392,20 +480,50 @@ final class GitHubClient {
     }
 
     nonisolated static func reviewRequestBody(commitID: String, body: String?,
-                                              event: String?, drafts: [DraftComment]) throws -> Data {
-        let comments = drafts.map { draft in
-            let multiLine = draft.lineStart < draft.lineEnd
+                                              event: String?, comments: [PendingComment]) throws -> Data {
+        let rows = comments.map { comment in
+            let multiLine = comment.lineStart < comment.lineEnd
             return ReviewBody.Comment(
-                path: draft.path,
-                body: draft.body,
-                side: draft.side,
-                line: draft.lineEnd,
-                startLine: multiLine ? draft.lineStart : nil,
-                startSide: multiLine ? draft.side : nil
+                path: comment.path,
+                body: comment.body,
+                side: comment.side,
+                line: comment.lineEnd,
+                startLine: multiLine ? comment.lineStart : nil,
+                startSide: multiLine ? comment.side : nil
             )
         }
         return try encoder.encode(ReviewBody(commitId: commitID, body: body, event: event,
-                                             comments: comments.isEmpty ? nil : comments))
+                                             comments: rows.isEmpty ? nil : rows))
+    }
+
+    struct SubmitReviewBody: Encodable {
+        let event: String
+        let body: String?
+    }
+
+    nonisolated static func submitReviewRequestBody(event: String, body: String?) throws -> Data {
+        try encoder.encode(SubmitReviewBody(event: event, body: body))
+    }
+
+    /// GraphQL variables for addPullRequestReviewThread. Line semantics
+    /// match REST (file line numbers + side; start* only for ranges).
+    nonisolated static func addThreadInput(reviewNodeID: String, comment: PendingComment) -> [String: Any] {
+        var input: [String: Any] = [
+            "pullRequestReviewId": reviewNodeID,
+            "path": comment.path,
+            "body": comment.body,
+            "line": comment.lineEnd,
+            "side": comment.side,
+        ]
+        if comment.lineStart < comment.lineEnd {
+            input["startLine"] = comment.lineStart
+            input["startSide"] = comment.side
+        }
+        return input
+    }
+
+    nonisolated static func decodeReviews(_ data: Data) throws -> [PullRequestReview] {
+        try decoder.decode([PullRequestReview].self, from: data)
     }
 
     struct FileCommentBody: Encodable {
