@@ -17,11 +17,12 @@ mutation, every list publish for atomicity with its filter state, and
 
 ## Part 2 — interactions (required for user-visible changes)
 
-Build and run the debug binary headlessly and DRIVE it:
+Build and run the debug binary headlessly and DRIVE it — in the
+background by default, so the human keeps their machine:
 - Launch: `.build/debug/PullMark`. To open a test document, add a
   temporary launch-arg hook — a few lines in
   AppDelegate.applicationDidFinishLaunching that read an argument like
-  `-pm-open-later <path>` and deliver it through OpenURLRouter after a
+  `-pm-open-later=<path>` and deliver it through OpenURLRouter after a
   short delay — marked with `// PM-TEMP` comments and stripped before
   finishing. `docs/kitchen-sink.md` is the standard fixture (every
   supported construct); use a scratch file when you need to mutate.
@@ -29,19 +30,34 @@ Build and run the debug binary headlessly and DRIVE it:
   `id x y w h layer` per window. Menus, tooltips, and popovers are
   separate windows of the same pid (layer 101/103) — capture them by
   their own window id.
-- Capture: `screencapture -o -l <windowID> out.png`, then READ the
+- Default input tier — background tools, no window raising, no
+  activation, real cursor untouched:
+  `swift scripts/drive/ax.swift <pid> menu <Menu> <Item> [<Subitem>]`
+  for menu commands, `ax.swift <pid> press <title>` for buttons and
+  links, `ax.swift <pid> list` to discover targets, and
+  `pclick.swift <pid> x y` / `pkey.swift <pid> <keycode> [cmd]` for
+  raw pid-targeted events (note: AppKit drops these while the app is
+  inactive — AX is the reliable background path; see
+  scripts/drive/README.md for the tier rules).
+- Capture: `screencapture -x -o -l <windowID> out.png` (always `-x` —
+  silent; `-l` captures a window that is behind others), then READ the
   image and judge it visually — legibility, alignment, hover states,
   cursor, unfold direction, coverage.
-- Input: post real CGEvents with the vendored scripts
-  (`scripts/drive/click.swift x y`, `key.swift <keycode> [cmd]`,
-  `drag.swift x1 y1 x2 y2`, `hover.swift x y`). `NSApp.sendEvent`
-  never reaches NSEvent local monitors; nil-source CGEvents inherit
-  live hardware modifiers — the scripts clear flags for you.
-- Synthetic clicks land on whatever window is frontmost at that point:
-  raise the target window first and never aim at coordinates that
-  another window might cover.
-- The machine may be in use: a capture showing an inactive window or a
-  blank webview is an artifact — retry, don't conclude.
+- Global HID tier — `click.swift x y`, `drag.swift x1 y1 x2 y2`,
+  `hover.swift x y`, `key.swift <keycode> [cmd]` — is reserved for
+  what genuinely needs the real cursor: hover states, cursor-shape
+  checks, real drags. These move the human's cursor and steal their
+  input: batch them into one short run and ANNOUNCE the batch to the
+  human before running it. `NSApp.sendEvent` never reaches NSEvent
+  local monitors; nil-source CGEvents inherit live hardware modifiers
+  — the scripts clear flags for you.
+- Global-tier clicks land on whatever window is frontmost at that
+  point: raise the target window first (only in an announced HID
+  batch) and never aim at coordinates that another window might cover.
+  Background-tier tools need no raising at all.
+- The machine may be in use: a capture showing an inactive window is
+  EXPECTED under background driving (gray traffic lights are fine);
+  a blank webview is an artifact — retry, don't conclude.
 
 Screenshots need Screen Recording permission granted to the session
 running you; if captures come back empty, say so rather than guessing.
