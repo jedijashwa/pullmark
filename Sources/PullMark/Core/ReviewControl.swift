@@ -63,6 +63,19 @@ enum ReviewControl {
     static let ownPRRestrictionReason =
         "GitHub doesn't allow approving your own pull request or requesting changes on it."
 
+    /// Visible height for the popover's pending-comment list, from each
+    /// row's measured bottom edge (ascending, content coordinates): the
+    /// exact content height when everything fits under the cap, else the
+    /// largest whole-row boundary that does — the list never ends by
+    /// slicing a row through its body text. A single row taller than the
+    /// cap gets the cap (scrolling reaches the rest). Nil when nothing
+    /// has been measured yet.
+    static func pendingListHeight(rowBottoms: [CGFloat], cap: CGFloat) -> CGFloat? {
+        guard let last = rowBottoms.last else { return nil }
+        if last <= cap { return last }
+        return rowBottoms.last(where: { $0 <= cap }) ?? cap
+    }
+
     /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries
     /// neither a body nor comments; Approve stands on its own.
     static func submitEnabled(verdict: ReviewVerdict, hasSummary: Bool,
