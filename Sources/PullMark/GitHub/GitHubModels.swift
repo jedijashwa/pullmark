@@ -89,9 +89,12 @@ struct PendingComment: Identifiable, Equatable, Codable {
     var side: String
     var body: String
 
-    /// Server-derived when available so a refetch doesn't churn SwiftUI
-    /// identity; the local UUID covers unsynced comments.
-    var id: String { serverID.map(String.init) ?? localID.uuidString }
+    /// Always the local UUID, so a row's identity survives the moment the
+    /// server accepts it (serverID lands in its own field, the id never
+    /// flips) — SwiftUI must not rebuild rows once per uploaded comment.
+    /// Adoption keeps localIDs stable across refetches by matching fresh
+    /// server copies to known ones (see PendingReviewSync.reconcile).
+    var id: String { localID.uuidString }
 
     init(serverID: Int? = nil, localID: UUID = UUID(),
          path: String, lineStart: Int, lineEnd: Int, side: String, body: String) {
@@ -104,19 +107,13 @@ struct PendingComment: Identifiable, Equatable, Codable {
         self.body = body
     }
 
-    /// A pending comment as fetched back from the server
-    /// (GET …/reviews/{id}/comments). Falls back to `original_line` when the
-    /// head moved under the pending review; nil only when GitHub returns no
-    /// line anchor at all (not expected for pending line comments).
-    init?(server comment: ReviewComment) {
-        guard let line = comment.line ?? comment.originalLine else { return nil }
-        self.init(serverID: comment.id,
-                  path: comment.path,
-                  lineStart: comment.startLine ?? line,
-                  lineEnd: line,
-                  side: comment.side ?? "RIGHT",
-                  body: comment.body)
-    }
+    // NOTE: pending comments are never built from the REST review-comments
+    // endpoint — GET …/reviews/{id}/comments returns only legacy
+    // diff-position fields (position/original_position/diff_hunk), no
+    // line/side, so nothing decoded from it can anchor a PendingComment.
+    // They come from GraphQL review threads instead — see
+    // GitHubClient.pendingReviewComments and the REST-shape regression
+    // fixture in PendingReviewTests.
 
     var lineDescription: String {
         let which = side == "LEFT" ? "old" : "new"

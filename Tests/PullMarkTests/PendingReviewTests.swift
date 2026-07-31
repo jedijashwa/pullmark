@@ -35,40 +35,153 @@ import Testing
         #expect(reviews[0].commitId == nil)
     }
 
-    // MARK: - Server-comment mapping
+    // MARK: - Pending comments come from GraphQL (REST cannot anchor them)
 
-    private func serverComment(id: Int, line: Int?, startLine: Int? = nil,
-                               originalLine: Int? = nil, side: String? = "RIGHT",
-                               body: String = "x") -> ReviewComment {
-        ReviewComment(id: id, path: "docs/a.md", body: body, line: line, side: side,
-                      startLine: startLine, originalLine: originalLine, subjectType: nil,
-                      inReplyToId: nil, user: nil, createdAt: nil, htmlUrl: nil)
+    /// REGRESSION (live-verified): GET …/reviews/{id}/comments returns
+    /// ONLY legacy diff-position fields for a pending review's comments —
+    /// no line/original_line/side/start_line. Anything decoded from it can
+    /// never anchor a PendingComment, so reconciliation never matched and
+    /// every sync re-uploaded the whole queue. This fixture mirrors the
+    /// real payload shape so the REST path can never silently return.
+    private static let realRESTPendingCommentsPayload = """
+    [{"id": 111, "pull_request_review_id": 42, "node_id": "PRRC_a",
+      "diff_hunk": "@@ -1,3 +1,4 @@\\n context",
+      "path": "docs/a.md",
+      "position": 4, "original_position": 4,
+      "commit_id": "beef", "original_commit_id": "beef",
+      "user": {"login": "me"}, "body": "note",
+      "created_at": "2026-07-30T10:00:00Z"}]
+    """.data(using: .utf8)!
+
+    @Test func restPendingCommentsPayloadCarriesNoLineAnchors() throws {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let comments = try decoder.decode([ReviewComment].self,
+                                          from: Self.realRESTPendingCommentsPayload)
+        #expect(comments.count == 1)
+        #expect(comments[0].line == nil)
+        #expect(comments[0].startLine == nil)
+        #expect(comments[0].originalLine == nil)
+        #expect(comments[0].side == nil)
     }
 
-    @Test func serverCommentMapsSingleLine() throws {
-        let mapped = try #require(PendingComment(server: serverComment(id: 7, line: 12)))
-        #expect(mapped.serverID == 7)
-        #expect(mapped.lineStart == 12)
-        #expect(mapped.lineEnd == 12)
-        #expect(mapped.side == "RIGHT")
-        #expect(mapped.id == "7", "server identity must be stable across refetches")
+    @Test func pendingCommentsParserRejectsTheRESTShapeOutright() {
+        // The production parser only accepts the GraphQL reviewThreads
+        // envelope — feeding it the REST payload must throw, never decode
+        // to an empty (or worse, plausible) result.
+        #expect(throws: Error.self) {
+            try GitHubClient.parsePendingCommentsPage(Self.realRESTPendingCommentsPayload,
+                                                      reviewID: 42)
+        }
     }
 
-    @Test func serverCommentMapsMultiLineRange() throws {
-        let mapped = try #require(PendingComment(server: serverComment(id: 8, line: 9, startLine: 3)))
-        #expect(mapped.lineStart == 3)
-        #expect(mapped.lineEnd == 9)
+    // MARK: - GraphQL pending-comments decoding
+
+    private func threadsPage(nodes: String, hasNextPage: Bool = false,
+                             endCursor: String? = nil) -> Data {
+        """
+        {"data": {"repository": {"pullRequest": {"reviewThreads": {
+          "pageInfo": {"hasNextPage": \(hasNextPage),
+                       "endCursor": \(endCursor.map { "\"\($0)\"" } ?? "null")},
+          "nodes": [\(nodes)]
+        }}}}}
+        """.data(using: .utf8)!
     }
 
-    @Test func serverCommentFallsBackToOriginalLine() throws {
-        // The head moved under the pending review: line is nil, the
-        // original anchor still names the comment in the list.
-        let mapped = try #require(PendingComment(server: serverComment(id: 9, line: nil, originalLine: 4)))
-        #expect(mapped.lineEnd == 4)
+    @Test func graphQLSingleLinePendingCommentDecodes() throws {
+        let page = threadsPage(nodes: """
+        {"diffSide": "RIGHT", "line": 12, "startLine": null,
+         "originalLine": 12, "originalStartLine": null, "path": "docs/a.md",
+         "comments": {"nodes": [
+           {"databaseId": 7, "body": "note", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let parsed = try GitHubClient.parsePendingCommentsPage(page, reviewID: 42)
+        #expect(parsed.nextCursor == nil)
+        let comment = try #require(parsed.comments.first)
+        #expect(comment.serverID == 7)
+        #expect(comment.path == "docs/a.md")
+        #expect(comment.lineStart == 12)
+        #expect(comment.lineEnd == 12)
+        #expect(comment.side == "RIGHT")
+        #expect(comment.body == "note")
     }
 
-    @Test func serverCommentWithoutAnyAnchorIsRejected() {
-        #expect(PendingComment(server: serverComment(id: 10, line: nil)) == nil)
+    @Test func graphQLMultiLineLeftSideRangeDecodes() throws {
+        let page = threadsPage(nodes: """
+        {"diffSide": "LEFT", "line": 9, "startLine": 3,
+         "originalLine": 9, "originalStartLine": 3, "path": "docs/b.md",
+         "comments": {"nodes": [
+           {"databaseId": 8, "body": "old side", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let comment = try #require(
+            try GitHubClient.parsePendingCommentsPage(page, reviewID: 42).comments.first)
+        #expect(comment.lineStart == 3)
+        #expect(comment.lineEnd == 9)
+        #expect(comment.side == "LEFT")
+    }
+
+    @Test func graphQLOutdatedThreadFallsBackToOriginalLines() throws {
+        // The head moved under the pending review: line/startLine are null,
+        // the original anchor still names the comment.
+        let page = threadsPage(nodes: """
+        {"diffSide": "RIGHT", "line": null, "startLine": null,
+         "originalLine": 6, "originalStartLine": 4, "path": "docs/a.md",
+         "comments": {"nodes": [
+           {"databaseId": 9, "body": "moved", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let comment = try #require(
+            try GitHubClient.parsePendingCommentsPage(page, reviewID: 42).comments.first)
+        #expect(comment.lineStart == 4)
+        #expect(comment.lineEnd == 6)
+    }
+
+    @Test func graphQLFiltersToPendingCommentsOfTheGivenReview() throws {
+        let page = threadsPage(nodes: """
+        {"diffSide": "RIGHT", "line": 5, "startLine": null,
+         "originalLine": 5, "originalStartLine": null, "path": "docs/a.md",
+         "comments": {"nodes": [
+           {"databaseId": 1, "body": "submitted earlier", "state": "SUBMITTED",
+            "pullRequestReview": {"databaseId": 42}},
+           {"databaseId": 2, "body": "someone else's pending", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 99}},
+           {"databaseId": null, "body": "no id", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}},
+           {"databaseId": 3, "body": "mine", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let parsed = try GitHubClient.parsePendingCommentsPage(page, reviewID: 42)
+        #expect(parsed.comments.map(\.body) == ["mine"])
+    }
+
+    @Test func graphQLFileLevelThreadWithoutLineAnchorIsSkipped() throws {
+        let page = threadsPage(nodes: """
+        {"diffSide": "RIGHT", "line": null, "startLine": null,
+         "originalLine": null, "originalStartLine": null, "path": "docs/a.md",
+         "comments": {"nodes": [
+           {"databaseId": 4, "body": "file-level", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let parsed = try GitHubClient.parsePendingCommentsPage(page, reviewID: 42)
+        #expect(parsed.comments.isEmpty)
+    }
+
+    @Test func graphQLPaginationCursorSurfacesOnlyWithNextPage() throws {
+        let more = threadsPage(nodes: "", hasNextPage: true, endCursor: "abc")
+        #expect(try GitHubClient.parsePendingCommentsPage(more, reviewID: 1).nextCursor == "abc")
+        let done = threadsPage(nodes: "", hasNextPage: false, endCursor: "abc")
+        #expect(try GitHubClient.parsePendingCommentsPage(done, reviewID: 1).nextCursor == nil)
+    }
+
+    @Test func graphQLMalformedResponseThrowsRatherThanDecodingEmpty() {
+        // An empty result must always mean "genuinely no pending comments";
+        // a null repository (bad access, wrong repo) must fail loudly.
+        let bad = Data(#"{"data": {"repository": null}}"#.utf8)
+        #expect(throws: Error.self) {
+            try GitHubClient.parsePendingCommentsPage(bad, reviewID: 1)
+        }
     }
 
     // MARK: - Pending-review selection
@@ -132,6 +245,66 @@ import Testing
         #expect(remaining.count == 1)
     }
 
+    // MARK: - Row identity across upload and refetch
+
+    @Test func pendingCommentIdentityNeverFlipsToTheServerID() {
+        var comment = local("x")
+        let before = comment.id
+        comment.serverID = 99
+        #expect(comment.id == before,
+                "gaining a serverID must not rebuild the SwiftUI row")
+    }
+
+    @Test func uploadedQueuedCommentKeepsItsRowIdentity() {
+        let queued = local("note")
+        // The server copy comes back from GraphQL with a fresh UUID.
+        let result = PendingReviewSync.reconcile(server: [server("note", id: 7)],
+                                                 previousServer: [], queue: [queued])
+        #expect(result.queue.isEmpty)
+        #expect(result.server.first?.localID == queued.localID)
+        #expect(result.server.first?.id == queued.id)
+        #expect(result.server.first?.serverID == 7)
+    }
+
+    @Test func refetchedServerCommentKeepsIdentityViaServerID() {
+        let firstSeen = PendingReviewSync.reconcile(server: [server("note", id: 7)],
+                                                    previousServer: [], queue: []).server
+        // Next adoption returns the same comment (body edited on
+        // github.com in the meantime) under a fresh UUID.
+        let again = PendingReviewSync.reconcile(server: [server("note, edited", id: 7)],
+                                                previousServer: firstSeen, queue: []).server
+        #expect(again.first?.localID == firstSeen.first?.localID)
+    }
+
+    @Test func externalServerCommentLeavesTheQueueAlone() {
+        let queued = local("mine, not uploaded yet", line: 3)
+        let external = server("added on github.com", id: 50, line: 8)
+        let result = PendingReviewSync.reconcile(server: [external],
+                                                 previousServer: [], queue: [queued])
+        #expect(result.queue == [queued])
+        #expect(result.server.first?.localID == external.localID)
+    }
+
+    @Test func reconciliationWorksAgainstGraphQLShapedData() throws {
+        // End to end over real decoding: a queued comment uploads, the
+        // GraphQL fetch returns it — the queue drains and the server copy
+        // wears the queued comment's identity.
+        let queued = PendingComment(path: "docs/a.md", lineStart: 12, lineEnd: 12,
+                                    side: "RIGHT", body: "note")
+        let page = threadsPage(nodes: """
+        {"diffSide": "RIGHT", "line": 12, "startLine": null,
+         "originalLine": 12, "originalStartLine": null, "path": "docs/a.md",
+         "comments": {"nodes": [
+           {"databaseId": 7, "body": "note", "state": "PENDING",
+            "pullRequestReview": {"databaseId": 42}}]}}
+        """)
+        let fetched = try GitHubClient.parsePendingCommentsPage(page, reviewID: 42).comments
+        let result = PendingReviewSync.reconcile(server: fetched,
+                                                 previousServer: [], queue: [queued])
+        #expect(result.queue.isEmpty, "the uploaded comment must not re-upload forever")
+        #expect(result.server.first?.id == queued.id)
+    }
+
     // MARK: - Disk store (pure encode/decode/update)
 
     private let ref = PullRequestRef(owner: "acme", repo: "docs", number: 12)
@@ -174,5 +347,102 @@ import Testing
     @Test func decodeToleratesGarbageAndNil() {
         #expect(PendingReviewStore.decodeQueues(nil).isEmpty)
         #expect(PendingReviewStore.decodeQueues(Data("not json".utf8)).isEmpty)
+    }
+}
+
+/// Single-flight semantics for the upload loop: changes during a pass
+/// re-run it, and concurrent callers wait instead of silently skipping.
+@Suite @MainActor struct PendingSyncGateTests {
+    /// Mutable state shared with @Sendable Task closures (everything runs
+    /// on the main actor, so access is serialized).
+    @MainActor private final class Box {
+        var passes = 0
+        var events: [String] = []
+        var release: CheckedContinuation<Void, Never>?
+    }
+
+    @Test func runsExactlyOnePassWhenNothingChanges() async {
+        let gate = PendingSyncGate()
+        let box = Box()
+        await gate.run("k") { box.passes += 1 }
+        #expect(box.passes == 1)
+    }
+
+    @Test func changeDuringTheFinalPassTriggersOneMorePass() async {
+        // Finding: a comment added during an in-flight sync's final pass
+        // was swallowed by the single-flight guard until a manual retry.
+        let gate = PendingSyncGate()
+        let box = Box()
+        await gate.run("k") {
+            box.passes += 1
+            if box.passes == 1 { gate.noteChange("k") }
+        }
+        #expect(box.passes == 2)
+    }
+
+    @Test func changeNotedWhilePassIsSuspendedGetsAnotherPass() async {
+        let gate = PendingSyncGate()
+        let box = Box()
+        let run = Task { @MainActor in
+            await gate.run("k") {
+                box.passes += 1
+                if box.passes == 1 {
+                    await withCheckedContinuation { box.release = $0 }
+                }
+            }
+        }
+        while box.release == nil { await Task.yield() }
+        gate.noteChange("k") // a comment lands mid-upload
+        box.release?.resume()
+        await run.value
+        #expect(box.passes == 2)
+    }
+
+    @Test func concurrentCallerWaitsForTheInFlightRunInsteadOfSkipping() async {
+        // Finding: submitReview's pre-submit sync was a no-op while another
+        // sync was in flight, producing a spurious upload error mid-upload.
+        let gate = PendingSyncGate()
+        let box = Box()
+        let first = Task { @MainActor in
+            await gate.run("k") {
+                box.events.append("first-begin")
+                await withCheckedContinuation { box.release = $0 }
+                box.events.append("first-end")
+            }
+        }
+        while box.release == nil { await Task.yield() }
+        let second = Task { @MainActor in
+            await gate.run("k") { box.events.append("second-pass") }
+            box.events.append("second-returned")
+        }
+        // Deterministic: wait until the second caller is provably parked.
+        while gate.waiterCount("k") == 0 { await Task.yield() }
+        box.release?.resume()
+        await first.value
+        await second.value
+        #expect(box.events == ["first-begin", "first-end", "second-returned"],
+                "the second caller must not run its own pass, and must return only after the first run finished")
+        #expect(gate.isRunning("k") == false)
+    }
+
+    @Test func waitUntilIdleReturnsImmediatelyWhenNothingIsInFlight() async {
+        let gate = PendingSyncGate()
+        await gate.waitUntilIdle("k")
+        #expect(gate.isRunning("k") == false)
+    }
+
+    @Test func differentKeysDoNotBlockEachOther() async {
+        let gate = PendingSyncGate()
+        let box = Box()
+        let blocked = Task { @MainActor in
+            await gate.run("a") {
+                await withCheckedContinuation { box.release = $0 }
+            }
+        }
+        while box.release == nil { await Task.yield() }
+        await gate.run("b") { box.passes += 1 }
+        #expect(box.passes == 1, "an in-flight run for one PR must not stall another PR's sync")
+        box.release?.resume()
+        await blocked.value
     }
 }

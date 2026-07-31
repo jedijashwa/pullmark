@@ -560,6 +560,14 @@ final class AppState: ObservableObject {
             session.commentsUnavailable = true
         }
         session.queuedComments = PendingReviewStore.loadQueue(ref: ref, headSHA: details.head.sha)
+        // Concurrent opens of the same PR both pass the check at the top of
+        // this function during the awaits above — re-check at the append
+        // and adopt the winner, or the session (and its pending-comment
+        // syncing) exists twice.
+        if let existing = prSessions.first(where: { $0.ref == ref }) {
+            selection = .prOverview(existing.id)
+            return
+        }
         prSessions.append(session)
         selection = .prOverview(session.id)
         noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
@@ -594,6 +602,13 @@ final class AppState: ObservableObject {
                let index = prSessions.firstIndex(where: { $0.id == session.id }) {
                 prSessions[index].updateAvailable = true
             }
+        }
+        // A pending review started elsewhere (github.com) appears without
+        // a relaunch: adoption rides the same 60s poll. Cheap — one
+        // reviews GET per open session, GraphQL only when one exists —
+        // and a poll failure stays silent; the next poll retries.
+        for session in prSessions {
+            await adoptPendingReview(sessionID: session.id)
         }
     }
 
@@ -724,6 +739,8 @@ final class AppState: ObservableObject {
     func removePR(_ id: String) {
         prSessions.removeAll { $0.id == id }
         dropPRContentCache(sessionID: id)
+        adoptionKnown.remove(id)
+        pendingSyncGate.forget(id)
         switch selection {
         case .prOverview(let s):
             if s == id { selection = nil }
@@ -736,9 +753,17 @@ final class AppState: ObservableObject {
 
     // MARK: - Pending review (GitHub is the source of truth — spec §4)
 
-    /// Sessions with an upload loop in flight — one syncer per PR, so two
-    /// quick adds can't race each other into duplicate comments.
-    private var syncingPending: Set<String> = []
+    /// One upload loop per PR (two quick adds can't race each other into
+    /// duplicate comments); adds during a pass trigger another, and submit
+    /// waits for in-flight runs — see PendingSyncGate.
+    private let pendingSyncGate = PendingSyncGate()
+
+    /// Sessions whose latest pending-review adoption succeeded. The create
+    /// path of a sync may only run for a session in this set: when
+    /// adoption state is unknown (identity resolution or the fetch failed
+    /// with a token present), a pending review the app cannot see may
+    /// exist server-side, and creating would 422 against it forever.
+    private var adoptionKnown: Set<String> = []
 
     /// Queues a review comment and immediately syncs it into the viewer's
     /// pending review on GitHub, so the pending count is true by
@@ -747,6 +772,7 @@ final class AppState: ObservableObject {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].queuedComments.append(comment)
         persistQueue(sessionID: sessionID)
+        pendingSyncGate.noteChange(sessionID)
         Task { await syncPendingComments(sessionID: sessionID) }
     }
 
@@ -775,45 +801,84 @@ final class AppState: ObservableObject {
     /// Fetches the viewer's pending review (if any) and reconciles the
     /// local queue against its comments — publishing both together so the
     /// unified list and its per-row upload state never disagree. Returns
-    /// false when the fetch failed (callers decide how loudly to surface).
+    /// false when adoption state could not be established (callers decide
+    /// how loudly to surface).
     @discardableResult
     func adoptPendingReview(sessionID: String) async -> Bool {
         guard let session = prSessions.first(where: { $0.id == sessionID }) else { return true }
         let ref = session.ref
-        // Unauthenticated: no pending review can exist and no sync can run.
-        guard let viewer = await client.viewerIdentity()?.login else { return true }
+        // Unauthenticated: no pending review can exist and no sync can run
+        // — a clean, known absence.
+        guard await client.authToken() != nil else {
+            adoptionKnown.insert(sessionID)
+            return true
+        }
+        // A token is present, so a pending review may exist server-side.
+        // A failed identity resolution means its existence is unknown —
+        // that must read as "unavailable" (banner), never as a silently
+        // clean "no pending review".
+        guard let viewer = await client.viewerIdentity()?.login else {
+            adoptionKnown.remove(sessionID)
+            return false
+        }
         do {
             let reviews = try await client.reviews(ref)
             var state: PendingReviewState?
             if let pending = PendingReviewSync.pendingReview(in: reviews, viewer: viewer) {
-                let comments = try await client.reviewComments(ref, reviewID: pending.id)
+                let comments = try await client.pendingReviewComments(ref, reviewID: pending.id)
                 state = PendingReviewState(reviewID: pending.id, nodeID: pending.nodeId,
                                            commitID: pending.commitId, summary: pending.body,
-                                           comments: comments.compactMap(PendingComment.init(server:)))
+                                           comments: comments)
             }
             guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return true }
-            let queue = PendingReviewSync.remainingQueue(local: prSessions[index].queuedComments,
-                                                         server: state?.comments ?? [])
+            let reconciled = PendingReviewSync.reconcile(
+                server: state?.comments ?? [],
+                previousServer: prSessions[index].pendingReview?.comments ?? [],
+                queue: prSessions[index].queuedComments)
+            state?.comments = reconciled.server
             prSessions[index].pendingReview = state
-            prSessions[index].queuedComments = queue
+            prSessions[index].queuedComments = reconciled.queue
             persistQueue(sessionID: sessionID)
+            adoptionKnown.insert(sessionID)
             return true
         } catch {
+            adoptionKnown.remove(sessionID)
             return false
         }
     }
 
-    /// Drains the local queue into the server-side pending review: one
-    /// atomic REST create when none exists, GraphQL adds (FIFO) when one
-    /// does — see GitHubClient's API-mix note. Failures keep the remainder
-    /// queued and surface; a 422 from racing an externally created pending
-    /// review is healed by re-adopting and retrying once.
+    /// Drains the local queue into the server-side pending review. When a
+    /// sync for this session is already in flight, waits for it to finish
+    /// (comments added mid-flight get one more pass via the gate) instead
+    /// of silently doing nothing.
     func syncPendingComments(sessionID: String) async {
-        guard syncingPending.insert(sessionID).inserted else { return }
-        defer { syncingPending.remove(sessionID) }
+        await pendingSyncGate.run(sessionID) { [weak self] in
+            await self?.performPendingSyncPass(sessionID: sessionID)
+        }
+    }
+
+    /// One drain pass: one atomic REST create when no pending review
+    /// exists, GraphQL adds (FIFO) when one does — see GitHubClient's
+    /// API-mix note. Failures keep the remainder queued and surface; a
+    /// 422 from racing an externally created pending review is healed by
+    /// re-adopting and retrying once.
+    private func performPendingSyncPass(sessionID: String) async {
         var attemptsLeft = 2
         while attemptsLeft > 0 {
             attemptsLeft -= 1
+            guard let queued = prSessions.first(where: { $0.id == sessionID })?.queuedComments,
+                  !queued.isEmpty else { return }
+            // Adoption unknown: an unseen pending review may exist — never
+            // run the create path against it. Re-adopt; if still unknown,
+            // keep the queue and show the same banner as missing comments.
+            if !adoptionKnown.contains(sessionID) {
+                guard await adoptPendingReview(sessionID: sessionID) else {
+                    if let index = prSessions.firstIndex(where: { $0.id == sessionID }) {
+                        prSessions[index].commentsUnavailable = true
+                    }
+                    return
+                }
+            }
             guard let session = prSessions.first(where: { $0.id == sessionID }),
                   !session.queuedComments.isEmpty else { return }
             do {
@@ -856,14 +921,27 @@ final class AppState: ObservableObject {
     /// (after draining the queue — never silently dropping comments that
     /// failed to upload), otherwise a one-shot create-and-submit.
     func submitReview(sessionID: String, event: String, summary: String?) async throws {
+        // Waits out any in-flight sync (the gate) then drains what's left
+        // — mid-upload comments must never read as "could not be uploaded".
         await syncPendingComments(sessionID: sessionID)
-        guard let session = prSessions.first(where: { $0.id == sessionID }) else {
+        guard var session = prSessions.first(where: { $0.id == sessionID }) else {
             throw MessageError(message: "The PR session is no longer available.")
         }
         guard session.queuedComments.isEmpty else {
             let count = session.queuedComments.count
             throw MessageError(message: "\(count) comment\(count == 1 ? "" : "s") could not be "
                 + "uploaded to GitHub, so the review was not submitted. Retry when you're back online.")
+        }
+        // Adoption unknown (e.g. identity resolution failed): a pending
+        // review the app cannot see may exist, and the create path would
+        // submit past it — establish the truth or refuse.
+        if session.pendingReview == nil, !adoptionKnown.contains(sessionID) {
+            guard await adoptPendingReview(sessionID: sessionID),
+                  let refreshed = prSessions.first(where: { $0.id == sessionID }) else {
+                throw MessageError(message: "Could not check GitHub for an existing pending review, "
+                    + "so the review was not submitted. Check your connection and try again.")
+            }
+            session = refreshed
         }
         if let pending = session.pendingReview {
             // The events endpoint documents body as required for COMMENT and
