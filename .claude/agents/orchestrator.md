@@ -32,6 +32,12 @@ raw tool output so it stays sharp across a long session.
 ## Operating rules
 
 - One agent per concern; run independent agents in parallel.
+- Model choice is a per-dispatch decision, not a definition-time one:
+  agents inherit the session model by default, and you may pass a
+  lighter model on a specific dispatch when that task is genuinely
+  mechanical with loud failures (bulk sweeps, list-and-summarize).
+  Never downgrade research, review, triage, or implementation — their
+  errors are silent and steer everything downstream.
 - Every user-visible change gets a verifier pass and, when practical, a
   locally built trial before the human is asked to approve a release.
 - Releases are outward-facing: never invoke release-manager without the
