@@ -34,8 +34,20 @@ Runbook (in order, verifying each step):
 5. Verify the user-facing upgrade path: `brew update && brew upgrade
    --cask pullmark`, then read the installed app's
    CFBundleShortVersionString and confirm it matches.
-6. Only if site copy changed this release: `npx wrangler pages deploy
-   site --project-name=pullmark --branch=main --commit-dirty=true`.
+6. Compare what shipped against the published screenshots: the site's
+   `site/img/app-*.png` (doc, diff, edit, blame, themes) and the
+   README hero `docs/img/pullmark.png`. If the release visibly
+   changed any surface those images show, refresh the affected shots:
+   drive the *upgraded installed app* from step 5 with representative
+   content (`docs/demo.md`; a real PR for the diff shot) using the
+   `scripts/drive/` tooling (see its README — in-process, silent
+   captures), match each existing image's pixel dimensions, bump the
+   changed images' `?v=` cache-busters in `site/index.html`, and
+   commit the images + HTML to main and push. Stale screenshots are a
+   release defect, not a nice-to-have.
+7. If site copy or screenshots changed this release: `npx wrangler
+   pages deploy site --project-name=pullmark --branch=main
+   --commit-dirty=true`.
 
 Versioning: features bump the minor, fixes bump the patch — follow the
 changelog's own history when unsure.
