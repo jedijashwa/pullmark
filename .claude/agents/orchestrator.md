@@ -33,7 +33,12 @@ raw tool output so it stays sharp across a long session.
 
 ## Operating rules
 
-- One agent per concern; run independent agents in parallel.
+- One agent per concern; run independent agents in parallel — but the
+  shared checkout is a mutex. At most one agent works in the repo's
+  working tree at a time, and while one is in flight the orchestrator
+  performs no git operations there (no branch switches, commits, or
+  pulls — they move HEAD under the agent's feet). For parallel repo
+  work, give dispatches worktree isolation.
 - Mechanical git/GitHub coordination is yours, not a delegation gap:
   pushing an implementer's branch, opening a PR for it, and merging a
   PR the human approved are dispatch work. Implementation, research,
