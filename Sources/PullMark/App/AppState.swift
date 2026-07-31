@@ -17,7 +17,19 @@ struct PRSession: Identifiable {
     var files: [PullRequestFile]
     var reviewComments: [ReviewComment] = []
     var threadMeta: [Int: ThreadMeta] = [:]
-    var drafts: [PendingComment] = []
+    /// The viewer's pending review on GitHub — the source of truth. Nil
+    /// when none exists (or the viewer is unauthenticated).
+    var pendingReview: PendingReviewState?
+    /// Comments authored here that GitHub hasn't accepted yet (offline or
+    /// API failure) — persisted to disk, retried on sync. Always updated
+    /// together with `pendingReview` so the unified list below and its
+    /// per-row upload state can never disagree.
+    var queuedComments: [PendingComment] = []
+    /// The unified pending set the UI shows: server-accepted first, then
+    /// the local queue, in authorship order within each.
+    var pendingComments: [PendingComment] {
+        (pendingReview?.comments ?? []) + queuedComments
+    }
     /// Repo Markdown files opened via links from PR content (not part of the diff).
     var browsedDocs: [String] = []
     /// Set when the PR's head moved on GitHub since it was loaded.
@@ -547,11 +559,21 @@ final class AppState: ObservableObject {
             // A blip must not render as "no comments on this PR".
             session.commentsUnavailable = true
         }
+        session.queuedComments = PendingReviewStore.loadQueue(ref: ref, headSHA: details.head.sha)
         prSessions.append(session)
         selection = .prOverview(session.id)
         noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
                               title: details.title, prStatus: PRStatus(details: details),
                               lastOpened: Date()))
+        // A pending review saved from here or started on github.com must be
+        // visible from the first render; a fetch failure shows the same
+        // banner as missing comments — never a silently clean review state.
+        let sessionID = session.id
+        if await !adoptPendingReview(sessionID: sessionID),
+           let index = prSessions.firstIndex(where: { $0.id == sessionID }) {
+            prSessions[index].commentsUnavailable = true
+        }
+        await syncPendingComments(sessionID: sessionID)
     }
 
     func openRemoteDoc(sessionID: String, path: String) {
@@ -593,6 +615,7 @@ final class AppState: ObservableObject {
                 commentsUnavailable = true
             }
             guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+            let headMoved = details.head.sha != prSessions[index].details.head.sha
             prSessions[index].details = details
             prSessions[index].files = files
             prSessions[index].mergeBaseSHA = mergeBase
@@ -602,9 +625,20 @@ final class AppState: ObservableObject {
             }
             prSessions[index].commentsUnavailable = commentsUnavailable
             prSessions[index].updateAvailable = false
+            if headMoved {
+                // Queued anchors are per-head; the old head's queue stays on
+                // disk under its own key rather than mis-anchoring here.
+                prSessions[index].queuedComments = PendingReviewStore.loadQueue(
+                    ref: ref, headSHA: details.head.sha)
+            }
             // Cached document text may predate the new head; views refill it.
             dropPRContentCache(sessionID: sessionID)
             updateRecentPRStatus(ref: ref, status: PRStatus(details: details))
+            if await !adoptPendingReview(sessionID: sessionID),
+               let current = prSessions.firstIndex(where: { $0.id == sessionID }) {
+                prSessions[current].commentsUnavailable = true
+            }
+            await syncPendingComments(sessionID: sessionID)
         } catch {
             lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
         }
@@ -700,21 +734,178 @@ final class AppState: ObservableObject {
         }
     }
 
-    // MARK: - Review drafts
+    // MARK: - Pending review (GitHub is the source of truth — spec §4)
 
-    func addDraft(sessionID: String, _ draft: PendingComment) {
+    /// Sessions with an upload loop in flight — one syncer per PR, so two
+    /// quick adds can't race each other into duplicate comments.
+    private var syncingPending: Set<String> = []
+
+    /// Queues a review comment and immediately syncs it into the viewer's
+    /// pending review on GitHub, so the pending count is true by
+    /// construction. On failure it stays queued (and on disk) for retry.
+    func addPendingComment(sessionID: String, _ comment: PendingComment) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-        prSessions[index].drafts.append(draft)
+        prSessions[index].queuedComments.append(comment)
+        persistQueue(sessionID: sessionID)
+        Task { await syncPendingComments(sessionID: sessionID) }
     }
 
-    func removeDraft(sessionID: String, draftID: String) {
+    /// Discards one pending comment — locally when it never reached GitHub,
+    /// server-side (then re-adopted) when it did.
+    func removePendingComment(sessionID: String, id: String) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-        prSessions[index].drafts.removeAll { $0.id == draftID }
+        if prSessions[index].queuedComments.contains(where: { $0.id == id }) {
+            prSessions[index].queuedComments.removeAll { $0.id == id }
+            persistQueue(sessionID: sessionID)
+            return
+        }
+        guard let serverID = prSessions[index].pendingReview?.comments
+            .first(where: { $0.id == id })?.serverID else { return }
+        let ref = prSessions[index].ref
+        Task {
+            do {
+                try await client.deleteReviewComment(ref, commentID: serverID)
+                await adoptPendingReview(sessionID: sessionID)
+            } catch {
+                lastError = "Could not discard the pending comment: \(error.localizedDescription)"
+            }
+        }
     }
 
-    func clearDrafts(sessionID: String) {
+    /// Fetches the viewer's pending review (if any) and reconciles the
+    /// local queue against its comments — publishing both together so the
+    /// unified list and its per-row upload state never disagree. Returns
+    /// false when the fetch failed (callers decide how loudly to surface).
+    @discardableResult
+    func adoptPendingReview(sessionID: String) async -> Bool {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return true }
+        let ref = session.ref
+        // Unauthenticated: no pending review can exist and no sync can run.
+        guard let viewer = await client.viewerIdentity()?.login else { return true }
+        do {
+            let reviews = try await client.reviews(ref)
+            var state: PendingReviewState?
+            if let pending = PendingReviewSync.pendingReview(in: reviews, viewer: viewer) {
+                let comments = try await client.reviewComments(ref, reviewID: pending.id)
+                state = PendingReviewState(reviewID: pending.id, nodeID: pending.nodeId,
+                                           commitID: pending.commitId, summary: pending.body,
+                                           comments: comments.compactMap(PendingComment.init(server:)))
+            }
+            guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return true }
+            let queue = PendingReviewSync.remainingQueue(local: prSessions[index].queuedComments,
+                                                         server: state?.comments ?? [])
+            prSessions[index].pendingReview = state
+            prSessions[index].queuedComments = queue
+            persistQueue(sessionID: sessionID)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Drains the local queue into the server-side pending review: one
+    /// atomic REST create when none exists, GraphQL adds (FIFO) when one
+    /// does — see GitHubClient's API-mix note. Failures keep the remainder
+    /// queued and surface; a 422 from racing an externally created pending
+    /// review is healed by re-adopting and retrying once.
+    func syncPendingComments(sessionID: String) async {
+        guard syncingPending.insert(sessionID).inserted else { return }
+        defer { syncingPending.remove(sessionID) }
+        var attemptsLeft = 2
+        while attemptsLeft > 0 {
+            attemptsLeft -= 1
+            guard let session = prSessions.first(where: { $0.id == sessionID }),
+                  !session.queuedComments.isEmpty else { return }
+            do {
+                if let pending = session.pendingReview {
+                    for comment in session.queuedComments {
+                        try await client.addPendingComment(reviewNodeID: pending.nodeID,
+                                                           comment: comment)
+                    }
+                } else {
+                    try await client.createReview(session.ref,
+                                                  commitID: session.details.head.sha,
+                                                  body: nil, event: nil,
+                                                  comments: session.queuedComments)
+                }
+                // Adoption moves the uploaded comments from the queue to the
+                // server list in one publish; anything it kept queued was
+                // not accepted (or arrived mid-sync) — loop once more.
+                await adoptPendingReview(sessionID: sessionID)
+                guard let after = prSessions.first(where: { $0.id == sessionID }),
+                      !after.queuedComments.isEmpty, attemptsLeft > 0 else { return }
+            } catch {
+                // The create may have lost to a review started elsewhere
+                // (one pending review per user) — adopt it and retry as adds.
+                await adoptPendingReview(sessionID: sessionID)
+                if let after = prSessions.first(where: { $0.id == sessionID }),
+                   after.pendingReview != nil, !after.queuedComments.isEmpty,
+                   attemptsLeft > 0 { continue }
+                let count = prSessions.first(where: { $0.id == sessionID })?
+                    .queuedComments.count ?? 0
+                if count > 0 {
+                    lastError = "Could not upload \(count) pending comment\(count == 1 ? "" : "s") "
+                        + "to GitHub — kept locally for retry. \(error.localizedDescription)"
+                }
+                return
+            }
+        }
+    }
+
+    /// Submits the review: the server-side pending review when one exists
+    /// (after draining the queue — never silently dropping comments that
+    /// failed to upload), otherwise a one-shot create-and-submit.
+    func submitReview(sessionID: String, event: String, summary: String?) async throws {
+        await syncPendingComments(sessionID: sessionID)
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else {
+            throw MessageError(message: "The PR session is no longer available.")
+        }
+        guard session.queuedComments.isEmpty else {
+            let count = session.queuedComments.count
+            throw MessageError(message: "\(count) comment\(count == 1 ? "" : "s") could not be "
+                + "uploaded to GitHub, so the review was not submitted. Retry when you're back online.")
+        }
+        if let pending = session.pendingReview {
+            // The events endpoint documents body as required for COMMENT and
+            // REQUEST_CHANGES; an empty string satisfies it when the review
+            // carries only comments.
+            let body = summary ?? (event == "APPROVE" ? nil : "")
+            try await client.submitReview(session.ref, reviewID: pending.reviewID,
+                                          event: event, body: body)
+        } else {
+            try await client.createReview(session.ref, commitID: session.details.head.sha,
+                                          body: summary, event: event, comments: [])
+        }
+        clearPendingState(sessionID: sessionID)
+        await reloadComments(sessionID: sessionID)
+    }
+
+    /// Discards the pending review server-side (GitHub's "Abandon review")
+    /// along with the local queue and persisted summary.
+    func abandonPendingReview(sessionID: String) async {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        do {
+            if let pending = session.pendingReview {
+                try await client.deletePendingReview(session.ref, reviewID: pending.reviewID)
+            }
+            clearPendingState(sessionID: sessionID)
+        } catch {
+            lastError = "Could not abandon the review: \(error.localizedDescription)"
+        }
+    }
+
+    private func clearPendingState(sessionID: String) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-        prSessions[index].drafts.removeAll()
+        prSessions[index].pendingReview = nil
+        prSessions[index].queuedComments = []
+        persistQueue(sessionID: sessionID)
+        PendingReviewStore.saveSummary(nil, ref: prSessions[index].ref)
+    }
+
+    private func persistQueue(sessionID: String) {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        PendingReviewStore.saveQueue(session.queuedComments, ref: session.ref,
+                                     headSHA: session.details.head.sha)
     }
 }
 
