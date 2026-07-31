@@ -113,6 +113,14 @@ struct PROverviewView: View {
             Text(filesSummary(session))
                 .font(.callout)
                 .foregroundStyle(.secondary)
+            // Honesty about non-Markdown files: their threads have no
+            // surface here, but they must not silently vanish (spec §2).
+            if hiddenCommentCount(session) > 0 {
+                let count = hiddenCommentCount(session)
+                Text("\(count) review comment\(count == 1 ? "" : "s") on files not shown in PullMark")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
             if let confirmation {
                 Label(confirmation, systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -166,6 +174,12 @@ struct PROverviewView: View {
             parts.append("\(session.otherFileCount) other file\(session.otherFileCount == 1 ? "" : "s") not shown")
         }
         return parts.joined(separator: " · ")
+    }
+
+    private func hiddenCommentCount(_ session: PRSession) -> Int {
+        ThreadVisibility.hiddenFileCommentCount(
+            comments: session.reviewComments,
+            visiblePaths: Set(session.markdownFiles.map(\.filename)))
     }
 }
 
@@ -275,6 +289,11 @@ struct PRFileView: View {
             .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
             .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
             .onChange(of: mode, perform: modeChanged)
+            // View ▸ Show Resolved Conversations flips in place — no page
+            // reload, the reader's position survives.
+            .onChange(of: state.resolvedConversationsVisible) {
+                proxy.setResolvedConversationsVisible($0)
+            }
             .modifier(PendingSearchConsumer(target: .prFile(sessionID, path),
                                             consume: consumePendingSearch))
             // Presented from the root view, not the toolbar button, so it
@@ -353,6 +372,16 @@ struct PRFileView: View {
         return TextLines.lines(in: headText, from: message.lineStart, to: message.lineEnd)
     }
 
+    /// Grouped threads for this file, and the viewer's pending comments on
+    /// it — one source of truth with the review popover (spec §3).
+    private var fileThreadGroups: [ReviewThread] {
+        ReviewThreads.group((session?.reviewComments ?? []).filter { $0.path == path })
+    }
+
+    private var filePendingComments: [PendingComment] {
+        (session?.pendingComments ?? []).filter { $0.path == path }
+    }
+
     private var html: String {
         guard let file else { return "" }
         let style = ThemeSelection.pageStyle(from: themeRaw)
@@ -372,22 +401,32 @@ struct PRFileView: View {
                                             theme: theme,
                                             customCSS: style.customCSS,
                                             blame: blameVisible ? blamePayloads : nil,
-                                            blameNote: blameVisible ? blameNote : nil)
+                                            blameNote: blameVisible ? blameNote : nil,
+                                            threads: file.status == "removed" ? nil
+                                                : ThreadVisibility.resultAnchored(
+                                                    fileThreadGroups,
+                                                    meta: session?.threadMeta ?? [:]),
+                                            pending: file.status == "removed" ? nil
+                                                : ThreadVisibility.resultPending(
+                                                    filePendingComments, path: path))
         case .sourceDiff:
+            let patch = file.patch ?? "No textual diff available for this file."
             return HTMLBuilder.patchPage(
-                patch: file.patch ?? "No textual diff available for this file.",
+                patch: patch,
                 title: path,
                 theme: theme,
-                customCSS: style.customCSS
+                customCSS: style.customCSS,
+                threads: PatchAnchors.place(threads: fileThreadGroups,
+                                            meta: session?.threadMeta ?? [:],
+                                            pending: filePendingComments,
+                                            patch: file.patch ?? "")
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
-            let threads = ReviewThreads.group(
-                (session?.reviewComments ?? []).filter { $0.path == path }
-            )
+            let threads = fileThreadGroups
             let placed = ReviewThreads.place(threads, in: segments,
                                              meta: session?.threadMeta ?? [:])
-            segments = placed.segments
+            segments = PendingAnchors.place(filePendingComments, in: placed.segments)
             func payload(_ thread: ReviewThread) -> ThreadPayload {
                 ThreadPayload(lineLabel: thread.lineLabel,
                               comments: thread.comments.map(CommentPayload.init),
@@ -428,6 +467,7 @@ struct PRFileView: View {
                 onThreadResolve: { rootID, resolved in
                     setThreadResolved(rootID: rootID, resolved: resolved)
                 },
+                onResolvedVisibility: { state.resolvedConversationsVisible = $0 },
                 onBlameHistory: { start, end in
                     historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
                 },
@@ -598,6 +638,11 @@ struct PRFileView: View {
     }
 
     private func handlePageLoaded() {
+        // A fresh page starts with resolved conversations hidden; re-apply
+        // the window's current choice.
+        if state.resolvedConversationsVisible {
+            proxy.setResolvedConversationsVisible(true)
+        }
         if state.pendingSearchQuery != nil {
             consumePendingSearch()
         } else if state.findBarVisible, let query = proxy.activeFindQuery {

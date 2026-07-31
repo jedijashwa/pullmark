@@ -84,6 +84,13 @@ struct PullMarkApp: App {
         }
         .keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
         .disabled(!prFileSelected)
+        Button(state?.resolvedConversationsVisible == true
+               ? "Hide Resolved Conversations" : "Show Resolved Conversations") {
+            state?.resolvedConversationsVisible.toggle()
+        }
+        .keyboardShortcut(shortcuts.keyboardShortcut(for: .showResolvedConversations))
+        .disabled(!prFileSelected)
+        .help("Reveal resolved review conversations in the Result view")
         Divider()
         Button("Review Changes…") { state?.send(.reviewChanges) }
             .keyboardShortcut(shortcuts.keyboardShortcut(for: .reviewChanges))

@@ -414,18 +414,38 @@ private struct PRSidebarGroup: View {
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
+    /// Unresolved comment count per path — every comment in an unresolved
+    /// thread, outdated and file-level included (spec §2). Derived from
+    /// reviewComments + threadMeta, which the session publishes together.
+    private var commentCounts: [String: Int] {
+        ThreadVisibility.unresolvedCommentCounts(comments: session.reviewComments,
+                                                 meta: session.threadMeta)
+    }
+
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             ForEach(session.markdownFiles) { file in
-                Label {
-                    Text(file.filename)
-                        .lineLimit(1)
-                        .truncationMode(.head)
-                } icon: {
-                    Image(systemName: icon(for: file.status))
-                        .foregroundStyle(color(for: file.status))
+                HStack(spacing: 6) {
+                    Label {
+                        Text(file.filename)
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                    } icon: {
+                        Image(systemName: icon(for: file.status))
+                            .foregroundStyle(color(for: file.status))
+                    }
+                    .font(fonts.row)
+                    if let count = commentCounts[file.filename] {
+                        Spacer(minLength: 2)
+                        Label("\(count)", systemImage: "bubble.left")
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                            .labelStyle(.titleAndIcon)
+                            .help(count == 1 ? "1 unresolved review comment"
+                                : "\(count) unresolved review comments")
+                            .accessibilityLabel("\(count) unresolved review comment\(count == 1 ? "" : "s")")
+                    }
                 }
-                .font(fonts.row)
                 .tag(SidebarSelection.prFile(session.id, file.filename))
             }
             ForEach(session.browsedDocs, id: \.self) { path in
