@@ -17,7 +17,7 @@ struct PRSession: Identifiable {
     var files: [PullRequestFile]
     var reviewComments: [ReviewComment] = []
     var threadMeta: [Int: ThreadMeta] = [:]
-    var drafts: [DraftComment] = []
+    var drafts: [PendingComment] = []
     /// Repo Markdown files opened via links from PR content (not part of the diff).
     var browsedDocs: [String] = []
     /// Set when the PR's head moved on GitHub since it was loaded.
@@ -702,12 +702,12 @@ final class AppState: ObservableObject {
 
     // MARK: - Review drafts
 
-    func addDraft(sessionID: String, _ draft: DraftComment) {
+    func addDraft(sessionID: String, _ draft: PendingComment) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].drafts.append(draft)
     }
 
-    func removeDraft(sessionID: String, draftID: UUID) {
+    func removeDraft(sessionID: String, draftID: String) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].drafts.removeAll { $0.id == draftID }
     }

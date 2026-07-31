@@ -73,22 +73,49 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     }
 }
 
-/// A review comment the user has written but not yet sent to GitHub.
-struct DraftComment: Identifiable, Equatable {
-    let id: UUID
+/// A review comment authored in PullMark: an anchor (path, line range, side)
+/// plus a body. Once GitHub accepts it into the viewer's pending review it
+/// carries the server comment id; until then it lives in the local queue
+/// (persisted to disk — see PendingReviewStore). Also the payload shape for
+/// immediate single comments.
+struct PendingComment: Identifiable, Equatable, Codable {
+    /// Set once GitHub accepted the comment into the pending review.
+    var serverID: Int?
+    /// Identity before the server assigns one (and across disk round trips).
+    var localID: UUID
     var path: String
     var lineStart: Int
     var lineEnd: Int
     var side: String
     var body: String
 
-    init(id: UUID = UUID(), path: String, lineStart: Int, lineEnd: Int, side: String, body: String) {
-        self.id = id
+    /// Server-derived when available so a refetch doesn't churn SwiftUI
+    /// identity; the local UUID covers unsynced comments.
+    var id: String { serverID.map(String.init) ?? localID.uuidString }
+
+    init(serverID: Int? = nil, localID: UUID = UUID(),
+         path: String, lineStart: Int, lineEnd: Int, side: String, body: String) {
+        self.serverID = serverID
+        self.localID = localID
         self.path = path
         self.lineStart = lineStart
         self.lineEnd = lineEnd
         self.side = side
         self.body = body
+    }
+
+    /// A pending comment as fetched back from the server
+    /// (GET …/reviews/{id}/comments). Falls back to `original_line` when the
+    /// head moved under the pending review; nil only when GitHub returns no
+    /// line anchor at all (not expected for pending line comments).
+    init?(server comment: ReviewComment) {
+        guard let line = comment.line ?? comment.originalLine else { return nil }
+        self.init(serverID: comment.id,
+                  path: comment.path,
+                  lineStart: comment.startLine ?? line,
+                  lineEnd: line,
+                  side: comment.side ?? "RIGHT",
+                  body: comment.body)
     }
 
     var lineDescription: String {
@@ -97,4 +124,20 @@ struct DraftComment: Identifiable, Equatable {
             ? "line \(lineEnd) (\(which))"
             : "lines \(lineStart)–\(lineEnd) (\(which))"
     }
+}
+
+/// A review row from GET /pulls/{n}/reviews. `state` "PENDING" marks an
+/// unsubmitted review — the list includes the viewer's own; other users'
+/// pending reviews are never visible. `nodeId` feeds the GraphQL
+/// incremental-add mutation (see GitHubClient's API-mix note).
+struct PullRequestReview: Decodable, Equatable {
+    struct User: Decodable, Equatable {
+        let login: String
+    }
+    let id: Int
+    let nodeId: String
+    let user: User?
+    let body: String?
+    let state: String
+    let commitId: String?
 }
