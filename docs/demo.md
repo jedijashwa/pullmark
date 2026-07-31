@@ -50,3 +50,5 @@ flowchart LR
 ## Relative image
 
 ![PullMark icon](img/pullmark.png)
+
+A trivial verification line (will self-close).
