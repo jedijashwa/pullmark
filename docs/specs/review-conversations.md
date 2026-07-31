@@ -220,6 +220,22 @@ Full survey by the feature-researcher agent, July 2026. Highlights:
   review popover) and stay visible on collapsed resolved-thread
   headers only as a count-free omission — expanding shows them.
 
+### Editing and deleting your own comments
+
+- Comments authored by the viewer get an overflow menu (⋯) on hover
+  with **Edit** and **Delete** — author-gated by comparing against
+  the authenticated login the app already resolves for the
+  review-request inbox.
+- **Edit** reuses the in-page mini-composer, pre-filled with the
+  current body; saving calls `PATCH /pulls/comments/{id}` and the
+  card shows GitHub's "edited" affordance. **Delete** confirms first
+  (destructive), then `DELETE /pulls/comments/{id}`.
+- Deleting a thread root with surviving replies must keep the thread
+  intact: grouping falls back to the reply chain rather than
+  orphaning replies whose `in_reply_to` target is gone.
+- Pending comments remain editable/discardable through the review
+  popover as today — this section covers *published* comments.
+
 ### 6. New-file clarity
 
 The added-file experience keeps the existing "New file — everything
@@ -265,7 +281,9 @@ indistinguishable in practice. No change to the view picker itself.
 - Implementation (separate, separately-approved effort).
 - PR timeline / issue-conversation threads beyond the existing
   overview comment box.
-- Editing or deleting already-published comments, and notifications.
+- Notifications.
+- Editing others' comments (maintainer/admin powers) and viewing
+  GitHub's per-comment edit history.
 - Reactions on PR-level (timeline) comments — this wave covers review
   comments only.
 - Rendering non-Markdown files (their comments get counted, not
