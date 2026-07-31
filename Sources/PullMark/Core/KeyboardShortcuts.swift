@@ -119,6 +119,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     case toggleOutline, toggleSource, reloadDocument
     case zoomIn, zoomOut, actualSize
     case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
+    case reviewChanges
 
     var title: String {
         switch self {
@@ -147,6 +148,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .prSourceDiff: return "Source Diff"
         case .prResult: return "Result"
         case .prFlipLayout: return "Flip Diff Layout"
+        case .reviewChanges: return "Review Changes…"
         }
     }
 
@@ -163,7 +165,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .toggleOutline, .toggleSource, .reloadDocument,
              .zoomIn, .zoomOut, .actualSize:
             return "View"
-        case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
+        case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout, .reviewChanges:
             return "Pull Requests"
         }
     }
@@ -182,6 +184,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
             return "While the find bar is open"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
             return "In a pull request file"
+        case .reviewChanges:
+            return "In a pull request"
         default:
             return nil
         }
@@ -221,6 +225,10 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .prSourceDiff: return KeyCombo(key: "2", command: true)
         case .prResult: return KeyCombo(key: "3", command: true)
         case .prFlipLayout: return KeyCombo(key: "l", command: true, option: true)
+        // ⇧⌘R ("Review"): free of the reserved table and every other
+        // default; ShortcutStore.init unbinds it from any older user
+        // recording rather than double-binding.
+        case .reviewChanges: return KeyCombo(key: "r", command: true, shift: true)
         }
     }
 }

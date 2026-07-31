@@ -55,6 +55,15 @@ struct PullMarkApp: App {
         return false
     }
 
+    /// True on the PR surfaces that carry the review control (overview or
+    /// a file view) — Review Changes… acts there and disables elsewhere.
+    private var prSurfaceSelected: Bool {
+        switch state?.selection {
+        case .prOverview, .prFile: return true
+        default: return false
+        }
+    }
+
     /// View menu: the PR file's rendered/source/result switch and the
     /// inline-vs-side-by-side flip. Disabled when no PR file is showing,
     /// so the keys are discoverable without pretending to work everywhere.
@@ -75,6 +84,11 @@ struct PullMarkApp: App {
         }
         .keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
         .disabled(!prFileSelected)
+        Divider()
+        Button("Review Changes…") { state?.send(.reviewChanges) }
+            .keyboardShortcut(shortcuts.keyboardShortcut(for: .reviewChanges))
+            .disabled(!prSurfaceSelected)
+            .help("Open the review — pending comments, summary, and verdict")
     }
 
     private func open(_ urlString: String) {

@@ -6,15 +6,9 @@ struct PROverviewView: View {
     @EnvironmentObject private var state: AppState
     let sessionID: String
 
-    @State private var reviewSummary = ""
-    /// The last programmatically seeded summary text — anything the field
-    /// holds beyond it means the user typed, and seeding must stop.
-    @State private var summarySeed: String?
-    @State private var summaryEdited = false
-    @State private var submitting = false
-    @State private var confirmAbandon = false
     @State private var confirmation: String?
     @State private var conversationText = ""
+    @State private var reviewPopoverVisible = false
     @State private var postingComment = false
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
@@ -35,7 +29,7 @@ struct PROverviewView: View {
                 header(session)
                     .padding([.horizontal, .top], 20)
                     .padding(.bottom, 12)
-                reviewSection(session)
+                conversationSection(session)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 Divider()
@@ -76,34 +70,19 @@ struct PROverviewView: View {
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
             .toolbar {
                 ToolbarItem {
+                    ReviewToolbarButton(sessionID: sessionID,
+                                        isPresented: $reviewPopoverVisible)
+                }
+                ToolbarItem {
                     ShareLink(item: session.details.htmlUrl)
                         .help("Share a link to this pull request")
                 }
             }
-            // Summary text survives quits: seeded from a pending review
-            // saved on github.com (server truth first) or from disk,
-            // persisted as it is typed.
-            .task(id: sessionID) {
-                if reviewSummary.isEmpty, let session = state.session(sessionID) {
-                    seedSummary(session)
-                }
-            }
-            // Adoption lands after first render (and the 60s poll can adopt
-            // an externally started review at any time): re-seed from the
-            // server summary while the user hasn't typed — a non-empty
-            // server summary beats an older disk-persisted one.
-            .onChange(of: session.pendingReview?.summary) { _ in
-                if let session = state.session(sessionID) {
-                    seedSummary(session)
-                }
-            }
-            .onChange(of: reviewSummary) { text in
-                if text != (summarySeed ?? "") { summaryEdited = true }
-                if let ref = state.session(sessionID)?.ref {
-                    PendingReviewStore.saveSummary(
-                        text.trimmingCharacters(in: .whitespacesAndNewlines), ref: ref)
-                }
-            }
+            // Review Changes… (menu or shortcut) opens the popover on
+            // whichever PR surface is active — here, the overview.
+            .modifier(DocumentCommandHandler(state: state) { _ in
+                if state.take(.reviewChanges) { reviewPopoverVisible = true }
+            })
         } else {
             EmptyView()
         }
@@ -139,149 +118,24 @@ struct PROverviewView: View {
         }
     }
 
-    /// The whole verdict lives here: the pending comment set (server truth
-    /// plus any not-yet-uploaded queue), an optional summary, and
-    /// first-class Approve / Request Changes / Comment — available with
-    /// zero comments too, like GitHub's own Review button.
-    private func reviewSection(_ session: PRSession) -> some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 8) {
-                if !session.pendingComments.isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(session.pendingComments) { comment in
-                                HStack(alignment: .top) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 6) {
-                                            Text("\(comment.path) · \(comment.lineDescription)")
-                                                .font(.caption.bold())
-                                                .foregroundStyle(.secondary)
-                                            PendingCommentTag(uploaded: comment.serverID != nil)
-                                        }
-                                        Text(comment.body)
-                                            .lineLimit(3)
-                                    }
-                                    Spacer()
-                                    Button {
-                                        state.removePendingComment(sessionID: sessionID, id: comment.id)
-                                    } label: {
-                                        Image(systemName: "trash")
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .help(comment.serverID != nil
-                                        ? "Discard this comment from the pending review on GitHub"
-                                        : "Discard this comment")
-                                }
-                                .padding(6)
-                                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
-                            }
-                        }
-                    }
-                    .frame(maxHeight: 180)
-                }
-
-                TextField("Review summary (optional)", text: $reviewSummary, axis: .vertical)
-                    .lineLimit(1...4)
-                    .textFieldStyle(.roundedBorder)
-
-                HStack(spacing: 10) {
-                    // Sync status replaces the old "Save as Pending" button:
-                    // the model keeps GitHub current on its own now.
-                    if !session.queuedComments.isEmpty {
-                        Label("\(session.queuedComments.count) not yet on GitHub",
-                              systemImage: "exclamationmark.icloud")
-                            .font(.callout)
-                            .foregroundStyle(.orange)
-                        Button("Retry Upload") {
-                            Task { await state.syncPendingComments(sessionID: sessionID) }
-                        }
-                        .fixedSize()
-                        .help("Upload the remaining comments into your pending review on GitHub")
-                    } else if session.pendingReview != nil {
-                        Label("Pending review on GitHub", systemImage: "checkmark.icloud")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .help("Saved as a pending review — visible only to you until you submit")
-                    }
-                    if session.pendingReview != nil || !session.pendingComments.isEmpty {
-                        Button("Abandon Review", role: .destructive) { confirmAbandon = true }
-                            .fixedSize()
-                            .help("Discard the pending review and all its comments, on GitHub too")
-                    }
-                    ProgressView()
-                        .controlSize(.small)
-                        .opacity(submitting ? 1 : 0)
-                    Spacer()
-                    Button("Comment") { submit(event: "COMMENT") }
-                        .fixedSize()
-                        .disabled(!reviewActionable(session))
-                        .help("Submit the review without a verdict")
-                    Button("Request Changes") { submit(event: "REQUEST_CHANGES") }
-                        .fixedSize()
-                        .disabled(!reviewActionable(session))
-                        .help("Ask for changes before this can merge")
-                    Button("Approve") { submit(event: "APPROVE") }
-                        .buttonStyle(.borderedProminent)
-                        .fixedSize()
-                        .help("Approve this pull request")
-                }
-                .disabled(submitting)
-
-                // Conversation comments post immediately to the PR's
-                // timeline — separate from any review verdict.
-                HStack(spacing: 10) {
-                    TextField("Comment on the pull request conversation…",
-                              text: $conversationText, axis: .vertical)
-                        .lineLimit(1...4)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Post") { postConversationComment() }
-                        .fixedSize()
-                        .disabled(conversationText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            || postingComment)
-                        .help("Post to the PR conversation right away (not part of a review)")
-                }
-            }
-            .padding(4)
-        } label: {
-            let count = session.pendingComments.count
-            Label(count == 0
-                    ? "Review"
-                    : "Review — \(count) pending comment\(count == 1 ? "" : "s")",
-                  systemImage: "text.bubble")
+    /// Conversation comments post immediately to the PR's timeline —
+    /// separate from any review verdict. The review itself (pending
+    /// comments, summary, verdict) lives in the toolbar's review popover.
+    private func conversationSection(_ session: PRSession) -> some View {
+        HStack(spacing: 10) {
+            TextField("Comment on the pull request conversation…",
+                      text: $conversationText, axis: .vertical)
+                .lineLimit(1...4)
+                .textFieldStyle(.roundedBorder)
+            ProgressView()
+                .controlSize(.small)
+                .opacity(postingComment ? 1 : 0)
+            Button("Post") { postConversationComment() }
+                .fixedSize()
+                .disabled(conversationText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    || postingComment)
+                .help("Post to the PR conversation right away (not part of a review)")
         }
-        .confirmationDialog("Abandon this review?", isPresented: $confirmAbandon) {
-            Button("Abandon Review", role: .destructive) {
-                Task {
-                    await state.abandonPendingReview(sessionID: sessionID)
-                    reviewSummary = ""
-                    summarySeed = nil
-                    summaryEdited = false
-                }
-            }
-        } message: {
-            Text("All pending comments and the summary will be discarded, on GitHub too.")
-        }
-    }
-
-    /// Seeds the summary field while the user hasn't typed: a non-empty
-    /// server summary wins (a review started or continued on github.com),
-    /// else the disk-persisted draft.
-    private func seedSummary(_ session: PRSession) {
-        guard !summaryEdited else { return }
-        let server = session.pendingReview?.summary ?? ""
-        let seeded = server.isEmpty
-            ? (PendingReviewStore.loadSummary(ref: session.ref) ?? "")
-            : server
-        guard !seeded.isEmpty, seeded != reviewSummary else { return }
-        summarySeed = seeded
-        reviewSummary = seeded
-    }
-
-    /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries
-    /// neither a body nor comments; Approve stands on its own.
-    private func reviewActionable(_ session: PRSession) -> Bool {
-        !session.pendingComments.isEmpty
-            || !reviewSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func postConversationComment() {
@@ -309,41 +163,6 @@ struct PROverviewView: View {
             parts.append("\(session.otherFileCount) other file\(session.otherFileCount == 1 ? "" : "s") not shown")
         }
         return parts.joined(separator: " · ")
-    }
-
-    private func submit(event: String) {
-        guard state.session(sessionID) != nil else { return }
-        submitting = true
-        confirmation = nil
-        let summary = reviewSummary.trimmingCharacters(in: .whitespacesAndNewlines)
-        Task {
-            do {
-                try await state.submitReview(sessionID: sessionID, event: event,
-                                             summary: summary.isEmpty ? nil : summary)
-                reviewSummary = ""
-                summarySeed = nil
-                summaryEdited = false
-                confirmation = "Review submitted."
-            } catch {
-                state.lastError = error.localizedDescription
-            }
-            submitting = false
-        }
-    }
-}
-
-/// GitHub's "Pending" tag for comments in the viewer's pending review;
-/// "Not uploaded" flags a queued comment GitHub hasn't accepted yet.
-private struct PendingCommentTag: View {
-    let uploaded: Bool
-
-    var body: some View {
-        Text(uploaded ? "Pending" : "Not uploaded")
-            .font(.caption2.bold())
-            .padding(.horizontal, 5)
-            .padding(.vertical, 1)
-            .background((uploaded ? Color.yellow : Color.orange).opacity(0.3),
-                        in: Capsule())
     }
 }
 
@@ -380,7 +199,9 @@ struct PRFileView: View {
         if state.take(.flipDiffLayout) {
             layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
         }
+        if state.take(.reviewChanges) { reviewPopoverVisible = true }
     }
+    @State private var reviewPopoverVisible = false
     @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
@@ -693,6 +514,11 @@ struct PRFileView: View {
                 Label("Comment on File", systemImage: "plus.bubble")
             }
             .help("Comment on this file as a whole, not a specific line")
+        }
+        // The morphing review control — on every PR surface (spec §3).
+        ToolbarItem {
+            ReviewToolbarButton(sessionID: sessionID,
+                                isPresented: $reviewPopoverVisible)
         }
         // The sidebar shouldn't be the only way around a PR: back to
         // the overview, and step or jump between its Markdown files.
