@@ -226,6 +226,17 @@ final class WebViewProxy: ObservableObject {
         let shift: Bool
     }
 
+    /// Pushes persisted composer drafts into the page (keyed by the page's
+    /// own draft keys) so click-away drafts survive reloads and relaunches.
+    /// JSON-encoded through jsonLiteral — draft text is user content and
+    /// must never reach the evaluated string unescaped.
+    func setComposerDrafts(_ drafts: [String: String]) {
+        guard !drafts.isEmpty else { return }
+        webView?.evaluateJavaScript(
+            "window.__pmSetComposerDrafts && __pmSetComposerDrafts(\(HTMLBuilder.jsonLiteral(drafts)));",
+            completionHandler: nil)
+    }
+
     /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
     /// view thread markers). In-place — no reload, the reader's position
     /// survives; pages without markers ignore it.

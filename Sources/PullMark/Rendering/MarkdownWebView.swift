@@ -1,12 +1,18 @@
 import SwiftUI
 import WebKit
 
-struct BridgeMessage {
+/// A submission from the in-page inline composer (spec §5): the resolved
+/// line range and side, the composed body (suggestion fences included),
+/// and whether it joins the pending review (`review`) or posts
+/// immediately. `draftKey` is the page's draft key for the source block,
+/// echoed back so a failed post can restore the text as a draft.
+struct ComposerSubmission {
     let lineStart: Int
     let lineEnd: Int
     let side: String
-    /// The pencil button: open the composer in edit-as-suggestion mode.
-    var edit = false
+    let body: String
+    let review: Bool
+    let draftKey: String
 }
 
 /// Word count / reading time of a rendered document, computed in the page.
@@ -29,7 +35,11 @@ struct LightboxRequest {
 
 struct MarkdownWebView: NSViewRepresentable {
     let html: String
-    var onCommentRequest: ((BridgeMessage) -> Void)?
+    /// The in-page composer submitted a comment (spec §5).
+    var onComposerSubmit: ((ComposerSubmission) -> Void)?
+    /// Click-away draft sync from the in-page composers: (draft key, text).
+    /// Empty text discards the draft.
+    var onComposerDraft: ((String, String) -> Void)?
     /// In-place block editing commit: (lineStart, lineEnd, seed the editor
     /// started from, replacement) — 1-based inclusive source lines.
     var onEditLocal: ((Int, Int, String, String) -> Void)?
@@ -56,8 +66,9 @@ struct MarkdownWebView: NSViewRepresentable {
     var onOutline: (([OutlineItem]) -> Void)?
     /// Scroll-spy: the heading id currently at the top of the viewport.
     var onActiveSection: ((String) -> Void)?
-    /// Reply requested on an existing review thread (root comment id).
-    var onThreadReply: ((Int) -> Void)?
+    /// Reply submitted from a thread card's in-page mini-composer:
+    /// (root comment id, body, draft key).
+    var onThreadReplySubmit: ((Int, String, String) -> Void)?
     /// Resolve/unresolve requested (root comment id, desired state).
     var onThreadResolve: ((Int, Bool) -> Void)?
     /// The in-page "N resolved conversations" control was toggled — keeps
@@ -330,13 +341,22 @@ struct MarkdownWebView: NSViewRepresentable {
             guard message.name == "bridge",
                   let dict = message.body as? [String: Any] else { return }
             switch dict["type"] as? String {
-            case "comment":
+            case "composerSubmit":
                 guard let lineStart = dict["lineStart"] as? Int,
                       let lineEnd = dict["lineEnd"] as? Int,
-                      let side = dict["side"] as? String
+                      let side = dict["side"] as? String,
+                      let body = dict["body"] as? String,
+                      let review = dict["review"] as? Bool
                 else { return }
-                parent.onCommentRequest?(BridgeMessage(lineStart: lineStart, lineEnd: lineEnd, side: side,
-                                                       edit: dict["edit"] as? Bool ?? false))
+                parent.onComposerSubmit?(ComposerSubmission(
+                    lineStart: lineStart, lineEnd: lineEnd, side: side,
+                    body: body, review: review,
+                    draftKey: dict["draftKey"] as? String ?? ""))
+            case "composerDraft":
+                if let key = dict["key"] as? String,
+                   let text = dict["text"] as? String {
+                    parent.onComposerDraft?(key, text)
+                }
             case "editLocal":
                 guard let lineStart = dict["lineStart"] as? Int,
                       let lineEnd = dict["lineEnd"] as? Int,
@@ -379,9 +399,11 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let id = dict["id"] as? String {
                     parent.onActiveSection?(id)
                 }
-            case "threadReply":
-                if let rootID = dict["rootID"] as? Int {
-                    parent.onThreadReply?(rootID)
+            case "threadReplySubmit":
+                if let rootID = dict["rootID"] as? Int,
+                   let body = dict["body"] as? String {
+                    parent.onThreadReplySubmit?(rootID, body,
+                                                dict["draftKey"] as? String ?? "reply:\(rootID)")
                 }
             case "copySHA":
                 // Blame chip without a known commit URL: copy the full SHA.
