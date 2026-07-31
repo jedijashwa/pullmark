@@ -7,7 +7,12 @@ import SwiftUI
 /// with a badge tint when something is. It is both the status and the
 /// entry point — clicking it opens the review popover. Presentation
 /// state lives with the owning view so the Review Changes… menu command
-/// can open it too.
+/// can open it too, and the popover itself is presented by
+/// `ReviewPopoverPresenter` on the surface's root view, NOT here: when
+/// the window narrows, SwiftUI collapses this button into the "»"
+/// overflow menu, the anchor leaves the window hierarchy, and a popover
+/// attached to it silently fails to present — killing every entry point
+/// at once (the overflow item, the menu command, and ⇧⌘R).
 struct ReviewToolbarButton: View {
     @EnvironmentObject private var state: AppState
     @ObservedObject private var shortcuts = ShortcutStore.shared
@@ -19,19 +24,50 @@ struct ReviewToolbarButton: View {
         Button {
             isPresented = true
         } label: {
-            Text(ReviewControl.buttonLabel(pendingCount: count))
-                .padding(.horizontal, count > 0 ? 7 : 0)
-                .padding(.vertical, count > 0 ? 2 : 0)
-                .background(count > 0 ? Color.yellow.opacity(0.28) : .clear,
-                            in: Capsule())
+            // A Label, not bare Text: the toolbar's overflow menu strips
+            // the capsule tint but keeps the label's image, so the icon
+            // is what carries the pending state into the collapsed
+            // representation (the count survives in the title text).
+            Label {
+                Text(ReviewControl.buttonLabel(pendingCount: count))
+                    .padding(.horizontal, count > 0 ? 7 : 0)
+                    .padding(.vertical, count > 0 ? 2 : 0)
+                    .background(count > 0 ? Color.yellow.opacity(0.28) : .clear,
+                                in: Capsule())
+            } icon: {
+                if count > 0 {
+                    Image(systemName: "exclamationmark.bubble.fill")
+                        .foregroundStyle(.yellow)
+                }
+            }
+            .labelStyle(.titleAndIcon)
         }
         .help((count == 0
                 ? "Review these changes — summary, verdict, and your pending comments"
                 : "Finish your review — \(count) pending comment\(count == 1 ? "" : "s")")
             + shortcuts.hint(.reviewChanges))
-        .popover(isPresented: $isPresented, arrowEdge: .bottom) {
-            ReviewPopover(sessionID: sessionID)
-                .environmentObject(state)
+    }
+}
+
+/// Presents the review popover from the surface's root view, anchored to
+/// an invisible point at the top-trailing corner so it still opens under
+/// the toolbar area where the review control lives. Root-view
+/// presentation is what keeps all three entry points working while the
+/// toolbar is overflowed (see `ReviewToolbarButton`).
+struct ReviewPopoverPresenter: ViewModifier {
+    @EnvironmentObject private var state: AppState
+    let sessionID: String
+    @Binding var isPresented: Bool
+
+    func body(content: Content) -> some View {
+        content.overlay(alignment: .topTrailing) {
+            Color.clear
+                .frame(width: 1, height: 1)
+                .allowsHitTesting(false)
+                .popover(isPresented: $isPresented, arrowEdge: .bottom) {
+                    ReviewPopover(sessionID: sessionID)
+                        .environmentObject(state)
+                }
         }
     }
 }
