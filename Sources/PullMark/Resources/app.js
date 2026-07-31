@@ -1126,7 +1126,9 @@
     div.append(label);
   }
 
-  function commentButton(seg) {
+  // The bubble opens an empty in-page composer beneath the block; a text
+  // selection inside the block narrows the range first (spec §5).
+  function commentButton(seg, target) {
     var btn = document.createElement("button");
     btn.className = "pm-comment-btn";
     btn.type = "button";
@@ -1136,7 +1138,7 @@
     btn.setAttribute("aria-label", btn.title);
     btn.addEventListener("click", function (event) {
       event.stopPropagation();
-      post({ type: "comment", lineStart: seg.lineStart, lineEnd: seg.lineEnd, side: seg.side });
+      composerForSegment(seg, target, false);
     });
     return btn;
   }
@@ -1149,9 +1151,11 @@
     '<path d="M9.7 3.8l2.2 2.2"/>' +
     "</svg>";
 
-  /// Edit-as-suggestion: only new-side lines can carry a ```suggestion
-  /// (GitHub applies it in place of the commented RIGHT-side lines).
-  function editButton(seg) {
+  /// The pencil opens the same composer with a ```suggestion fence
+  /// pre-filled from the block's current lines and focused. Only new-side
+  /// lines can carry a suggestion (GitHub applies it in place of the
+  /// commented RIGHT-side lines).
+  function editButton(seg, target) {
     var btn = document.createElement("button");
     btn.className = "pm-comment-btn pm-edit-btn";
     btn.type = "button";
@@ -1160,8 +1164,7 @@
     btn.setAttribute("aria-label", btn.title);
     btn.addEventListener("click", function (event) {
       event.stopPropagation();
-      post({ type: "comment", edit: true,
-             lineStart: seg.lineStart, lineEnd: seg.lineEnd, side: seg.side });
+      composerForSegment(seg, target, true);
     });
     return btn;
   }
@@ -1204,7 +1207,7 @@
         reply.type = "button";
         reply.textContent = "Reply";
         reply.addEventListener("click", function () {
-          post({ type: "threadReply", rootID: thread.rootID });
+          toggleReplyComposer(box, thread.rootID, reply);
         });
         actions.append(reply);
         if (thread.resolved !== null && thread.resolved !== undefined) {
@@ -1277,6 +1280,573 @@
     return wrap;
   }
 
+  // ---- In-page inline comment composer (spec §5) ----
+  // The composer expands beneath the target block, styled as a sibling of
+  // the thread cards — the document stays visible and the composer scrolls
+  // with content. Click-away preserves the typed text as a draft keyed to
+  // the block (mirrored to disk through the bridge); explicit Cancel (or
+  // Esc while empty) discards. Actions follow review state: "Start a
+  // review" until a pending review exists, then "Add review comment",
+  // with "Add single comment" always secondary.
+
+  var composerDrafts = {};
+  // Swift pushes persisted drafts for this file after each page load.
+  window.__pmSetComposerDrafts = function (map) {
+    Object.keys(map || {}).forEach(function (key) {
+      composerDrafts[key] = map[key];
+    });
+  };
+
+  function draftSave(key, text) {
+    if (text.trim() === "") { draftDiscard(key); return; }
+    composerDrafts[key] = text;
+    post({ type: "composerDraft", key: key, text: text });
+  }
+
+  function draftDiscard(key) {
+    delete composerDrafts[key];
+    post({ type: "composerDraft", key: key, text: "" });
+  }
+
+  // Commentable file-line runs (per-hunk, computed in Swift from the
+  // patch): a comment range must sit inside one run — GitHub rejects
+  // ranges that span hunks. An absent payload means membership is unknown;
+  // validation then stays out of the way (failures surface at post time).
+  function commentableRuns(side) {
+    var lines = payload.commentableLines;
+    if (!lines) { return null; }
+    return (side === "LEFT" ? lines.left : lines.right) || [];
+  }
+
+  function rangeCommentable(side, start, end) {
+    var runs = commentableRuns(side);
+    if (!runs) { return true; }
+    return runs.some(function (run) {
+      return run[0] <= start && end <= run[1];
+    });
+  }
+
+  // Largest single-run intersection (ties keep the earlier run), or null
+  // when the range touches no run — mirrors CommentableLines.clamp.
+  function clampRangeToRuns(side, start, end) {
+    var runs = commentableRuns(side);
+    if (!runs) { return [start, end]; }
+    var best = null;
+    runs.forEach(function (run) {
+      var lo = Math.max(start, run[0]);
+      var hi = Math.min(end, run[1]);
+      if (lo > hi) { return; }
+      if (!best || hi - lo > best[1] - best[0]) { best = [lo, hi]; }
+    });
+    return best;
+  }
+
+  // The current selection's text clamped to one element — a selection
+  // spanning blocks narrows to the invoked block (spec §5).
+  function selectionTextWithin(el) {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { return ""; }
+    var range = sel.getRangeAt(0).cloneRange();
+    var intersects;
+    try { intersects = range.intersectsNode(el); } catch (e) { intersects = false; }
+    if (!intersects) { return ""; }
+    var bounds = document.createRange();
+    bounds.selectNodeContents(el);
+    try {
+      if (bounds.comparePoint(range.startContainer, range.startOffset) < 0) {
+        range.setStart(bounds.startContainer, bounds.startOffset);
+      }
+      if (bounds.comparePoint(range.endContainer, range.endOffset) > 0) {
+        range.setEnd(bounds.endContainer, bounds.endOffset);
+      }
+    } catch (e) { return ""; }
+    return range.toString();
+  }
+
+  // Maps selected rendered text back to 0-based indexes into the block's
+  // source lines. Rendered text is a per-line substring of the source for
+  // the constructs that matter (emphasis, links, code spans): match the
+  // selection's first fragment forward — dropping trailing words, since a
+  // rendered paragraph joins source lines — and its last fragment from
+  // there, dropping leading words. Unmatchable selections return null →
+  // the whole block; a wrong narrow would misanchor the comment, so null
+  // is the safe answer. Exposed for the render harness.
+  window.__pmNarrowToSelection = function (sourceLines, selectedText) {
+    var fragments = (selectedText || "").split("\n")
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 0; });
+    if (!fragments.length) { return null; }
+    function find(fragment, from, dropLeading) {
+      var words = fragment.split(/\s+/);
+      while (words.length) {
+        var probe = words.join(" ");
+        for (var i = from; i < sourceLines.length; i++) {
+          if (sourceLines[i].indexOf(probe) !== -1) { return i; }
+        }
+        if (dropLeading) { words.shift(); } else { words.pop(); }
+      }
+      return -1;
+    }
+    var start = find(fragments[0], 0, false);
+    if (start === -1) { return null; }
+    var end = find(fragments[fragments.length - 1], start, true);
+    return [start, end === -1 ? start : end];
+  };
+
+  function narrowRangeTo(blockEl, sourceLines, lineBase) {
+    var text = selectionTextWithin(blockEl);
+    if (!text) { return null; }
+    var mapped = window.__pmNarrowToSelection(sourceLines, text);
+    if (!mapped) { return null; }
+    return [lineBase + mapped[0], lineBase + mapped[1]];
+  }
+
+  // The fence grows past any backtick run inside the seed, so suggesting
+  // an edit to a code fence can't break out of the ```suggestion block.
+  function suggestionFence(seed) {
+    var longest = 0;
+    var run = 0;
+    for (var ch of seed) {
+      if (ch === "`") { run += 1; longest = Math.max(longest, run); }
+      else { run = 0; }
+    }
+    return "`".repeat(Math.max(3, longest + 1));
+  }
+
+  function suggestionBlock(seed) {
+    var fence = suggestionFence(seed);
+    // An empty seed emits GitHub's delete-lines form: nothing at all
+    // between the fences.
+    return seed === ""
+      ? fence + "suggestion\n" + fence
+      : fence + "suggestion\n" + seed + "\n" + fence;
+  }
+
+  function rangeCaption(side, start, end) {
+    var which = side === "LEFT" ? "old" : "new";
+    return (start === end ? "Line " + start : "Lines " + start + "–" + end)
+      + ", " + which;
+  }
+
+  var openComposer = null;
+
+  function closeComposer(save) {
+    if (!openComposer) { return; }
+    var st = openComposer;
+    openComposer = null;
+    document.removeEventListener("mousedown", st.onAway, true);
+    if (st.syncTimer) { clearTimeout(st.syncTimer); }
+    if (save) { draftSave(st.draftKey, st.ta.value); }
+    st.container.remove();
+    if (st.onClose) { st.onClose(); }
+  }
+
+  // opts: { anchor (node the composer inserts after), side, range [s, e],
+  //   lineBase, sourceLines (side's source, indexed from lineBase; null →
+  //   no suggestion), seedFor (optional override returning the current
+  //   lines for the range), draftKey, prefillSuggestion, splitGrid,
+  //   onClose }
+  function composerOpen(opts) {
+    if (openComposer && openComposer.draftKey === opts.draftKey) {
+      // The affordance that opened it toggles its own composer closed.
+      closeComposer(true);
+      return;
+    }
+    closeComposer(true);
+
+    var root = document.createElement("div");
+    root.className = "pm-composer pm-annotation";
+
+    var bar = document.createElement("div");
+    bar.className = "pm-composer-toolbar";
+    var suggest = document.createElement("button");
+    suggest.type = "button";
+    suggest.className = "pm-composer-suggest";
+    suggest.textContent = "Add a suggestion";
+    var caption = document.createElement("span");
+    caption.className = "pm-composer-caption";
+    bar.append(suggest, caption);
+
+    var ta = document.createElement("textarea");
+    ta.className = "pm-composer-text";
+    ta.placeholder = "Leave a comment";
+    ta.rows = 3;
+
+    var note = document.createElement("div");
+    note.className = "pm-composer-note";
+    note.textContent = "These lines are outside the pull request's diff, "
+      + "so GitHub can't attach a comment to them.";
+
+    var actions = document.createElement("div");
+    actions.className = "pm-composer-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    var secondary = document.createElement("button");
+    secondary.type = "button";
+    secondary.textContent = "Add single comment";
+    secondary.title = "Post immediately, outside any pending review (⇧⌘↩)";
+    var primary = document.createElement("button");
+    primary.type = "button";
+    primary.className = "pm-composer-primary";
+    primary.textContent = payload.reviewPending ? "Add review comment" : "Start a review";
+    primary.title = payload.reviewPending
+      ? "Add to your pending review — it posts when you submit the review (⌘↩)"
+      : "Start a pending review with this comment (⌘↩)";
+    actions.append(cancel, secondary, primary);
+
+    root.append(bar, ta, note, actions);
+
+    var container = root;
+    if (opts.splitGrid) {
+      container = document.createElement("div");
+      container.className = "pm-split-full pm-annotation";
+      container.append(root);
+    }
+
+    var st = {
+      root: root, container: container, ta: ta, range: opts.range.slice(),
+      draftKey: opts.draftKey, syncTimer: null, onClose: opts.onClose || null
+    };
+
+    function seedText() {
+      if (opts.seedFor) { return opts.seedFor(st.range); }
+      if (!opts.sourceLines) { return null; }
+      var lo = st.range[0] - opts.lineBase;
+      var hi = st.range[1] - opts.lineBase;
+      if (lo < 0 || hi >= opts.sourceLines.length || lo > hi) { return null; }
+      return opts.sourceLines.slice(lo, hi + 1).join("\n");
+    }
+
+    function updateState() {
+      var valid = rangeCommentable(opts.side, st.range[0], st.range[1]);
+      var empty = ta.value.trim() === "";
+      caption.textContent = rangeCaption(opts.side, st.range[0], st.range[1]);
+      note.style.display = valid ? "none" : "";
+      primary.disabled = !valid || empty;
+      secondary.disabled = !valid || empty;
+      if (opts.side !== "RIGHT") {
+        suggest.disabled = true;
+        suggest.title = "Suggestions can only target new-file lines — "
+          + "GitHub applies them in place of the commented lines.";
+      } else if (seedText() === null || !valid) {
+        suggest.disabled = true;
+        suggest.title = "The targeted lines aren't available to suggest an edit to.";
+      } else {
+        suggest.disabled = false;
+        suggest.title = "Insert a ```suggestion block pre-filled with the current lines";
+      }
+    }
+
+    st.setRange = function (range) {
+      st.range = range.slice();
+      updateState();
+    };
+    st.moveAfter = function (anchor) {
+      anchor.after(container);
+    };
+
+    function grow() {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(72, ta.scrollHeight) + "px";
+    }
+
+    function scheduleDraftSync() {
+      if (st.syncTimer) { clearTimeout(st.syncTimer); }
+      // Synced while typing (debounced) so a page re-render underneath the
+      // composer — a pending comment arriving, the refresh loop — can
+      // never lose more than a beat of text.
+      st.syncTimer = setTimeout(function () {
+        st.syncTimer = null;
+        draftSave(st.draftKey, ta.value);
+      }, 400);
+    }
+
+    function submit(review) {
+      var body = ta.value.trim();
+      if (body === "" || primary.disabled) { return; }
+      post({ type: "composerSubmit", review: !!review,
+             lineStart: st.range[0], lineEnd: st.range[1], side: opts.side,
+             body: body, draftKey: st.draftKey });
+      draftDiscard(st.draftKey);
+      closeComposer(false);
+    }
+
+    suggest.addEventListener("click", function () {
+      var seed = seedText();
+      if (seed === null) { return; }
+      if (ta.value !== "" && !/\n$/.test(ta.value)) { ta.value += "\n"; }
+      ta.value += suggestionBlock(seed) + "\n";
+      grow();
+      updateState();
+      scheduleDraftSync();
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    });
+    cancel.addEventListener("click", function () {
+      draftDiscard(st.draftKey);
+      closeComposer(false);
+    });
+    secondary.addEventListener("click", function () { submit(false); });
+    primary.addEventListener("click", function () { submit(true); });
+
+    ta.addEventListener("input", function () {
+      grow();
+      updateState();
+      scheduleDraftSync();
+    });
+    ta.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        // Never bubbles into the page's own Escape handling (marker
+        // collapse) while the composer has focus.
+        event.stopPropagation();
+        if (ta.value.trim() === "") {
+          event.preventDefault();
+          draftDiscard(st.draftKey);
+          closeComposer(false);
+        }
+        // Non-empty: the text is kept and the composer stays — only
+        // Cancel discards; click-away saves (spec §5).
+        return;
+      }
+      if (event.isComposing) { return; }
+      if (event.key === "Enter" && event.metaKey && !event.altKey && !event.ctrlKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        submit(!event.shiftKey);
+      }
+    });
+
+    // Click-away saves (HIG nonmodal rule). Capture phase so it runs
+    // before whatever the click does; the comment affordances manage the
+    // composer themselves (toggle/move), so they are exempt.
+    st.onAway = function (event) {
+      if (root.contains(event.target)) { return; }
+      if (event.target.closest
+          && event.target.closest(".pm-comment-btn, .pm-patch-lineno")) { return; }
+      closeComposer(true);
+    };
+    document.addEventListener("mousedown", st.onAway, true);
+
+    var draft = composerDrafts[opts.draftKey];
+    if (draft) {
+      ta.value = draft;
+    } else if (opts.prefillSuggestion) {
+      var seed = seedText();
+      if (seed !== null) {
+        ta.value = suggestionBlock(seed) + "\n";
+      }
+    }
+
+    opts.anchor.after(container);
+    openComposer = st;
+    updateState();
+    grow();
+    ta.focus();
+    if (!draft && opts.prefillSuggestion && ta.value !== "") {
+      // Caret at the end of the seeded lines, inside the fence, ready to
+      // edit — the pencil's whole point.
+      var head = suggestionFence(seedText() || "") + "suggestion\n";
+      var caret = head.length + (seedText() || "").length;
+      ta.setSelectionRange(caret, caret);
+    } else {
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+  }
+
+  // Opens the composer for a rendered-diff segment: default anchor is the
+  // whole block; a text selection inside the block narrows the range
+  // (spec §5 — narrowing is a gesture, not a widget).
+  function composerForSegment(seg, target, suggest) {
+    var sourceLines = (seg.text || "").split("\n");
+    var range = [seg.lineStart, seg.lineEnd];
+    var narrowed = narrowRangeTo(target.block, sourceLines, seg.lineStart);
+    if (narrowed) {
+      range = narrowed;
+    } else if (!rangeCommentable(seg.side, range[0], range[1])) {
+      // The whole-block default pokes outside its hunk (context blocks):
+      // clamp into the diff rather than opening pre-invalidated. A range
+      // the user narrowed deliberately is never clamped — validation
+      // explains instead.
+      var clamped = clampRangeToRuns(seg.side, range[0], range[1]);
+      if (clamped) { range = clamped; }
+    }
+    composerOpen({
+      anchor: target.anchor,
+      side: seg.side,
+      range: range,
+      lineBase: seg.lineStart,
+      sourceLines: seg.side === "RIGHT" ? sourceLines : null,
+      draftKey: seg.side + ":" + seg.lineStart + "-" + seg.lineEnd,
+      prefillSuggestion: suggest,
+      splitGrid: target.split
+    });
+  }
+
+  // Replies move in-page too (spec §5): the Reply button expands a mini-
+  // composer inside the thread card — text area, Cancel, one Reply action.
+  // Click-away keeps the typed text as a draft on the thread.
+  function toggleReplyComposer(box, rootID, opener) {
+    var existing = box.querySelector(".pm-reply-composer");
+    if (existing) { existing.__pmClose(true); return; }
+    var draftKey = "reply:" + rootID;
+    var root = document.createElement("div");
+    root.className = "pm-reply-composer";
+    var ta = document.createElement("textarea");
+    ta.className = "pm-composer-text";
+    ta.placeholder = "Write a reply";
+    ta.rows = 2;
+    var actions = document.createElement("div");
+    actions.className = "pm-composer-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    var send = document.createElement("button");
+    send.type = "button";
+    send.className = "pm-composer-primary";
+    send.textContent = "Reply";
+    send.title = "Reply to this thread (⌘↩)";
+    actions.append(cancel, send);
+    root.append(ta, actions);
+
+    var syncTimer = null;
+    function grow() {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(56, ta.scrollHeight) + "px";
+    }
+    function close(save) {
+      document.removeEventListener("mousedown", onAway, true);
+      if (syncTimer) { clearTimeout(syncTimer); }
+      if (save) { draftSave(draftKey, ta.value); }
+      root.remove();
+    }
+    root.__pmClose = close;
+    function submit() {
+      var body = ta.value.trim();
+      if (body === "") { return; }
+      post({ type: "threadReplySubmit", rootID: rootID, body: body, draftKey: draftKey });
+      draftDiscard(draftKey);
+      close(false);
+    }
+    function onAway(event) {
+      if (root.contains(event.target) || event.target === opener) { return; }
+      close(true);
+    }
+    document.addEventListener("mousedown", onAway, true);
+
+    cancel.addEventListener("click", function () {
+      draftDiscard(draftKey);
+      close(false);
+    });
+    send.addEventListener("click", submit);
+    ta.addEventListener("input", function () {
+      grow();
+      send.disabled = ta.value.trim() === "";
+      if (syncTimer) { clearTimeout(syncTimer); }
+      syncTimer = setTimeout(function () {
+        syncTimer = null;
+        draftSave(draftKey, ta.value);
+      }, 400);
+    });
+    ta.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        if (ta.value.trim() === "") {
+          event.preventDefault();
+          draftDiscard(draftKey);
+          close(false);
+        }
+        return;
+      }
+      if (event.isComposing) { return; }
+      if (event.key === "Enter" && event.metaKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        submit();
+      }
+    });
+
+    var draft = composerDrafts[draftKey];
+    if (draft) { ta.value = draft; }
+    send.disabled = ta.value.trim() === "";
+    box.append(root);
+    grow();
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+
+  // ---- Result-view comment affordances (spec §5) ----
+  // Commenting is offered on blocks that map into the PR diff; on blocks
+  // that don't, the affordance explains why not instead of vanishing.
+  // Default anchor is the block's diff-mapped range; a text selection
+  // narrows it, exactly like the diff views.
+  function setupResultCommenting() {
+    var docLines = (payload.markdown || "").split("\n");
+    for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+      var m = /^(\d+)-(\d+)$/.exec(
+        (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
+      if (!m) { continue; }
+      attachResultAffordance(el, +m[1], +m[2], docLines);
+    }
+  }
+
+  function attachResultAffordance(el, blockStart, blockEnd, docLines) {
+    el.classList.add("pm-commentable");
+    var mapped = clampRangeToRuns("RIGHT", blockStart, blockEnd);
+    var bubble = document.createElement("button");
+    bubble.type = "button";
+    bubble.className = "pm-comment-btn pm-annotation";
+    bubble.innerHTML = COMMENT_ICON;
+    if (!mapped) {
+      bubble.classList.add("pm-comment-unavailable");
+      bubble.title = "This block isn't part of the pull request's diff — "
+        + "GitHub can only attach comments to changed lines.";
+      bubble.setAttribute("aria-disabled", "true");
+      bubble.setAttribute("aria-label", bubble.title);
+      el.append(bubble);
+      return;
+    }
+    var sourceLines = docLines.slice(blockStart - 1, blockEnd);
+    function open(suggest) {
+      var range = mapped;
+      var narrowed = narrowRangeTo(el, sourceLines, blockStart);
+      if (narrowed) { range = narrowed; }
+      // A sibling of the marker card when one is open, matching the
+      // diff views' card order.
+      var anchor = el;
+      if (el.nextElementSibling
+          && el.nextElementSibling.classList.contains("pm-result-card")) {
+        anchor = el.nextElementSibling;
+      }
+      composerOpen({
+        anchor: anchor,
+        side: "RIGHT",
+        range: range,
+        lineBase: blockStart,
+        sourceLines: sourceLines,
+        draftKey: "RIGHT:" + blockStart + "-" + blockEnd,
+        prefillSuggestion: suggest
+      });
+    }
+    bubble.title = "Comment on lines " + mapped[0] + "–" + mapped[1];
+    bubble.setAttribute("aria-label", bubble.title);
+    bubble.addEventListener("click", function (event) {
+      event.stopPropagation();
+      open(false);
+    });
+    var pencil = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "pm-comment-btn pm-edit-btn pm-annotation";
+    pencil.innerHTML = EDIT_ICON;
+    pencil.title = "Suggest an edit to lines " + mapped[0] + "–" + mapped[1];
+    pencil.setAttribute("aria-label", pencil.title);
+    pencil.addEventListener("click", function (event) {
+      event.stopPropagation();
+      open(true);
+    });
+    el.append(bubble, pencil);
+  }
+
   // ---- Resolved-conversation visibility (Result view, spec §1) ----
   // Hidden by default; the in-page "N resolved conversations" control and
   // the native View menu item mirror each other through this hook.
@@ -1298,9 +1868,10 @@
     clone.querySelectorAll(".pm-annotation, .pm-threads").forEach(function (el) {
       el.remove();
     });
-    clone.querySelectorAll(".pm-commented, .pm-pending-anchor, .pm-anchor-open")
+    clone.querySelectorAll(".pm-commented, .pm-pending-anchor, .pm-anchor-open, .pm-commentable")
       .forEach(function (el) {
-        el.classList.remove("pm-commented", "pm-pending-anchor", "pm-anchor-open");
+        el.classList.remove("pm-commented", "pm-pending-anchor", "pm-anchor-open",
+                            "pm-commentable");
       });
     clone.classList.remove("pm-markers-on", "pm-exporting");
     return clone.outerHTML;
@@ -1318,7 +1889,7 @@
     return chip;
   }
 
-  function inlineSegmentEl(seg) {
+  function inlineSegmentEl(seg, target) {
     var wrap = document.createElement("div");
     if (seg.kind === "modified" && seg.wordDiff) {
       wrap.className = "pm-block pm-changed";
@@ -1345,20 +1916,30 @@
       if (seg.kind === "moved") { wrap.append(movedChip(seg)); }
     }
     if (payload.commentable !== false) {
-      wrap.append(commentButton(seg));
-      if (seg.side === "RIGHT") { wrap.append(editButton(seg)); }
+      wrap.append(commentButton(seg, target));
+      if (seg.side === "RIGHT") { wrap.append(editButton(seg, target)); }
     }
     return wrap;
   }
 
   function renderInline(segments) {
     segments.forEach(function (seg) {
-      content.append(inlineSegmentEl(seg));
+      // The composer inserts after the segment's LAST associated element
+      // (thread and pending cards included) — a sibling of the cards.
+      var target = { block: null, anchor: null, split: false };
+      var wrap = inlineSegmentEl(seg, target);
+      target.block = wrap;
+      target.anchor = wrap;
+      content.append(wrap);
       if (seg.threads && seg.threads.length) {
-        content.append(threadsEl(seg.threads));
+        var threads = threadsEl(seg.threads);
+        content.append(threads);
+        target.anchor = threads;
       }
       if (seg.pending && seg.pending.length) {
-        content.append(pendingEl(seg.pending));
+        var pending = pendingEl(seg.pending);
+        content.append(pending);
+        target.anchor = pending;
       }
     });
   }
@@ -1403,9 +1984,11 @@
           renderSegmentText(right, seg.text, seg.fmText, true);
         }
       }
+      var target = { block: seg.side === "LEFT" ? left : right,
+                     anchor: right, split: true };
       if (payload.commentable !== false) {
-        (seg.side === "LEFT" ? left : right).append(commentButton(seg));
-        if (seg.side === "RIGHT") { right.append(editButton(seg)); }
+        (seg.side === "LEFT" ? left : right).append(commentButton(seg, target));
+        if (seg.side === "RIGHT") { right.append(editButton(seg, target)); }
       }
       grid.append(left, right);
       if (seg.threads && seg.threads.length) {
@@ -1413,12 +1996,14 @@
         full.className = "pm-split-full";
         full.append(threadsEl(seg.threads));
         grid.append(full);
+        target.anchor = full;
       }
       if (seg.pending && seg.pending.length) {
         var pendingFull = document.createElement("div");
         pendingFull.className = "pm-split-full";
         pendingFull.append(pendingEl(seg.pending));
         grid.append(pendingFull);
+        target.anchor = pendingFull;
       }
     });
     content.append(grid);
@@ -1453,13 +2038,16 @@
     pre.className = "pm-patch";
     if (rows && rows.length) { pre.classList.add("pm-patch-annotated"); }
     var placed = [];
-    (patch || "").split("\n").forEach(function (line, index) {
+    var lineEls = {};
+    var rawLines = (patch || "").split("\n");
+    rawLines.forEach(function (line, index) {
       var span = document.createElement("span");
       if (line.startsWith("+")) { span.className = "pm-line-add"; }
       else if (line.startsWith("-")) { span.className = "pm-line-del"; }
       else if (line.startsWith("@@")) { span.className = "pm-line-hunk"; }
       span.textContent = line;
       pre.append(span, document.createTextNode("\n"));
+      lineEls[index] = span;
       var row = byIndex[index];
       if (!row) { return; }
       span.classList.add("pm-patch-commented");
@@ -1500,6 +2088,9 @@
       placed.push({ badge: badge, span: span });
     });
     content.append(pre);
+    if ((payload.patchLines || []).length) {
+      setupPatchCommenting(pre, lineEls, rawLines);
+    }
     // Badges sit in the patch's left gutter, aligned per line; reposition
     // as cards open/close (and on wraps from window resizes).
     function positionPatchBadges() {
@@ -1511,6 +2102,131 @@
     if (placed.length && typeof ResizeObserver === "function") {
       new ResizeObserver(positionPatchBadges).observe(pre);
     }
+  }
+
+  // ---- Source Diff line-number targeting (spec §5) ----
+  // Click a line number to comment on that line; shift-click extends the
+  // range GitHub-style (within one hunk, one side). The composer expands
+  // beneath the range's last line. Every patch line is inside the diff by
+  // construction, so no membership validation applies here.
+  function setupPatchCommenting(pre, lineEls, rawLines) {
+    pre.classList.add("pm-patch-numbered");
+    var originByIndex = {};
+    (payload.patchLines || []).forEach(function (origin) {
+      originByIndex[origin.index] = origin;
+    });
+
+    var sel = null; // { side, anchorIndex, startIndex, endIndex }
+
+    function sideOf(index) {
+      return rawLines[index].charAt(0) === "-" ? "LEFT" : "RIGHT";
+    }
+    function fileLine(index, side) {
+      var origin = originByIndex[index];
+      if (!origin) { return null; }
+      var line = side === "LEFT" ? origin.old : origin.new;
+      return line === undefined || line === null ? null : line;
+    }
+    // A range must stay inside one hunk (GitHub's rule): no header row
+    // between the endpoints.
+    function sameHunk(a, b) {
+      for (var i = Math.min(a, b); i <= Math.max(a, b); i++) {
+        if (rawLines[i].indexOf("@@") === 0) { return false; }
+      }
+      return true;
+    }
+    function applyHighlight() {
+      Object.keys(originByIndex).forEach(function (key) {
+        var index = +key;
+        var span = lineEls[index];
+        if (!span) { return; }
+        span.classList.toggle("pm-patch-selected",
+          !!sel && sel.startIndex <= index && index <= sel.endIndex);
+      });
+    }
+    function clearSelection() {
+      sel = null;
+      applyHighlight();
+    }
+    // The node the composer inserts after: the end line's newline, past
+    // any thread card or badge already sitting there.
+    function composerAnchorFor(index) {
+      var node = lineEls[index].nextSibling;
+      while (node && node.nextSibling && node.nextSibling.nodeType === 1
+             && (node.nextSibling.classList.contains("pm-patch-threads")
+                 || node.nextSibling.classList.contains("pm-patch-badge"))) {
+        node = node.nextSibling;
+      }
+      return node || lineEls[index];
+    }
+    // The current lines of the selected new-side range, for suggestions
+    // ("-" rows have no new-side content and are skipped).
+    function newSideSeed() {
+      if (!sel || sel.side !== "RIGHT") { return null; }
+      var lines = [];
+      for (var i = sel.startIndex; i <= sel.endIndex; i++) {
+        var origin = originByIndex[i];
+        if (origin && origin.new !== undefined && origin.new !== null) {
+          lines.push(rawLines[i].slice(1));
+        }
+      }
+      return lines.join("\n");
+    }
+    function openFor(anchorLine, extending) {
+      var start = fileLine(sel.startIndex, sel.side);
+      var end = fileLine(sel.endIndex, sel.side);
+      if (start === null || end === null) { return; }
+      var key = sel.side + ":" + anchorLine + "-" + anchorLine;
+      if (extending && openComposer && openComposer.draftKey === key) {
+        // Shift-extension of the open composer: keep the text, move the
+        // card and update the caption.
+        openComposer.setRange([start, end]);
+        openComposer.moveAfter(composerAnchorFor(sel.endIndex));
+        return;
+      }
+      composerOpen({
+        anchor: composerAnchorFor(sel.endIndex),
+        side: sel.side,
+        range: [start, end],
+        lineBase: start,
+        sourceLines: null,
+        seedFor: newSideSeed,
+        draftKey: key,
+        onClose: clearSelection
+      });
+      if (!openComposer) { clearSelection(); } // the click toggled it shut
+    }
+
+    Object.keys(originByIndex).forEach(function (key) {
+      var index = +key;
+      var span = lineEls[index];
+      if (!span) { return; }
+      var side = sideOf(index);
+      var number = fileLine(index, side);
+      if (number === null) { return; }
+      var lineno = document.createElement("button");
+      lineno.type = "button";
+      lineno.className = "pm-patch-lineno pm-annotation";
+      lineno.textContent = String(number);
+      lineno.title = "Comment on " + (side === "LEFT" ? "old" : "new")
+        + " line " + number + " — shift-click extends the range";
+      lineno.setAttribute("aria-label", lineno.title);
+      lineno.addEventListener("click", function (event) {
+        event.stopPropagation();
+        var extending = event.shiftKey && !!sel && sel.side === side
+          && sameHunk(sel.anchorIndex, index);
+        if (extending) {
+          sel.startIndex = Math.min(sel.anchorIndex, index);
+          sel.endIndex = Math.max(sel.anchorIndex, index);
+        } else {
+          sel = { side: side, anchorIndex: index,
+                  startIndex: index, endIndex: index };
+        }
+        applyHighlight();
+        openFor(fileLine(sel.anchorIndex, sel.side), extending);
+      });
+      span.prepend(lineno);
+    });
   }
 
   // ---- Lightbox: click media to inspect it (rendered natively) ----
@@ -2045,6 +2761,13 @@
     if (linesAnnotated
         && ((payload.threads || []).length || (payload.pendingComments || []).length)) {
       setupThreadMarkers(payload.threads || [], payload.pendingComments || []);
+    }
+    // Result view of a PR file: comment affordances on blocks (spec §5).
+    // Only PR Result pages carry commentableLines; local documents, the
+    // overview, and browsed repo docs never grow comment chrome.
+    if (linesAnnotated && payload.commentableLines && !payload.preview
+        && !payload.editable) {
+      setupResultCommenting();
     }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];
