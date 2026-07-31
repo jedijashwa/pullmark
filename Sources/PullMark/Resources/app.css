@@ -263,6 +263,165 @@ body {
   .pm-pending-queued { color: #f0883e; background: rgba(240, 136, 62, 0.2); }
 }
 
+/* ---- In-page inline comment composer (spec §5) ----
+   A sibling of the thread cards: same card chrome, form controls inside.
+   Colors ride the primer variables so reading themes and both appearances
+   adapt. */
+
+.pm-composer {
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
+  border-radius: 8px;
+  padding: 10px 14px 12px;
+  margin: 8px 0 12px;
+  background: var(--bgColor-default, #fff);
+  font: 14px -apple-system, sans-serif;
+}
+.pm-composer-toolbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pm-composer-suggest {
+  font: 600 12px -apple-system, sans-serif;
+  color: var(--fgColor-accent, #0969da);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.pm-composer-suggest:disabled {
+  color: var(--fgColor-muted, #6e7781);
+  opacity: 0.6;
+  cursor: default;
+}
+.pm-composer-caption {
+  /* The static range caption ("Lines 12–14, new"). */
+  font: 600 12px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  white-space: nowrap;
+}
+.pm-composer-text {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  font: 13px -apple-system, sans-serif;
+  line-height: 1.45;
+  color: var(--fgColor-default, inherit);
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.06));
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.pm-composer-text:focus {
+  outline: none;
+  border-color: var(--fgColor-accent, #0969da);
+  background: var(--bgColor-default, #fff);
+}
+.pm-composer-note {
+  /* Inline validation: shown only when the resolved range falls outside
+     the PR diff (spec §5). */
+  font: 12px -apple-system, sans-serif;
+  color: #9a6700;
+  margin-top: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-composer-note { color: #e3b341; }
+}
+.pm-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.pm-composer-actions button {
+  font: 600 12px -apple-system, sans-serif;
+  color: var(--fgColor-default, inherit);
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.08));
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.4));
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.pm-composer-actions button:hover:not(:disabled) {
+  border-color: rgba(128, 128, 128, 0.8);
+}
+.pm-composer-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pm-composer-actions .pm-composer-primary {
+  color: #fff;
+  background: var(--fgColor-accent, #0969da);
+  border-color: transparent;
+}
+.pm-composer-actions .pm-composer-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  border-color: transparent;
+}
+
+/* Reply mini-composer inside a thread card. */
+.pm-reply-composer {
+  border-top: 1px solid rgba(128, 128, 128, 0.18);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+.pm-reply-composer .pm-composer-actions {
+  margin-top: 8px;
+}
+
+/* Result-view comment affordances: blocks that anchor a bubble/pencil on
+   hover, like the diff views' blocks. */
+.pm-commentable {
+  position: relative;
+}
+.pm-commentable:hover > .pm-comment-btn {
+  display: flex;
+}
+.pm-comment-unavailable {
+  opacity: 0.45;
+  cursor: default;
+}
+.pm-comment-unavailable:hover {
+  border-color: rgba(128, 128, 128, 0.45);
+}
+
+/* Source Diff line numbers (spec §5): click to target, shift-click to
+   extend. Excluded from text selection so copied patches stay clean. */
+.pm-patch-lineno {
+  display: inline-block;
+  width: 42px;
+  margin-right: 8px;
+  text-align: right;
+  font: inherit;
+  font-size: 11px;
+  color: var(--fgColor-muted, #6e7781);
+  background: none;
+  border: none;
+  padding: 0 4px 0 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pm-patch-lineno:hover {
+  color: var(--fgColor-accent, #0969da);
+  font-weight: 700;
+}
+.pm-patch-selected {
+  background: rgba(9, 105, 218, 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-patch-selected { background: rgba(88, 166, 255, 0.18); }
+}
+/* Composer inside the patch <pre>: back to prose metrics. */
+.pm-patch .pm-composer {
+  white-space: normal;
+  max-width: 700px;
+}
+
 /* ---- Result-view thread markers (spec §1) ----
    Badge colors ride the primer variables so every reading theme and both
    appearances adapt; the anchored range's tint follows the theme accent

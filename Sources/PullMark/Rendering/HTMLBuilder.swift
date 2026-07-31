@@ -62,6 +62,17 @@ enum HTMLBuilder {
         /// Commented patch lines (patch mode): gutter badges that expand
         /// the thread cards inline.
         var patchThreads: [PatchThreadPayload]?
+        /// Per-hunk commentable file-line runs for the in-page composer's
+        /// inline validation (spec §5). In document mode its presence also
+        /// enables the Result view's comment affordances.
+        var commentableLines: CommentableLines.Payload?
+        /// True while the viewer has a review in progress — the composer's
+        /// primary action reads "Add review comment" instead of "Start a
+        /// review".
+        var reviewPending: Bool?
+        /// Patch-line file provenance (patch mode): renders the clickable
+        /// line-number gutter that sets the composer's range.
+        var patchLines: [PatchLinePayload]?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -109,7 +120,9 @@ enum HTMLBuilder {
                              blame: [BlameRunPayload]? = nil,
                              blameNote: String? = nil,
                              threads: [ThreadPayload]? = nil,
-                             pending: [PendingPayload]? = nil) -> String {
+                             pending: [PendingPayload]? = nil,
+                             commentableLines: CommentableLines.Payload? = nil,
+                             reviewPending: Bool = false) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -120,7 +133,9 @@ enum HTMLBuilder {
                                     blame: blame,
                                     blameNote: blameNote,
                                     threads: threads?.isEmpty == false ? threads : nil,
-                                    pendingComments: pending?.isEmpty == false ? pending : nil),
+                                    pendingComments: pending?.isEmpty == false ? pending : nil,
+                                    commentableLines: commentableLines,
+                                    reviewPending: reviewPending ? true : nil),
              title: title, customCSS: customCSS)
     }
 
@@ -144,7 +159,9 @@ enum HTMLBuilder {
                          theme: String = "github",
                          customCSS: String? = nil,
                          preview: Bool = false,
-                         allNew: Bool = false) -> String {
+                         allNew: Bool = false,
+                         commentableLines: CommentableLines.Payload? = nil,
+                         reviewPending: Bool = false) -> String {
         page(payload: RenderPayload(mode: "diff", segments: segments,
                                     outdatedThreads: outdatedThreads.isEmpty ? nil : outdatedThreads,
                                     fileThreads: fileThreads.isEmpty ? nil : fileThreads,
@@ -154,16 +171,22 @@ enum HTMLBuilder {
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
                                     theme: theme,
-                                    preview: preview ? true : nil),
+                                    preview: preview ? true : nil,
+                                    commentableLines: commentableLines,
+                                    reviewPending: reviewPending ? true : nil),
              title: title, customCSS: customCSS)
     }
 
     static func patchPage(patch: String, title: String = "",
                           theme: String = "github",
                           customCSS: String? = nil,
-                          threads: [PatchThreadPayload]? = nil) -> String {
+                          threads: [PatchThreadPayload]? = nil,
+                          patchLines: [PatchLinePayload]? = nil,
+                          reviewPending: Bool = false) -> String {
         page(payload: RenderPayload(mode: "patch", patch: patch, theme: theme,
-                                    patchThreads: threads?.isEmpty == false ? threads : nil),
+                                    patchThreads: threads?.isEmpty == false ? threads : nil,
+                                    reviewPending: reviewPending ? true : nil,
+                                    patchLines: patchLines?.isEmpty == false ? patchLines : nil),
              title: title, customCSS: customCSS)
     }
 
