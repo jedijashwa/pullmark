@@ -61,19 +61,27 @@ enum ReviewControl {
 
     /// One shared inline reason for both disabled options.
     static let ownPRRestrictionReason =
-        "GitHub doesn't allow approving your own pull request or requesting changes on it."
+        "GitHub doesn’t allow approving your own pull request or requesting changes on it."
+
+    /// How much of the first hidden row stays visible when the list
+    /// overflows: a resting clip that ends on a clean card edge reads as
+    /// "that's everything", so the next row peeks under the fade instead.
+    static let pendingListPeek: CGFloat = 12
 
     /// Visible height for the popover's pending-comment list, from each
     /// row's measured bottom edge (ascending, content coordinates): the
     /// exact content height when everything fits under the cap, else the
-    /// largest whole-row boundary that does — the list never ends by
-    /// slicing a row through its body text. A single row taller than the
-    /// cap gets the cap (scrolling reaches the rest). Nil when nothing
-    /// has been measured yet.
-    static func pendingListHeight(rowBottoms: [CGFloat], cap: CGFloat) -> CGFloat? {
+    /// largest whole-row boundary whose peek still fits — plus the peek,
+    /// so the next row's top sliver shows and the clip reads as
+    /// scrollable instead of slicing a row through its body text. A
+    /// single row taller than the cap gets the cap (scrolling reaches
+    /// the rest). Nil when nothing has been measured yet.
+    static func pendingListHeight(rowBottoms: [CGFloat], cap: CGFloat,
+                                  peek: CGFloat = ReviewControl.pendingListPeek) -> CGFloat? {
         guard let last = rowBottoms.last else { return nil }
         if last <= cap { return last }
-        return rowBottoms.last(where: { $0 <= cap }) ?? cap
+        guard let boundary = rowBottoms.last(where: { $0 + peek <= cap }) else { return cap }
+        return boundary + peek
     }
 
     /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries

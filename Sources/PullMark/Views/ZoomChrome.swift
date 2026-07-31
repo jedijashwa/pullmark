@@ -24,10 +24,16 @@ struct ChromeFonts {
     /// Sidebar section headers (~11pt semibold) — they scale with their
     /// own rows; a 26pt row under an 11pt header would look broken.
     var sectionHeader: Font? { scaled(11, weight: .semibold, or: nil) }
+    /// Popover/panel body text (the macOS body default is 13pt).
+    var body: Font? { scaled(13, or: nil) }
+    /// Popover/panel headers (13pt semibold, the .headline default).
+    var headline: Font? { scaled(13, weight: .semibold, or: .headline) }
     var callout: Font? { scaled(12, or: .callout) }
     var calloutSemibold: Font? { scaled(12, weight: .semibold, or: .callout.weight(.semibold)) }
     var caption: Font? { scaled(10, or: .caption) }
+    var captionBold: Font? { scaled(10, weight: .bold, or: .caption.bold()) }
     var caption2: Font? { scaled(10, or: .caption2) }
+    var caption2Bold: Font? { scaled(10, weight: .bold, or: .caption2.bold()) }
     var footnote: Font? { scaled(10, or: .footnote) }
 }
 

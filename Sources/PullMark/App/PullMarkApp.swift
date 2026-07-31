@@ -89,6 +89,9 @@ struct PullMarkApp: App {
             .keyboardShortcut(shortcuts.keyboardShortcut(for: .reviewChanges))
             .disabled(!prSurfaceSelected)
             .help("Open the review — pending comments, summary, and verdict")
+        // Its own group: without this divider the command joins the menu's
+        // trailing system group (Enter Full Screen) and inherits its indent.
+        Divider()
     }
 
     private func open(_ urlString: String) {
