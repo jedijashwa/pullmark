@@ -12,8 +12,10 @@ final class GitHubClient {
 
     private var cachedToken: String?
     private var tokenResolved = false
+    /// Cached only on success — a transient resolution failure must retry
+    /// on the next call, never latch into "no viewer" for the whole
+    /// session (that silently disabled pending-review adoption).
     private var cachedViewer: ViewerIdentity?
-    private var viewerResolved = false
     /// Ephemeral so no repo content or API response is ever cached to disk —
     /// everything fetched lives in memory only.
     private let session = URLSession(configuration: .ephemeral)
@@ -240,8 +242,7 @@ final class GitHubClient {
     }
 
     func viewerIdentity() async -> ViewerIdentity? {
-        if viewerResolved { return cachedViewer }
-        viewerResolved = true
+        if let cachedViewer { return cachedViewer }
         struct Response: Decodable {
             struct DataBox: Decodable { let viewer: Viewer? }
             struct Viewer: Decodable {
@@ -367,21 +368,112 @@ final class GitHubClient {
         return all
     }
 
-    /// Comments belonging to one review (paginated). The viewer's pending
-    /// comments come back only through here — the PR-wide comment list
-    /// omits them.
-    func reviewComments(_ ref: PullRequestRef, reviewID: Int) async throws -> [ReviewComment] {
-        var all: [ReviewComment] = []
-        for page in 1...30 {
-            let data = try await request(
-                "GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews/\(reviewID)/comments",
-                query: [URLQueryItem(name: "per_page", value: "100"),
-                        URLQueryItem(name: "page", value: "\(page)")])
-            let batch = try Self.decoder.decode([ReviewComment].self, from: data)
-            all.append(contentsOf: batch)
-            if batch.count < 100 { break }
+    /// The viewer's pending comments on a review, resolved through GraphQL
+    /// review threads. This must NOT use REST: GET …/reviews/{id}/comments
+    /// returns only legacy diff-position fields for pending comments — no
+    /// line/original_line/side — so a REST fetch decodes to zero anchored
+    /// comments, reconciliation never matches, and every sync re-uploads
+    /// the whole queue (see the REST-shape regression fixture in
+    /// PendingReviewTests).
+    func pendingReviewComments(_ ref: PullRequestRef, reviewID: Int) async throws -> [PendingComment] {
+        let query = """
+        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+          repository(owner: $owner, name: $repo) {
+            pullRequest(number: $number) {
+              reviewThreads(first: 100, after: $after) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  diffSide line startLine originalLine originalStartLine path
+                  comments(first: 100) {
+                    nodes { databaseId body state pullRequestReview { databaseId } }
+                  }
+                }
+              }
+            }
+          }
         }
-        return all
+        """
+        var all: [PendingComment] = []
+        var cursor: String?
+        for _ in 1...30 {
+            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo, "number": ref.number]
+            if let cursor { variables["after"] = cursor }
+            let data = try await graphQL(query, variables: variables)
+            let page = try Self.parsePendingCommentsPage(data, reviewID: reviewID)
+            all.append(contentsOf: page.comments)
+            guard let next = page.nextCursor else { break }
+            cursor = next
+        }
+        // Threads arrive in file/position order; the UI wants authorship
+        // order, which server comment ids approximate monotonically.
+        return all.sorted { ($0.serverID ?? 0) < ($1.serverID ?? 0) }
+    }
+
+    /// One page of the pending-comments query: the review's pending
+    /// comments (line-anchored threads only — file-level threads have no
+    /// line to anchor a PendingComment) plus the next-page cursor. Throws
+    /// on an unexpected shape rather than decoding to an empty list — an
+    /// empty result must always mean "genuinely no pending comments".
+    nonisolated static func parsePendingCommentsPage(_ data: Data, reviewID: Int) throws
+        -> (comments: [PendingComment], nextCursor: String?) {
+        struct Response: Decodable {
+            struct DataBox: Decodable { let repository: Repo? }
+            struct Repo: Decodable { let pullRequest: PR? }
+            struct PR: Decodable { let reviewThreads: Threads }
+            struct Threads: Decodable {
+                let pageInfo: PageInfo
+                let nodes: [Node]
+            }
+            struct PageInfo: Decodable {
+                let hasNextPage: Bool
+                let endCursor: String?
+            }
+            struct Node: Decodable {
+                let diffSide: String?
+                let line: Int?
+                let startLine: Int?
+                let originalLine: Int?
+                let originalStartLine: Int?
+                let path: String
+                let comments: Comments
+            }
+            struct Comments: Decodable { let nodes: [Comment] }
+            struct Comment: Decodable {
+                struct Review: Decodable { let databaseId: Int? }
+                let databaseId: Int?
+                let body: String
+                let state: String?
+                let pullRequestReview: Review?
+            }
+            let data: DataBox?
+        }
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard let threads = response.data?.repository?.pullRequest?.reviewThreads else {
+            throw APIError(status: 200, message: "Unexpected reviewThreads response shape")
+        }
+        var comments: [PendingComment] = []
+        for thread in threads.nodes {
+            // line falls back to originalLine when the head moved under the
+            // pending review (same anchoring the app shows for outdated
+            // comments); threads with no line at all (file-level) are
+            // skipped — PendingComment requires a line anchor.
+            guard let lineEnd = thread.line ?? thread.originalLine else { continue }
+            let lineStart = thread.startLine ?? thread.originalStartLine ?? lineEnd
+            let side = thread.diffSide ?? "RIGHT"
+            for comment in thread.comments.nodes {
+                guard comment.state == "PENDING",
+                      comment.pullRequestReview?.databaseId == reviewID,
+                      let serverID = comment.databaseId else { continue }
+                comments.append(PendingComment(serverID: serverID,
+                                               path: thread.path,
+                                               lineStart: min(lineStart, lineEnd),
+                                               lineEnd: lineEnd,
+                                               side: side,
+                                               body: comment.body))
+            }
+        }
+        let nextCursor = threads.pageInfo.hasNextPage ? threads.pageInfo.endCursor : nil
+        return (comments, nextCursor)
     }
 
     /// Adds one comment to the viewer's existing pending review (GraphQL —

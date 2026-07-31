@@ -29,27 +29,107 @@ enum PendingReviewSync {
         return reviews.first { $0.state == "PENDING" && $0.user?.login == viewer }
     }
 
-    /// The local queue after a server fetch: queued comments the server now
-    /// holds (matched by anchor + body — the server never echoes local ids)
-    /// are dropped in favor of the authoritative server copy; everything
-    /// unmatched is retained so a failed or interrupted upload never loses
-    /// work. Each server comment claims at most one queued twin, so a
-    /// deliberately repeated comment survives until it uploads too.
+    /// A fresh server fetch reconciled against what the session already
+    /// held, publishing both halves of the truth at once:
+    /// - Server comments inherit the `localID` of the copy the session
+    ///   already knew (matched by server id) or of the queued twin they
+    ///   claim (matched by anchor + body — the server never echoes local
+    ///   ids), so SwiftUI row identity survives both upload and refetch.
+    /// - Queued comments the server now holds are dropped in favor of the
+    ///   authoritative server copy; everything unmatched is retained so a
+    ///   failed or interrupted upload never loses work. Each server
+    ///   comment claims at most one queued twin, so a deliberately
+    ///   repeated comment survives until it uploads too.
+    static func reconcile(server: [PendingComment],
+                          previousServer: [PendingComment],
+                          queue: [PendingComment])
+        -> (server: [PendingComment], queue: [PendingComment]) {
+        var remaining = queue
+        let stabilized = server.map { fresh -> PendingComment in
+            var fresh = fresh
+            var identified = false
+            if fresh.serverID != nil,
+               let known = previousServer.first(where: { $0.serverID == fresh.serverID }) {
+                fresh.localID = known.localID
+                identified = true
+            }
+            if let match = remaining.firstIndex(where: {
+                $0.path == fresh.path && $0.lineStart == fresh.lineStart
+                    && $0.lineEnd == fresh.lineEnd && $0.side == fresh.side
+                    && $0.body == fresh.body
+            }) {
+                if !identified { fresh.localID = remaining[match].localID }
+                remaining.remove(at: match)
+            }
+            return fresh
+        }
+        return (stabilized, remaining)
+    }
+
+    /// The local queue after a server fetch — `reconcile` without identity
+    /// carry-over context.
     static func remainingQueue(local: [PendingComment],
                                server: [PendingComment]) -> [PendingComment] {
-        var unclaimed = server
-        return local.filter { queued in
-            if let match = unclaimed.firstIndex(where: {
-                $0.path == queued.path && $0.lineStart == queued.lineStart
-                    && $0.lineEnd == queued.lineEnd && $0.side == queued.side
-                    && $0.body == queued.body
-            }) {
-                unclaimed.remove(at: match)
-                return false
-            }
-            return true
+        reconcile(server: server, previousServer: [], queue: local).queue
+    }
+}
+
+/// Single-flight coordination for the per-PR upload loop, closing two
+/// gaps in a bare "already syncing" guard:
+/// - a change noted during an in-flight run's final pass triggers one
+///   more pass instead of sitting un-uploaded until a manual retry, and
+/// - callers that need the queue drained (submit) wait for the in-flight
+///   run to finish instead of silently skipping and misreading
+///   mid-upload comments as failures.
+@MainActor
+final class PendingSyncGate {
+    private var inFlight: Set<String> = []
+    private var generations: [String: Int] = [:]
+    private var waiters: [String: [CheckedContinuation<Void, Never>]] = [:]
+
+    /// Records a change (e.g. a newly queued comment). Call synchronously
+    /// with the change itself, before kicking off a run.
+    func noteChange(_ key: String) {
+        generations[key, default: 0] += 1
+    }
+
+    /// Runs `pass` repeatedly until no change was noted during the last
+    /// pass. When a run is already in flight for this key, waits for it
+    /// to finish and returns — every change noted before this call is
+    /// covered either by that run's re-pass or by a later run (there is
+    /// no suspension between its last generation check and its exit).
+    func run(_ key: String, pass: @MainActor () async -> Void) async {
+        if inFlight.contains(key) {
+            await waitUntilIdle(key)
+            return
+        }
+        inFlight.insert(key)
+        defer {
+            inFlight.remove(key)
+            for waiter in waiters.removeValue(forKey: key) ?? [] { waiter.resume() }
+        }
+        var seen = -1
+        while seen != generations[key, default: 0] {
+            seen = generations[key, default: 0]
+            await pass()
         }
     }
+
+    /// Suspends until no run is in flight for the key.
+    func waitUntilIdle(_ key: String) async {
+        while inFlight.contains(key) {
+            await withCheckedContinuation { waiters[key, default: []].append($0) }
+        }
+    }
+
+    /// Drops bookkeeping for a key (session closed).
+    func forget(_ key: String) {
+        generations[key] = nil
+    }
+
+    // Test hooks — deterministic sequencing needs observable state.
+    func isRunning(_ key: String) -> Bool { inFlight.contains(key) }
+    func waiterCount(_ key: String) -> Int { waiters[key]?.count ?? 0 }
 }
 
 /// Disk persistence for review work GitHub hasn't accepted yet: queued
