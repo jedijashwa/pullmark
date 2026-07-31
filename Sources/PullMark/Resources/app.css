@@ -745,9 +745,11 @@ mark.pm-find.pm-find-current {
 
 /* Gutter badges on commented patch lines (spec §1, last bullet): the
    annotated patch grows a left gutter; badges align per line from JS. */
-.pm-patch-annotated {
+/* Doubled class scope: github-markdown.css sets `.markdown-body pre`
+   padding at higher specificity than a single class. */
+.markdown-body .pm-patch-annotated {
   position: relative;
-  padding-left: 52px;
+  padding-left: 68px;
 }
 .pm-patch-badge {
   left: 8px;
