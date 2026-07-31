@@ -2144,9 +2144,15 @@
           !!sel && sel.startIndex <= index && index <= sel.endIndex);
       });
     }
-    function clearSelection() {
-      sel = null;
-      applyHighlight();
+    // Clears only the selection it was created for: closing the previous
+    // composer (a new line was clicked) must not wipe the new selection.
+    function selectionClearer(owned) {
+      return function () {
+        if (sel === owned) {
+          sel = null;
+          applyHighlight();
+        }
+      };
     }
     // The node the composer inserts after: the end line's newline, past
     // any thread card or badge already sitting there.
@@ -2184,6 +2190,7 @@
         openComposer.moveAfter(composerAnchorFor(sel.endIndex));
         return;
       }
+      var owned = sel;
       composerOpen({
         anchor: composerAnchorFor(sel.endIndex),
         side: sel.side,
@@ -2192,9 +2199,9 @@
         sourceLines: null,
         seedFor: newSideSeed,
         draftKey: key,
-        onClose: clearSelection
+        onClose: selectionClearer(owned)
       });
-      if (!openComposer) { clearSelection(); } // the click toggled it shut
+      if (!openComposer) { selectionClearer(owned)(); } // the click toggled it shut
     }
 
     Object.keys(originByIndex).forEach(function (key) {
