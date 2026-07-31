@@ -190,38 +190,87 @@ struct ReviewPopover: View {
 
     // MARK: Pending comments
 
+    /// Each row's bottom edge in the list content's coordinate space,
+    /// feeding `ReviewControl.pendingListHeight` so the visible list
+    /// always ends on a whole row instead of slicing one mid-body.
+    @State private var pendingRowBottoms: [CGFloat] = []
+    /// The content's frame in the ScrollView's coordinate space — how the
+    /// bottom fade knows whether more rows remain below the fold.
+    @State private var pendingContentFrame: CGRect = .zero
+    private static let pendingListCap: CGFloat = 180
+
     private func pendingList(_ session: PRSession) -> some View {
-        ScrollView {
+        let height = ReviewControl.pendingListHeight(
+            rowBottoms: pendingRowBottoms, cap: Self.pendingListCap)
+        // Rows exist below the fold and the user hasn't scrolled them into
+        // view yet: fade the tail out so the clip reads as scrollable.
+        let clipped = height.map {
+            pendingContentFrame.maxY > $0 + 1
+        } ?? false
+        return ScrollView {
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(session.pendingComments) { comment in
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text("\(comment.path) · \(comment.lineDescription)")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.secondary)
-                                PendingCommentTag(uploaded: comment.serverID != nil)
-                            }
-                            Text(comment.body)
-                                .lineLimit(3)
-                        }
-                        Spacer()
-                        Button {
-                            state.removePendingComment(sessionID: sessionID, id: comment.id)
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.borderless)
-                        .help(comment.serverID != nil
-                            ? "Discard this comment from the pending review on GitHub"
-                            : "Discard this comment")
-                    }
-                    .padding(6)
-                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+                    pendingRow(comment)
+                        .background(GeometryReader { geo in
+                            Color.clear.preference(
+                                key: PendingRowBottomsKey.self,
+                                value: [geo.frame(in: .named("pendingList")).maxY])
+                        })
                 }
             }
+            .background(GeometryReader { geo in
+                Color.clear.preference(
+                    key: PendingContentFrameKey.self,
+                    value: geo.frame(in: .named("pendingListViewport")))
+            })
+            .coordinateSpace(name: "pendingList")
         }
-        .frame(maxHeight: 180)
+        .coordinateSpace(name: "pendingListViewport")
+        // Before the first measurement lands, fall back to the old cap.
+        .frame(maxHeight: height ?? Self.pendingListCap)
+        .mask(
+            VStack(spacing: 0) {
+                Rectangle()
+                if clipped {
+                    LinearGradient(colors: [.black, .clear],
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: 24)
+                }
+            }
+        )
+        .onPreferenceChange(PendingRowBottomsKey.self) {
+            pendingRowBottoms = $0.sorted()
+        }
+        .onPreferenceChange(PendingContentFrameKey.self) {
+            pendingContentFrame = $0
+        }
+    }
+
+    private func pendingRow(_ comment: PendingComment) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text("\(comment.path) · \(comment.lineDescription)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                    PendingCommentTag(uploaded: comment.serverID != nil)
+                }
+                Text(comment.body)
+                    .lineLimit(3)
+            }
+            Spacer()
+            Button {
+                state.removePendingComment(sessionID: sessionID, id: comment.id)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .help(comment.serverID != nil
+                ? "Discard this comment from the pending review on GitHub"
+                : "Discard this comment")
+        }
+        .padding(6)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
     }
 
     /// Honest sync status: the model keeps GitHub current on its own, and
@@ -330,6 +379,22 @@ struct ReviewPopover: View {
             }
             submitting = false
         }
+    }
+}
+
+/// Bottom edges of the pending-comment rows, in list-content coordinates.
+private struct PendingRowBottomsKey: PreferenceKey {
+    static var defaultValue: [CGFloat] = []
+    static func reduce(value: inout [CGFloat], nextValue: () -> [CGFloat]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+/// The pending list content's frame in the ScrollView's coordinate space.
+private struct PendingContentFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
 

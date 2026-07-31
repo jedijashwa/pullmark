@@ -76,6 +76,31 @@ import Testing
         }
     }
 
+    // MARK: - Pending-list whole-row sizing
+
+    @Test func pendingListUnmeasuredHasNoHeight() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [], cap: 180) == nil)
+    }
+
+    @Test func pendingListFitsExactlyWhenUnderTheCap() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [60, 126], cap: 180) == 126)
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [60, 126, 180], cap: 180) == 180)
+    }
+
+    /// The live-verified defect: three rows at ~66pt each overflow a
+    /// 180pt cap, and the list must end on the second row's boundary
+    /// instead of slicing the third mid-body.
+    @Test func pendingListSnapsToTheLastWholeRowUnderTheCap() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [66, 132, 198], cap: 180) == 132)
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [50, 100, 150, 200, 250],
+                                                cap: 180) == 150)
+    }
+
+    @Test func pendingListSingleOversizeRowGetsTheCap() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [240], cap: 180) == 180)
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [240, 300], cap: 180) == 180)
+    }
+
     // MARK: - Submit-enabled rules
 
     @Test func approveSubmitsEvenEmpty() {
