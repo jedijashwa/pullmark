@@ -3,4 +3,9 @@ dist/
 .DS_Store
 *.xcodeproj
 .swiftpm/
-.claude/
+# Claude Code: agent and skill definitions are shared project tooling;
+# everything else in .claude/ (worktrees, local settings) stays local.
+.claude/*
+!.claude/agents/
+!.claude/skills/
+CLAUDE.local.md
