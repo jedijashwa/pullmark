@@ -99,6 +99,11 @@ struct ReviewPopover: View {
     /// all verdicts enabled — the server 422 surfaces instead of the app
     /// blocking on a network check.
     @State private var viewerLogin: String?
+    /// Chrome text follows the document zoom (damped) like the sidebar
+    /// and outline panels — the pending comment bodies especially.
+    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
     var body: some View {
         if let session = state.session(sessionID) {
@@ -111,13 +116,14 @@ struct ReviewPopover: View {
     private func content(_ session: PRSession) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(ReviewControl.headerLabel(pendingCount: session.pendingComments.count))
-                .font(.headline)
+                .font(fonts.headline)
 
             if !session.pendingComments.isEmpty {
                 pendingList(session)
             }
 
             TextField("Review summary (optional)", text: $reviewSummary, axis: .vertical)
+                .font(fonts.body)
                 .lineLimit(1...4)
                 .textFieldStyle(.roundedBorder)
 
@@ -127,7 +133,12 @@ struct ReviewPopover: View {
 
             HStack(spacing: 10) {
                 if session.pendingReview != nil || !session.pendingComments.isEmpty {
+                    // Quiet, link-weight — destruction lives behind the red
+                    // confirmation, so the resting control needn't shout
+                    // next to Submit.
                     Button("Abandon review", role: .destructive) { confirmAbandon = true }
+                        .buttonStyle(.borderless)
+                        .font(fonts.body)
                         .fixedSize()
                         .help("Discard the pending review and all its comments, on GitHub too")
                 }
@@ -175,7 +186,9 @@ struct ReviewPopover: View {
             }
         }
         .confirmationDialog("Abandon this review?", isPresented: $confirmAbandon) {
-            Button("Abandon Review", role: .destructive) {
+            // "Abandon review" — GitHub's own casing, same as the control
+            // that opened this dialog; the sentence above carries context.
+            Button("Abandon review", role: .destructive) {
                 Task {
                     await state.abandonPendingReview(sessionID: sessionID)
                     reviewSummary = ""
@@ -203,10 +216,14 @@ struct ReviewPopover: View {
         let height = ReviewControl.pendingListHeight(
             rowBottoms: pendingRowBottoms, cap: Self.pendingListCap)
         // Rows exist below the fold and the user hasn't scrolled them into
-        // view yet: fade the tail out so the clip reads as scrollable.
-        let clipped = height.map {
+        // view yet: fade the tail out so the clip reads as scrollable
+        // (the sizing already leaves the next row peeking under it).
+        let bottomClipped = height.map {
             pendingContentFrame.maxY > $0 + 1
         } ?? false
+        // Scrolled: a symmetric top fade eases the first visible row out
+        // instead of shearing it mid-glyph at the clip edge.
+        let topClipped = pendingContentFrame.minY < -1
         return ScrollView {
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(session.pendingComments) { comment in
@@ -230,8 +247,13 @@ struct ReviewPopover: View {
         .frame(maxHeight: height ?? Self.pendingListCap)
         .mask(
             VStack(spacing: 0) {
+                if topClipped {
+                    LinearGradient(colors: [.clear, .black],
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: 24)
+                }
                 Rectangle()
-                if clipped {
+                if bottomClipped {
                     LinearGradient(colors: [.black, .clear],
                                    startPoint: .top, endPoint: .bottom)
                         .frame(height: 24)
@@ -251,11 +273,13 @@ struct ReviewPopover: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text("\(comment.path) · \(comment.lineDescription)")
-                        .font(.caption.bold())
+                        .font(fonts.captionBold)
                         .foregroundStyle(.secondary)
-                    PendingCommentTag(uploaded: comment.serverID != nil)
+                    PendingCommentTag(uploaded: comment.serverID != nil,
+                                      font: fonts.caption2Bold)
                 }
                 Text(comment.body)
+                    .font(fonts.body)
                     .lineLimit(3)
             }
             Spacer()
@@ -263,8 +287,11 @@ struct ReviewPopover: View {
                 state.removePendingComment(sessionID: sessionID, id: comment.id)
             } label: {
                 Image(systemName: "trash")
+                    .font(fonts.body)
             }
             .buttonStyle(.borderless)
+            // VoiceOver hears which comment dies, not the glyph's name.
+            .accessibilityLabel("Discard comment, \(comment.path) \(comment.lineDescription)")
             .help(comment.serverID != nil
                 ? "Discard this comment from the pending review on GitHub"
                 : "Discard this comment")
@@ -281,7 +308,7 @@ struct ReviewPopover: View {
             HStack(spacing: 10) {
                 Label("\(session.queuedComments.count) not yet on GitHub",
                       systemImage: "exclamationmark.icloud")
-                    .font(.callout)
+                    .font(fonts.callout)
                     .foregroundStyle(.orange)
                 Button("Retry Upload") {
                     Task { await state.syncPendingComments(sessionID: sessionID) }
@@ -291,7 +318,7 @@ struct ReviewPopover: View {
             }
         } else if session.pendingReview != nil {
             Label("Pending review on GitHub", systemImage: "checkmark.icloud")
-                .font(.callout)
+                .font(fonts.callout)
                 .foregroundStyle(.secondary)
                 .help("Saved as a pending review — visible only to you until you submit")
         }
@@ -306,12 +333,34 @@ struct ReviewPopover: View {
     private func verdictSection(_ session: PRSession) -> some View {
         let ownPR = isOwnPR(session)
         return VStack(alignment: .leading, spacing: 6) {
-            ForEach(ReviewVerdict.allCases) { option in
-                verdictRow(option, ownPR: ownPR)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(ReviewVerdict.allCases) { option in
+                    verdictRow(option, ownPR: ownPR)
+                }
+            }
+            // VoiceOver gets the real semantics — one radio group, "radio
+            // button, 2 of 3" per row — instead of three loose buttons.
+            // The binding refuses own-PR-gated verdicts, mirroring the
+            // visual rows' disabled state, and the group's hint carries
+            // the shared reason.
+            .accessibilityRepresentation {
+                Picker("Review verdict", selection: Binding(
+                    get: { verdict },
+                    set: { newValue in
+                        if ReviewControl.verdictSelectable(newValue, ownPR: ownPR) {
+                            verdict = newValue
+                        }
+                    })) {
+                    ForEach(ReviewVerdict.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .accessibilityHint(ownPR ? ReviewControl.ownPRRestrictionReason : "")
             }
             if ownPR {
                 Text(ReviewControl.ownPRRestrictionReason)
-                    .font(.caption)
+                    .font(fonts.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -320,7 +369,9 @@ struct ReviewPopover: View {
     }
 
     /// Radio-style row. Hand-built rather than a radioGroup Picker because
-    /// individual options must disable (own-PR gating) with the rest live.
+    /// individual options must disable (own-PR gating) with the rest live;
+    /// the accessibilityRepresentation above restores the radio-group
+    /// semantics VoiceOver expects.
     private func verdictRow(_ option: ReviewVerdict, ownPR: Bool) -> some View {
         let selectable = ReviewControl.verdictSelectable(option, ownPR: ownPR)
         return Button {
@@ -335,13 +386,12 @@ struct ReviewPopover: View {
                     .foregroundStyle(selectable ? AnyShapeStyle(.primary)
                                                 : AnyShapeStyle(.tertiary))
             }
+            .font(fonts.body)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!selectable)
         .help(option.help)
-        .accessibilityAddTraits(verdict == option ? [.isSelected] : [])
-        .accessibilityHint(selectable ? "" : ReviewControl.ownPRRestrictionReason)
     }
 
     // MARK: Actions
@@ -402,10 +452,12 @@ private struct PendingContentFrameKey: PreferenceKey {
 /// "Not uploaded" flags a queued comment GitHub hasn't accepted yet.
 struct PendingCommentTag: View {
     let uploaded: Bool
+    /// Zoom-following override from the host (ChromeFonts).
+    var font: Font?
 
     var body: some View {
         Text(uploaded ? "Pending" : "Not uploaded")
-            .font(.caption2.bold())
+            .font(font ?? .caption2.bold())
             .padding(.horizontal, 5)
             .padding(.vertical, 1)
             .background((uploaded ? Color.yellow : Color.orange).opacity(0.3),

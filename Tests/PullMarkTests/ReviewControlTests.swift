@@ -76,29 +76,47 @@ import Testing
         }
     }
 
-    // MARK: - Pending-list whole-row sizing
+    // MARK: - Pending-list whole-row-plus-peek sizing
 
     @Test func pendingListUnmeasuredHasNoHeight() {
         #expect(ReviewControl.pendingListHeight(rowBottoms: [], cap: 180) == nil)
     }
 
+    /// Everything visible: exact content height, no peek — there is
+    /// nothing below the fold to advertise.
     @Test func pendingListFitsExactlyWhenUnderTheCap() {
         #expect(ReviewControl.pendingListHeight(rowBottoms: [60, 126], cap: 180) == 126)
         #expect(ReviewControl.pendingListHeight(rowBottoms: [60, 126, 180], cap: 180) == 180)
     }
 
     /// The live-verified defect: three rows at ~66pt each overflow a
-    /// 180pt cap, and the list must end on the second row's boundary
-    /// instead of slicing the third mid-body.
-    @Test func pendingListSnapsToTheLastWholeRowUnderTheCap() {
-        #expect(ReviewControl.pendingListHeight(rowBottoms: [66, 132, 198], cap: 180) == 132)
+    /// 180pt cap, and the list must end on the second row's boundary —
+    /// never slicing the third mid-body — plus the peek, so the third
+    /// row's top sliver signals there is more to scroll.
+    @Test func pendingListSnapsToTheLastWholeRowPlusPeek() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [66, 132, 198], cap: 180) == 144)
         #expect(ReviewControl.pendingListHeight(rowBottoms: [50, 100, 150, 200, 250],
-                                                cap: 180) == 150)
+                                                cap: 180) == 162)
+    }
+
+    /// A boundary that fits alone but not with its peek steps back to the
+    /// previous row — the peek must never be squeezed out.
+    @Test func pendingListPeekAlwaysFitsUnderTheCap() {
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [60, 175, 240], cap: 180) == 72)
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [66, 132, 260], cap: 200,
+                                                peek: 80) == 146)
     }
 
     @Test func pendingListSingleOversizeRowGetsTheCap() {
         #expect(ReviewControl.pendingListHeight(rowBottoms: [240], cap: 180) == 180)
         #expect(ReviewControl.pendingListHeight(rowBottoms: [240, 300], cap: 180) == 180)
+        // First boundary too deep for boundary+peek: cap, not a negative
+        // or zero height.
+        #expect(ReviewControl.pendingListHeight(rowBottoms: [175, 350], cap: 180) == 180)
+    }
+
+    @Test func pendingListPeekDefaultIsTwelvePoints() {
+        #expect(ReviewControl.pendingListPeek == 12)
     }
 
     // MARK: - Submit-enabled rules
