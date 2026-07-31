@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// Usage: swift key2.swift <keycode> [cmd]
+// Usage: swift key.swift <keycode> [cmd]
 let code = CGKeyCode(UInt16(CommandLine.arguments[1])!)
 let cmd = CommandLine.arguments.contains("cmd")
 let down = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: true)!

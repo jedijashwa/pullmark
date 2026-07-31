@@ -16,7 +16,8 @@ release. This loop has caught what code review cannot.
    their session, settings, and recents carry over into the trial
    (that's the point: they trial with their own state).
 3. `open dist/PullMark.app` and tell the human what to look at.
-4. Iterate: apply feedback, rebuild, relaunch. Multiple rounds are
+4. Iterate: feedback goes through the implementer (re-verify anything
+   non-trivial), then rebuild and relaunch. Multiple rounds are
    normal — keep going until they say ship (then use the release
    skill) or stop.
 5. **Cleanup is mandatory** whenever the trial ends: quit the dist

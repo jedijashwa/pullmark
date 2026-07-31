@@ -18,9 +18,13 @@ mutation, every list publish for atomicity with its filter state, and
 ## Part 2 — interactions (required for user-visible changes)
 
 Build and run the debug binary headlessly and DRIVE it:
-- Launch: `.build/debug/PullMark` (add a temporary launch-arg hook to
-  open a test document if needed — mark hooks with `// PM-TEMP`
-  comments and strip them before finishing).
+- Launch: `.build/debug/PullMark`. To open a test document, add a
+  temporary launch-arg hook — a few lines in
+  AppDelegate.applicationDidFinishLaunching that read an argument like
+  `-pm-open-later <path>` and deliver it through OpenURLRouter after a
+  short delay — marked with `// PM-TEMP` comments and stripped before
+  finishing. `docs/kitchen-sink.md` is the standard fixture (every
+  supported construct); use a scratch file when you need to mutate.
 - Find windows: `swift scripts/drive/winlist.swift <pid>` prints
   `id x y w h layer` per window. Menus, tooltips, and popovers are
   separate windows of the same pid (layer 101/103) — capture them by

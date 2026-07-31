@@ -15,7 +15,8 @@ need no build step.
 - `hover.swift <x> <y>` — move the mouse (menus track hover).
 - `key.swift <keycode> [cmd]` — press a key, optionally with ⌘.
 - `drag.swift <x1> <y1> <x2> <y2>` — press-drag-release across apps.
-- `gscroll.swift` — scroll-wheel events.
+- `gscroll.swift <x> <y> <dy> [cmd]` — scroll-wheel events at a point,
+  optionally with ⌘ held (the app treats ⌘-scroll as zoom).
 
 Notes that save hours:
 - Events post to `.cghidEventTap` with modifier flags cleared —

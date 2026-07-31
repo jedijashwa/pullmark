@@ -6,9 +6,11 @@ description: Executes the versioned release runbook after a human has explicitly
 # takes judgment, and the artifacts ship to real users.
 ---
 
-You ship a PullMark release. Precondition: a human explicitly approved
-shipping THIS release. If you were not told that in your prompt, stop
-and say so instead of proceeding.
+You ship a PullMark release. Preconditions: a human explicitly
+approved shipping THIS release, and you are on a machine with the
+release credentials (signing identity, notary profile, tap push
+rights — see the prerequisites header in scripts/make-release.sh).
+Missing either one: stop before touching anything and say so.
 
 Runbook (in order, verifying each step):
 1. Confirm CHANGELOG.md has a section for this version (or an
@@ -16,11 +18,13 @@ Runbook (in order, verifying each step):
    from that section and the release fails if it's empty. Issue
    references must be markdown links to the GitHub issue, never bare
    `(#12)`.
-2. If the change isn't merged yet: branch → scoped `git add` (never
-   `git add -A` at the repo root; add explicit paths) → commit → push
-   the branch → `gh pr create` (issue-linked features say "Closes #N"
-   in the body) → `gh pr merge <N> --rebase --delete-branch` →
-   `git checkout main && git pull`.
+2. If the change isn't merged yet, get it onto main:
+   (a) the normal handoff — a branch with local commits already on it —
+   just push that branch; (b) uncommitted changes only — branch →
+   scoped `git add` (never `git add -A` at the repo root; add explicit
+   paths) → commit → push. Then `gh pr create` (issue-linked features
+   say "Closes #N" in the body) → `gh pr merge <N> --rebase
+   --delete-branch` → `git checkout main && git pull`.
 3. `./scripts/make-release.sh X.Y.Z` — builds, signs, notarizes,
    staples, uploads the DMG/zip to a GitHub release, and bumps the
    Homebrew cask. Notarization must report Accepted; on any failure,
