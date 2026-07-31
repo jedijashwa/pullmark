@@ -132,10 +132,21 @@ Full survey by the feature-researcher agent, July 2026. Highlights:
     tint.
 - Clicking it opens the review surface (today's review section:
   summary field, pending-comment list, submit actions) as a popover.
-  Verdict buttons match GitHub's casing: **Comment / Approve /
-  Request changes**. **Verdicts appear only here, never in the
-  composer** — the VS Code failure is finishing leaking into the
-  composer and vice versa.
+  **Verdicts appear only here, never in the composer** — the VS Code
+  failure is finishing leaking into the composer and vice versa.
+- The verdict is a **radio-style selection** — **Comment / Approve /
+  Request changes**, GitHub's casing — with **Comment preselected
+  every time** (never remembered from the last submit). One primary
+  button, **"Submit review"**, submits whatever is selected; ⌘↩
+  therefore can never approve unless Approve was deliberately
+  chosen. No verdict ever carries default-button prominence —
+  approval is a judgment, not a workflow default.
+- On the viewer's own pull request, the Approve and Request changes
+  options render **disabled with the inline reason** ("GitHub
+  doesn't allow approving your own pull request") — the API rejects
+  both with 422s (verified verbatim); the check compares the
+  authenticated login against the PR author, both already known to
+  the app, so it works offline and before any failed submit.
 - Every pending comment, wherever it appears (review popover, at its
   anchor in diff or Result views), carries a yellow **Pending** tag.
 - Menu item + rebindable shortcut for "Review changes", per
