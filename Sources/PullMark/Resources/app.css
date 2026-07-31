@@ -827,3 +827,22 @@ mark.pm-find.pm-find-current {
 :root.pm-inspecting #content a img {
   cursor: auto !important;
 }
+
+/* ---- Content width: Standard (default cascade above) / Wide / Full ----
+   Placed last: the width choice outranks per-theme measures and the blame
+   variants of both. Wide stays capped — around the researched ceiling of
+   comfortable line length — so only Full Width is truly unbounded. The
+   split-diff grid (pm-wide, 1500px) is already wider than Wide's cap and
+   keeps its own measure until Full Width releases it too. */
+
+:root[data-width="wide"] .markdown-body {
+  max-width: 1200px;
+}
+:root[data-width="wide"].pm-blame-on .markdown-body {
+  max-width: 1256px; /* 1200 + the 56px gutter margin */
+}
+:root[data-width="full"] .markdown-body,
+:root[data-width="full"].pm-blame-on .markdown-body,
+:root[data-width="full"] .markdown-body.pm-wide {
+  max-width: none;
+}

@@ -162,6 +162,19 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// Applies a content-width change to the loaded page in place — pure
+    /// CSS reflow, so the reader's rough position survives (a reload would
+    /// land at the top).
+    func setContentWidth(_ dataValue: String?) {
+        let js: String
+        if let dataValue {
+            js = "document.documentElement.dataset.width = '\(dataValue)';"
+        } else {
+            js = "delete document.documentElement.dataset.width;"
+        }
+        webView?.evaluateJavaScript(js, completionHandler: nil)
+    }
+
     /// The source line of the topmost block visible in the viewport — the
     /// anchor for keeping the reader's place across an edit-mode flip.
     func firstVisibleLine(_ completion: @escaping (Int?) -> Void) {

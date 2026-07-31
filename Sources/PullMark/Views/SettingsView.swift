@@ -156,6 +156,7 @@ struct GeneralSettingsTab: View {
 
 struct ThemeSettingsTab: View {
     @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(ContentWidth.defaultsKey) private var contentWidthRaw = ContentWidth.standard.rawValue
     @State private var customNames: [String] = []
 
     private var selection: ThemeSelection {
@@ -196,12 +197,27 @@ struct ThemeSettingsTab: View {
                         }
                     }
                 }
+                Text("Content width")
+                    .font(.headline)
+                    .padding(.top, 10)
+                HStack(alignment: .top, spacing: 16) {
+                    ForEach(ContentWidth.allCases) { width in
+                        WidthPreviewCard(width: width, selected: contentWidthRaw == width.rawValue) {
+                            contentWidthRaw = width.rawValue
+                        }
+                    }
+                }
+                Text("How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 10) {
                     Button("Open Themes Folder") {
                         NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
                     }
                     Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
                 }
+                .padding(.top, 6)
                 Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there).")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -209,8 +225,86 @@ struct ThemeSettingsTab: View {
             }
             .padding(20)
         }
-        .frame(height: 540)
+        .frame(height: 620)
         .onAppear { customNames = CustomThemes.availableThemeNames() }
+    }
+}
+
+/// One selectable content-width card: a drawn miniature page whose text
+/// column sits at that option's proportion of the window — the System
+/// Settings Appearance-picker pattern, where every option is a small
+/// picture of its result.
+struct WidthPreviewCard: View {
+    let width: ContentWidth
+    let selected: Bool
+    let select: () -> Void
+
+    /// The miniature's text-column share of the page. Not to scale —
+    /// exaggerated enough to read at a glance.
+    private var measure: CGFloat {
+        switch width {
+        case .standard: return 0.55
+        case .wide: return 0.78
+        case .full: return 0.96
+        }
+    }
+
+    /// Text lines as fractions of the column (a heading, then prose with
+    /// a ragged last line).
+    private static let lines: [(width: CGFloat, height: CGFloat, emphasis: Bool)] = [
+        (0.42, 6, true),
+        (1.0, 3.5, false), (0.97, 3.5, false), (1.0, 3.5, false),
+        (0.88, 3.5, false), (1.0, 3.5, false), (0.58, 3.5, false),
+    ]
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(Array(Self.lines.enumerated()), id: \.offset) { _, line in
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(.secondary.opacity(line.emphasis ? 0.55 : 0.3))
+                            .frame(width: max(10, 176 * measure * line.width),
+                                   height: line.height)
+                    }
+                }
+                .frame(width: 176 * measure, alignment: .leading)
+            }
+            .frame(width: 200, height: 108)
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+            .overlay(
+                RoundedRectangle(cornerRadius: 9)
+                    .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor),
+                                  lineWidth: selected ? 2.5 : 1)
+            )
+            .overlay(alignment: .bottomTrailing) {
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(Color.white, Color.accentColor)
+                        .background(Circle().fill(.white).padding(2))
+                        .padding(7)
+                }
+            }
+            .padding(.bottom, 4)
+            Text(width.label)
+                .font(.callout.weight(selected ? .semibold : .medium))
+            Text(width.descriptor)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 200)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: select)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(width.label) content width")
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction(.default, select)
     }
 }
 

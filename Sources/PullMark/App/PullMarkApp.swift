@@ -46,6 +46,7 @@ struct PullMarkApp: App {
     @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
     @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(ContentWidth.defaultsKey) private var contentWidthRaw = ContentWidth.standard.rawValue
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -257,6 +258,14 @@ struct PullMarkApp: App {
                 Picker("Appearance", selection: $appearanceRaw) {
                     ForEach(Appearance.allCases) { appearance in
                         Text(appearance.label).tag(appearance.rawValue)
+                    }
+                }
+                // In the View menu as well as Settings: the urge to go
+                // wider strikes mid-read (entering full screen), not while
+                // browsing preferences.
+                Picker("Content Width", selection: $contentWidthRaw) {
+                    ForEach(ContentWidth.allCases) { width in
+                        Text(width.label).tag(width.rawValue)
                     }
                 }
                 Divider()

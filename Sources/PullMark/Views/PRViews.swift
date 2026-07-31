@@ -54,6 +54,7 @@ struct PROverviewView: View {
                     onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                     proxy: proxy
                 )
+                .modifier(ContentWidthApplier(proxy: proxy))
                 .background(ThemePaper.color(for: themeRaw))
                 .overlay {
                     if let content = state.lightbox {
@@ -517,6 +518,7 @@ struct PRFileView: View {
                 onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                 proxy: proxy
             )
+            .modifier(ContentWidthApplier(proxy: proxy))
             .overlay(alignment: .bottomTrailing) {
                 if mode == .result, state.lightbox == nil, let stats {
                     DocumentStatsPill(stats: stats)
@@ -1202,6 +1204,7 @@ struct PRDocView: View {
                         onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                         proxy: proxy
                     )
+                    .modifier(ContentWidthApplier(proxy: proxy))
                     .overlay(alignment: .bottomTrailing) {
                         if state.lightbox == nil, let stats {
                             DocumentStatsPill(stats: stats)

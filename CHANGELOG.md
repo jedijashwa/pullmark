@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.21.0 - 2026-07-31
+
+- **Content width** — choose how far text may stretch before it wraps:
+  **Standard** (the classic reading measure, still the default), **Wide**
+  (longer lines, more on screen, still capped), or **Full Width** (the
+  document gets the whole window — made for full screen). Pick in
+  Settings → Themes with illustrated previews, or switch mid-read from
+  View → Content Width; changes apply live to every open document and
+  keep your place. Plays with every theme, the blame gutter, diffs, and
+  zoom. Requested by a full-screen reader tired of the dead space.
+
 ## 0.20.6 - 2026-07-29
 
 - Dropping a Markdown file (or folder) onto the rendered document now

@@ -170,3 +170,38 @@ import Foundation
         #expect(HTMLBuilder.resourcesBaseURL != nil, "bundled resources should resolve")
     }
 }
+
+// Serialized: these tests share UserDefaults.standard for the width key,
+// and the parallel runner interleaves them otherwise.
+@Suite(.serialized) struct ContentWidthTests {
+    @Test func standardEmitsNoWidthAttribute() {
+        UserDefaults.standard.removeObject(forKey: ContentWidth.defaultsKey)
+        let page = HTMLBuilder.documentPage(markdown: "# Hi")
+        #expect(!page.contains("\"width\""))
+    }
+
+    @Test func wideAndFullRideThePayload() {
+        for (raw, expected) in [("wide", "\"width\":\"wide\""),
+                                ("full", "\"width\":\"full\"")] {
+            UserDefaults.standard.set(raw, forKey: ContentWidth.defaultsKey)
+            let page = HTMLBuilder.documentPage(markdown: "# Hi")
+            #expect(page.contains(expected))
+        }
+        UserDefaults.standard.removeObject(forKey: ContentWidth.defaultsKey)
+    }
+
+    @Test func previewsIgnoreTheWidthPreference() {
+        // Settings theme cards have their own fixed miniature layout — a
+        // user on Full Width must still see the cards render identically.
+        UserDefaults.standard.set("full", forKey: ContentWidth.defaultsKey)
+        let page = HTMLBuilder.documentPage(markdown: "# Hi", preview: true)
+        #expect(!page.contains("\"width\""))
+        UserDefaults.standard.removeObject(forKey: ContentWidth.defaultsKey)
+    }
+
+    @Test func unknownStoredValueFallsBackToStandard() {
+        UserDefaults.standard.set("bogus", forKey: ContentWidth.defaultsKey)
+        #expect(ContentWidth.current == .standard)
+        UserDefaults.standard.removeObject(forKey: ContentWidth.defaultsKey)
+    }
+}

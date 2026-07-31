@@ -35,6 +35,11 @@ enum HTMLBuilder {
         /// it onto <html data-theme="..."> before rendering; app.css only
         /// styles the non-default themes, so "github" stays pixel-identical.
         var theme: String?
+        /// Content width ("wide", "full"). app.js mirrors it onto
+        /// <html data-width="...">; absent means the Standard measure, so
+        /// the default cascade stays untouched. Stamped centrally in
+        /// page(payload:) from the user preference.
+        var width: String?
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
@@ -236,7 +241,13 @@ enum HTMLBuilder {
 
     private static func page(payload: RenderPayload, title: String,
                              customCSS: String? = nil) -> String {
-        """
+        var payload = payload
+        // Every real page follows the content-width preference; the
+        // miniature Settings previews keep their own fixed layout.
+        if payload.preview != true {
+            payload.width = ContentWidth.current.dataValue
+        }
+        return """
         <!DOCTYPE html>
         <html>
         <head>
