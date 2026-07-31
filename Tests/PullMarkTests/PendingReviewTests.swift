@@ -446,3 +446,42 @@ import Testing
         await blocked.value
     }
 }
+
+/// GitHub error payloads come in two `errors` shapes; both must render as
+/// readable messages, never raw JSON (finding: the self-approval 422).
+@Suite struct GitHubErrorMessageTests {
+    @Test func objectShapedErrorsJoinTheirMessages() {
+        let data = Data("""
+        {"message": "Validation Failed",
+         "errors": [{"resource": "PullRequestReview", "code": "custom",
+                     "message": "Something specific went wrong"}]}
+        """.utf8)
+        #expect(GitHubClient.errorMessage(from: data)
+            == "Validation Failed — Something specific went wrong")
+    }
+
+    @Test func stringShapedErrorsDecodeToo() {
+        // Live-verified shape of the self-approval 422.
+        let data = Data("""
+        {"message": "Unprocessable Entity",
+         "errors": ["Can not approve your own pull request"],
+         "documentation_url": "https://docs.github.com/rest"}
+        """.utf8)
+        #expect(GitHubClient.errorMessage(from: data)
+            == "Unprocessable Entity — Can not approve your own pull request")
+    }
+
+    @Test func messagelessErrorEntriesAreSkippedNotFatal() {
+        let data = Data("""
+        {"message": "Validation Failed",
+         "errors": [{"resource": "Review", "code": "custom"}, "plain text detail"]}
+        """.utf8)
+        #expect(GitHubClient.errorMessage(from: data)
+            == "Validation Failed — plain text detail")
+    }
+
+    @Test func nonJSONBodyFallsBackToRawText() {
+        #expect(GitHubClient.errorMessage(from: Data("upstream said no".utf8))
+            == "upstream said no")
+    }
+}

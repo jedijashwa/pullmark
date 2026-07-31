@@ -679,13 +679,31 @@ final class GitHubClient {
         return data
     }
 
-    private struct APIMessage: Decodable {
-        struct Detail: Decodable { let message: String? }
+    struct APIMessage: Decodable {
+        /// GitHub mixes two `errors` shapes: `[{"message": …}]` objects
+        /// (validation errors) and bare strings (`["Can not approve your
+        /// own pull request"]`) — both must decode, or the alert shows
+        /// the raw JSON body.
+        struct Detail: Decodable {
+            let message: String?
+
+            private enum CodingKeys: String, CodingKey { case message }
+
+            init(from decoder: Decoder) throws {
+                if let single = try? decoder.singleValueContainer(),
+                   let text = try? single.decode(String.self) {
+                    message = text
+                } else {
+                    let keyed = try decoder.container(keyedBy: CodingKeys.self)
+                    message = try keyed.decodeIfPresent(String.self, forKey: .message)
+                }
+            }
+        }
         let message: String?
         let errors: [Detail]?
     }
 
-    private nonisolated static func errorMessage(from data: Data) -> String {
+    nonisolated static func errorMessage(from data: Data) -> String {
         if let parsed = try? JSONDecoder().decode(APIMessage.self, from: data) {
             let parts = ([parsed.message] + (parsed.errors?.map(\.message) ?? [])).compactMap { $0 }
             if !parts.isEmpty { return parts.joined(separator: " — ") }
