@@ -8,6 +8,7 @@ struct PROverviewView: View {
 
     @State private var reviewSummary = ""
     @State private var submitting = false
+    @State private var confirmAbandon = false
     @State private var confirmation: String?
     @State private var conversationText = ""
     @State private var postingComment = false
@@ -75,6 +76,20 @@ struct PROverviewView: View {
                         .help("Share a link to this pull request")
                 }
             }
+            // Summary text survives quits: seeded from disk (or a pending
+            // review saved on github.com), persisted as it is typed.
+            .task(id: sessionID) {
+                if reviewSummary.isEmpty {
+                    reviewSummary = PendingReviewStore.loadSummary(ref: session.ref)
+                        ?? session.pendingReview?.summary ?? ""
+                }
+            }
+            .onChange(of: reviewSummary) { text in
+                if let ref = state.session(sessionID)?.ref {
+                    PendingReviewStore.saveSummary(
+                        text.trimmingCharacters(in: .whitespacesAndNewlines), ref: ref)
+                }
+            }
         } else {
             EmptyView()
         }
@@ -110,32 +125,38 @@ struct PROverviewView: View {
         }
     }
 
-    /// The whole verdict lives here: drafts (when any), an optional
-    /// summary, and first-class Approve / Request Changes / Comment —
-    /// available with zero comments too, like GitHub's own Review button.
+    /// The whole verdict lives here: the pending comment set (server truth
+    /// plus any not-yet-uploaded queue), an optional summary, and
+    /// first-class Approve / Request Changes / Comment — available with
+    /// zero comments too, like GitHub's own Review button.
     private func reviewSection(_ session: PRSession) -> some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
-                if !session.drafts.isEmpty {
+                if !session.pendingComments.isEmpty {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 6) {
-                            ForEach(session.drafts) { draft in
+                            ForEach(session.pendingComments) { comment in
                                 HStack(alignment: .top) {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("\(draft.path) · \(draft.lineDescription)")
-                                            .font(.caption.bold())
-                                            .foregroundStyle(.secondary)
-                                        Text(draft.body)
+                                        HStack(spacing: 6) {
+                                            Text("\(comment.path) · \(comment.lineDescription)")
+                                                .font(.caption.bold())
+                                                .foregroundStyle(.secondary)
+                                            PendingCommentTag(uploaded: comment.serverID != nil)
+                                        }
+                                        Text(comment.body)
                                             .lineLimit(3)
                                     }
                                     Spacer()
                                     Button {
-                                        state.removeDraft(sessionID: sessionID, draftID: draft.id)
+                                        state.removePendingComment(sessionID: sessionID, id: comment.id)
                                     } label: {
                                         Image(systemName: "trash")
                                     }
                                     .buttonStyle(.borderless)
-                                    .help("Discard this draft comment")
+                                    .help(comment.serverID != nil
+                                        ? "Discard this comment from the pending review on GitHub"
+                                        : "Discard this comment")
                                 }
                                 .padding(6)
                                 .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
@@ -150,10 +171,28 @@ struct PROverviewView: View {
                     .textFieldStyle(.roundedBorder)
 
                 HStack(spacing: 10) {
-                    if !session.drafts.isEmpty {
-                        Button("Save as Pending on GitHub") { submit(event: nil) }
+                    // Sync status replaces the old "Save as Pending" button:
+                    // the model keeps GitHub current on its own now.
+                    if !session.queuedComments.isEmpty {
+                        Label("\(session.queuedComments.count) not yet on GitHub",
+                              systemImage: "exclamationmark.icloud")
+                            .font(.callout)
+                            .foregroundStyle(.orange)
+                        Button("Retry Upload") {
+                            Task { await state.syncPendingComments(sessionID: sessionID) }
+                        }
+                        .fixedSize()
+                        .help("Upload the remaining comments into your pending review on GitHub")
+                    } else if session.pendingReview != nil {
+                        Label("Pending review on GitHub", systemImage: "checkmark.icloud")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .help("Saved as a pending review — visible only to you until you submit")
+                    }
+                    if session.pendingReview != nil || !session.pendingComments.isEmpty {
+                        Button("Abandon Review", role: .destructive) { confirmAbandon = true }
                             .fixedSize()
-                            .help("Uploads the comments as a pending (draft) review you can finish on GitHub")
+                            .help("Discard the pending review and all its comments, on GitHub too")
                     }
                     ProgressView()
                         .controlSize(.small)
@@ -190,17 +229,28 @@ struct PROverviewView: View {
             }
             .padding(4)
         } label: {
-            Label(session.drafts.isEmpty
+            let count = session.pendingComments.count
+            Label(count == 0
                     ? "Review"
-                    : "Review — \(session.drafts.count) draft comment\(session.drafts.count == 1 ? "" : "s")",
+                    : "Review — \(count) pending comment\(count == 1 ? "" : "s")",
                   systemImage: "text.bubble")
+        }
+        .confirmationDialog("Abandon this review?", isPresented: $confirmAbandon) {
+            Button("Abandon Review", role: .destructive) {
+                Task {
+                    await state.abandonPendingReview(sessionID: sessionID)
+                    reviewSummary = ""
+                }
+            }
+        } message: {
+            Text("All pending comments and the summary will be discarded, on GitHub too.")
         }
     }
 
     /// GitHub rejects a COMMENT or REQUEST_CHANGES review that carries
     /// neither a body nor comments; Approve stands on its own.
     private func reviewActionable(_ session: PRSession) -> Bool {
-        !session.drafts.isEmpty
+        !session.pendingComments.isEmpty
             || !reviewSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -231,30 +281,37 @@ struct PROverviewView: View {
         return parts.joined(separator: " · ")
     }
 
-    private func submit(event: String?) {
-        guard let session = state.session(sessionID) else { return }
+    private func submit(event: String) {
+        guard state.session(sessionID) != nil else { return }
         submitting = true
         confirmation = nil
         let summary = reviewSummary.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
             do {
-                try await state.client.createReview(
-                    session.ref,
-                    commitID: session.details.head.sha,
-                    body: summary.isEmpty ? nil : summary,
-                    event: event,
-                    comments: session.drafts
-                )
-                state.clearDrafts(sessionID: sessionID)
+                try await state.submitReview(sessionID: sessionID, event: event,
+                                             summary: summary.isEmpty ? nil : summary)
                 reviewSummary = ""
-                confirmation = event == nil
-                    ? "Saved as a pending review on GitHub."
-                    : "Review submitted."
+                confirmation = "Review submitted."
             } catch {
                 state.lastError = error.localizedDescription
             }
             submitting = false
         }
+    }
+}
+
+/// GitHub's "Pending" tag for comments in the viewer's pending review;
+/// "Not uploaded" flags a queued comment GitHub hasn't accepted yet.
+private struct PendingCommentTag: View {
+    let uploaded: Bool
+
+    var body: some View {
+        Text(uploaded ? "Pending" : "Not uploaded")
+            .font(.caption2.bold())
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background((uploaded ? Color.yellow : Color.orange).opacity(0.3),
+                        in: Capsule())
     }
 }
 
@@ -835,7 +892,7 @@ struct CommentComposer: View {
                     .keyboardShortcut(.cancelAction)
                     .fixedSize()
                 Button("Add to Review") {
-                    state.addDraft(sessionID: sessionID, draft)
+                    state.addPendingComment(sessionID: sessionID, draft)
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
@@ -1016,6 +1073,10 @@ struct CommentComposer: View {
                     comment: draft
                 )
                 await state.reloadComments(sessionID: sessionID)
+                // If a pending review exists, GitHub may have absorbed the
+                // "immediate" comment into it — re-adopt so the app shows
+                // where the comment actually landed.
+                await state.adoptPendingReview(sessionID: sessionID)
                 dismiss()
             } catch {
                 self.error = error.localizedDescription
