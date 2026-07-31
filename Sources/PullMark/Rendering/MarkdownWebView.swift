@@ -60,6 +60,9 @@ struct MarkdownWebView: NSViewRepresentable {
     var onThreadReply: ((Int) -> Void)?
     /// Resolve/unresolve requested (root comment id, desired state).
     var onThreadResolve: ((Int, Bool) -> Void)?
+    /// The in-page "N resolved conversations" control was toggled — keeps
+    /// the View menu's Show Resolved Conversations item in sync.
+    var onResolvedVisibility: ((Bool) -> Void)?
     /// Blame gutter entry clicked: open line history for this 1-based range.
     var onBlameHistory: ((Int, Int) -> Void)?
     /// Word count / reading time computed from the rendered text
@@ -400,6 +403,10 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let rootID = dict["rootID"] as? Int,
                    let resolved = dict["resolved"] as? Bool {
                     parent.onThreadResolve?(rootID, resolved)
+                }
+            case "resolvedVisibility":
+                if let visible = dict["visible"] as? Bool {
+                    parent.onResolvedVisibility?(visible)
                 }
             default:
                 break

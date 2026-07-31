@@ -145,6 +145,11 @@ final class AppState: ObservableObject {
     /// view to the raw text. Deliberately not persisted — reading stays the
     /// default on every launch.
     @Published var sourceViewVisible = false
+    /// Show Resolved Conversations (Result-view thread markers, spec §1).
+    /// Transient and default-off — resolved threads leave the reading
+    /// surface on every launch; the in-page control and the View menu item
+    /// mirror each other through this flag.
+    @Published var resolvedConversationsVisible = false
     /// ⌘K Open Quickly palette.
     @Published var openQuicklyVisible = false
     /// Presents the commit sheet for a repo root (File → Commit Changes…).

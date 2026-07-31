@@ -226,6 +226,15 @@ final class WebViewProxy: ObservableObject {
         let shift: Bool
     }
 
+    /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
+    /// view thread markers). In-place — no reload, the reader's position
+    /// survives; pages without markers ignore it.
+    func setResolvedConversationsVisible(_ visible: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmSetResolvedShown && __pmSetResolvedShown(\(visible));",
+            completionHandler: nil)
+    }
+
     /// Current scroll position as a 0–1 fraction of the scrollable height.
     func scrollFraction(_ completion: @escaping (Double?) -> Void) {
         guard let webView else { return completion(nil) }
@@ -248,6 +257,9 @@ final class WebViewProxy: ObservableObject {
     /// window's zoom.
     func printDocument() {
         guard let webView, let window = webView.window else { return }
+        // Paper is the document only: review annotations (thread markers,
+        // highlights, cards) hide for the duration of the print.
+        setExporting(webView, true)
         atActualSize(webView) { [weak self] done in
             let info = NSPrintInfo.shared
             info.horizontalPagination = .fit
@@ -264,6 +276,7 @@ final class WebViewProxy: ObservableObject {
             // when the panel is done (printed or cancelled).
             let restorer = PrintRestorer {
                 self?.printRestorer = nil
+                if let webView = self?.webView { self?.setExporting(webView, false) }
                 done()
             }
             self?.printRestorer = restorer
@@ -311,8 +324,11 @@ final class WebViewProxy: ObservableObject {
             return
         }
         // Export at actual size regardless of the window's zoom — a zoomed
-        // export would bake enlarged text into the file.
-        atActualSize(webView) { done in
+        // export would bake enlarged text into the file. Review annotations
+        // hide first (exports are the document only), and the height is
+        // measured after that relayout.
+        setExporting(webView, true)
+        atActualSize(webView) { [weak self] done in
             webView.evaluateJavaScript(
                 "Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)"
             ) { result, _ in
@@ -322,6 +338,7 @@ final class WebViewProxy: ObservableObject {
                     configuration.rect = CGRect(x: 0, y: 0, width: webView.bounds.width, height: height)
                 }
                 webView.createPDF(configuration: configuration) { pdfResult in
+                    self?.setExporting(webView, false)
                     done()
                     completion(pdfResult)
                 }
@@ -329,14 +346,27 @@ final class WebViewProxy: ObservableObject {
         }
     }
 
+    /// Flips the page's export mode: review annotations (thread markers,
+    /// highlights, inline cards, the resolved control) hide while set —
+    /// exports and prints are the document only (spec).
+    private func setExporting(_ webView: WKWebView, _ exporting: Bool) {
+        webView.evaluateJavaScript(
+            "document.documentElement.classList.toggle('pm-exporting', \(exporting));",
+            completionHandler: nil)
+    }
+
     /// Serialized DOM of the rendered page in its current state (after the
-    /// page scripts ran), without the doctype.
+    /// page scripts ran), without the doctype. Prefers the page's export
+    /// serializer, which strips review annotations — exported HTML is the
+    /// document only, with no thread text in the markup.
     func pageDOM(completion: @escaping (String?) -> Void) {
         guard let webView else {
             completion(nil)
             return
         }
-        webView.evaluateJavaScript("document.documentElement.outerHTML") { result, _ in
+        webView.evaluateJavaScript(
+            "window.__pmExportDOM ? window.__pmExportDOM() : document.documentElement.outerHTML"
+        ) { result, _ in
             completion(result as? String)
         }
     }
