@@ -120,6 +120,8 @@ enum DocumentCommand: Equatable {
     case showSourceDiff
     case showResult
     case flipDiffLayout
+    /// Opens the review popover on the active PR surface (spec §3).
+    case reviewChanges
 }
 
 struct DocumentCommandRequest: Equatable {
