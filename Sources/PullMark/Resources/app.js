@@ -20,6 +20,11 @@
   if (payload.theme) {
     document.documentElement.dataset.theme = payload.theme;
   }
+  // Content width: Standard leaves the attribute (and the default
+  // cascade) alone; "wide"/"full" widen the measure via app.css.
+  if (payload.width) {
+    document.documentElement.dataset.width = payload.width;
+  }
   // Settings theme cards: miniature, non-interactive rendering.
   if (payload.preview) {
     document.documentElement.dataset.preview = "1";

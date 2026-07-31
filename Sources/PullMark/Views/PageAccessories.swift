@@ -444,3 +444,19 @@ struct PRUpdateBanner: View {
         .background(Color.orange.opacity(0.18))
     }
 }
+
+/// Applies content-width changes to a loaded page in place. The html
+/// builders read the preference themselves (fresh loads are born at the
+/// right width); this modifier only handles the live flip, as a CSS
+/// reflow that keeps the reader's rough position — recomputing the html
+/// would reload the page and land at the top.
+struct ContentWidthApplier: ViewModifier {
+    let proxy: WebViewProxy
+    @AppStorage(ContentWidth.defaultsKey) private var raw = ContentWidth.standard.rawValue
+
+    func body(content: Content) -> some View {
+        content.onChange(of: raw) { newValue in
+            proxy.setContentWidth(ContentWidth(rawValue: newValue)?.dataValue ?? nil)
+        }
+    }
+}
