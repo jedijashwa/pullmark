@@ -119,6 +119,11 @@ struct ThreadPayload: Encodable, Equatable {
     /// Root comment id (REST databaseId) — enables reply/resolve actions.
     var rootID: Int? = nil
     var resolved: Bool? = nil
+    /// New-side source line range of the anchor — set for Result-view
+    /// marker payloads only (ThreadVisibility.resultAnchored); the page
+    /// maps it onto rendered blocks via their data-pm-lines annotations.
+    var anchorStart: Int? = nil
+    var anchorEnd: Int? = nil
 }
 
 struct CommentPayload: Encodable, Equatable {
