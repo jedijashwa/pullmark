@@ -1,6 +1,6 @@
 # PullMark demo document
 
-This file exercises the GitHub-flavored Markdown features PullMark renders.
+This file exercises the GitHub-flavored Markdown features PullMark renders in its viewer.
 
 ## Table
 
@@ -15,6 +15,7 @@ This file exercises the GitHub-flavored Markdown features PullMark renders.
 - [x] Render local files
 - [x] Rendered PR diffs
 - [ ] Editing (later)
+- [ ] Pending-review verification pass
 
 ## Code preview
 
@@ -50,3 +51,8 @@ flowchart LR
 ## Relative image
 
 ![PullMark icon](img/pullmark.png)
+
+## Verification note
+
+This paragraph exists only to give the pending-review
+verification pass a fresh block to comment on.
