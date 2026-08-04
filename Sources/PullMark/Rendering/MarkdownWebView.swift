@@ -102,7 +102,7 @@ struct MarkdownWebView: NSViewRepresentable {
     var interactive: Bool = true
     /// Document magnification (View → Zoom). Non-interactive views (theme
     /// preview cards) stay at actual size — they are already miniatures.
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -264,7 +264,7 @@ struct MarkdownWebView: NSViewRepresentable {
             }
             atLimit = hitLimit
             pageZoom = clamped
-            UserDefaults.standard.set(Double(clamped), forKey: DefaultsKeys.zoom)
+            UserDefaults.pullmark.set(Double(clamped), forKey: DefaultsKeys.zoom)
         }
     }
 

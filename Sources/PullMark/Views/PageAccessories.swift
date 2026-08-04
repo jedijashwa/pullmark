@@ -98,10 +98,10 @@ struct OutlineSidebar: View {
     /// idealWidth, but the split view ignored the seed at first layout —
     /// the document pane's priority squeezed the panel to its minimum on
     /// every launch, no matter what width was remembered.)
-    @AppStorage(DefaultsKeys.outlineWidth) private var storedWidth = 255
+    @AppStorage(DefaultsKeys.outlineWidth, store: UserDefaults.pullmark) private var storedWidth = 255
     /// Follows the document zoom (damped) so headings stay readable next
     /// to a magnified page; the width ceiling stretches with it.
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     @State private var dragBaseWidth: CGFloat?
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
@@ -356,7 +356,7 @@ struct DefaultAppBanner: View {
 /// Sheet rendering release-notes Markdown with the app's own renderer.
 struct ReleaseNotesSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     let title: String
     let markdown: String
 
@@ -452,7 +452,7 @@ struct PRUpdateBanner: View {
 /// would reload the page and land at the top.
 struct ContentWidthApplier: ViewModifier {
     let proxy: WebViewProxy
-    @AppStorage(ContentWidth.defaultsKey) private var raw = ContentWidth.standard.rawValue
+    @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var raw = ContentWidth.standard.rawValue
 
     func body(content: Content) -> some View {
         content.onChange(of: raw) { newValue in

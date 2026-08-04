@@ -5,7 +5,7 @@ import SwiftUI
 /// through the real WKWebView pipeline, one per theme.
 struct SettingsView: View {
     /// Persisted so Settings reopens on the tab you last used.
-    @AppStorage(DefaultsKeys.settingsTab) private var tab = "general"
+    @AppStorage(DefaultsKeys.settingsTab, store: UserDefaults.pullmark) private var tab = "general"
 
     var body: some View {
         TabView(selection: $tab) {
@@ -28,12 +28,12 @@ struct SettingsView: View {
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var updates: UpdateChecker
     @EnvironmentObject private var defaultApp: DefaultAppManager
-    @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
-    @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
-    @AppStorage(DefaultsKeys.qlRendered) private var qlRendered = true
-    @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
-    @AppStorage(DefaultsKeys.inboxMarkdownOnly) private var inboxMarkdownOnly = true
-    @AppStorage(DefaultsKeys.restoreSession) private var restoreSession = true
+    @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
+    @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.qlRendered, store: UserDefaults.pullmark) private var qlRendered = true
+    @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
+    @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
+    @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @State private var updateStatus: String?
     @State private var checking = false
 
@@ -155,8 +155,8 @@ struct GeneralSettingsTab: View {
 // MARK: - Themes
 
 struct ThemeSettingsTab: View {
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
-    @AppStorage(ContentWidth.defaultsKey) private var contentWidthRaw = ContentWidth.standard.rawValue
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
     @State private var customNames: [String] = []
 
     private var selection: ThemeSelection {

@@ -10,7 +10,7 @@ final class ShortcutStore: ObservableObject {
 
     @Published private(set) var overrides: ShortcutOverrides
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .pullmark) {
         self.defaults = defaults
         var decoded = ShortcutOverrides.decoded(
             from: defaults.data(forKey: DefaultsKeys.shortcutOverrides))

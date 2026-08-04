@@ -48,7 +48,7 @@ final class DefaultAppManager: ObservableObject {
 
     private let defaults: UserDefaults
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .pullmark) {
         self.defaults = defaults
         claimed = defaults.bool(forKey: DefaultsKeys.claimedDefaultHandler)
         refresh()

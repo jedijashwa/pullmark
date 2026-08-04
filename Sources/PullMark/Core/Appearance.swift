@@ -29,7 +29,7 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 
     @MainActor static func applyCurrent() {
-        let raw = UserDefaults.standard.string(forKey: defaultsKey) ?? Appearance.system.rawValue
+        let raw = UserDefaults.pullmark.string(forKey: defaultsKey) ?? Appearance.system.rawValue
         (Appearance(rawValue: raw) ?? .system).apply()
     }
 }

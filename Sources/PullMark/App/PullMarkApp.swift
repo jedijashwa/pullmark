@@ -42,11 +42,11 @@ struct PullMarkApp: App {
     @StateObject private var defaultApp = DefaultAppManager()
     /// Observed so recording a new shortcut in Settings re-keys the menus.
     @ObservedObject private var shortcuts = ShortcutStore.shared
-    @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
-    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(DefaultsKeys.diffLayout) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
-    @AppStorage(ContentWidth.defaultsKey) private var contentWidthRaw = ContentWidth.standard.rawValue
+    @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
+    @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
+    @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -433,7 +433,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // SwiftUI restores window frames but not full-screen state, so
         // remember it ourselves (⌘Q from full screen still has the window
         // alive here; closing the window first leaves full screen anyway).
-        UserDefaults.standard.set(
+        UserDefaults.pullmark.set(
             NSApp.windows.contains { $0.styleMask.contains(.fullScreen) },
             forKey: DefaultsKeys.windowWasFullScreen)
     }
@@ -442,7 +442,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Polls briefly: SwiftUI creates the window a beat after
     /// applicationDidFinishLaunching.
     func restoreFullScreenIfNeeded(attempt: Int = 0) {
-        guard UserDefaults.standard.bool(forKey: DefaultsKeys.windowWasFullScreen) else { return }
+        guard UserDefaults.pullmark.bool(forKey: DefaultsKeys.windowWasFullScreen) else { return }
         if let window = NSApp.windows.first(where: {
             $0.frame.height > 200 && !$0.styleMask.contains(.fullScreen)
         }) {

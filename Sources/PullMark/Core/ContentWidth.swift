@@ -38,7 +38,7 @@ enum ContentWidth: String, CaseIterable, Identifiable {
     }
 
     static var current: ContentWidth {
-        UserDefaults.standard.string(forKey: defaultsKey)
+        UserDefaults.pullmark.string(forKey: defaultsKey)
             .flatMap(ContentWidth.init(rawValue:)) ?? .standard
     }
 }

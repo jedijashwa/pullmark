@@ -7,7 +7,7 @@ struct ContentView: View {
     @EnvironmentObject private var updates: UpdateChecker
     /// Observed so the toolbar's shortcut hints follow a rebind.
     @ObservedObject private var shortcuts = ShortcutStore.shared
-    @AppStorage(Appearance.defaultsKey) private var appearanceRaw = Appearance.system.rawValue
+    @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
     @Environment(\.controlActiveState) private var controlActiveState
 
     var body: some View {
@@ -173,9 +173,9 @@ struct ContentView: View {
 struct SidebarView: View {
     @EnvironmentObject private var state: AppState
 
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
-    @AppStorage(DefaultsKeys.inboxEnabled) private var inboxEnabled = true
-    @AppStorage(DefaultsKeys.inboxMarkdownOnly) private var inboxMarkdownOnly = true
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
+    @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     // Per-window like the rest of the sidebar (@AppStorage would live-sync
     // a collapse in one window into every other window).
     @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var localExpanded = true
@@ -268,7 +268,7 @@ private struct CollapsibleSection<Content: View>: View {
     @Binding var isExpanded: Bool
     var badge = 0
     @ViewBuilder let content: () -> Content
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
 
     init(_ title: String, isExpanded: Binding<Bool>, badge: Int = 0,
          @ViewBuilder content: @escaping () -> Content) {
@@ -313,7 +313,7 @@ private struct CollapsibleSection<Content: View>: View {
 /// can open it, but the reading room has nothing to show).
 private struct InboxRow: View {
     @EnvironmentObject private var state: AppState
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let item: GitHubClient.InboxPR
 
     var body: some View {
@@ -354,7 +354,7 @@ private struct InboxRow: View {
 
 private struct RecentRow: View {
     @EnvironmentObject private var state: AppState
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let item: RecentItem
 
     var body: some View {
@@ -408,7 +408,7 @@ private struct RecentRow: View {
 
 private struct PRSidebarGroup: View {
     @EnvironmentObject private var state: AppState
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let session: PRSession
     @State private var expanded = true
 
@@ -500,7 +500,7 @@ private struct PRSidebarGroup: View {
 
 struct DetailView: View {
     @EnvironmentObject private var state: AppState
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
 
     var body: some View {
         switch state.selection {

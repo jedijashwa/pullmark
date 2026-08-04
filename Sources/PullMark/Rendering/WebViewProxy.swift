@@ -139,7 +139,7 @@ final class WebViewProxy: ObservableObject {
         webView.pageZoom = 1
         webView.evaluateJavaScript("1") { [weak self] _, _ in
             capture {
-                let stored = UserDefaults.standard.object(forKey: DefaultsKeys.zoom) as? Double ?? 1.0
+                let stored = UserDefaults.pullmark.object(forKey: DefaultsKeys.zoom) as? Double ?? 1.0
                 webView.pageZoom = DocumentZoom.clamped(stored)
                 self?.zoomHold = false
             }

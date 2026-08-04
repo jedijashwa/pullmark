@@ -20,7 +20,7 @@ enum DMGGreeter {
             offerMove(image)
         case .cleanup(let image):
             // Ask once per image file; a declined offer never nags again.
-            let declined = UserDefaults.standard.stringArray(forKey: DefaultsKeys.dmgCleanupDeclined) ?? []
+            let declined = UserDefaults.pullmark.stringArray(forKey: DefaultsKeys.dmgCleanupDeclined) ?? []
             guard !declined.contains(image.imagePath) else { return }
             offerCleanup(image)
         case .none:
@@ -73,9 +73,9 @@ enum DMGGreeter {
         alert.addButton(withTitle: "Move to Trash")
         alert.addButton(withTitle: "Keep")
         guard alert.runModal() == .alertFirstButtonReturn else {
-            var declined = UserDefaults.standard.stringArray(forKey: DefaultsKeys.dmgCleanupDeclined) ?? []
+            var declined = UserDefaults.pullmark.stringArray(forKey: DefaultsKeys.dmgCleanupDeclined) ?? []
             declined.append(image.imagePath)
-            UserDefaults.standard.set(declined, forKey: DefaultsKeys.dmgCleanupDeclined)
+            UserDefaults.pullmark.set(declined, forKey: DefaultsKeys.dmgCleanupDeclined)
             return
         }
         let imagePath = image.imagePath

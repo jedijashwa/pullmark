@@ -21,8 +21,8 @@ struct LocalFileView: View {
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
     @ObservedObject private var shortcuts = ShortcutStore.shared
-    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
@@ -79,7 +79,7 @@ struct LocalFileView: View {
     @State private var pendingAutoReveal = false
 
     // Blame annotations
-    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
+    @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
     @State private var historyRequest: BlameHistoryRequest?
