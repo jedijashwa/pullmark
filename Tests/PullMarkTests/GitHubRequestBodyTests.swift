@@ -96,4 +96,10 @@ import Testing
         #expect(object.count == 1)
         #expect(object["body"] as? String == "hello")
     }
+
+    @Test func editCommentBodyIsJustTheBody() throws {
+        let object = try json(GitHubClient.editCommentRequestBody(body: "revised"))
+        #expect(object.count == 1)
+        #expect(object["body"] as? String == "revised")
+    }
 }
