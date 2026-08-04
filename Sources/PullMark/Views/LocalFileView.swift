@@ -92,6 +92,7 @@ struct LocalFileView: View {
             onNextReveal: handleNextReveal,
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
+            onLocalLinkFailed: { state.lastNotice = $0 },
             onOutline: handleOutline,
             onActiveSection: handleActiveSection,
             onBlameHistory: handleBlameHistory,

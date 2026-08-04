@@ -57,6 +57,10 @@ struct MarkdownWebView: NSViewRepresentable {
     var localResourceRoot: URL?
     /// Called when the user clicks a relative link to another local file.
     var onOpenLocalFile: ((URL) -> Void)?
+    /// A clicked local link that can't be followed — escapes the folder,
+    /// or its target doesn't exist. Silent no-ops here read as "links are
+    /// broken", so the host surfaces the reason as a notice.
+    var onLocalLinkFailed: ((String) -> Void)?
     /// Repo + commit that repo-relative resources resolve against. PR files only.
     var remoteContext: RemoteResourceContext?
     /// Called when the user clicks a repo-relative link to a Markdown file;
@@ -499,12 +503,21 @@ struct MarkdownWebView: NSViewRepresentable {
                 return
             }
             if url.scheme == LocalResourceSchemeHandler.scheme {
-                if let root = schemeHandler.rootDirectory,
-                   let fileURL = LocalResourceSchemeHandler.resolve(url, root: root) {
-                    if MarkdownFileType.matches(fileURL.pathExtension) {
-                        parent.onOpenLocalFile?(fileURL)
+                if let root = schemeHandler.rootDirectory {
+                    if let fileURL = LocalResourceSchemeHandler.resolveClickedLink(url, root: root),
+                       FileManager.default.fileExists(atPath: fileURL.path) {
+                        if MarkdownFileType.matches(fileURL.pathExtension) {
+                            parent.onOpenLocalFile?(fileURL)
+                        } else {
+                            NSWorkspace.shared.open(fileURL)
+                        }
                     } else {
-                        NSWorkspace.shared.open(fileURL)
+                        // Said out loud — a silent no-op here once cost a
+                        // long wrong diagnosis.
+                        let shown = LocalResourceSchemeHandler.clickedRelativePath(url)
+                            ?? url.path
+                        parent.onLocalLinkFailed?(
+                            "That link points to a file that doesn't exist: \(shown)")
                     }
                 }
                 decisionHandler(.cancel)
