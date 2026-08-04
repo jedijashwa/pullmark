@@ -1,0 +1,11 @@
+#!/bin/sh
+# The `pullmark` command: opens files, folders, or URLs in PullMark from
+# the shell. Installed by the Homebrew cask's binary stanza, which
+# symlinks this script (inside the app bundle) into the brew prefix.
+# `open -a` resolves the app through Launch Services wherever it lives,
+# resolves relative paths against the caller's working directory, and
+# lands everything in the frontmost window.
+if [ "$#" -eq 0 ]; then
+    exec open -a "PullMark"
+fi
+exec open -a "PullMark" "$@"

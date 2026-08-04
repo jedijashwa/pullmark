@@ -22,6 +22,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/PullMark "$APP/Contents/MacOS/PullMark"
 cp -R .build/release/PullMark_PullMark.bundle "$APP/Contents/Resources/"
 cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# The `pullmark` shell command: lives inside the bundle so it ships (and
+# is signed) with the app; the Homebrew cask's binary stanza symlinks it
+# into the brew prefix.
+install -m 0755 scripts/pullmark-cli "$APP/Contents/Resources/pullmark"
 
 # macOS 26 layered icon (Liquid Glass): assets/AppIcon.icon compiles only
 # with full Xcode's actool — the Command Line Tools cannot build Icon
