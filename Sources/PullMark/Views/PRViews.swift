@@ -224,10 +224,16 @@ struct PRFileView: View {
     /// Comment id awaiting the native delete confirmation (destructive
     /// actions never confirm with page chrome).
     @State private var deleteCommentID: Int?
-    /// Scroll fraction captured just before a model update re-renders the
-    /// page (reaction fold-in, comment edit/delete reload) — restored in
+    /// Reading position captured just before a model update re-renders the
+    /// page (reaction fold-in, reply/edit/delete reload) — restored in
     /// handlePageLoaded so a chip click can't yank the reader to the top.
-    @State private var pendingScrollRestore: Double?
+    /// Stamped with the view mode it was captured from: the next page to
+    /// load may be a mode switch, whose scroll geometry is unrelated.
+    private struct ScrollRestore {
+        let fraction: Double
+        let mode: Mode
+    }
+    @State private var pendingScrollRestore: ScrollRestore?
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
@@ -554,7 +560,13 @@ struct PRFileView: View {
             state.addPendingComment(sessionID: sessionID, comment)
             return
         }
-        guard let session else { return }
+        guard let session else {
+            // The page already cleared its composer — never drop the text.
+            restoreDraftAfterFailure(key: submission.draftKey, text: submission.body)
+            state.lastError = "Could not post the comment — the PR session is "
+                + "no longer available. Your text was kept as a draft."
+            return
+        }
         Task {
             do {
                 try await state.client.createComment(
@@ -578,8 +590,11 @@ struct PRFileView: View {
     /// place: the scroll fraction is captured first and restored once the
     /// fresh page loads (see handlePageLoaded).
     private func mutatePreservingScroll(_ mutate: @escaping () -> Void) {
+        let capturedMode = mode
         proxy.scrollFraction { fraction in
-            pendingScrollRestore = fraction
+            pendingScrollRestore = fraction.map {
+                ScrollRestore(fraction: $0, mode: capturedMode)
+            }
             mutate()
         }
     }
@@ -597,7 +612,9 @@ struct PRFileView: View {
             state.lastError = "Reaction state unavailable — try refreshing the PR."
             return
         }
-        Task {
+        // Serialized per comment id: a rapid double-toggle's add/remove
+        // pair must reach GitHub in click order (see serializeReactionWrite).
+        state.serializeReactionWrite(commentID: commentID) {
             do {
                 try await state.client.setReaction(subjectID: nodeID, content: kind,
                                                    add: reacted)
@@ -650,12 +667,22 @@ struct PRFileView: View {
     }
 
     private func sendThreadReply(rootID: Int, body: String, draftKey: String) {
-        guard let session else { return }
+        guard let session else {
+            // The page already cleared its composer — never drop the text.
+            restoreDraftAfterFailure(key: draftKey, text: body)
+            state.lastError = "Could not post the reply — the PR session is "
+                + "no longer available. Your text was kept as a draft."
+            return
+        }
         Task {
             do {
                 try await state.client.replyToReviewComment(session.ref, rootID: rootID,
                                                             body: body)
-                await state.reloadComments(sessionID: sessionID)
+                // Same reader-in-place reload as reactions/edits/deletes —
+                // a posted reply must not jump the document to the top.
+                mutatePreservingScroll {
+                    Task { await state.reloadComments(sessionID: sessionID) }
+                }
             } catch {
                 restoreDraftAfterFailure(key: draftKey, text: body)
                 state.lastError = "Could not post the reply: \(error.localizedDescription)"
@@ -665,7 +692,17 @@ struct PRFileView: View {
 
     /// Click-away draft sync from the page; empty text discards.
     private func saveComposerDraft(key: String, text: String) {
-        guard let session else { return }
+        guard let session else {
+            // No session, no ref/head to key disk persistence to. The page
+            // still holds the text in its own draft map — say so instead
+            // of silently dropping the sync (empty text is a discard and
+            // needs no noise).
+            if !text.isEmpty {
+                state.lastError = "The PR session is no longer available — "
+                    + "the draft could not be saved to disk."
+            }
+            return
+        }
         ComposerDraftStore.save(jsKey: key, text: text, ref: session.ref,
                                 headSHA: session.details.head.sha, path: path)
     }
@@ -799,10 +836,14 @@ struct PRFileView: View {
 
     private func handlePageLoaded() {
         // A model mutation re-rendered the page under the reader (reaction
-        // fold-in, edit/delete reload): put them back where they were.
-        if let fraction = pendingScrollRestore {
+        // fold-in, reply/edit/delete reload): put them back where they
+        // were — but only in the mode the position was captured from. A
+        // mode switch loading in between must keep its natural top.
+        if let restore = pendingScrollRestore {
             pendingScrollRestore = nil
-            proxy.restoreScrollFraction(fraction)
+            if restore.mode == mode {
+                proxy.restoreScrollFraction(restore.fraction)
+            }
         }
         // A fresh page starts with resolved conversations hidden; re-apply
         // the window's current choice.

@@ -805,6 +805,27 @@ final class AppState: ObservableObject {
         prSessions[index] = session
     }
 
+    /// FIFO write chain per comment id: a rapid double-toggle must reach
+    /// GitHub in click order — two concurrent Tasks can invert an
+    /// add/remove pair server-side, failing the second write and surfacing
+    /// a spurious error for a state the user already left.
+    private var reactionWriteChains: [Int: (task: Task<Void, Never>, generation: Int)] = [:]
+
+    func serializeReactionWrite(commentID: Int,
+                                _ operation: @escaping @MainActor () async -> Void) {
+        let previous = reactionWriteChains[commentID]?.task
+        let generation = (reactionWriteChains[commentID]?.generation ?? 0) + 1
+        let task = Task { [weak self] in
+            await previous?.value
+            await operation()
+            // Drop the bookkeeping once the chain drains (still the tail).
+            if let self, self.reactionWriteChains[commentID]?.generation == generation {
+                self.reactionWriteChains[commentID] = nil
+            }
+        }
+        reactionWriteChains[commentID] = (task, generation)
+    }
+
     func removePR(_ id: String) {
         prSessions.removeAll { $0.id == id }
         dropPRContentCache(sessionID: id)
