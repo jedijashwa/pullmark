@@ -108,8 +108,21 @@
         if (cut !== -1) { suffix = value.slice(cut); value = value.slice(0, cut); }
       }
       var path = value.replace(/^\//, "");
-      el.setAttribute(attr, "pullmark-local:///"
-        + path.split("/").map(encodeSegment).join("/") + suffix);
+      var rewritten = "pullmark-local:///"
+        + path.split("/").map(encodeSegment).join("/");
+      if (attr === "href") {
+        // Links carry the RAW relative path in a query parameter: URL
+        // normalization (WHATWG remove-dot-segments, which eats even
+        // percent-encoded dots) would otherwise swallow a leading ".."
+        // before the native side ever sees it. Only the fragment
+        // survives from the original suffix — a query string on a
+        // local file link has no meaning.
+        var frag = suffix.indexOf("#") !== -1 ? suffix.slice(suffix.indexOf("#")) : "";
+        rewritten += "?pmrel=" + encodeURIComponent(value) + frag;
+      } else {
+        rewritten += suffix;
+      }
+      el.setAttribute(attr, rewritten);
     });
   }
 
