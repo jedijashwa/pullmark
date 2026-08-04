@@ -78,7 +78,8 @@ switch args[2] {
 case "menu":
     let path = Array(args.dropFirst(3))
     guard !path.isEmpty else { fail("usage: swift ax.swift <pid> menu <Menu> <Item> [<Subitem>]") }
-    guard let menuBar = attribute(app, kAXMenuBarAttribute) else {
+    guard let menuBar = attribute(app, kAXMenuBarAttribute),
+          CFGetTypeID(menuBar) == AXUIElementGetTypeID() else {
         fail("error: no menu bar for pid \(pid) (app still launching, or not a regular app)")
     }
     var current = menuBar as! AXUIElement
@@ -128,9 +129,14 @@ case "press":
     guard let target = exact ?? loose else {
         fail("error: no pressable element titled '\(name)' (searched \(visited) elements; try `ax.swift \(pid) list` to discover targets)")
     }
-    press(target)
+    // Capture everything to report BEFORE pressing: the press often
+    // re-renders the UI and destroys the node, and querying a destroyed
+    // AXUIElement can SIGTRAP inside the AX runtime.
+    let pressedRole = role(target)
+    let pressedLabel = label(target)
     let box = frame(target)
-    print("pressed: \(role(target)) \"\(label(target))\" at (\(Int(box.midX)), \(Int(box.midY)))")
+    press(target)
+    print("pressed: \(pressedRole) \"\(pressedLabel)\" at (\(Int(box.midX)), \(Int(box.midY)))")
 
 case "list":
     let maxDepth = args.count > 3 ? (Int(args[3]) ?? 8) : 8
