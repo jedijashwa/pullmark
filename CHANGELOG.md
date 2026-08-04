@@ -4,6 +4,22 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Line numbers in rendered views** — a new Appearance setting, off by
+  default: each block shows its starting source line in the margin of
+  rendered documents and diffs, with the block's full range on hover.
+  Rendered text wraps freely, so numbering is per block — the rendered
+  views' honest answer to "where is this in the file?" (the raw source
+  view keeps its true per-line gutter). Diffs number by the new file;
+  removed blocks keep their old-file coordinates, and side-by-side view
+  numbers each column by its own side. Plays with blame: numbers sit
+  nearest the text, history outside them.
+- **Appearance settings** — the Themes settings tab is now Appearance:
+  theme cards under their own header with the custom-theme controls
+  beside them, and each layout choice — theme, content width, line
+  numbers — presented as selectable preview cards.
+
 ## 0.22.0 - 2026-08-04
 
 - **Review conversations** ([#29]) — reviewing now happens wherever
