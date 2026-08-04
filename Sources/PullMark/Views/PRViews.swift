@@ -12,7 +12,7 @@ struct PROverviewView: View {
     @State private var postingComment = false
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
 
     var body: some View {
         if let session = state.session(sessionID) {
@@ -226,7 +226,7 @@ struct PRFileView: View {
     /// page (reaction fold-in, comment edit/delete reload) — restored in
     /// handlePageLoaded so a chip click can't yank the reader to the top.
     @State private var pendingScrollRestore: Double?
-    @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
+    @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
     @State private var loading = true
@@ -237,9 +237,9 @@ struct PRFileView: View {
     @State private var stats: DocumentStats?
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
-    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
+    @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
     @State private var historyRequest: BlameHistoryRequest?
@@ -950,9 +950,9 @@ struct PRDocView: View {
     @State private var stats: DocumentStats?
     @State private var findSeed: String?
     @StateObject private var proxy = WebViewProxy()
-    @AppStorage(DefaultsKeys.outlinePanel) private var outlineVisible = false
-    @AppStorage(Theme.defaultsKey) private var themeRaw = Theme.standard.rawValue
-    @AppStorage(DefaultsKeys.blame) private var blameVisible = false
+    @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
+    @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @State private var blamePayloads: [BlameRunPayload]?
     @State private var blameNote: String?
     @State private var historyRequest: BlameHistoryRequest?

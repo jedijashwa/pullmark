@@ -188,28 +188,28 @@ enum PendingReviewStore {
     }
 
     static func loadQueue(ref: PullRequestRef, headSHA: String) -> [PendingComment] {
-        let queues = decodeQueues(UserDefaults.standard.data(forKey: DefaultsKeys.pendingCommentQueues))
+        let queues = decodeQueues(UserDefaults.pullmark.data(forKey: DefaultsKeys.pendingCommentQueues))
         return queues[queueKey(ref: ref, headSHA: headSHA)]?.comments ?? []
     }
 
     static func saveQueue(_ comments: [PendingComment], ref: PullRequestRef, headSHA: String) {
-        let current = decodeQueues(UserDefaults.standard.data(forKey: DefaultsKeys.pendingCommentQueues))
+        let current = decodeQueues(UserDefaults.pullmark.data(forKey: DefaultsKeys.pendingCommentQueues))
         let updated = updatedQueues(current, key: queueKey(ref: ref, headSHA: headSHA),
                                     comments: comments)
-        UserDefaults.standard.set(encodeQueues(updated), forKey: DefaultsKeys.pendingCommentQueues)
+        UserDefaults.pullmark.set(encodeQueues(updated), forKey: DefaultsKeys.pendingCommentQueues)
     }
 
     static func loadSummary(ref: PullRequestRef) -> String? {
-        let all = UserDefaults.standard.dictionary(forKey: DefaultsKeys.pendingReviewSummaries)
+        let all = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.pendingReviewSummaries)
             as? [String: String]
         return all?[summaryKey(ref: ref)]
     }
 
     /// Nil or empty text removes the entry.
     static func saveSummary(_ text: String?, ref: PullRequestRef) {
-        var all = UserDefaults.standard.dictionary(forKey: DefaultsKeys.pendingReviewSummaries)
+        var all = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.pendingReviewSummaries)
             as? [String: String] ?? [:]
         all[summaryKey(ref: ref)] = (text?.isEmpty == false) ? text : nil
-        UserDefaults.standard.set(all, forKey: DefaultsKeys.pendingReviewSummaries)
+        UserDefaults.pullmark.set(all, forKey: DefaultsKeys.pendingReviewSummaries)
     }
 }

@@ -188,15 +188,15 @@ enum ComposerDraftStore {
 
     static func save(jsKey: String, text: String, ref: PullRequestRef,
                      headSHA: String, path: String) {
-        let stored = decode(UserDefaults.standard.data(forKey: DefaultsKeys.composerDrafts))
+        let stored = decode(UserDefaults.pullmark.data(forKey: DefaultsKeys.composerDrafts))
         let updated = updated(stored,
                               key: storageKey(ref: ref, headSHA: headSHA, path: path, jsKey: jsKey),
                               text: text)
-        UserDefaults.standard.set(encode(updated), forKey: DefaultsKeys.composerDrafts)
+        UserDefaults.pullmark.set(encode(updated), forKey: DefaultsKeys.composerDrafts)
     }
 
     static func load(ref: PullRequestRef, headSHA: String, path: String) -> [String: String] {
-        drafts(in: decode(UserDefaults.standard.data(forKey: DefaultsKeys.composerDrafts)),
+        drafts(in: decode(UserDefaults.pullmark.data(forKey: DefaultsKeys.composerDrafts)),
                ref: ref, headSHA: headSHA, path: path)
     }
 }

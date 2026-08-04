@@ -31,7 +31,7 @@ enum Theme: String, CaseIterable, Identifiable {
     }
 
     /// The app-default theme. Every reader of the stored selection must
-    /// fall back to this — including the `@AppStorage(Theme.defaultsKey)`
+    /// fall back to this — including the `@AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark)`
     /// declarations in views, whose inline defaults are what an unset key
     /// actually resolves to (they never consult `current(from:)`).
     static let standard: Theme = .editorial

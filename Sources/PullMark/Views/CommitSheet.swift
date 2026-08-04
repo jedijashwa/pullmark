@@ -23,7 +23,7 @@ struct CommitSheet: View {
     @State private var useNewBranch = true
     @State private var skipMainPrompt = false
     @State private var hasRemote = false
-    @AppStorage(DefaultsKeys.pushAfterCommit) private var pushAfterCommit = false
+    @AppStorage(DefaultsKeys.pushAfterCommit, store: UserDefaults.pullmark) private var pushAfterCommit = false
     @State private var committing = false
     @State private var error: String?
     @FocusState private var messageFocused: Bool
@@ -31,7 +31,7 @@ struct CommitSheet: View {
     private var onMainline: Bool { branch == "main" || branch == "master" }
 
     private var mainPromptNeeded: Bool {
-        let allowed = UserDefaults.standard.stringArray(forKey: DefaultsKeys.commitToMainAllowed) ?? []
+        let allowed = UserDefaults.pullmark.stringArray(forKey: DefaultsKeys.commitToMainAllowed) ?? []
         return onMainline && !allowed.contains(root.path)
     }
 
@@ -254,10 +254,10 @@ struct CommitSheet: View {
                     return
                 }
                 if remember {
-                    var allowed = UserDefaults.standard
+                    var allowed = UserDefaults.pullmark
                         .stringArray(forKey: DefaultsKeys.commitToMainAllowed) ?? []
                     if !allowed.contains(root.path) { allowed.append(root.path) }
-                    UserDefaults.standard.set(allowed, forKey: DefaultsKeys.commitToMainAllowed)
+                    UserDefaults.pullmark.set(allowed, forKey: DefaultsKeys.commitToMainAllowed)
                 }
                 let committed = "Committed \(displayCount) file\(displayCount == 1 ? "" : "s")"
                     + (branchName.isEmpty ? "" : " on new branch “\(branchName)”")

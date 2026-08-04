@@ -61,7 +61,7 @@ struct ZoomKeyCatcher: NSViewRepresentable {
                   !ShortcutStore.shared.isCustomized(.zoomIn),
                   ownsCombo(shift: modifiers.contains(.shift))
             else { return false }
-            let defaults = UserDefaults.standard
+            let defaults = UserDefaults.pullmark
             let stored = defaults.object(forKey: DefaultsKeys.zoom) as? Double ?? 1.0
             defaults.set(DocumentZoom.zoomIn(from: DocumentZoom.clamped(stored)),
                          forKey: DefaultsKeys.zoom)
@@ -90,7 +90,7 @@ struct ZoomKeyCatcher: NSViewRepresentable {
 /// Transient "125%" pill shown at the top of the document area whenever the
 /// zoom changes (menu, shortcut, or pinch), the way browsers surface it.
 struct ZoomHUD: View {
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     @Environment(\.controlActiveState) private var controlActiveState
     @State private var visible = false
     @State private var hideTask: Task<Void, Never>?

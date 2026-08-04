@@ -174,7 +174,7 @@ struct ReviewPopover: View {
     @State private var viewerLogin: String?
     /// Chrome text follows the document zoom (damped) like the sidebar
     /// and outline panels — the pending comment bodies especially.
-    @AppStorage(DefaultsKeys.zoom) private var zoom = 1.0
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
