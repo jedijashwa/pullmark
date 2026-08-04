@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.24.0 - 2026-08-04
 
 - **The sidebar navigator, rebuilt**
   ([#32](https://github.com/jedijashwa/pullmark/issues/32)) — the
