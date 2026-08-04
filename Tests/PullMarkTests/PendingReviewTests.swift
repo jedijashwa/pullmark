@@ -305,6 +305,78 @@ import Testing
         #expect(result.server.first?.id == queued.id)
     }
 
+    // MARK: - Create-authoritative sync (the no-second-create rule)
+
+    // A successful atomic create is its own proof: the sent comments move
+    // into the adopted state from the response, with no re-fetch of
+    // GitHub's lagging reviews list. The create branch is guarded on
+    // `pendingReview == nil`, so a non-nil state out of stateAfterCreate
+    // IS the no-second-create rule — the same pass can never re-enter the
+    // create path and 422 against the review it just created.
+
+    @Test func createResponseBecomesTheAdoptedStateAndDrainsTheQueue() {
+        let sent = [local("first"), local("second")]
+        let created = PullRequestReview(id: 42, nodeId: "PRR_42",
+                                        user: .init(login: "me"),
+                                        body: nil, state: "PENDING",
+                                        commitId: "abc123")
+        let outcome = PendingReviewSync.stateAfterCreate(
+            review: created, sent: sent, queue: sent, fallbackCommitID: "head999")
+        #expect(outcome.state.reviewID == 42)
+        #expect(outcome.state.nodeID == "PRR_42")
+        #expect(outcome.state.commitID == "abc123")
+        #expect(outcome.state.comments == sent,
+                "every sent comment was accepted with the atomic create")
+        #expect(outcome.queue.isEmpty)
+    }
+
+    @Test func stateAfterCreateKeepsMidFlightAdditionsQueued() {
+        let sent = [local("sent while creating")]
+        let midFlight = local("typed during the create round-trip")
+        let created = PullRequestReview(id: 1, nodeId: "PRR_1", user: nil,
+                                        body: nil, state: "PENDING", commitId: nil)
+        let outcome = PendingReviewSync.stateAfterCreate(
+            review: created, sent: sent, queue: sent + [midFlight],
+            fallbackCommitID: "head999")
+        #expect(outcome.queue == [midFlight])
+        #expect(outcome.state.commitID == "head999",
+                "a response without commit_id falls back to the loaded head")
+    }
+
+    @Test func createResponseDecodesAndToleratesDrift() {
+        let body = Data("""
+        {"id": 7, "node_id": "PRR_7", "user": {"login": "me"},
+         "body": "", "state": "PENDING", "commit_id": "abc"}
+        """.utf8)
+        let decoded = GitHubClient.decodeCreatedReview(body)
+        #expect(decoded?.id == 7)
+        #expect(decoded?.nodeId == "PRR_7")
+        #expect(decoded?.commitId == "abc")
+        // Shape drift degrades to nil (the caller adopts instead) rather
+        // than throwing — the review already exists server-side.
+        #expect(GitHubClient.decodeCreatedReview(Data("not json".utf8)) == nil)
+    }
+
+    @Test func laterAdoptionIdentifiesIdlessCreatedCommentsByAuthoring() {
+        // Comments landed by the atomic create carry no serverID until a
+        // normal adoption sees them; the fresh fetch must hand ids to the
+        // known copies without rebuilding their row identity.
+        let created = local("note")
+        let again = PendingReviewSync.reconcile(server: [server("note", id: 7)],
+                                                previousServer: [created], queue: [])
+        #expect(again.server.first?.localID == created.localID)
+        #expect(again.server.first?.serverID == 7)
+    }
+
+    @Test func idlessIdentityMatchClaimsEachKnownCommentOnce() {
+        let one = local("dup")
+        let two = local("dup")
+        let again = PendingReviewSync.reconcile(
+            server: [server("dup", id: 1), server("dup", id: 2)],
+            previousServer: [one, two], queue: [])
+        #expect(Set(again.server.map(\.localID)) == Set([one.localID, two.localID]))
+    }
+
     // MARK: - Disk store (pure encode/decode/update)
 
     private let ref = PullRequestRef(owner: "acme", repo: "docs", number: 12)

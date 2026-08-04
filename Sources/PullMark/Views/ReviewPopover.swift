@@ -300,7 +300,9 @@ struct ReviewPopover: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(session.pendingComments) { comment in
-                    pendingRow(comment)
+                    pendingRow(comment,
+                               uploaded: !session.queuedComments
+                                   .contains { $0.id == comment.id })
                         .background(GeometryReader { geo in
                             Color.clear.preference(
                                 key: PendingRowBottomsKey.self,
@@ -341,14 +343,17 @@ struct ReviewPopover: View {
         }
     }
 
-    private func pendingRow(_ comment: PendingComment) -> some View {
+    /// `uploaded` is membership in the adopted review, not serverID
+    /// presence: comments the atomic create landed are synced before their
+    /// ids echo back (see PendingReviewSync.stateAfterCreate).
+    private func pendingRow(_ comment: PendingComment, uploaded: Bool) -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text("\(comment.path) · \(comment.lineDescription)")
                         .font(fonts.captionBold)
                         .foregroundStyle(.secondary)
-                    PendingCommentTag(uploaded: comment.serverID != nil,
+                    PendingCommentTag(uploaded: uploaded,
                                       font: fonts.caption2Bold)
                 }
                 Text(comment.body)
@@ -522,14 +527,14 @@ private struct PendingContentFrameKey: PreferenceKey {
 }
 
 /// GitHub's "Pending" tag for comments in the viewer's pending review;
-/// "Not uploaded" flags a queued comment GitHub hasn't accepted yet.
+/// "Not synced" flags a queued comment GitHub hasn't accepted yet.
 struct PendingCommentTag: View {
     let uploaded: Bool
     /// Zoom-following override from the host (ChromeFonts).
     var font: Font?
 
     var body: some View {
-        Text(uploaded ? "Pending" : "Not uploaded")
+        Text(uploaded ? "Pending" : "Not synced")
             .font(font ?? .caption2.bold())
             .padding(.horizontal, 5)
             .padding(.vertical, 1)

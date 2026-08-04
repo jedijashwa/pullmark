@@ -87,8 +87,23 @@ import Testing
             comment(id: 4, path: "Package.swift"),
         ]
         let hidden = ThreadVisibility.hiddenFileCommentCount(
-            comments: comments, visiblePaths: ["docs/a.md"])
+            comments: comments, meta: [:], visiblePaths: ["docs/a.md"])
         #expect(hidden == 3)
+    }
+
+    /// Same inclusion rule as the sidebar badges: a resolved conversation
+    /// is settled and counts nowhere — including the overview's
+    /// hidden-files honesty line.
+    @Test func hiddenFileCommentCountSkipsResolvedThreads() {
+        let comments = [
+            comment(id: 1, path: "src/main.swift"),
+            comment(id: 2, path: "src/main.swift", replyTo: 1),
+            comment(id: 3, path: "Package.swift"),
+        ]
+        let meta = [1: ThreadMeta(nodeID: "n1", isResolved: true)]
+        let hidden = ThreadVisibility.hiddenFileCommentCount(
+            comments: comments, meta: meta, visiblePaths: ["docs/a.md"])
+        #expect(hidden == 1)
     }
 
     // MARK: - Pending comments at anchors (spec §3)
@@ -99,15 +114,19 @@ import Testing
             pending(path: "a.md", side: "LEFT"),   // no old side in Result
             pending(path: "b.md"),
         ]
-        let placed = ThreadVisibility.resultPending(items, path: "a.md")
+        let placed = ThreadVisibility.resultPending(items, path: "a.md",
+                                                    queuedIDs: [items[0].id])
         #expect(placed.count == 1)
         #expect(placed[0].lineStart == 3)
         #expect(placed[0].lineLabel == "Lines 3–4 (new)")
         #expect(placed[0].uploaded == false)
     }
 
+    /// "Uploaded" is membership in the adopted review (the queued set),
+    /// not serverID presence — the atomic create lands comments before
+    /// their ids echo back (PendingReviewSync.stateAfterCreate).
     @Test func pendingPayloadLabelsSingleLineAndUpload() {
-        let payload = PendingPayload(pending(start: 7, end: 7, uploaded: true))
+        let payload = PendingPayload(pending(start: 7, end: 7), uploaded: true)
         #expect(payload.lineLabel == "Line 7 (new)")
         #expect(payload.uploaded)
     }

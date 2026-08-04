@@ -115,9 +115,10 @@ struct PROverviewView: View {
                 .foregroundStyle(.secondary)
             // Honesty about non-Markdown files: their threads have no
             // surface here, but they must not silently vanish (spec §2).
+            // Unresolved only — the same rule as the sidebar badges.
             if hiddenCommentCount(session) > 0 {
                 let count = hiddenCommentCount(session)
-                Text("\(count) review comment\(count == 1 ? "" : "s") on files not shown in PullMark")
+                Text("\(count) unresolved review comment\(count == 1 ? "" : "s") on files not shown in PullMark")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -179,6 +180,7 @@ struct PROverviewView: View {
     private func hiddenCommentCount(_ session: PRSession) -> Int {
         ThreadVisibility.hiddenFileCommentCount(
             comments: session.reviewComments,
+            meta: session.threadMeta,
             visiblePaths: Set(session.markdownFiles.map(\.filename)))
     }
 }
@@ -382,6 +384,13 @@ struct PRFileView: View {
         (session?.pendingComments ?? []).filter { $0.path == path }
     }
 
+    /// Comments still in the local queue (everything else in the unified
+    /// pending list lives in the adopted review on GitHub) — drives the
+    /// "Not synced" tag on anchored pending cards.
+    private var queuedCommentIDs: Set<String> {
+        Set((session?.queuedComments ?? []).map(\.id))
+    }
+
     private var html: String {
         guard let file else { return "" }
         let style = ThemeSelection.pageStyle(from: themeRaw)
@@ -410,7 +419,8 @@ struct PRFileView: View {
                                                     viewer: state.viewerLogin),
                                             pending: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultPending(
-                                                    filePendingComments, path: path),
+                                                    filePendingComments, path: path,
+                                                    queuedIDs: queuedCommentIDs),
                                             commentableLines: file.status == "removed" ? nil
                                                 : CommentableLines.payload(patch: file.patch),
                                             reviewPending: reviewPending)
@@ -425,7 +435,8 @@ struct PRFileView: View {
                                             meta: session?.threadMeta ?? [:],
                                             pending: filePendingComments,
                                             patch: file.patch ?? "",
-                                            viewer: state.viewerLogin),
+                                            viewer: state.viewerLogin,
+                                            queuedIDs: queuedCommentIDs),
                 patchLines: file.patch.map(PatchComposerLines.payloads(patch:)),
                 reviewPending: reviewPending
             )
@@ -436,7 +447,8 @@ struct PRFileView: View {
             let placed = ReviewThreads.place(threads, in: segments,
                                              meta: session?.threadMeta ?? [:],
                                              viewer: viewer)
-            segments = PendingAnchors.place(filePendingComments, in: placed.segments)
+            segments = PendingAnchors.place(filePendingComments, in: placed.segments,
+                                            queuedIDs: queuedCommentIDs)
             func payload(_ thread: ReviewThread) -> ThreadPayload {
                 let meta = session?.threadMeta[thread.root.id]
                 return ThreadPayload(lineLabel: thread.lineLabel,

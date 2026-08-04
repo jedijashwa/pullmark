@@ -854,8 +854,14 @@ final class AppState: ObservableObject {
             persistQueue(sessionID: sessionID)
             return
         }
-        guard let serverID = prSessions[index].pendingReview?.comments
-            .first(where: { $0.id == id })?.serverID else { return }
+        guard let comment = prSessions[index].pendingReview?.comments
+            .first(where: { $0.id == id }) else { return }
+        guard let serverID = comment.serverID else {
+            // Landed by the atomic create, id not echoed back yet (see
+            // stateAfterCreate) — a server-side delete needs the id.
+            lastError = "This comment is still syncing with GitHub — try discarding it again in a moment."
+            return
+        }
         let ref = prSessions[index].ref
         Task {
             do {
@@ -904,6 +910,18 @@ final class AppState: ObservableObject {
                                            comments: comments)
             }
             guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return true }
+            // Reviews-list lag guard: a review this app just created can be
+            // missing from the list for a beat (read-after-write). Comments
+            // only the create response vouches for (no server id yet) must
+            // not be dropped — and dropping the review would re-arm the
+            // create path into a guaranteed 422. Keep the local truth; a
+            // later adoption that sees the review reconciles ids normally.
+            if state == nil,
+               let local = prSessions[index].pendingReview,
+               local.comments.contains(where: { $0.serverID == nil }) {
+                adoptionKnown.insert(sessionID)
+                return true
+            }
             let reconciled = PendingReviewSync.reconcile(
                 server: state?.comments ?? [],
                 previousServer: prSessions[index].pendingReview?.comments ?? [],
@@ -926,7 +944,7 @@ final class AppState: ObservableObject {
     /// of silently doing nothing.
     func syncPendingComments(sessionID: String) async {
         // Demo mode: nothing uploads — the queued comment deliberately
-        // stays "Not uploaded" so both sync states stay visible.
+        // stays "Not synced" so both sync states stay visible.
         guard !DemoMode.active else { return }
         await pendingSyncGate.run(sessionID) { [weak self] in
             await self?.performPendingSyncPass(sessionID: sessionID)
@@ -938,8 +956,18 @@ final class AppState: ObservableObject {
     /// API-mix note. Failures keep the remainder queued and surface; a
     /// 422 from racing an externally created pending review is healed by
     /// re-adopting and retrying once.
+    ///
+    /// The create path runs at most once per pass. A successful create is
+    /// its own proof: the response carries the review and every sent
+    /// comment was accepted with it, so the sent comments move into the
+    /// adopted state directly (PendingReviewSync.stateAfterCreate).
+    /// Re-fetching instead would race GitHub's lagging reviews list — the
+    /// fetch misses the just-created review, the loop re-enters the create
+    /// path, and the second create 422s ("one pending review per PR")
+    /// though the first one succeeded.
     private func performPendingSyncPass(sessionID: String) async {
         var attemptsLeft = 2
+        var createdThisPass = false
         while attemptsLeft > 0 {
             attemptsLeft -= 1
             guard let queued = prSessions.first(where: { $0.id == sessionID })?.queuedComments,
@@ -963,16 +991,44 @@ final class AppState: ObservableObject {
                         try await client.addPendingComment(reviewNodeID: pending.nodeID,
                                                            comment: comment)
                     }
+                    // Adoption moves the uploaded comments from the queue to
+                    // the server list in one publish; anything it kept queued
+                    // was not accepted (or arrived mid-sync) — loop once more.
+                    await adoptPendingReview(sessionID: sessionID)
+                } else if !createdThisPass {
+                    let sent = session.queuedComments
+                    let created = try await client.createReview(
+                        session.ref, commitID: session.details.head.sha,
+                        body: nil, event: nil, comments: sent)
+                    createdThisPass = true
+                    if let created,
+                       let index = prSessions.firstIndex(where: { $0.id == sessionID }) {
+                        let outcome = PendingReviewSync.stateAfterCreate(
+                            review: created, sent: sent,
+                            queue: prSessions[index].queuedComments,
+                            fallbackCommitID: session.details.head.sha)
+                        // One synchronous publish: the adopted list and the
+                        // queue its rows are filtered against move together.
+                        prSessions[index].pendingReview = outcome.state
+                        prSessions[index].queuedComments = outcome.queue
+                        persistQueue(sessionID: sessionID)
+                        adoptionKnown.insert(sessionID)
+                    } else {
+                        // Response shape drift: the review exists but wasn't
+                        // decodable. Adopt to find it — quietly, and without
+                        // ever re-entering the create path this pass.
+                        await adoptPendingReview(sessionID: sessionID)
+                    }
                 } else {
-                    try await client.createReview(session.ref,
-                                                  commitID: session.details.head.sha,
-                                                  body: nil, event: nil,
-                                                  comments: session.queuedComments)
+                    // A create already ran this pass but no pending review
+                    // is visible yet (reviews-list lag). Adopt-only, quiet:
+                    // the comments are safe server-side or still queued for
+                    // the next pass — a second create would 422.
+                    await adoptPendingReview(sessionID: sessionID)
+                    if prSessions.first(where: { $0.id == sessionID })?.pendingReview == nil {
+                        return
+                    }
                 }
-                // Adoption moves the uploaded comments from the queue to the
-                // server list in one publish; anything it kept queued was
-                // not accepted (or arrived mid-sync) — loop once more.
-                await adoptPendingReview(sessionID: sessionID)
                 guard let after = prSessions.first(where: { $0.id == sessionID }),
                       !after.queuedComments.isEmpty, attemptsLeft > 0 else { return }
             } catch {

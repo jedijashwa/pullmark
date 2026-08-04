@@ -45,6 +45,11 @@ enum PendingReviewSync {
                           queue: [PendingComment])
         -> (server: [PendingComment], queue: [PendingComment]) {
         var remaining = queue
+        // Known server comments the create-authoritative path landed before
+        // GitHub echoed ids back (serverID nil — see stateAfterCreate):
+        // the fresh fetch identifies them by anchor + body, each claiming
+        // at most one, so localIDs survive the id-less bridge too.
+        var unidentifiedKnown = previousServer.filter { $0.serverID == nil }
         let stabilized = server.map { fresh -> PendingComment in
             var fresh = fresh
             var identified = false
@@ -53,11 +58,13 @@ enum PendingReviewSync {
                 fresh.localID = known.localID
                 identified = true
             }
-            if let match = remaining.firstIndex(where: {
-                $0.path == fresh.path && $0.lineStart == fresh.lineStart
-                    && $0.lineEnd == fresh.lineEnd && $0.side == fresh.side
-                    && $0.body == fresh.body
-            }) {
+            if !identified,
+               let match = unidentifiedKnown.firstIndex(where: { fresh.sameAuthoring(as: $0) }) {
+                fresh.localID = unidentifiedKnown[match].localID
+                identified = true
+                unidentifiedKnown.remove(at: match)
+            }
+            if let match = remaining.firstIndex(where: { fresh.sameAuthoring(as: $0) }) {
                 if !identified { fresh.localID = remaining[match].localID }
                 remaining.remove(at: match)
             }
@@ -66,11 +73,43 @@ enum PendingReviewSync {
         return (stabilized, remaining)
     }
 
+    /// The session state after a successful atomic review create. The
+    /// create response is authoritative: the review exists and every sent
+    /// comment was accepted with it, so the sent comments move straight
+    /// from the queue into the adopted state — no re-fetch, which GitHub's
+    /// lagging reviews list can fail (and the create path must never run
+    /// again against a review that already exists). Server comment ids
+    /// arrive with the next normal adoption (reconcile matches them back
+    /// by anchor + body).
+    static func stateAfterCreate(review: PullRequestReview,
+                                 sent: [PendingComment],
+                                 queue: [PendingComment],
+                                 fallbackCommitID: String)
+        -> (state: PendingReviewState, queue: [PendingComment]) {
+        let state = PendingReviewState(reviewID: review.id,
+                                       nodeID: review.nodeId,
+                                       commitID: review.commitId ?? fallbackCommitID,
+                                       summary: review.body,
+                                       comments: sent)
+        let sentIDs = Set(sent.map(\.localID))
+        return (state, queue.filter { !sentIDs.contains($0.localID) })
+    }
+
     /// The local queue after a server fetch — `reconcile` without identity
     /// carry-over context.
     static func remainingQueue(local: [PendingComment],
                                server: [PendingComment]) -> [PendingComment] {
         reconcile(server: server, previousServer: [], queue: local).queue
+    }
+}
+
+extension PendingComment {
+    /// Same anchor and body — how a fresh server copy claims the local
+    /// twin it came from (the server never echoes local ids).
+    func sameAuthoring(as other: PendingComment) -> Bool {
+        path == other.path && lineStart == other.lineStart
+            && lineEnd == other.lineEnd && side == other.side
+            && body == other.body
     }
 }
 

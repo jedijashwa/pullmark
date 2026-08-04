@@ -1613,7 +1613,7 @@
       if (item.uploaded === false) {
         var queued = document.createElement("span");
         queued.className = "pm-pending-tag pm-pending-queued";
-        queued.textContent = "Not uploaded";
+        queued.textContent = "Not synced";
         tags.append(queued);
       }
       header.append(label, tags);
