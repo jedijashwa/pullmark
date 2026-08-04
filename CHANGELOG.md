@@ -4,6 +4,38 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.22.0 - 2026-08-04
+
+- **Review conversations** ([#29]) — reviewing now happens wherever
+  you read:
+  - **Threads in the Result view**: comment badges in the margin with
+    counts, clustered per block; click to expand the conversation in
+    place. Resolved conversations stay tucked away until you ask —
+    "Show Resolved Conversations" lives in the View menu (rebindable)
+    and at the end of the document.
+  - **An honest review state**: one toolbar control reads "Review
+    changes" or "Finish your review · N" — and N is true, because
+    pending reviews live on GitHub, not in app memory. Reviews started
+    on github.com appear in PullMark and vice versa; quitting loses
+    nothing. "Abandon review" (with confirmation) discards server-side.
+  - **Verdicts that can't happen by accident**: Comment / Approve /
+    Request changes as an explicit selection, Comment preselected every
+    time, one Submit button. On your own PR, Approve and Request
+    changes are disabled with the reason inline.
+  - **An in-page composer** replacing the sheet: it expands beneath the
+    block, brings itself into view, pre-fills suggestions from the
+    block's lines, narrows its range to your text selection, and keeps
+    drafts when you click away. One comment bubble on a fixed margin
+    rail (the margin is part of the hover zone — park your pointer
+    there and scroll); suggestion editing starts inside the composer.
+  - **Reactions and comment management**: react with GitHub's eight
+    emoji on any published comment; edit or delete your own from the
+    ⋯ menu. Resolved threads in diff views collapse to one line.
+  - **Comment counts** on sidebar file rows, plus a note on the PR
+    overview when comments live on files PullMark doesn't show.
+
+[#29]: https://github.com/jedijashwa/pullmark/issues/29
+
 ## 0.21.0 - 2026-07-31
 
 - **Content width** — choose how far text may stretch before it wraps:
