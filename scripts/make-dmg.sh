@@ -49,6 +49,14 @@ ATTACH_OUT="$(hdiutil attach -readwrite -noverify -noautoopen "$RW_DMG")"
 MOUNT_POINT="$(printf '%s\n' "$ATTACH_OUT" | awk -F'\t' '/\/Volumes\//{print $NF; exit}')"
 [ -d "$MOUNT_POINT" ] || { echo "error: failed to mount $RW_DMG" >&2; exit 1; }
 
+# Finder registers the new volume asynchronously — asking for the disk
+# right after attach intermittently fails ("Can't get disk"). Wait until
+# Finder can see it before scripting the layout.
+for _ in $(seq 1 15); do
+  [ "$(osascript -e "tell application \"Finder\" to exists disk \"$VOLNAME\"" 2>/dev/null)" = "true" ] && break
+  sleep 1
+done
+
 osascript <<EOF
 tell application "Finder"
   tell disk "$VOLNAME"
