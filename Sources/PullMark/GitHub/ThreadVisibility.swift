@@ -13,15 +13,19 @@ enum ThreadVisibility {
     /// nearest-block guessing — a misanchored highlight in a reading view
     /// is worse than an absent one).
     static func resultAnchored(_ threads: [ReviewThread],
-                               meta: [Int: ThreadMeta]) -> [ThreadPayload] {
+                               meta: [Int: ThreadMeta],
+                               viewer: String? = nil) -> [ThreadPayload] {
         threads.compactMap { thread in
             guard !thread.isFileLevel, !thread.isOutdated,
                   let line = thread.anchorLine, thread.anchorSide == "RIGHT" else { return nil }
+            let threadMeta = meta[thread.root.id]
             return ThreadPayload(
                 lineLabel: thread.lineLabel,
-                comments: thread.comments.map(CommentPayload.init),
+                comments: thread.comments.map {
+                    CommentPayload($0, meta: threadMeta, viewer: viewer)
+                },
                 rootID: thread.root.id,
-                resolved: meta[thread.root.id]?.isResolved,
+                resolved: threadMeta?.isResolved,
                 anchorStart: min(thread.root.startLine ?? line, line),
                 anchorEnd: line
             )
@@ -192,7 +196,8 @@ enum PatchAnchors {
     /// patch line and are excluded here (they are counted in the presence
     /// signals instead). Rows come back sorted by line index.
     static func place(threads: [ReviewThread], meta: [Int: ThreadMeta],
-                      pending: [PendingComment], patch: String) -> [PatchThreadPayload] {
+                      pending: [PendingComment], patch: String,
+                      viewer: String? = nil) -> [PatchThreadPayload] {
         let origins = lineOrigins(patch: patch)
 
         func lineIndex(side: String, line: Int) -> Int? {
@@ -207,11 +212,14 @@ enum PatchAnchors {
             guard !thread.isFileLevel, let line = thread.anchorLine,
                   let index = lineIndex(side: thread.anchorSide, line: line) else { continue }
             var row = rows[index] ?? PatchThreadPayload(lineIndex: index)
+            let threadMeta = meta[thread.root.id]
             row.threads.append(ThreadPayload(
                 lineLabel: thread.lineLabel,
-                comments: thread.comments.map(CommentPayload.init),
+                comments: thread.comments.map {
+                    CommentPayload($0, meta: threadMeta, viewer: viewer)
+                },
                 rootID: thread.root.id,
-                resolved: meta[thread.root.id]?.isResolved
+                resolved: threadMeta?.isResolved
             ))
             rows[index] = row
         }

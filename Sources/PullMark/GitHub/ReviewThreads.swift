@@ -29,19 +29,26 @@ struct ReviewThread: Equatable {
 
 enum ReviewThreads {
     /// Groups a flat comment list into threads. Replies carry the id of the
-    /// thread's root comment in `in_reply_to_id`; a reply whose root is
-    /// missing is promoted to a root so nothing is dropped.
+    /// thread's root comment in `in_reply_to_id`; when that root was deleted
+    /// the earliest surviving comment roots the thread, and the missing id
+    /// is mapped to it so the remaining replies stay together instead of
+    /// each being promoted into its own orphan thread.
     static func group(_ comments: [ReviewComment]) -> [ReviewThread] {
         let sorted = comments.sorted { $0.id < $1.id }
         var threads: [ReviewThread] = []
         var indexByRootID: [Int: Int] = [:]
         for comment in sorted {
-            if let parentID = comment.inReplyToId, let index = indexByRootID[parentID] {
-                threads[index].replies.append(comment)
-            } else {
-                indexByRootID[comment.id] = threads.count
-                threads.append(ReviewThread(root: comment, replies: []))
+            if let parentID = comment.inReplyToId {
+                if let index = indexByRootID[parentID] {
+                    threads[index].replies.append(comment)
+                    continue
+                }
+                // Deleted root: this (earliest, ids are ascending) reply
+                // becomes the root; later siblings follow it here.
+                indexByRootID[parentID] = threads.count
             }
+            indexByRootID[comment.id] = threads.count
+            threads.append(ReviewThread(root: comment, replies: []))
         }
         return threads
     }
@@ -50,7 +57,7 @@ enum ReviewThreads {
     /// thread's anchor (matching diff side), falling back to the nearest
     /// segment. Threads with no current position are returned separately.
     static func place(_ threads: [ReviewThread], in segments: [DiffSegmentPayload],
-                      meta: [Int: ThreadMeta] = [:])
+                      meta: [Int: ThreadMeta] = [:], viewer: String? = nil)
         -> (segments: [DiffSegmentPayload], outdated: [ReviewThread]) {
         var annotated = segments
         var outdated: [ReviewThread] = []
@@ -85,11 +92,14 @@ enum ReviewThreads {
                 outdated.append(thread)
                 continue
             }
+            let threadMeta = meta[thread.root.id]
             let payload = ThreadPayload(
                 lineLabel: thread.lineLabel,
-                comments: thread.comments.map(CommentPayload.init),
+                comments: thread.comments.map {
+                    CommentPayload($0, meta: threadMeta, viewer: viewer)
+                },
                 rootID: thread.root.id,
-                resolved: meta[thread.root.id]?.isResolved
+                resolved: threadMeta?.isResolved
             )
             if annotated[index].threads == nil { annotated[index].threads = [] }
             annotated[index].threads?.append(payload)
@@ -111,6 +121,20 @@ enum ReviewThreads {
 struct ThreadMeta: Equatable {
     let nodeID: String
     var isResolved: Bool
+    /// Per-comment GraphQL state, keyed by REST databaseId: node id (the
+    /// subject for reaction mutations), the viewer's own reactions, and
+    /// whether the comment was edited.
+    var comments: [Int: ReviewCommentMeta] = [:]
+}
+
+/// GraphQL-only per-comment state folded into the thread-meta query:
+/// REST has no viewerHasReacted, and lastEditedAt is the exact "edited"
+/// signal (updated_at also moves on non-edits).
+struct ReviewCommentMeta: Equatable {
+    let nodeID: String
+    /// REST content names ("+1", "heart", …) the viewer has pressed.
+    var viewerReacted: Set<String> = []
+    var edited: Bool = false
 }
 
 struct ThreadPayload: Encodable, Equatable {
@@ -130,6 +154,17 @@ struct CommentPayload: Encodable, Equatable {
     let author: String
     let dateLabel: String
     let body: String
+    /// REST comment id — present on published comments; enables the
+    /// reaction and edit/delete bridge round trips.
+    var id: Int? = nil
+    /// GitHub's "edited" affordance (quiet "· edited" in the byline).
+    var edited: Bool = false
+    /// The viewer authored this comment — gates the ⋯ (Edit/Delete) menu.
+    var viewerOwned: Bool = false
+    /// Reaction toggles can work: the viewer is known and the comment's
+    /// GraphQL node id is on hand. Chips still render read-only otherwise.
+    var canReact: Bool = false
+    var reactions: [ReactionChipPayload] = []
 
     init(author: String, dateLabel: String, body: String) {
         self.author = author
@@ -139,5 +174,19 @@ struct CommentPayload: Encodable, Equatable {
 
     init(_ comment: ReviewComment) {
         self.init(author: comment.author, dateLabel: comment.dateLabel, body: comment.body)
+    }
+
+    /// A published comment enriched with viewer-relative state: `meta` is
+    /// the containing thread's (nil degrades to counts-only chips, no
+    /// menu, no toggles — never a crash).
+    init(_ comment: ReviewComment, meta: ThreadMeta?, viewer: String?) {
+        self.init(comment)
+        let commentMeta = meta?.comments[comment.id]
+        id = comment.id
+        edited = commentMeta?.edited ?? false
+        viewerOwned = CommentAuthorship.viewerOwns(author: comment.user?.login, viewer: viewer)
+        canReact = viewer != nil && commentMeta != nil
+        reactions = CommentReactions.chips(rollup: comment.reactions,
+                                           viewerReacted: commentMeta?.viewerReacted ?? [])
     }
 }

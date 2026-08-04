@@ -35,6 +35,64 @@ struct PullRequestFile: Decodable, Identifiable, Equatable {
     }
 }
 
+/// The REST reactions rollup carried by every review comment: one count per
+/// canonical reaction. "+1"/"-1" are GitHub's literal JSON keys (they carry
+/// no underscore, so the snake-case strategy leaves them alone); missing
+/// keys decode as zero rather than failing the whole comments page.
+struct ReactionRollup: Decodable, Equatable {
+    var plusOne = 0
+    var minusOne = 0
+    var laugh = 0
+    var hooray = 0
+    var confused = 0
+    var heart = 0
+    var rocket = 0
+    var eyes = 0
+
+    init(plusOne: Int = 0, minusOne: Int = 0, laugh: Int = 0, hooray: Int = 0,
+         confused: Int = 0, heart: Int = 0, rocket: Int = 0, eyes: Int = 0) {
+        self.plusOne = plusOne
+        self.minusOne = minusOne
+        self.laugh = laugh
+        self.hooray = hooray
+        self.confused = confused
+        self.heart = heart
+        self.rocket = rocket
+        self.eyes = eyes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case plusOne = "+1"
+        case minusOne = "-1"
+        case laugh, hooray, confused, heart, rocket, eyes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        plusOne = try container.decodeIfPresent(Int.self, forKey: .plusOne) ?? 0
+        minusOne = try container.decodeIfPresent(Int.self, forKey: .minusOne) ?? 0
+        laugh = try container.decodeIfPresent(Int.self, forKey: .laugh) ?? 0
+        hooray = try container.decodeIfPresent(Int.self, forKey: .hooray) ?? 0
+        confused = try container.decodeIfPresent(Int.self, forKey: .confused) ?? 0
+        heart = try container.decodeIfPresent(Int.self, forKey: .heart) ?? 0
+        rocket = try container.decodeIfPresent(Int.self, forKey: .rocket) ?? 0
+        eyes = try container.decodeIfPresent(Int.self, forKey: .eyes) ?? 0
+    }
+
+    mutating func setCount(_ count: Int, for kind: ReactionKind) {
+        switch kind {
+        case .thumbsUp: plusOne = count
+        case .thumbsDown: minusOne = count
+        case .laugh: laugh = count
+        case .hooray: hooray = count
+        case .confused: confused = count
+        case .heart: heart = count
+        case .rocket: rocket = count
+        case .eyes: eyes = count
+        }
+    }
+}
+
 /// An existing review comment fetched from GitHub. Comments whose `line` is
 /// nil are "outdated": they anchor to a previous version of the diff.
 struct ReviewComment: Decodable, Identifiable, Equatable {
@@ -55,6 +113,9 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     let user: User?
     let createdAt: String?
     let htmlUrl: URL?
+    /// Reaction counts (REST rollup). Mutable so a confirmed reaction
+    /// toggle folds into the loaded model without a refetch.
+    var reactions: ReactionRollup? = nil
 
     var author: String { user?.login ?? "unknown" }
 
