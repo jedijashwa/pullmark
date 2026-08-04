@@ -414,7 +414,12 @@ private struct SidebarFileRow: View {
                     }
                 }
             } icon: {
+                // Rasterized: the List drag preview repaints template
+                // symbols white (mismatching the black text); a flattened
+                // icon keeps its tint in the ghost.
                 Image(systemName: "doc.text")
+                    .foregroundStyle(.secondary)
+                    .drawingGroup()
             }
         }
         .help(PathAbbreviator.abbreviate(file.url.path))
@@ -460,6 +465,7 @@ private struct FolderRootGroup: View {
                             .truncationMode(.head)
                     } icon: {
                         Image(systemName: "doc.text")
+                            .foregroundStyle(.secondary)
                     }
                     .font(fonts.row)
                     .tag(SidebarSelection.local(folder.fileURL(for: path)))
@@ -485,6 +491,8 @@ private struct FolderRootGroup: View {
                     .font(fonts.row)
             } icon: {
                 Image(systemName: folder.missing ? "folder.badge.questionmark" : "folder")
+                    .foregroundStyle(.secondary)
+                    .drawingGroup() // keeps its tint in the drag preview
             }
             .foregroundStyle(folder.missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
             if folder.scanning {
@@ -545,7 +553,12 @@ private struct FolderNodeView: View {
                     FolderNodeView(folder: folder, node: child, depth: depth + 1)
                 }
             } label: {
-                Label(node.name, systemImage: "folder")
+                Label {
+                    Text(node.name)
+                } icon: {
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                }
                     .font(fonts.row)
                     .tag(SidebarSelection.folderNode(folder.rootURL, node.path))
                     .simultaneousGesture(
@@ -566,7 +579,12 @@ private struct FolderNodeView: View {
                     }
             }
         } else {
-            Label(node.name, systemImage: "doc.text")
+            Label {
+                Text(node.name)
+            } icon: {
+                Image(systemName: "doc.text")
+                    .foregroundStyle(.secondary)
+            }
                 .font(fonts.row)
                 .tag(SidebarSelection.local(folder.fileURL(for: node.path)))
                 .help(PathAbbreviator.abbreviate(folder.fileURL(for: node.path).path))
@@ -842,6 +860,7 @@ private struct PRSidebarGroup: View {
                 } icon: {
                     Image(systemName: status.systemImage)
                         .foregroundStyle(status.color)
+                        .drawingGroup() // keeps its tint in the drag preview
                 }
                 let count = session.markdownFiles.count
                 Text("\(count)")
@@ -897,8 +916,13 @@ private struct PRNodeView: View {
                                collapsedDirs: $collapsedDirs)
                 }
             } label: {
-                Label(node.name, systemImage: "folder")
-                    .font(fonts.row)
+                Label {
+                    Text(node.name)
+                } icon: {
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                }
+                .font(fonts.row)
             }
         } else if let filePath = node.filePath {
             HStack(spacing: 6) {
