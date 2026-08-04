@@ -289,6 +289,13 @@ body {
    Colors ride the primer variables so reading themes and both appearances
    adapt. */
 
+.pm-composer,
+.pm-split-full {
+  /* Breathing room when the composer scrolls itself into view — flush
+     against the window edge reads as clipped. */
+  scroll-margin-bottom: 16px;
+  scroll-margin-top: 10px;
+}
 .pm-composer {
   border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
   border-radius: 8px;
