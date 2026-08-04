@@ -37,6 +37,8 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @State private var updateStatus: String?
     @State private var checking = false
+    @State private var cliStatus = CLIInstaller.Status.unavailable
+    @State private var cliError: String?
 
     var body: some View {
         Form {
@@ -113,6 +115,35 @@ struct GeneralSettingsTab: View {
                 }
             }
 
+            LabeledContent("Command line:") {
+                // The `pullmark` command for DMG installs — Homebrew users
+                // already get it from the cask's binary stanza.
+                VStack(alignment: .leading, spacing: 6) {
+                    if cliStatus == .installed {
+                        HStack(spacing: 7) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("The pullmark command is installed")
+                        }
+                    } else if cliStatus == .notInstalled {
+                        Button("Install pullmark Command…") {
+                            cliError = CLIInstaller.install()
+                            cliStatus = CLIInstaller.status
+                        }
+                        .help("Adds a pullmark command to /usr/local/bin so you can open files and folders from the shell")
+                    } else {
+                        Text("Not available in this build")
+                            .foregroundStyle(.secondary)
+                    }
+                    if let cliError {
+                        Text(cliError)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
             LabeledContent("Updates:") {
                 // Trailing-aligned: the status line appearing must not widen
                 // the column and shove the button away from the right edge.
@@ -139,7 +170,10 @@ struct GeneralSettingsTab: View {
         .frame(height: 560)
         // The binding can change behind our back (Finder's "Change All…",
         // another app claiming it) — re-resolve whenever the tab shows.
-        .onAppear { defaultApp.refresh() }
+        .onAppear {
+            defaultApp.refresh()
+            cliStatus = CLIInstaller.status
+        }
     }
 
     private func check() {

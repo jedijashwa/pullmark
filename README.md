@@ -33,7 +33,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Edit in place** — click a block's pencil and it becomes an editor inside the rendered page; ⌘↩ or the Save button commits (guarded, versioned), Esc cancels.
 - **Source at a keystroke** — **⌥⌘U** (View → Show Markdown Source) temporarily flips the active document to its raw Markdown, syntax-tinted and light/dark aware; press again to return to the rendered view.
 - **Windows and tabs** — ⌘N opens an independent window (own sidebar, PRs, and edits); merge windows into native macOS tabs. Opens from Finder or the CLI land in the frontmost window. Drag `.md` files or folders onto any window.
-- **A `pullmark` command** — Homebrew installs a `pullmark` shell command: `pullmark README.md`, `pullmark docs/`, or bare `pullmark` to open the app. Relative paths resolve against your working directory.
+- **A `pullmark` command** — `pullmark README.md`, `pullmark docs/`, or bare `pullmark` to open the app, with relative paths resolved against your working directory. Homebrew installs it automatically; DMG installs add it from Settings → General → Command line.
 - **Review-request inbox** — PRs awaiting your review sit at the top of the sidebar with unread indicators and a Markdown-file-count badge; refreshed quietly, hideable in Settings.
 - **Moved-block detection** — a paragraph relocated verbatim renders once with a quiet "moved" chip instead of red-plus-green noise; only unambiguous relocations qualify.
 - **Open Quickly** — **⌘K** jumps to any heading in the current document, any sidebar file, any PR, or a recent — fuzzy-matched.
