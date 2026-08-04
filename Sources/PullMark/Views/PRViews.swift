@@ -219,6 +219,13 @@ struct PRFileView: View {
         if state.take(.reviewChanges) { reviewPopoverVisible = true }
     }
     @State private var reviewPopoverVisible = false
+    /// Comment id awaiting the native delete confirmation (destructive
+    /// actions never confirm with page chrome).
+    @State private var deleteCommentID: Int?
+    /// Scroll fraction captured just before a model update re-renders the
+    /// page (reaction fold-in, comment edit/delete reload) — restored in
+    /// handlePageLoaded so a chip click can't yank the reader to the top.
+    @State private var pendingScrollRestore: Double?
     @AppStorage(DefaultsKeys.diffLayout) private var layoutRaw = DiffLayout.inline.rawValue
     @State private var baseText: String?
     @State private var headText: String?
@@ -310,6 +317,8 @@ struct PRFileView: View {
         PRFileSheets(
             fileCommentVisible: $fileCommentVisible,
             historyRequest: $historyRequest,
+            deleteCommentID: $deleteCommentID,
+            onDeleteComment: { deleteComment($0) },
             sessionID: sessionID,
             path: path,
             history: { [weak state] in
@@ -397,7 +406,8 @@ struct PRFileView: View {
                                             threads: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultAnchored(
                                                     fileThreadGroups,
-                                                    meta: session?.threadMeta ?? [:]),
+                                                    meta: session?.threadMeta ?? [:],
+                                                    viewer: state.viewerLogin),
                                             pending: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultPending(
                                                     filePendingComments, path: path),
@@ -414,21 +424,27 @@ struct PRFileView: View {
                 threads: PatchAnchors.place(threads: fileThreadGroups,
                                             meta: session?.threadMeta ?? [:],
                                             pending: filePendingComments,
-                                            patch: file.patch ?? ""),
+                                            patch: file.patch ?? "",
+                                            viewer: state.viewerLogin),
                 patchLines: file.patch.map(PatchComposerLines.payloads(patch:)),
                 reviewPending: reviewPending
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
             let threads = fileThreadGroups
+            let viewer = state.viewerLogin
             let placed = ReviewThreads.place(threads, in: segments,
-                                             meta: session?.threadMeta ?? [:])
+                                             meta: session?.threadMeta ?? [:],
+                                             viewer: viewer)
             segments = PendingAnchors.place(filePendingComments, in: placed.segments)
             func payload(_ thread: ReviewThread) -> ThreadPayload {
-                ThreadPayload(lineLabel: thread.lineLabel,
-                              comments: thread.comments.map(CommentPayload.init),
-                              rootID: thread.root.id,
-                              resolved: session?.threadMeta[thread.root.id]?.isResolved)
+                let meta = session?.threadMeta[thread.root.id]
+                return ThreadPayload(lineLabel: thread.lineLabel,
+                                     comments: thread.comments.map {
+                                         CommentPayload($0, meta: meta, viewer: viewer)
+                                     },
+                                     rootID: thread.root.id,
+                                     resolved: meta?.isResolved)
             }
             // Whole-file comments were never anchored — their own section,
             // not the outdated bucket.
@@ -469,6 +485,14 @@ struct PRFileView: View {
                 onThreadResolve: { rootID, resolved in
                     setThreadResolved(rootID: rootID, resolved: resolved)
                 },
+                onReactionToggle: { commentID, content, reacted in
+                    handleReactionToggle(commentID: commentID, content: content,
+                                         reacted: reacted)
+                },
+                onCommentEdit: { commentID, body, draftKey in
+                    handleCommentEdit(commentID: commentID, body: body, draftKey: draftKey)
+                },
+                onCommentDelete: { deleteCommentID = $0 },
                 onResolvedVisibility: { state.resolvedConversationsVisible = $0 },
                 onBlameHistory: { start, end in
                     historyRequest = BlameHistoryRequest(lineStart: start, lineEnd: end)
@@ -534,6 +558,81 @@ struct PRFileView: View {
             } catch {
                 restoreDraftAfterFailure(key: submission.draftKey, text: submission.body)
                 state.lastError = "Could not post the comment: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Re-renders the page from a model mutation with the reader kept in
+    /// place: the scroll fraction is captured first and restored once the
+    /// fresh page loads (see handlePageLoaded).
+    private func mutatePreservingScroll(_ mutate: @escaping () -> Void) {
+        proxy.scrollFraction { fraction in
+            pendingScrollRestore = fraction
+            mutate()
+        }
+    }
+
+    /// A reaction toggle from the page (already flipped optimistically
+    /// there). Success folds the confirmed state into the model — the
+    /// re-rendered page then agrees with what the chip already shows;
+    /// failure reverts the chip and surfaces the error (the spec's
+    /// optimistic-toggle resolution).
+    private func handleReactionToggle(commentID: Int, content: String, reacted: Bool) {
+        guard let session, let kind = ReactionKind(rawValue: content) else { return }
+        guard let nodeID = CommentReactions.commentNodeID(of: commentID,
+                                                          in: session.threadMeta) else {
+            proxy.revertReaction(commentID: commentID, content: content, attempted: reacted)
+            state.lastError = "Reaction state unavailable — try refreshing the PR."
+            return
+        }
+        Task {
+            do {
+                try await state.client.setReaction(subjectID: nodeID, content: kind,
+                                                   add: reacted)
+                mutatePreservingScroll {
+                    state.applyReaction(sessionID: sessionID, commentID: commentID,
+                                        content: content, reacted: reacted)
+                }
+            } catch {
+                proxy.revertReaction(commentID: commentID, content: content,
+                                     attempted: reacted)
+                state.lastError = "Could not update the reaction: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Save from the in-card edit composer. Success reloads comments (the
+    /// re-render shows the new body and the "edited" byline); failure puts
+    /// the text back as the comment's edit draft so nothing typed is lost.
+    private func handleCommentEdit(commentID: Int, body: String, draftKey: String) {
+        guard let session else { return }
+        Task {
+            do {
+                try await state.client.updateReviewComment(session.ref,
+                                                           commentID: commentID, body: body)
+                mutatePreservingScroll {
+                    Task { await state.reloadComments(sessionID: sessionID) }
+                }
+            } catch {
+                restoreDraftAfterFailure(key: draftKey, text: body)
+                state.lastError = "Could not save the edit: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Runs after the native confirmation. Thread grouping keeps any
+    /// surviving replies together (ReviewThreads.group's deleted-root
+    /// fallback), so the reloaded page never orphans them.
+    private func deleteComment(_ commentID: Int) {
+        guard let session else { return }
+        Task {
+            do {
+                try await state.client.deleteReviewComment(session.ref, commentID: commentID)
+                mutatePreservingScroll {
+                    Task { await state.reloadComments(sessionID: sessionID) }
+                }
+            } catch {
+                state.lastError = "Could not delete the comment: \(error.localizedDescription)"
             }
         }
     }
@@ -687,6 +786,12 @@ struct PRFileView: View {
     }
 
     private func handlePageLoaded() {
+        // A model mutation re-rendered the page under the reader (reaction
+        // fold-in, edit/delete reload): put them back where they were.
+        if let fraction = pendingScrollRestore {
+            pendingScrollRestore = nil
+            proxy.restoreScrollFraction(fraction)
+        }
         // A fresh page starts with resolved conversations hidden; re-apply
         // the window's current choice.
         if state.resolvedConversationsVisible {
@@ -723,6 +828,8 @@ struct PRFileView: View {
 private struct PRFileSheets: ViewModifier {
     @Binding var fileCommentVisible: Bool
     @Binding var historyRequest: BlameHistoryRequest?
+    @Binding var deleteCommentID: Int?
+    let onDeleteComment: (Int) -> Void
     let sessionID: String
     let path: String
     let history: () async throws -> HistoryPanelData
@@ -734,6 +841,22 @@ private struct PRFileSheets: ViewModifier {
             }
             .sheet(item: $historyRequest) { _ in
                 BlameHistorySheet(load: history)
+            }
+            // The page's Delete menu item lands here: destructive, so it
+            // confirms natively (same shape as Abandon review) before any
+            // API call — page JS never confirms with its own chrome.
+            .confirmationDialog("Delete this comment?",
+                                isPresented: Binding(
+                                    get: { deleteCommentID != nil },
+                                    set: { if !$0 { deleteCommentID = nil } })) {
+                Button("Delete comment", role: .destructive) {
+                    if let id = deleteCommentID {
+                        deleteCommentID = nil
+                        onDeleteComment(id)
+                    }
+                }
+            } message: {
+                Text("The comment is removed from GitHub. Replies from others stay.")
             }
     }
 }

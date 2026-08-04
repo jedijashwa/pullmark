@@ -159,6 +159,11 @@ final class AppState: ObservableObject {
     /// alters history without touching the file, so file watchers miss it.
     @Published var gitStateTick = 0
     @Published var findBarVisible = false
+    /// The authenticated GitHub login, published for synchronous use by
+    /// payload building (author-gating the ⋯ menu, tinting reaction
+    /// chips). Set whenever identity resolution succeeds; nil gates all
+    /// viewer-relative affordances off.
+    @Published private(set) var viewerLogin: String?
     @Published var recents: [RecentItem] = []
     @Published var searchPaletteVisible = false
     /// Query handed from the search palette to the detail view it opened;
@@ -748,6 +753,29 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Folds a confirmed reaction write into the loaded model without a
+    /// refetch: the REST rollup count and the viewer's reaction state move
+    /// together, and the session is published once — the comment list and
+    /// the meta its chips derive from can never disagree mid-update.
+    func applyReaction(sessionID: String, commentID: Int, content: String, reacted: Bool) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        var session = prSessions[index]
+        guard let commentIndex = session.reviewComments.firstIndex(where: { $0.id == commentID })
+        else { return }
+        let rootID = CommentReactions.metaRoot(of: commentID, in: session.threadMeta)
+        let viewerReacted = rootID.flatMap {
+            session.threadMeta[$0]?.comments[commentID]?.viewerReacted
+        } ?? []
+        let updated = CommentReactions.applied(
+            rollup: session.reviewComments[commentIndex].reactions ?? ReactionRollup(),
+            viewerReacted: viewerReacted, content: content, reacted: reacted)
+        session.reviewComments[commentIndex].reactions = updated.rollup
+        if let rootID {
+            session.threadMeta[rootID]?.comments[commentID]?.viewerReacted = updated.viewerReacted
+        }
+        prSessions[index] = session
+    }
+
     func removePR(_ id: String) {
         prSessions.removeAll { $0.id == id }
         dropPRContentCache(sessionID: id)
@@ -833,6 +861,7 @@ final class AppState: ObservableObject {
             adoptionKnown.remove(sessionID)
             return false
         }
+        viewerLogin = viewer
         do {
             let reviews = try await client.reviews(ref)
             var state: PendingReviewState?
