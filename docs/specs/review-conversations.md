@@ -178,11 +178,17 @@ Full survey by the feature-researcher agent, July 2026. Highlights:
 
 - The composer **expands beneath the target block inside the page**,
   styled as a sibling of the thread cards — the document stays visible
-  and the composer scrolls with content. The existing hover
-  affordances collapse to one: the bubble opens an empty composer; the
-  pencil opens the same composer with a ```suggestion fence pre-filled
-  from the block's current lines and focused (the separate suggest
-  sheet retires).
+  and the composer scrolls with content. The hover affordances
+  collapse to exactly one: a single comment bubble on a **fixed margin
+  rail** (commentable pages reserve real right-margin padding so the
+  rail exists at every content width), vertically anchored to the
+  block's first line, one bubble visible at a time. The margin band
+  itself is part of the hover zone — a pointer parked on the rail
+  lights the block at its height, including while scrolling.
+  Suggestion editing starts inside the composer via its "Add a
+  suggestion" control; there is no separate pencil affordance (revised
+  2026-08-04 after live trial: a second stacked button collided with
+  short neighbors and straddled block edges).
 - Contents: text area; a compact toolbar with one **"Add a
   suggestion"** button (pre-fills the fence; disabled on the old
   side); a static range caption ("Lines 12–14, new"); Cancel; and a
@@ -261,9 +267,10 @@ indistinguishable in practice. No change to the view picker itself.
   covers every built-in theme, light and dark.
 - **Zoom**: markers and composer live in-page, so they scale with
   document magnification like all other content.
-- **Content width (Standard/Wide/Full)**: margin badges sit in the
-  gutter outside the content column; at Full width they overlay the
-  right edge — verified at all three settings.
+- **Content width (Standard/Wide/Full)**: commentable pages reserve
+  dedicated right-margin padding outside the reading measure, so
+  markers and the bubble rail have guaranteed room at all three
+  settings — including Full width — with no page overflow.
 - **Blame**: blame gutter and margin badges occupy opposite sides;
   thread highlight and blame hover tints must compose visibly.
 - **Split diff layout**: badges attach to the new-side column;
