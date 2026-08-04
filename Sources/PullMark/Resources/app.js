@@ -925,14 +925,22 @@
     }
 
     var clusters = [];
+    // Open state is per kind: the blue badge opens the published cards,
+    // the yellow badge the pending ones — the split visual honors the
+    // clicked control (clicking the highlight itself opens both).
     function clusterFor(el) {
       for (var i = 0; i < clusters.length; i++) {
         if (clusters[i].el === el) { return clusters[i]; }
       }
-      var cluster = { el: el, threads: [], pendings: [], open: false,
+      var cluster = { el: el, threads: [], pendings: [],
+                      openThreads: false, openPending: false,
                       card: null, badge: null, pendingBadge: null };
       clusters.push(cluster);
       return cluster;
+    }
+
+    function clusterOpen(cluster) {
+      return cluster.openThreads || cluster.openPending;
     }
     (threads || []).forEach(function (thread) {
       var el = blockFor(thread.anchorEnd || thread.anchorStart);
@@ -956,29 +964,53 @@
     }
 
     function renderCard(cluster) {
-      if (cluster.card) { cluster.card.remove(); }
+      // A re-render destroys any reply/edit mini-composer inside the old
+      // card: flush their typed text to drafts first (debounce can hold
+      // up to 400ms of it).
+      if (cluster.card) { flushLiveComposerDrafts(cluster.card); cluster.card.remove(); }
       var card = document.createElement("div");
       card.className = "pm-result-card pm-annotation";
       var visible = visibleThreads(cluster);
-      if (visible.length) { card.append(threadsEl(visible)); }
-      if (cluster.pendings.length) { card.append(pendingEl(cluster.pendings)); }
+      if (cluster.openThreads && visible.length) { card.append(threadsEl(visible)); }
+      if (cluster.openPending && cluster.pendings.length) {
+        card.append(pendingEl(cluster.pendings));
+      }
       cluster.el.after(card);
       cluster.card = card;
     }
 
     function collapseCluster(cluster) {
-      cluster.open = false;
+      cluster.openThreads = false;
+      cluster.openPending = false;
       cluster.el.classList.remove("pm-anchor-open");
-      if (cluster.card) { cluster.card.remove(); cluster.card = null; }
+      if (cluster.card) { flushLiveComposerDrafts(cluster.card); cluster.card.remove(); cluster.card = null; }
       positionMarkers();
     }
 
-    function toggleCluster(cluster) {
-      if (cluster.open) { collapseCluster(cluster); return; }
-      cluster.open = true;
-      cluster.el.classList.add("pm-anchor-open");
-      renderCard(cluster);
+    function syncCard(cluster) {
+      if (clusterOpen(cluster)) {
+        cluster.el.classList.add("pm-anchor-open");
+        renderCard(cluster);
+      } else {
+        cluster.el.classList.remove("pm-anchor-open");
+        if (cluster.card) { flushLiveComposerDrafts(cluster.card); cluster.card.remove(); cluster.card = null; }
+      }
       positionMarkers();
+    }
+
+    function toggleKind(cluster, kind) {
+      if (kind === "pending") { cluster.openPending = !cluster.openPending; }
+      else { cluster.openThreads = !cluster.openThreads; }
+      syncCard(cluster);
+    }
+
+    // The highlight itself toggles the whole cluster: everything open when
+    // any part is closed, everything closed otherwise.
+    function toggleCluster(cluster) {
+      if (clusterOpen(cluster)) { collapseCluster(cluster); return; }
+      cluster.openThreads = visibleThreads(cluster).length > 0;
+      cluster.openPending = cluster.pendings.length > 0;
+      syncCard(cluster);
     }
 
     function badgeEl(cluster, pending) {
@@ -991,7 +1023,7 @@
       badge.append(count);
       badge.addEventListener("click", function (event) {
         event.stopPropagation();
-        toggleCluster(cluster);
+        toggleKind(cluster, pending ? "pending" : "threads");
       });
       return badge;
     }
@@ -1065,14 +1097,39 @@
             + (cluster.pendings.length === 1 ? "" : "s") + " — click to expand";
           cluster.pendingBadge.setAttribute("aria-label", cluster.pendingBadge.title);
         }
-        if (cluster.open) {
-          if (!hasThreads && !hasPending) { collapseCluster(cluster); }
-          else { renderCard(cluster); }
+        if (clusterOpen(cluster)) {
+          if (!hasThreads) { cluster.openThreads = false; }
+          if (!hasPending) { cluster.openPending = false; }
+          syncCard(cluster);
         }
       });
       updateResolvedControl();
       positionMarkers();
     }
+
+    // Open-card state survives Swift-side re-renders (reaction fold-in,
+    // reply/edit/delete reload): the proxy reads the open anchors before
+    // the reload and re-applies them once the fresh page has built its
+    // clusters. Anchored by the block's data-pm-lines key.
+    window.__pmOpenThreadAnchors = function () {
+      var open = [];
+      clusters.forEach(function (cluster) {
+        if (!clusterOpen(cluster)) { return; }
+        open.push({ anchor: cluster.el.getAttribute("data-pm-lines") || "",
+                    threads: cluster.openThreads, pending: cluster.openPending });
+      });
+      return open;
+    };
+    window.__pmRestoreOpenThreadAnchors = function (list) {
+      (list || []).forEach(function (item) {
+        clusters.forEach(function (cluster) {
+          if ((cluster.el.getAttribute("data-pm-lines") || "") !== item.anchor) { return; }
+          cluster.openThreads = !!item.threads && visibleThreads(cluster).length > 0;
+          cluster.openPending = !!item.pending && cluster.pendings.length > 0;
+          syncCard(cluster);
+        });
+      });
+    };
 
     function positionMarkers() {
       var cRect = content.getBoundingClientRect();
@@ -1096,7 +1153,7 @@
       if (event.key !== "Escape") { return; }
       var closed = false;
       clusters.forEach(function (cluster) {
-        if (cluster.open) { collapseCluster(cluster); closed = true; }
+        if (clusterOpen(cluster)) { collapseCluster(cluster); closed = true; }
       });
       if (closed) {
         event.preventDefault();
@@ -1330,7 +1387,9 @@
   function refreshReactionBars(id) {
     var c = reactionComments[id];
     if (!c) { return; }
-    document.querySelectorAll('.pm-reactions[data-pm-comment="' + id + '"]')
+    // Ids are server ints today, but they pass through attribute selectors
+    // — escape rather than trust the shape.
+    document.querySelectorAll('.pm-reactions[data-pm-comment="' + CSS.escape(String(id)) + '"]')
       .forEach(function (bar) { renderReactionBar(bar, c); });
   }
 
@@ -1429,8 +1488,30 @@
     p.el.remove();
   }
 
+  // The popups position themselves relative to their card (menu below the
+  // ⋯ button, picker above the smiley); near a viewport edge that default
+  // side would clip — flip to the anchor's other side instead. Runs after
+  // the popup is in the DOM, so real geometry decides.
+  function fitPopupVertically(el, anchor) {
+    var margin = 8;
+    var rect = el.getBoundingClientRect();
+    var overBottom = rect.bottom > window.innerHeight - margin;
+    var overTop = rect.top < margin;
+    if (!overBottom && !overTop) { return; }
+    var aRect = anchor && anchor.getBoundingClientRect
+      ? anchor.getBoundingClientRect() : rect;
+    var parent = el.offsetParent;
+    var parentTop = parent ? parent.getBoundingClientRect().top : 0;
+    var top = overBottom
+      ? aRect.top - parentTop - el.offsetHeight - 4   // above the anchor
+      : aRect.bottom - parentTop + 4;                 // below the anchor
+    el.style.bottom = "auto";
+    el.style.top = Math.round(top) + "px";
+  }
+
   function showTransientPopup(el, anchor) {
     closeTransientPopup();
+    fitPopupVertically(el, anchor);
     var p = { el: el, anchor: anchor };
     p.onAway = function (event) {
       if (el.contains(event.target) || event.target === anchor
@@ -1547,6 +1628,12 @@
       close(true);
     }
     document.addEventListener("mousedown", onAway, true);
+    // Destroyed-from-outside path (card re-render): same keep-rule as
+    // away — an unchanged text is no draft.
+    root.__pmFlushDraft = function () {
+      if (ta.value === c.body) { draftDiscard(draftKey); }
+      else { draftSave(draftKey, ta.value); }
+    };
 
     cancel.addEventListener("click", function () {
       draftDiscard(draftKey);
@@ -1656,6 +1743,17 @@
   function draftDiscard(key) {
     delete composerDrafts[key];
     post({ type: "composerDraft", key: key, text: "" });
+  }
+
+  // Mini-composers (reply/edit) register a flush hook on their root;
+  // anything that destroys their DOM (card re-render, resolved-visibility
+  // toggle) calls this first, so no typed text ever waits on the 400ms
+  // draft debounce when the textarea disappears.
+  function flushLiveComposerDrafts(scope) {
+    if (!scope || !scope.querySelectorAll) { return; }
+    scope.querySelectorAll(".pm-reply-composer").forEach(function (el) {
+      if (el.__pmFlushDraft) { el.__pmFlushDraft(); }
+    });
   }
 
   // Commentable file-line runs (per-hunk, computed in Swift from the
@@ -2083,6 +2181,8 @@
       close(true);
     }
     document.addEventListener("mousedown", onAway, true);
+    // Destroyed-from-outside path (card re-render): same save as away.
+    root.__pmFlushDraft = function () { draftSave(draftKey, ta.value); };
 
     cancel.addEventListener("click", function () {
       draftDiscard(draftKey);

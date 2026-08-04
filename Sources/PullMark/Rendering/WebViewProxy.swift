@@ -258,6 +258,48 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// One expanded Result-view thread cluster, keyed by its block's
+    /// data-pm-lines range, with the open kinds (published/pending cards
+    /// expand independently — the split badges).
+    struct OpenThreadAnchor: Codable, Equatable {
+        let anchor: String
+        let threads: Bool
+        let pending: Bool
+    }
+
+    /// Anchors of the expanded thread clusters — captured just before a
+    /// model-driven re-render so handlePageLoaded can put the open cards
+    /// back (the scroll fraction alone keeps the reader's place, not the
+    /// card they had open). Pages without markers answer with [].
+    func openThreadAnchors(_ completion: @escaping ([OpenThreadAnchor]) -> Void) {
+        guard let webView else { return completion([]) }
+        webView.evaluateJavaScript(
+            "window.__pmOpenThreadAnchors ? JSON.stringify(__pmOpenThreadAnchors()) : \"[]\""
+        ) { value, _ in
+            guard let json = value as? String,
+                  let data = json.data(using: .utf8),
+                  let decoded = try? JSONDecoder().decode([OpenThreadAnchor].self, from: data)
+            else { return completion([]) }
+            completion(decoded)
+        }
+    }
+
+    /// Re-applies captured open clusters to the freshly loaded page. The
+    /// anchor keys round-tripped through the page (every evaluateJavaScript
+    /// interpolation is an injection surface): only the generated
+    /// "start-end" shape passes, and the payload is JSON-encoded besides.
+    func restoreOpenThreadAnchors(_ anchors: [OpenThreadAnchor]) {
+        let safe = anchors.filter {
+            $0.anchor.range(of: "^[0-9]+-[0-9]+$", options: .regularExpression) != nil
+        }
+        guard !safe.isEmpty,
+              let data = try? JSONEncoder().encode(safe),
+              let json = String(data: data, encoding: .utf8) else { return }
+        webView?.evaluateJavaScript(
+            "window.__pmRestoreOpenThreadAnchors && __pmRestoreOpenThreadAnchors(\(json));",
+            completionHandler: nil)
+    }
+
     /// Current scroll position as a 0–1 fraction of the scrollable height.
     func scrollFraction(_ completion: @escaping (Double?) -> Void) {
         guard let webView else { return completion(nil) }

@@ -232,6 +232,9 @@ struct PRFileView: View {
     private struct ScrollRestore {
         let fraction: Double
         let mode: Mode
+        /// Expanded thread clusters at capture time — scroll position alone
+        /// keeps the reader's place, not the card they had open.
+        var openAnchors: [WebViewProxy.OpenThreadAnchor] = []
     }
     @State private var pendingScrollRestore: ScrollRestore?
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var layoutRaw = DiffLayout.inline.rawValue
@@ -591,11 +594,17 @@ struct PRFileView: View {
     /// fresh page loads (see handlePageLoaded).
     private func mutatePreservingScroll(_ mutate: @escaping () -> Void) {
         let capturedMode = mode
-        proxy.scrollFraction { fraction in
-            pendingScrollRestore = fraction.map {
-                ScrollRestore(fraction: $0, mode: capturedMode)
+        proxy.openThreadAnchors { anchors in
+            proxy.scrollFraction { fraction in
+                if fraction == nil && anchors.isEmpty {
+                    pendingScrollRestore = nil
+                } else {
+                    pendingScrollRestore = ScrollRestore(fraction: fraction ?? 0,
+                                                         mode: capturedMode,
+                                                         openAnchors: anchors)
+                }
+                mutate()
             }
-            mutate()
         }
     }
 
@@ -842,6 +851,8 @@ struct PRFileView: View {
         if let restore = pendingScrollRestore {
             pendingScrollRestore = nil
             if restore.mode == mode {
+                // Cards first (they add height), then the scroll fraction.
+                proxy.restoreOpenThreadAnchors(restore.openAnchors)
                 proxy.restoreScrollFraction(restore.fraction)
             }
         }
