@@ -427,12 +427,28 @@ final class GitHubClient {
     /// review is left PENDING on GitHub; otherwise it is submitted with
     /// that event (COMMENT / APPROVE / REQUEST_CHANGES). Fails with 422
     /// when the viewer already has a pending review on the PR.
+    ///
+    /// Returns the created review when the response decodes (it is the
+    /// authoritative read: GitHub's reviews *list* lags reads-after-writes,
+    /// so a re-fetch right after a create can miss the new review — see
+    /// AppState.performPendingSyncPass). A decode failure returns nil
+    /// rather than throwing: the HTTP success already means the review
+    /// exists, and surfacing a shape drift as a create failure would
+    /// re-run a create that must not run twice.
+    @discardableResult
     func createReview(_ ref: PullRequestRef, commitID: String, body: String?,
-                      event: String?, comments: [PendingComment]) async throws {
+                      event: String?, comments: [PendingComment]) async throws
+        -> PullRequestReview? {
         let payload = try Self.reviewRequestBody(commitID: commitID, body: body,
                                                  event: event, comments: comments)
-        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews",
-                              jsonBody: payload)
+        let data = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/reviews",
+                                     jsonBody: payload)
+        return Self.decodeCreatedReview(data)
+    }
+
+    /// The review object POST …/reviews echoes back, or nil on shape drift.
+    nonisolated static func decodeCreatedReview(_ data: Data) -> PullRequestReview? {
+        try? decoder.decode(PullRequestReview.self, from: data)
     }
 
     /// All reviews on the PR (paginated; includes the viewer's own PENDING

@@ -45,18 +45,27 @@ enum ThreadVisibility {
         return counts
     }
 
-    /// Review comments on files PullMark does not show (non-Markdown files)
-    /// — the PR overview's honesty line (spec §2).
+    /// Unresolved review comments on files PullMark does not show
+    /// (non-Markdown files) — the PR overview's honesty line (spec §2).
+    /// Same inclusion rule as the sidebar badges (unresolvedCommentCounts):
+    /// resolved conversations are settled and count nowhere.
     static func hiddenFileCommentCount(comments: [ReviewComment],
+                                       meta: [Int: ThreadMeta],
                                        visiblePaths: Set<String>) -> Int {
-        comments.filter { !visiblePaths.contains($0.path) }.count
+        ReviewThreads.group(comments.filter { !visiblePaths.contains($0.path) })
+            .filter { meta[$0.root.id]?.isResolved != true }
+            .reduce(0) { $0 + $1.comments.count }
     }
 
     /// The viewer's pending comments that can anchor in this file's Result
     /// view (new-side only — the Result view has no old side).
+    /// `queuedIDs` are the comments still in the local queue — everything
+    /// else in the unified list lives in the adopted review on GitHub.
     static func resultPending(_ pending: [PendingComment],
-                              path: String) -> [PendingPayload] {
-        pending.filter { $0.path == path && $0.side == "RIGHT" }.map(PendingPayload.init)
+                              path: String,
+                              queuedIDs: Set<String> = []) -> [PendingPayload] {
+        pending.filter { $0.path == path && $0.side == "RIGHT" }
+            .map { PendingPayload($0, uploaded: !queuedIDs.contains($0.id)) }
     }
 }
 
@@ -70,10 +79,12 @@ struct PendingPayload: Encodable, Equatable {
     let lineLabel: String
     let body: String
     /// False while the comment is queued locally and GitHub hasn't
-    /// accepted it yet ("Not uploaded" in the review popover).
+    /// accepted it yet ("Not synced" in the review popover). Membership,
+    /// not serverID: comments the atomic create landed are synced before
+    /// their ids echo back (see PendingReviewSync.stateAfterCreate).
     let uploaded: Bool
 
-    init(_ comment: PendingComment) {
+    init(_ comment: PendingComment, uploaded: Bool) {
         lineStart = comment.lineStart
         lineEnd = comment.lineEnd
         side = comment.side
@@ -82,7 +93,7 @@ struct PendingPayload: Encodable, Equatable {
             ? "Line \(comment.lineEnd) (\(which))"
             : "Lines \(comment.lineStart)–\(comment.lineEnd) (\(which))"
         body = comment.body
-        uploaded = comment.serverID != nil
+        self.uploaded = uploaded
     }
 }
 
@@ -92,7 +103,8 @@ struct PendingPayload: Encodable, Equatable {
 /// the prose.
 enum PendingAnchors {
     static func place(_ pending: [PendingComment],
-                      in segments: [DiffSegmentPayload]) -> [DiffSegmentPayload] {
+                      in segments: [DiffSegmentPayload],
+                      queuedIDs: Set<String> = []) -> [DiffSegmentPayload] {
         var annotated = segments
         for comment in pending {
             let line = comment.lineEnd
@@ -117,7 +129,8 @@ enum PendingAnchors {
             }
             guard let index = match else { continue }
             if annotated[index].pending == nil { annotated[index].pending = [] }
-            annotated[index].pending?.append(PendingPayload(comment))
+            annotated[index].pending?.append(
+                PendingPayload(comment, uploaded: !queuedIDs.contains(comment.id)))
         }
         return annotated
     }
@@ -197,7 +210,8 @@ enum PatchAnchors {
     /// signals instead). Rows come back sorted by line index.
     static func place(threads: [ReviewThread], meta: [Int: ThreadMeta],
                       pending: [PendingComment], patch: String,
-                      viewer: String? = nil) -> [PatchThreadPayload] {
+                      viewer: String? = nil,
+                      queuedIDs: Set<String> = []) -> [PatchThreadPayload] {
         let origins = lineOrigins(patch: patch)
 
         func lineIndex(side: String, line: Int) -> Int? {
@@ -226,7 +240,7 @@ enum PatchAnchors {
         for comment in pending {
             guard let index = lineIndex(side: comment.side, line: comment.lineEnd) else { continue }
             var row = rows[index] ?? PatchThreadPayload(lineIndex: index)
-            row.pending.append(PendingPayload(comment))
+            row.pending.append(PendingPayload(comment, uploaded: !queuedIDs.contains(comment.id)))
             rows[index] = row
         }
         return rows.values.sorted { $0.lineIndex < $1.lineIndex }

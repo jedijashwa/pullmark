@@ -487,7 +487,7 @@ enum DemoSession {
                            + "payload here?"),
     ]
 
-    /// … and one still queued locally ("Not uploaded" in the popover).
+    /// … and one still queued locally ("Not synced" in the popover).
     static let queuedPendingComments: [PendingComment] = [
         PendingComment(serverID: nil,
                        path: gettingStartedPath,

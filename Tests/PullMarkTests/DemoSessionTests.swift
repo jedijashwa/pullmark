@@ -186,6 +186,7 @@ import Testing
         // The hidden-file honesty line has something to count.
         #expect(ThreadVisibility.hiddenFileCommentCount(
             comments: session.reviewComments,
+            meta: session.threadMeta,
             visiblePaths: Set(session.markdownFiles.map(\.filename))) == 1)
         // Sidebar badges: unresolved threads only.
         let counts = ThreadVisibility.unresolvedCommentCounts(
