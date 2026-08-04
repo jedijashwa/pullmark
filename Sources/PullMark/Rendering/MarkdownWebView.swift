@@ -71,6 +71,16 @@ struct MarkdownWebView: NSViewRepresentable {
     var onThreadReplySubmit: ((Int, String, String) -> Void)?
     /// Resolve/unresolve requested (root comment id, desired state).
     var onThreadResolve: ((Int, Bool) -> Void)?
+    /// A reaction chip/picker toggle: (comment id, REST content name,
+    /// desired state). The page already flipped optimistically — the
+    /// handler reverts via WebViewProxy.revertReaction on failure.
+    var onReactionToggle: ((Int, String, Bool) -> Void)?
+    /// Save from the in-card edit composer: (comment id, new body, draft
+    /// key — echoed back so a failed PATCH can restore the text).
+    var onCommentEdit: ((Int, String, String) -> Void)?
+    /// Delete chosen from a comment's ⋯ menu. The native destructive
+    /// confirm happens app-side before any API call.
+    var onCommentDelete: ((Int) -> Void)?
     /// The in-page "N resolved conversations" control was toggled — keeps
     /// the View menu's Show Resolved Conversations item in sync.
     var onResolvedVisibility: ((Bool) -> Void)?
@@ -425,6 +435,22 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let rootID = dict["rootID"] as? Int,
                    let resolved = dict["resolved"] as? Bool {
                     parent.onThreadResolve?(rootID, resolved)
+                }
+            case "reactionToggle":
+                if let commentID = dict["commentID"] as? Int,
+                   let content = dict["content"] as? String,
+                   let reacted = dict["reacted"] as? Bool {
+                    parent.onReactionToggle?(commentID, content, reacted)
+                }
+            case "commentEdit":
+                if let commentID = dict["commentID"] as? Int,
+                   let body = dict["body"] as? String {
+                    parent.onCommentEdit?(commentID, body,
+                                          dict["draftKey"] as? String ?? "edit:\(commentID)")
+                }
+            case "commentDelete":
+                if let commentID = dict["commentID"] as? Int {
+                    parent.onCommentDelete?(commentID)
                 }
             case "resolvedVisibility":
                 if let visible = dict["visible"] as? Bool {

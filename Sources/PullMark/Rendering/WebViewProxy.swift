@@ -237,6 +237,18 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// Reverts an optimistic reaction flip after the API write failed.
+    /// `content` came from the page (every evaluateJavaScript interpolation
+    /// is an injection surface): it must name a known reaction, and it goes
+    /// through jsStringLiteral besides.
+    func revertReaction(commentID: Int, content: String, attempted: Bool) {
+        guard ReactionKind(rawValue: content) != nil else { return }
+        webView?.evaluateJavaScript(
+            "window.__pmReactionRevert && __pmReactionRevert(\(commentID), "
+            + "\(HTMLBuilder.jsStringLiteral(content)), \(attempted));",
+            completionHandler: nil)
+    }
+
     /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
     /// view thread markers). In-place — no reload, the reader's position
     /// survives; pages without markers ignore it.
