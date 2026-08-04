@@ -37,10 +37,16 @@ Runbook (in order, verifying each step):
 6. Compare what shipped against the published screenshots: the site's
    `site/img/app-*.png` (doc, diff, edit, blame, themes) and the
    README hero `docs/img/pullmark.png`. If the release visibly
-   changed any surface those images show, refresh the affected shots:
-   drive the *upgraded installed app* from step 5 with representative
-   content (`docs/demo.md`; a real PR for the diff shot) using the
-   `scripts/drive/` tooling (see its README — in-process, silent
+   changed any surface those images show, refresh the affected shots.
+   Captures for the site/README are taken from the demo fixture —
+   NEVER from real user documents, folders, or pull requests (nothing
+   real may appear in a published pixel). Launch the *upgraded
+   installed app* from step 5 into demo mode:
+   `PM_DEMO=1 /Applications/PullMark.app/Contents/MacOS/PullMark`
+   — it opens fully populated (fictional docs, a staged PR with
+   threads, reactions, and a pending review) and entirely offline;
+   quitting leaves no trace in the real defaults domain. Drive it with
+   the `scripts/drive/` tooling (see its README — in-process, silent
    captures), match each existing image's pixel dimensions, bump the
    changed images' `?v=` cache-busters in `site/index.html`, and
    commit the images + HTML to main and push. Stale screenshots are a
