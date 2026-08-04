@@ -1223,20 +1223,370 @@
       }
       box.append(header);
       (thread.comments || []).forEach(function (c) {
-        var comment = document.createElement("div");
-        comment.className = "pm-thread-comment";
-        var head = document.createElement("div");
-        head.className = "pm-thread-head";
-        head.textContent = c.author + (c.dateLabel ? " · " + c.dateLabel : "");
-        var body = document.createElement("div");
-        body.className = "pm-thread-body";
-        body.innerHTML = render(c.body);
-        comment.append(head, body);
-        box.append(comment);
+        box.append(commentEl(c));
       });
       wrap.append(box);
     });
     return wrap;
+  }
+
+  // One published comment card: byline (with GitHub's quiet "edited"
+  // affordance), rendered body, the ⋯ menu on the viewer's own comments,
+  // and the reaction chips at the foot. Pending comments never come
+  // through here (pendingEl) — no reaction UI, no menu (spec).
+  function commentEl(c) {
+    var comment = document.createElement("div");
+    comment.className = "pm-thread-comment";
+    var head = document.createElement("div");
+    head.className = "pm-thread-head";
+    head.textContent = c.author + (c.dateLabel ? " · " + c.dateLabel : "");
+    if (c.edited) {
+      var edited = document.createElement("span");
+      edited.className = "pm-edited";
+      edited.textContent = " · edited";
+      head.append(edited);
+    }
+    var body = document.createElement("div");
+    body.className = "pm-thread-body";
+    body.innerHTML = render(c.body);
+    comment.append(head, body);
+    if (c.id && c.viewerOwned) {
+      comment.classList.add("pm-owned");
+      comment.append(commentMenuButton(c, comment, body));
+    }
+    if (c.id && ((c.reactions && c.reactions.length) || c.canReact)) {
+      reactionComments[c.id] = c;
+      var bar = document.createElement("div");
+      bar.className = "pm-reactions";
+      bar.setAttribute("data-pm-comment", c.id);
+      renderReactionBar(bar, c);
+      comment.append(bar);
+    }
+    return comment;
+  }
+
+  // ---- Emoji reactions on comments (spec) ----
+  // Chips (emoji + count) at each published comment's foot, the viewer's
+  // own tinted; a smiley on hover opens a picker limited to GitHub's
+  // eight. Toggles are optimistic: the chip flips immediately, the bridge
+  // posts the write, and Swift calls __pmReactionRevert on failure.
+
+  var REACTION_SET = [
+    ["+1", "👍"], ["-1", "👎"], ["laugh", "😄"], ["hooray", "🎉"],
+    ["confused", "😕"], ["heart", "❤️"], ["rocket", "🚀"], ["eyes", "👀"]
+  ];
+
+  function reactionEmoji(content) {
+    for (var i = 0; i < REACTION_SET.length; i++) {
+      if (REACTION_SET[i][0] === content) { return REACTION_SET[i][1]; }
+    }
+    return content;
+  }
+
+  function reactionRank(content) {
+    for (var i = 0; i < REACTION_SET.length; i++) {
+      if (REACTION_SET[i][0] === content) { return i; }
+    }
+    return REACTION_SET.length;
+  }
+
+  // Live payload object per published comment id — the source of truth
+  // the bars re-render from, so optimistic state survives a card being
+  // collapsed and re-expanded.
+  var reactionComments = {};
+
+  function reactionChipOf(c, content) {
+    var list = c.reactions || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].content === content) { return list[i]; }
+    }
+    return null;
+  }
+
+  // Chip math mirroring CommentReactions.applied: counts and the mine
+  // flag move together; a chip at zero disappears; new chips slot into
+  // canonical order.
+  function applyReactionLocal(c, content, reacted) {
+    var chip = reactionChipOf(c, content);
+    if (reacted) {
+      if (chip) {
+        if (!chip.mine) { chip.count += 1; chip.mine = true; }
+        return;
+      }
+      if (!c.reactions) { c.reactions = []; }
+      var entry = { content: content, count: 1, mine: true };
+      var at = c.reactions.length;
+      for (var i = 0; i < c.reactions.length; i++) {
+        if (reactionRank(c.reactions[i].content) > reactionRank(content)) { at = i; break; }
+      }
+      c.reactions.splice(at, 0, entry);
+    } else if (chip && chip.mine) {
+      chip.count -= 1;
+      chip.mine = false;
+      if (chip.count <= 0) { c.reactions.splice(c.reactions.indexOf(chip), 1); }
+    }
+  }
+
+  function refreshReactionBars(id) {
+    var c = reactionComments[id];
+    if (!c) { return; }
+    document.querySelectorAll('.pm-reactions[data-pm-comment="' + id + '"]')
+      .forEach(function (bar) { renderReactionBar(bar, c); });
+  }
+
+  function toggleReaction(c, content) {
+    closeTransientPopup();
+    var chip = reactionChipOf(c, content);
+    var reacted = !(chip && chip.mine);
+    applyReactionLocal(c, content, reacted);
+    refreshReactionBars(c.id);
+    post({ type: "reactionToggle", commentID: c.id, content: content, reacted: reacted });
+  }
+
+  // A failed write reverts the optimistic flip (Swift calls this with the
+  // attempted direction) and Swift surfaces the error natively.
+  window.__pmReactionRevert = function (commentID, content, attempted) {
+    var c = reactionComments[commentID];
+    if (!c) { return; }
+    applyReactionLocal(c, content, !attempted);
+    refreshReactionBars(commentID);
+  };
+
+  // Smiley in the SF-Symbols outline style of COMMENT_ICON.
+  var SMILEY_ICON =
+    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"' +
+    ' stroke-width="1.4" stroke-linecap="round" aria-hidden="true">' +
+    '<circle cx="8" cy="8" r="6.25"/>' +
+    '<path d="M5.4 9.5a3.4 3.4 0 0 0 5.2 0"/>' +
+    '<circle cx="5.9" cy="6.4" r="0.5" fill="currentColor" stroke="none"/>' +
+    '<circle cx="10.1" cy="6.4" r="0.5" fill="currentColor" stroke="none"/>' +
+    "</svg>";
+
+  function renderReactionBar(bar, c) {
+    bar.textContent = "";
+    (c.reactions || []).forEach(function (chip) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "pm-reaction-chip" + (chip.mine ? " pm-reaction-mine" : "");
+      btn.textContent = reactionEmoji(chip.content) + " " + chip.count;
+      var label = (chip.mine ? "Remove your " : "React with ") + reactionEmoji(chip.content);
+      btn.setAttribute("aria-pressed", chip.mine ? "true" : "false");
+      if (c.canReact) {
+        btn.title = label;
+        btn.setAttribute("aria-label", label);
+        btn.addEventListener("click", function () { toggleReaction(c, chip.content); });
+      } else {
+        btn.disabled = true;
+      }
+      bar.append(btn);
+    });
+    if (c.canReact) {
+      var add = document.createElement("button");
+      add.type = "button";
+      add.className = "pm-react-add";
+      add.innerHTML = SMILEY_ICON;
+      add.title = "Add reaction";
+      add.setAttribute("aria-label", "Add reaction");
+      add.setAttribute("aria-haspopup", "true");
+      add.addEventListener("click", function () {
+        if (transientPopup && transientPopup.anchor === add) { closeTransientPopup(); return; }
+        openReactionPicker(add, bar, c);
+      });
+      bar.append(add);
+    }
+  }
+
+  function openReactionPicker(anchor, bar, c) {
+    var pick = document.createElement("div");
+    pick.className = "pm-react-picker";
+    REACTION_SET.forEach(function (pair) {
+      var chip = reactionChipOf(c, pair[0]);
+      var mine = !!(chip && chip.mine);
+      var option = document.createElement("button");
+      option.type = "button";
+      option.className = "pm-react-option" + (mine ? " pm-reaction-mine" : "");
+      option.textContent = pair[1];
+      var label = (mine ? "Remove your " : "React with ") + pair[1];
+      option.title = label;
+      option.setAttribute("aria-label", label);
+      option.addEventListener("click", function () { toggleReaction(c, pair[0]); });
+      pick.append(option);
+    });
+    bar.append(pick);
+    showTransientPopup(pick, anchor);
+  }
+
+  // One transient popup (reaction picker / ⋯ menu) at a time; click-away
+  // and Esc close it, Esc never leaking into the page's own handling.
+  var transientPopup = null;
+
+  function closeTransientPopup() {
+    if (!transientPopup) { return; }
+    var p = transientPopup;
+    transientPopup = null;
+    document.removeEventListener("mousedown", p.onAway, true);
+    document.removeEventListener("keydown", p.onKey, true);
+    p.el.remove();
+  }
+
+  function showTransientPopup(el, anchor) {
+    closeTransientPopup();
+    var p = { el: el, anchor: anchor };
+    p.onAway = function (event) {
+      if (el.contains(event.target) || event.target === anchor
+          || (anchor && anchor.contains && anchor.contains(event.target))) { return; }
+      closeTransientPopup();
+    };
+    p.onKey = function (event) {
+      if (event.key !== "Escape") { return; }
+      event.preventDefault();
+      event.stopPropagation();
+      closeTransientPopup();
+      if (anchor && anchor.focus) { anchor.focus(); }
+    };
+    document.addEventListener("mousedown", p.onAway, true);
+    document.addEventListener("keydown", p.onKey, true);
+    transientPopup = p;
+  }
+
+  // ---- Editing and deleting your own comments (spec) ----
+  // Viewer-authored published comments carry a hover ⋯ menu. Edit swaps
+  // the body for the mini-composer pre-filled with the current Markdown;
+  // Delete round-trips through the bridge so the destructive confirm is
+  // native (the page never confirms with its own chrome).
+
+  function commentMenuButton(c, card, bodyEl) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pm-comment-menu-btn";
+    btn.textContent = "⋯";
+    btn.title = "Comment actions";
+    btn.setAttribute("aria-label", "Comment actions");
+    btn.setAttribute("aria-haspopup", "menu");
+    btn.addEventListener("click", function () {
+      if (transientPopup && transientPopup.anchor === btn) { closeTransientPopup(); return; }
+      var menu = document.createElement("div");
+      menu.className = "pm-comment-menu";
+      menu.setAttribute("role", "menu");
+      var edit = document.createElement("button");
+      edit.type = "button";
+      edit.setAttribute("role", "menuitem");
+      edit.textContent = "Edit";
+      edit.addEventListener("click", function () {
+        closeTransientPopup();
+        openEditComposer(c, card, bodyEl);
+      });
+      var del = document.createElement("button");
+      del.type = "button";
+      del.setAttribute("role", "menuitem");
+      del.className = "pm-menu-destructive";
+      del.textContent = "Delete";
+      del.addEventListener("click", function () {
+        closeTransientPopup();
+        post({ type: "commentDelete", commentID: c.id });
+      });
+      menu.append(edit, del);
+      card.append(menu);
+      showTransientPopup(menu, btn);
+    });
+    return btn;
+  }
+
+  // The reply mini-composer pattern, seeded with the comment's current
+  // body. Click-away keeps the typed text as a draft on the comment;
+  // Cancel discards; Save posts commentEdit and the card catches up when
+  // the reloaded comments arrive (failures restore the draft app-side).
+  function openEditComposer(c, card, bodyEl) {
+    var existing = card.querySelector(".pm-edit-composer");
+    if (existing) { existing.querySelector("textarea").focus(); return; }
+    var draftKey = "edit:" + c.id;
+    var root = document.createElement("div");
+    root.className = "pm-reply-composer pm-edit-composer";
+    var ta = document.createElement("textarea");
+    ta.className = "pm-composer-text";
+    ta.rows = 3;
+    var actions = document.createElement("div");
+    actions.className = "pm-composer-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    var save = document.createElement("button");
+    save.type = "button";
+    save.className = "pm-composer-primary";
+    save.textContent = "Save";
+    save.title = "Save your edit (⌘↩)";
+    actions.append(cancel, save);
+    root.append(ta, actions);
+
+    var syncTimer = null;
+    function grow() {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(56, ta.scrollHeight) + "px";
+    }
+    function close(keep) {
+      document.removeEventListener("mousedown", onAway, true);
+      if (syncTimer) { clearTimeout(syncTimer); }
+      if (keep) {
+        // An unchanged text is no draft — saving it would resurrect a
+        // stale body after the comment moves on.
+        if (ta.value === c.body) { draftDiscard(draftKey); }
+        else { draftSave(draftKey, ta.value); }
+      }
+      root.remove();
+      bodyEl.style.display = "";
+    }
+    function submit() {
+      var body = ta.value.trim();
+      if (body === "") { return; }
+      post({ type: "commentEdit", commentID: c.id, body: body, draftKey: draftKey });
+      draftDiscard(draftKey);
+      close(false);
+    }
+    function onAway(event) {
+      if (root.contains(event.target)) { return; }
+      close(true);
+    }
+    document.addEventListener("mousedown", onAway, true);
+
+    cancel.addEventListener("click", function () {
+      draftDiscard(draftKey);
+      close(false);
+    });
+    save.addEventListener("click", submit);
+    ta.addEventListener("input", function () {
+      grow();
+      save.disabled = ta.value.trim() === "";
+      if (syncTimer) { clearTimeout(syncTimer); }
+      syncTimer = setTimeout(function () {
+        syncTimer = null;
+        if (ta.value !== c.body) { draftSave(draftKey, ta.value); }
+      }, 400);
+    });
+    ta.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        if (ta.value.trim() === "") {
+          event.preventDefault();
+          draftDiscard(draftKey);
+          close(false);
+        }
+        return;
+      }
+      if (event.isComposing) { return; }
+      if (event.key === "Enter" && event.metaKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        submit();
+      }
+    });
+
+    ta.value = composerDrafts[draftKey] || c.body;
+    save.disabled = ta.value.trim() === "";
+    bodyEl.style.display = "none";
+    bodyEl.after(root);
+    grow();
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
   }
 
   // The viewer's pending review comments at their anchors: always the
