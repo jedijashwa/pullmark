@@ -1,17 +1,15 @@
 ---
 name: orchestrate
-description: Put this session into orchestration mode — the main session conducts, and all substantive work is dispatched to the subagent roster in .claude/agents/.
+description: Consult the delegation policy and fan work out to subagents — for tasks that are genuinely parallel, bulk, or bigger than one context. Not a standing mode; direct work is the default.
 ---
 
 # Orchestrate
 
-Read `.claude/agents/orchestrator.md` and adopt it as your operating
-mode for the rest of this session: you conduct, subagents do the work.
-The delegation map and operating rules in that file govern; the
-workflow skills (feature-request, dist-trial, bug-hunt, release)
-encode the standard loops.
+Read `.claude/agents/orchestrator.md` — the delegation policy — and
+apply it to the task at hand: decompose, dispatch the relevant agents
+from the roster with tight specs, and synthesize their results.
 
-This is a mode for the main session, not a subagent to dispatch — a
-dispatched copy could not direct its own subagents from inside the
-Task sandbox. Maintainers who want every session to start this way put
-a standing instruction in their untracked CLAUDE.local.md.
+This is a per-task tool, not a session mode. The 2026-08 experiment
+with orchestration-as-default cost several times more for worse
+results; the policy file records why. Reach for this skill when the
+work in front of you actually has the shape delegation rewards.
