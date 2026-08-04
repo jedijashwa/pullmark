@@ -920,7 +920,7 @@ private struct PRFileSheets: ViewModifier {
                     }
                 }
             } message: {
-                Text("The comment is removed from GitHub. Replies from others stay.")
+                Text("The comment will be removed from GitHub. Replies from others will stay.")
             }
     }
 }

@@ -205,10 +205,12 @@ body {
   opacity: 0.65;
 }
 /* Resolved threads collapse to a one-line header (author · "Resolved");
-   the full card returns on click (spec §2). */
+   the full card returns on click (spec §2). The one-liner lives in the
+   header row, so expanding folds it into the card header — line label
+   and actions join it, and "Resolved" is said once. */
 .pm-thread-summary {
   display: block;
-  width: 100%;
+  flex: none;
   text-align: left;
   cursor: pointer;
   font: 600 12px -apple-system, sans-serif;
@@ -224,13 +226,24 @@ body {
 .pm-thread:not(.pm-thread-collapsed) .pm-thread-summary::before {
   content: "▾ ";
 }
-.pm-thread:not(.pm-thread-collapsed) > .pm-thread-summary {
-  margin-bottom: 6px;
+.pm-thread-resolved > .pm-thread-header {
+  justify-content: flex-start;
+  gap: 10px;
+}
+.pm-thread-resolved > .pm-thread-header .pm-thread-line {
+  font-weight: 400;
+}
+.pm-thread-resolved > .pm-thread-header .pm-thread-actions {
+  margin-left: auto;
 }
 .pm-thread-collapsed {
   padding: 7px 14px;
 }
-.pm-thread-collapsed > .pm-thread-header,
+.pm-thread-collapsed > .pm-thread-header {
+  margin-bottom: 0;
+}
+.pm-thread-collapsed > .pm-thread-header .pm-thread-line,
+.pm-thread-collapsed > .pm-thread-header .pm-thread-actions,
 .pm-thread-collapsed > .pm-thread-comment {
   display: none;
 }
@@ -297,8 +310,9 @@ body {
   cursor: default;
 }
 .pm-composer-caption {
-  /* The static range caption ("Lines 12–14, new"). */
-  font: 600 12px -apple-system, sans-serif;
+  /* The static range caption ("Lines 12–14, new") — secondary metadata,
+     not a control: regular weight, muted gray. */
+  font: 400 12px -apple-system, sans-serif;
   color: var(--fgColor-muted, #6e7781);
   white-space: nowrap;
 }
@@ -538,13 +552,40 @@ body {
   color: var(--fgColor-muted, #6e7781);
 }
 
-/* Result-view comment affordances: blocks that anchor a bubble/pencil on
-   hover, like the diff views' blocks. */
+/* Result-view comment affordances: bubble + pencil in one hover container
+   BESIDE the block — in the content column's right padding gutter, where
+   the markers live — never overlaying wide content (tables). The container
+   overlaps the block edge by 2px so hover hands off without a gap, and
+   the container's own hover keeps it alive while the pointer is on it. */
 .pm-commentable {
   position: relative;
 }
-.pm-commentable:hover > .pm-comment-btn {
+.pm-result-tools {
+  position: absolute;
+  top: 2px;
+  left: calc(100% - 2px);
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+.pm-commentable:hover > .pm-result-tools,
+.pm-result-tools:hover {
   display: flex;
+}
+.pm-result-tools .pm-comment-btn {
+  position: static;
+  display: flex;
+}
+/* Commented blocks carry marker badges at the block top in the same
+   gutter column — start the affordances below them (one badge row, or
+   two when published and pending badges stack). */
+.pm-commented > .pm-result-tools,
+.pm-pending-anchor > .pm-result-tools {
+  top: 30px;
+}
+.pm-commented.pm-pending-anchor > .pm-result-tools {
+  top: 58px;
 }
 .pm-comment-unavailable {
   opacity: 0.45;
@@ -645,9 +686,11 @@ body {
   background: rgba(9, 105, 218, 0.06);
   box-shadow: 0 0 0 6px rgba(9, 105, 218, 0.06);
 }
+/* Same quiet weight as published-thread highlights — the yellow badge
+   carries the pending signal; a filled block would read as content. */
 .pm-pending-anchor {
-  background: rgba(212, 167, 44, 0.1);
-  box-shadow: 0 0 0 6px rgba(212, 167, 44, 0.1);
+  background: rgba(212, 167, 44, 0.06);
+  box-shadow: 0 0 0 6px rgba(212, 167, 44, 0.06);
 }
 .pm-anchor-open.pm-commented {
   background: rgba(9, 105, 218, 0.1);
@@ -669,8 +712,8 @@ body {
     box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.09);
   }
   .pm-pending-anchor {
-    background: rgba(187, 128, 9, 0.14);
-    box-shadow: 0 0 0 6px rgba(187, 128, 9, 0.14);
+    background: rgba(187, 128, 9, 0.09);
+    box-shadow: 0 0 0 6px rgba(187, 128, 9, 0.09);
   }
   .pm-anchor-open.pm-commented {
     background: rgba(88, 166, 255, 0.15);
