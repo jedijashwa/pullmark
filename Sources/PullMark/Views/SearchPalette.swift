@@ -197,7 +197,9 @@ struct SearchPalette: View {
     private func iconName(for target: SidebarSelection) -> String {
         switch target {
         case .local: return "doc.text"
+        case .folder, .folderNode: return "folder"
         case .prFile, .prDoc, .prOverview: return "arrow.triangle.pull"
+        case .inboxItem, .recentItem: return "clock"
         }
     }
 
@@ -295,6 +297,21 @@ struct SearchPalette: View {
                 content: nil,
                 url: file.url
             ))
+        }
+        // Folder-tree files search like any local document (spec: same
+        // completeness rule as ⌘K); the background scan already listed them.
+        for folder in state.folders {
+            for path in folder.filePaths {
+                let url = folder.fileURL(for: path)
+                sources.append(SearchSource(
+                    id: "local:" + url.path,
+                    title: path,
+                    subtitle: PathAbbreviator.abbreviate(folder.rootURL.path),
+                    target: .local(url),
+                    content: nil,
+                    url: url
+                ))
+            }
         }
         for session in state.prSessions {
             for file in session.markdownFiles where file.status != "removed" {

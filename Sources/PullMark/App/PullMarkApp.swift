@@ -180,9 +180,34 @@ struct PullMarkApp: App {
                     }
                     if state?.recents.isEmpty == false {
                         Divider()
+                        // "Clear Menu" per macOS convention; the settings
+                        // row and sidebar context menu say Clear Recents.
                         Button("Clear Menu") { state?.clearRecents() }
+                            .keyboardShortcut(shortcuts.keyboardShortcut(for: .clearRecents))
                     }
                 }
+                Divider()
+                // Sidebar file commands (sidebar-navigator spec §4) — act
+                // on the selected file, folder root, or tree node.
+                Button("Reveal in Finder") {
+                    if let url = state?.selectionLocalURL {
+                        NSWorkspace.shared.activateFileViewerSelecting([url])
+                    }
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .revealInFinder))
+                .disabled(state?.selectionLocalURL == nil)
+                Button("Copy Path") {
+                    if let url = state?.selectionLocalURL { SidebarActions.copyPath(url) }
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .copyPath))
+                .disabled(state?.selectionLocalURL == nil)
+                Button("Refresh Folder") {
+                    if let root = state?.selectionFolderRoot {
+                        state?.rescanFolder(root: root)
+                    }
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .refreshFolder))
+                .disabled(state?.selectionFolderRoot == nil)
             }
             CommandGroup(replacing: .saveItem) {
                 // Edit-mode commits write to disk as they land — the mode

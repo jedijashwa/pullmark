@@ -1,3 +1,4 @@
+import QuickLook
 import SwiftUI
 
 struct ContentView: View {
@@ -109,6 +110,18 @@ struct ContentView: View {
         .alert(state.lastNotice ?? "", isPresented: noticePresented) {
             Button("OK", role: .cancel) {}
         }
+        // A clicked dead recent: quiet notice with a removal action —
+        // never the old error-and-purge (spec §6).
+        .alert("\(state.deadRecent?.title ?? "") isn't available",
+               isPresented: deadRecentPresented) {
+            Button("Remove from Recents") {
+                if let item = state.deadRecent { state.removeRecent(id: item.id) }
+            }
+            Button("Keep", role: .cancel) {}
+        } message: {
+            Text("Last seen at \(state.deadRecent?.path.map { PathAbbreviator.abbreviate($0) } ?? ""). "
+                + "It will revive here if the file comes back.")
+        }
         .environmentObject(state)
         // Drop .md files or folders anywhere on the window.
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
@@ -168,6 +181,13 @@ struct ContentView: View {
             set: { if !$0 { state.lastNotice = nil } }
         )
     }
+
+    private var deadRecentPresented: Binding<Bool> {
+        Binding(
+            get: { state.deadRecent != nil },
+            set: { if !$0 { state.deadRecent = nil } }
+        )
+    }
 }
 
 struct SidebarView: View {
@@ -178,41 +198,51 @@ struct SidebarView: View {
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     // Per-window like the rest of the sidebar (@AppStorage would live-sync
     // a collapse in one window into every other window).
-    @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var localExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var filesExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarFoldersExpanded) private var foldersExpanded = true
     @SceneStorage(DefaultsKeys.sidebarPRsExpanded) private var prsExpanded = true
     @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
     @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
+    /// Space → Quick Look on the selected local row (spec §8.2).
+    @State private var quickLookURL: URL?
 
     // What you opened yourself outranks what was assigned to you: the
-    // review-request inbox sits below Local Files and Pull Requests.
+    // review-request inbox sits below the opened sections.
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
     var body: some View {
         List(selection: $state.selection) {
-            CollapsibleSection("Local Files", isExpanded: $localExpanded) {
+            CollapsibleSection("Files", isExpanded: $filesExpanded) {
                 if state.localFiles.isEmpty {
-                    Text("Open a file or folder to get started.")
-                        .foregroundStyle(.secondary)
+                    Button("Open File…") { state.openFilesPanel() }
                         .font(fonts.callout)
                 }
                 ForEach(state.localFiles) { file in
-                    Label(file.displayName, systemImage: "doc.text")
-                        .font(fonts.row)
+                    SidebarFileRow(file: file,
+                                   showsPath: duplicateFileNames.contains(file.url.lastPathComponent))
                         .tag(SidebarSelection.local(file.url))
-                        .contextMenu {
-                            Button("Remove from Sidebar") { state.removeLocalFile(file) }
-                        }
                 }
+                .onMove { from, to in state.localFiles.move(fromOffsets: from, toOffset: to) }
+            }
+            CollapsibleSection("Folders", isExpanded: $foldersExpanded) {
+                if state.folders.isEmpty {
+                    Button("Open Folder…") { state.openFolderPanel() }
+                        .font(fonts.callout)
+                }
+                ForEach(state.folders) { folder in
+                    FolderRootGroup(folder: folder)
+                }
+                .onMove { from, to in state.folders.move(fromOffsets: from, toOffset: to) }
             }
             CollapsibleSection("Pull Requests", isExpanded: $prsExpanded) {
                 if state.prSessions.isEmpty {
-                    Text("Open a PR to review its Markdown changes.")
-                        .foregroundStyle(.secondary)
+                    Button("Open Pull Request…") { state.showAddPR = true }
                         .font(fonts.callout)
                 }
                 ForEach(state.prSessions) { session in
                     PRSidebarGroup(session: session)
                 }
+                .onMove { from, to in state.prSessions.move(fromOffsets: from, toOffset: to) }
             }
             if inboxEnabled, !visibleInbox.isEmpty {
                 // The unread count keeps demotion honest: collapsed or
@@ -221,18 +251,34 @@ struct SidebarView: View {
                                    badge: visibleInbox.filter(state.inboxIsUnread).count) {
                     ForEach(visibleInbox) { item in
                         InboxRow(item: item)
+                            .tag(SidebarSelection.inboxItem(item.id))
                     }
                 }
             }
             if !recentItems.isEmpty {
-                CollapsibleSection("Recent", isExpanded: $recentExpanded) {
+                CollapsibleSection("Recents", isExpanded: $recentExpanded) {
                     ForEach(recentItems) { item in
-                        RecentRow(item: item)
+                        RecentRow(item: item,
+                                  missing: state.missingRecentIDs.contains(item.id),
+                                  showsPath: duplicateRecentNames.contains(item.title))
+                            .tag(SidebarSelection.recentItem(item.id))
                     }
+                }
+                .contextMenu {
+                    Button("Clear Recents") { state.clearRecents() }
                 }
             }
         }
         .listStyle(.sidebar)
+        // ⌫ removes the selected removable item (spec §4).
+        .onDeleteCommand { state.removeSelectedSidebarItem() }
+        .modifier(SpaceQuickLook(url: $quickLookURL, selected: selectedLocalURL))
+        .onAppear { state.validateSidebarPaths() }
+    }
+
+    private var selectedLocalURL: URL? {
+        if case .local(let url) = state.selection { return url }
+        return nil
     }
 
     /// With Markdown-only on (default), review requests PullMark can't
@@ -243,18 +289,303 @@ struct SidebarView: View {
         return state.inbox.filter { (state.inboxMDCount($0) ?? 1) > 0 }
     }
 
-    /// Recents not already open in the sidebar.
+    /// Recents not already visible in the sidebar — a file under an open
+    /// folder root counts as visible (it's in that root's tree).
     private var recentItems: [RecentItem] {
         state.recents.filter { item in
             switch item.kind {
             case .file:
-                return !state.localFiles.contains { $0.url.path == item.path }
+                guard let path = item.path else { return true }
+                if state.localFiles.contains(where: { $0.url.path == path }) { return false }
+                return !state.folders.contains { path.hasPrefix($0.rootURL.path + "/") }
             case .folder:
-                return true
+                return !state.folders.contains { $0.rootURL.path == item.path }
             case .pr:
                 guard let ref = item.ref else { return false }
                 return !state.prSessions.contains { $0.ref == ref }
             }
+        }
+    }
+
+    /// Display names shared by two or more visible rows grow a dimmed
+    /// parent-path second line (spec §5, VS Code's rule).
+    private var duplicateFileNames: Set<String> {
+        duplicates(state.localFiles.map { $0.url.lastPathComponent })
+    }
+
+    private var duplicateRecentNames: Set<String> {
+        duplicates(recentItems.filter { $0.kind != .pr }.map(\.title))
+    }
+
+    private func duplicates(_ names: [String]) -> Set<String> {
+        var seen: Set<String> = []
+        var dupes: Set<String> = []
+        for name in names {
+            if !seen.insert(name).inserted { dupes.insert(name) }
+        }
+        return dupes
+    }
+}
+
+/// Space previews the selected local file through Quick Look — the app
+/// ships a QL extension, so the sidebar previews PullMark's own render.
+/// Key handling needs macOS 14; earlier systems simply don't get Space.
+private struct SpaceQuickLook: ViewModifier {
+    @Binding var url: URL?
+    let selected: URL?
+
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content
+                .quickLookPreview($url)
+                .onKeyPress(.space) {
+                    guard let selected else { return .ignored }
+                    url = selected
+                    return .handled
+                }
+        } else {
+            content
+        }
+    }
+}
+
+/// The shared hover-revealed ✕ for removable top-level rows (spec §4):
+/// same non-destructive removal as the context menu, never on tree
+/// children. Sized against the chrome font so it survives zoom.
+private struct HoverRemoveButton: View {
+    let help: String
+    let action: () -> Void
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark.circle.fill")
+                .font(ChromeFonts(zoom: zoom).caption)
+                .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+/// Wraps row content with a trailing hover-✕. The hover state lives per
+/// row; the button only exists while hovered so it can't eat clicks.
+private struct RemovableRow<Content: View>: View {
+    let help: String
+    let remove: () -> Void
+    @ViewBuilder let content: () -> Content
+    @State private var hovered = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            content()
+            Spacer(minLength: 2)
+            if hovered {
+                HoverRemoveButton(help: help, action: remove)
+            }
+        }
+        .onHover { hovered = $0 }
+    }
+}
+
+/// An ad-hoc opened document in Files.
+private struct SidebarFileRow: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let file: LocalFile
+    let showsPath: Bool
+
+    var body: some View {
+        let fonts = ChromeFonts(zoom: zoom)
+        RemovableRow(help: "Remove from Sidebar",
+                     remove: { state.removeLocalFile(file) }) {
+            Label {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(file.url.lastPathComponent)
+                        .lineLimit(1)
+                        .font(fonts.row)
+                    if showsPath {
+                        Text(PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path))
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } icon: {
+                Image(systemName: "doc.text")
+            }
+        }
+        .help(PathAbbreviator.abbreviate(file.url.path))
+        .contextMenu {
+            Button("Remove from Sidebar") { state.removeLocalFile(file) }
+            Divider()
+            Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([file.url]) }
+            Button("Copy Path") { SidebarActions.copyPath(file.url) }
+        }
+    }
+}
+
+/// Shared clipboard/Finder actions for sidebar rows.
+enum SidebarActions {
+    static func copyPath(_ url: URL) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url.path, forType: .string)
+    }
+}
+
+/// A folder root: closeable place with its tree (or flat list) below.
+private struct FolderRootGroup: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let folder: LocalFolder
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: Binding(
+            get: { folder.expandedPaths.contains("") },
+            set: { state.setFolderExpanded(folder.rootURL, path: "", $0) }
+        )) {
+            if folder.viewMode == .tree {
+                ForEach(folder.nodes) { node in
+                    FolderNodeView(folder: folder, node: node, depth: 1)
+                }
+            } else {
+                ForEach(folder.filePaths, id: \.self) { path in
+                    Label {
+                        Text(path)
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                    } icon: {
+                        Image(systemName: "doc.text")
+                    }
+                    .font(fonts.row)
+                    .tag(SidebarSelection.local(folder.fileURL(for: path)))
+                    .contextMenu { fileMenu(folder.fileURL(for: path)) }
+                }
+            }
+            if folder.truncated {
+                Text("Showing the first \(folder.filePaths.count) files")
+                    .font(fonts.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } label: {
+            rootRow
+        }
+    }
+
+    private var rootRow: some View {
+        RemovableRow(help: "Remove from Sidebar",
+                     remove: { state.removeFolder(folder.rootURL) }) {
+            Label {
+                Text(folder.displayName)
+                    .lineLimit(1)
+                    .font(fonts.row)
+            } icon: {
+                Image(systemName: folder.missing ? "folder.badge.questionmark" : "folder")
+            }
+            .foregroundStyle(folder.missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
+            if folder.scanning {
+                ProgressView().controlSize(.mini)
+            }
+        }
+        .tag(SidebarSelection.folder(folder.rootURL))
+        .help(folder.missing
+            ? "Folder not found — last seen at "
+                + PathAbbreviator.abbreviate(folder.rootURL.path)
+            : PathAbbreviator.abbreviate(folder.rootURL.path))
+        .contextMenu {
+            Button("Remove from Sidebar") { state.removeFolder(folder.rootURL) }
+            Divider()
+            Button("Reveal in Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting([folder.rootURL])
+            }
+            Button("Copy Path") { SidebarActions.copyPath(folder.rootURL) }
+            Button("Refresh Folder") { state.rescanFolder(root: folder.rootURL) }
+            Divider()
+            Picker("View", selection: Binding(
+                get: { folder.viewMode },
+                set: { state.setFolderViewMode(folder.rootURL, $0) }
+            )) {
+                Text("View as Tree").tag(LocalFolder.ViewMode.tree)
+                Text("View as List").tag(LocalFolder.ViewMode.list)
+            }
+            .pickerStyle(.inline)
+        }
+    }
+
+    @ViewBuilder
+    private func fileMenu(_ url: URL) -> some View {
+        Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        Button("Copy Path") { SidebarActions.copyPath(url) }
+    }
+}
+
+/// One node of a folder tree. Expansion binds into the folder model so
+/// it persists per root in the session snapshot; ⌥-clicking a directory
+/// expands its whole subtree.
+private struct FolderNodeView: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let folder: LocalFolder
+    let node: PathTree.Node
+    let depth: Int
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    var body: some View {
+        if node.isDirectory {
+            DisclosureGroup(isExpanded: Binding(
+                get: { folder.expandedPaths.contains(node.path) },
+                set: { state.setFolderExpanded(folder.rootURL, path: node.path, $0) }
+            )) {
+                ForEach(node.children) { child in
+                    FolderNodeView(folder: folder, node: child, depth: depth + 1)
+                }
+            } label: {
+                Label(node.name, systemImage: "folder")
+                    .font(fonts.row)
+                    .tag(SidebarSelection.folderNode(folder.rootURL, node.path))
+                    .simultaneousGesture(
+                        TapGesture().modifiers(.option).onEnded {
+                            expandSubtree(node)
+                        }
+                    )
+                    .contextMenu {
+                        Button("Expand All") { expandSubtree(node) }
+                        Divider()
+                        Button("Reveal in Finder") {
+                            NSWorkspace.shared.activateFileViewerSelecting(
+                                [folder.fileURL(for: node.path)])
+                        }
+                        Button("Copy Path") {
+                            SidebarActions.copyPath(folder.fileURL(for: node.path))
+                        }
+                    }
+            }
+        } else {
+            Label(node.name, systemImage: "doc.text")
+                .font(fonts.row)
+                .tag(SidebarSelection.local(folder.fileURL(for: node.path)))
+                .help(PathAbbreviator.abbreviate(folder.fileURL(for: node.path).path))
+                .contextMenu {
+                    Button("Reveal in Finder") {
+                        NSWorkspace.shared.activateFileViewerSelecting(
+                            [folder.fileURL(for: node.path)])
+                    }
+                    Button("Copy Path") {
+                        SidebarActions.copyPath(folder.fileURL(for: node.path))
+                    }
+                }
+        }
+    }
+
+    private func expandSubtree(_ node: PathTree.Node) {
+        state.setFolderExpanded(folder.rootURL, path: node.path, true)
+        for child in node.children where child.isDirectory {
+            expandSubtree(child)
         }
     }
 }
@@ -309,8 +640,8 @@ private struct CollapsibleSection<Content: View>: View {
 }
 
 /// A review-requested PR: unread dot, title over repo#number, and a
-/// Markdown-file badge (dimmed when the PR touches no Markdown — PullMark
-/// can open it, but the reading room has nothing to show).
+/// Markdown-file badge. A real selectable row (spec §1): click opens,
+/// arrow keys merely select, the context menu offers Open and GitHub.
 private struct InboxRow: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
@@ -318,68 +649,90 @@ private struct InboxRow: View {
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        Button {
-            state.openInboxItem(item)
-        } label: {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 6, height: 6)
-                    .opacity(state.inboxIsUnread(item) ? 1 : 0)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(item.title)
-                        .lineLimit(1)
-                        .font(fonts.row)
-                        .fontWeight(state.inboxIsUnread(item) ? .semibold : .regular)
-                    Text("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"
-                        + (item.draft ? " · draft" : ""))
-                        .font(fonts.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if let count = state.inboxMDCount(item), count > 0 {
-                    Label("\(count)", systemImage: "doc.text")
-                        .font(fonts.caption)
-                        .foregroundStyle(.secondary)
-                        .labelStyle(.titleAndIcon)
-                        .help(count == 1 ? "1 Markdown file" : "\(count) Markdown files")
+        HStack(spacing: 6) {
+            Circle()
+                .fill(Color.accentColor)
+                .frame(width: 6, height: 6)
+                .opacity(state.inboxIsUnread(item) ? 1 : 0)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title)
+                    .lineLimit(1)
+                    .font(fonts.row)
+                    .fontWeight(state.inboxIsUnread(item) ? .semibold : .regular)
+                Text("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"
+                    + (item.draft ? " · draft" : ""))
+                    .font(fonts.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let count = state.inboxMDCount(item), count > 0 {
+                Label("\(count)", systemImage: "doc.text")
+                    .font(fonts.caption)
+                    .foregroundStyle(.secondary)
+                    .labelStyle(.titleAndIcon)
+                    .help(count == 1 ? "1 Markdown file" : "\(count) Markdown files")
+            }
+        }
+        .contentShape(Rectangle())
+        // Click opens; the gesture rides alongside List selection so the
+        // row still highlights and arrow keys merely select.
+        .simultaneousGesture(TapGesture().onEnded { state.openInboxItem(item) })
+        .help(state.inboxMDCount(item) == 0
+            ? "No Markdown files in this pull request" : item.title)
+        .contextMenu {
+            Button("Open") { state.openInboxItem(item) }
+            Button("Reveal on GitHub") {
+                let ref = item.ref
+                if let url = URL(string:
+                    "https://github.com/\(ref.owner)/\(ref.repo)/pull/\(ref.number)") {
+                    NSWorkspace.shared.open(url)
                 }
             }
         }
-        .buttonStyle(.plain)
-        .help(state.inboxMDCount(item) == 0
-            ? "No Markdown files in this pull request" : item.title)
     }
 }
 
+/// A recent file, folder, or PR. Dead local entries dim instead of
+/// vanishing and revive when their path returns (spec §6); clicking a
+/// dead entry raises the quiet notice with a removal action.
 private struct RecentRow: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let item: RecentItem
+    let missing: Bool
+    let showsPath: Bool
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        Button {
-            state.openRecent(item)
-        } label: {
+        RemovableRow(help: "Remove from Recents",
+                     remove: { state.removeRecent(id: item.id) }) {
             Label {
-                HStack(spacing: 4) {
-                    Text(item.title)
-                        .lineLimit(1)
-                        .font(fonts.row)
-                    if item.kind == .pr, let status = item.prStatus, status != .open {
-                        Text(status.label)
-                            .font(fonts.caption2)
-                            .foregroundStyle(status.color)
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 4) {
+                        Text(item.title)
+                            .lineLimit(1)
+                            .font(fonts.row)
+                        if item.kind == .pr, let status = item.prStatus, status != .open {
+                            Text(status.label)
+                                .font(fonts.caption2)
+                                .foregroundStyle(status.color)
+                        }
+                    }
+                    if showsPath, let path = item.path {
+                        Text(PathAbbreviator.abbreviate((path as NSString).deletingLastPathComponent))
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             } icon: {
                 switch item.kind {
                 case .file:
-                    Image(systemName: "doc.text")
+                    Image(systemName: missing ? "doc.badge.clock" : "doc.text")
                         .foregroundStyle(.secondary)
                 case .folder:
-                    Image(systemName: "folder")
+                    Image(systemName: missing ? "folder.badge.questionmark" : "folder")
                         .foregroundStyle(.secondary)
                 case .pr:
                     let status = item.prStatus ?? .open
@@ -387,18 +740,30 @@ private struct RecentRow: View {
                         .foregroundStyle(status.color.opacity(0.75))
                 }
             }
+            .foregroundStyle(missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded { state.openRecent(item) })
         .help(helpText)
         .contextMenu {
             Button("Remove from Recents") { state.removeRecent(id: item.id) }
+            if item.kind != .pr, let path = item.path {
+                Divider()
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+                }
+                Button("Copy Path") { SidebarActions.copyPath(URL(fileURLWithPath: path)) }
+            }
+            Divider()
+            Button("Clear Recents") { state.clearRecents() }
         }
     }
 
     private var helpText: String {
         switch item.kind {
         case .file, .folder:
-            return item.path.map { PathAbbreviator.abbreviate($0) } ?? item.title
+            let path = item.path.map { PathAbbreviator.abbreviate($0) } ?? item.title
+            return missing ? "File not found — last seen at \(path)" : path
         case .pr:
             let status = item.prStatus.map { " — \($0.label)" } ?? ""
             return "\(item.owner ?? "")/\(item.repo ?? "")#\(item.number ?? 0)\(status)"
@@ -406,11 +771,18 @@ private struct RecentRow: View {
     }
 }
 
+/// A PR group: header with status, changed-file count, and hover ✕; its
+/// Markdown files as a path tree (spec §3) with status icons and
+/// unresolved-comment badges on file nodes; browsed repo docs as a flat
+/// run below; and the "other files" honesty line as a quiet final row.
 private struct PRSidebarGroup: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let session: PRSession
     @State private var expanded = true
+    /// Tree expansion, all directories open by default (GitHub's
+    /// default); per-window, not persisted — PR trees are small.
+    @State private var collapsedDirs: Set<String> = []
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
@@ -422,31 +794,21 @@ private struct PRSidebarGroup: View {
                                                  meta: session.threadMeta)
     }
 
+    private var tree: [PathTree.Node] {
+        PathTree.build(session.markdownFiles.map(\.filename))
+    }
+
+    private var statusByPath: [String: String] {
+        Dictionary(uniqueKeysWithValues: session.markdownFiles.map { ($0.filename, $0.status) })
+    }
+
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
-            ForEach(session.markdownFiles) { file in
-                HStack(spacing: 6) {
-                    Label {
-                        Text(file.filename)
-                            .lineLimit(1)
-                            .truncationMode(.head)
-                    } icon: {
-                        Image(systemName: icon(for: file.status))
-                            .foregroundStyle(color(for: file.status))
-                    }
-                    .font(fonts.row)
-                    if let count = commentCounts[file.filename] {
-                        Spacer(minLength: 2)
-                        Label("\(count)", systemImage: "bubble.left")
-                            .font(fonts.caption)
-                            .foregroundStyle(.secondary)
-                            .labelStyle(.titleAndIcon)
-                            .help(count == 1 ? "1 unresolved review comment"
-                                : "\(count) unresolved review comments")
-                            .accessibilityLabel("\(count) unresolved review comment\(count == 1 ? "" : "s")")
-                    }
-                }
-                .tag(SidebarSelection.prFile(session.id, file.filename))
+            ForEach(tree) { node in
+                PRNodeView(session: session, node: node,
+                           statusByPath: statusByPath,
+                           commentCounts: commentCounts,
+                           collapsedDirs: $collapsedDirs)
             }
             ForEach(session.browsedDocs, id: \.self) { path in
                 Label {
@@ -460,27 +822,111 @@ private struct PRSidebarGroup: View {
                 .font(fonts.row)
                 .tag(SidebarSelection.prDoc(session.id, path))
             }
+            if session.otherFileCount > 0 {
+                Text(session.otherFileCount == 1
+                    ? "1 other file not shown"
+                    : "\(session.otherFileCount) other files not shown")
+                    .font(fonts.caption)
+                    .foregroundStyle(.secondary)
+            }
         } label: {
             // Interpolating the Int directly would go through LocalizedStringKey
             // and render with digit grouping ("#45,206").
             let title: String = "\(session.ref.repo) #\(session.ref.number)"
             let status = PRStatus(details: session.details)
-            Label {
-                Text(title)
-            } icon: {
-                Image(systemName: status.systemImage)
-                    .foregroundStyle(status.color)
+            RemovableRow(help: "Remove from Sidebar",
+                         remove: { state.removePR(session.id) }) {
+                Label {
+                    Text(title)
+                        .font(fonts.row)
+                } icon: {
+                    Image(systemName: status.systemImage)
+                        .foregroundStyle(status.color)
+                }
+                let count = session.markdownFiles.count
+                Text("\(count)")
+                    .font(fonts.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .help(count == 1 ? "1 changed Markdown file"
+                        : "\(count) changed Markdown files")
             }
-            .font(fonts.row)
             .tag(SidebarSelection.prOverview(session.id))
             .help(status.label)
             .contextMenu {
                 Button("Remove from Sidebar") { state.removePR(session.id) }
+                Button("Reveal on GitHub") {
+                    if let url = URL(string: "https://github.com/\(session.ref.owner)/"
+                        + "\(session.ref.repo)/pull/\(session.ref.number)") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
             }
         }
     }
+}
 
-    private func icon(for status: String) -> String {
+/// One node of a PR file tree: directories disclose (expanded by
+/// default), files keep their status icon and comment badge.
+private struct PRNodeView: View {
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let session: PRSession
+    let node: PathTree.Node
+    let statusByPath: [String: String]
+    let commentCounts: [String: Int]
+    @Binding var collapsedDirs: Set<String>
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    var body: some View {
+        if node.isDirectory {
+            DisclosureGroup(isExpanded: Binding(
+                get: { !collapsedDirs.contains(node.path) },
+                set: { expanded in
+                    if expanded {
+                        collapsedDirs.remove(node.path)
+                    } else {
+                        collapsedDirs.insert(node.path)
+                    }
+                }
+            )) {
+                ForEach(node.children) { child in
+                    PRNodeView(session: session, node: child,
+                               statusByPath: statusByPath,
+                               commentCounts: commentCounts,
+                               collapsedDirs: $collapsedDirs)
+                }
+            } label: {
+                Label(node.name, systemImage: "folder")
+                    .font(fonts.row)
+            }
+        } else if let filePath = node.filePath {
+            HStack(spacing: 6) {
+                Label {
+                    Text(node.name)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                } icon: {
+                    Image(systemName: Self.icon(for: statusByPath[filePath] ?? ""))
+                        .foregroundStyle(Self.color(for: statusByPath[filePath] ?? ""))
+                }
+                .font(fonts.row)
+                if let count = commentCounts[filePath] {
+                    Spacer(minLength: 2)
+                    Label("\(count)", systemImage: "bubble.left")
+                        .font(fonts.caption)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(.titleAndIcon)
+                        .help(count == 1 ? "1 unresolved review comment"
+                            : "\(count) unresolved review comments")
+                        .accessibilityLabel("\(count) unresolved review comment\(count == 1 ? "" : "s")")
+                }
+            }
+            .tag(SidebarSelection.prFile(session.id, filePath))
+        }
+    }
+
+    static func icon(for status: String) -> String {
         switch status {
         case "added": return "plus.circle"
         case "removed": return "minus.circle"
@@ -489,7 +935,7 @@ private struct PRSidebarGroup: View {
         }
     }
 
-    private func color(for status: String) -> Color {
+    static func color(for status: String) -> Color {
         switch status {
         case "added": return .green
         case "removed": return .red
@@ -534,7 +980,35 @@ struct DetailView: View {
             } else {
                 placeholder
             }
+        case .folder(let root):
+            folderPlaceholder(root)
+        case .folderNode, .inboxItem, .recentItem:
+            // Navigational rows: selecting them highlights and enables
+            // keyboard actions; the document area shows the empty state.
+            placeholder
         }
+    }
+
+    /// Selecting a folder root shows the place, not a file (spec §8.6):
+    /// name, count, and the nudge to pick something.
+    private func folderPlaceholder(_ root: URL) -> some View {
+        let factor = DocumentZoom.clamped(zoom)
+        let folder = state.folder(for: root)
+        let count = folder?.filePaths.count ?? 0
+        return VStack(spacing: 12 * factor) {
+            Image(systemName: "folder")
+                .font(.system(size: 42 * factor))
+                .foregroundStyle(.secondary)
+            Text(root.lastPathComponent)
+                .font(.system(size: 15 * factor, weight: .semibold))
+            Text(folder?.missing == true
+                ? "Folder not found — it will revive when the path returns"
+                : count == 1 ? "1 Markdown file — pick one from the sidebar"
+                : "\(count) Markdown files — pick one from the sidebar")
+                .font(.system(size: 13 * factor))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Sits in the document area, so it follows the document zoom at full
