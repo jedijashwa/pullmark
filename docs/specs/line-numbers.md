@@ -58,6 +58,9 @@ tell.
   the text the reader sees.
 - Elements without annotations (the TOC nav, injected layers) get no
   label.
+- Rendered prose that isn't a file opts out entirely: the PR overview's
+  description and modal preview sheets show no numbers even with the
+  setting on — a source-line coordinate there means nothing.
 - Room is reserved by the root class:
   `:root.pm-line-numbers .markdown-body` gains left padding (~48px,
   sized for 5-digit files plus inset) with per-theme `max-width`

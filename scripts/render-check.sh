@@ -28,7 +28,7 @@ CSP="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; im
 emit_page() {
   # "<" is <-escaped inside the JSON like HTMLBuilder.jsonLiteral, so
   # content can never close the payload tag or confuse the HTML parser.
-  local markdown_json="${1//</\\u003c}" out="$2"
+  local markdown_json="${1//</\\u003c}" out="$2" extra="${3:-}"
   cat > "$out" <<EOF
 <!DOCTYPE html>
 <html>
@@ -42,7 +42,7 @@ emit_page() {
 </head>
 <body>
 <article id="content" class="markdown-body"></article>
-<script type="application/json" id="pm-payload">{"mode":"document","markdown":${markdown_json}}</script>
+<script type="application/json" id="pm-payload">{"mode":"document","markdown":${markdown_json}${extra}}</script>
 <script src="vendor/marked.min.js"></script>
 <script src="vendor/marked-alert.min.js"></script>
 <script src="vendor/marked-footnote.min.js"></script>
@@ -108,6 +108,32 @@ check "tilde strikethrough"  '<del>strikethrough still works</del>'
 check "toc list"             '<nav class="pm-toc"[^>]*><ul class="pm-toc-list">'
 check "toc links headings"   '<a href="#math">Math</a>'
 check "block line annotations" 'data-pm-lines="[0-9]+-[0-9]+"'
+
+# ---- Line numbers: gutter labels build only when the payload carries the
+# preference; the default page above must stay label-free.
+emit_page "$(jq -Rs . < docs/kitchen-sink.md)" "$WORK/linenum.html" ',"lineNumbers":true'
+LINENUM_DOM="$WORK/linenum-dom.html"
+"$CHROME" --headless --disable-gpu --virtual-time-budget=8000 \
+  --dump-dom "file://$WORK/linenum.html" > "$LINENUM_DOM" 2>/dev/null
+
+linenum_check() {
+  local label="$1" pattern="$2"
+  if grep -qE "$pattern" "$LINENUM_DOM"; then
+    echo "  ok: $label"
+  else
+    echo "FAIL: $label (pattern: $pattern)"
+    failures=$((failures + 1))
+  fi
+}
+linenum_check "line-number root class" '<html class="[^"]*pm-line-numbers'
+linenum_check "line-number layer"      'class="pm-linenum-layer"'
+linenum_check "line-number label"      '<span class="pm-linenum" title="Line'
+if grep -qE 'class="pm-linenum"' "$DOM"; then
+  echo "FAIL: line-number labels leaked into the default page"
+  failures=$((failures + 1))
+else
+  echo "  ok: line numbers absent by default"
+fi
 
 # ---- Hostile markdown: script injection must be inert under the CSP (#5).
 cat > "$WORK/hostile.md" <<'EOF'

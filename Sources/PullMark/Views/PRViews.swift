@@ -41,7 +41,10 @@ struct PROverviewView: View {
                             : "_No description provided._",
                         title: session.details.title,
                         theme: style.theme,
-                        customCSS: style.customCSS
+                        customCSS: style.customCSS,
+                        // A PR description isn't a file — a source-line
+                        // coordinate in its margin would mean nothing.
+                        lineNumberEligible: false
                     ),
                     onPageLoaded: {
                         // Restore find highlights if the page re-renders
@@ -53,7 +56,7 @@ struct PROverviewView: View {
                     onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                     proxy: proxy
                 )
-                .modifier(ContentWidthApplier(proxy: proxy))
+                .modifier(PagePreferenceApplier(proxy: proxy))
                 .background(ThemePaper.color(for: themeRaw))
                 .overlay {
                     if let content = state.lightbox {
@@ -523,7 +526,7 @@ struct PRFileView: View {
                 onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                 proxy: proxy
             )
-            .modifier(ContentWidthApplier(proxy: proxy))
+            .modifier(PagePreferenceApplier(proxy: proxy))
             .overlay(alignment: .bottomTrailing) {
                 if mode == .result, state.lightbox == nil, let stats {
                     DocumentStatsPill(stats: stats)
@@ -1076,7 +1079,7 @@ struct PRDocView: View {
                         onLightboxRequest: { presentLightbox($0, proxy: proxy, state: state) },
                         proxy: proxy
                     )
-                    .modifier(ContentWidthApplier(proxy: proxy))
+                    .modifier(PagePreferenceApplier(proxy: proxy))
                     .overlay(alignment: .bottomTrailing) {
                         if state.lightbox == nil, let stats {
                             DocumentStatsPill(stats: stats)

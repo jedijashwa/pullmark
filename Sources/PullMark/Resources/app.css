@@ -6,13 +6,33 @@ body {
   body { background: #0d1117; }
 }
 
+/* Left-gutter annotations (blame, line numbers) widen the content column
+   instead of squeezing it: every max-width below adds the gutter back, so
+   the text measure is identical with and without annotations. */
+:root {
+  --pm-left-gutter: 0px;
+}
+:root.pm-blame-on {
+  --pm-left-gutter: 56px;
+}
+:root.pm-line-numbers {
+  /* 36px label + 12px air + the 14px bleed of diff blocks and the open
+     block editor (negative margins), rounded up */
+  --pm-left-gutter: 64px;
+}
+:root.pm-line-numbers.pm-blame-on {
+  /* Numbers nearest the text, blame's 56px band outside them. */
+  --pm-left-gutter: 120px;
+}
+
 .markdown-body {
-  max-width: 860px;
+  max-width: calc(860px + var(--pm-left-gutter));
   margin: 0 auto;
   padding: 32px 28px 72px;
+  padding-left: calc(28px + var(--pm-left-gutter));
 }
 .markdown-body.pm-wide {
-  max-width: 1500px;
+  max-width: calc(1500px + var(--pm-left-gutter));
 }
 
 .mermaid {
@@ -881,14 +901,6 @@ body {
 
 :root.pm-blame-on .markdown-body {
   position: relative;
-  padding-left: 84px;
-  max-width: 916px; /* base 860 + the 56px gutter margin */
-}
-:root[data-theme="editorial"].pm-blame-on .markdown-body {
-  max-width: 796px; /* editorial 740 + 56 */
-}
-:root[data-theme="terminal"].pm-blame-on .markdown-body {
-  max-width: 936px; /* terminal 880 + 56 */
 }
 
 .pm-blame-gutter {
@@ -1015,6 +1027,59 @@ body {
   border-left: 2px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
   padding: 2px 0 2px 10px;
   margin: 0 0 20px;
+}
+
+/* ---- Line numbers (rendered views) ----
+   Rendered lines don't correspond to source lines, so numbering is per
+   block — each block's START line in the left gutter, the full range in
+   the tooltip. The layer always exists once built; the root class (see
+   --pm-left-gutter above) reserves the gutter and reveals it, so the
+   Settings toggle is a pure CSS flip plus a reposition pass. */
+:root.pm-line-numbers .markdown-body {
+  position: relative;
+}
+.pm-linenum-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+}
+:root.pm-line-numbers .pm-linenum-layer {
+  display: block;
+}
+.pm-linenum {
+  position: absolute;
+  pointer-events: auto;
+  width: 36px;
+  text-align: right;
+  font-family: var(--fontStack-monospace, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
+  font-size: 11px;
+  line-height: 1.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--fgColor-muted, #6e7781);
+  opacity: 0.8;
+  user-select: none;
+  cursor: default;
+}
+/* Inline diff: a removed block's number is an old-file coordinate — the
+   only number on the page that isn't "the file after this change". */
+.pm-linenum-old {
+  font-style: italic;
+  opacity: 0.55;
+}
+/* Split view: each column is numbered by its own side, in dedicated grid
+   tracks (the page margin can't reach the right column, and anything
+   inside a cell would ride its horizontal scroll). With the setting off
+   the labels aren't placed, so the grid keeps its two tracks. */
+:root.pm-line-numbers .pm-split {
+  grid-template-columns: 36px 1fr 36px 1fr;
+}
+.pm-split > .pm-linenum {
+  position: static;
+  display: none;
+}
+:root.pm-line-numbers .pm-split > .pm-linenum {
+  display: block;
 }
 
 /* ---- Math (KaTeX) ---- */
@@ -1167,7 +1232,7 @@ mark.pm-find.pm-find-current {
   --borderColor-default: #e4e2dd;
   --borderColor-muted: #efede8;
   --borderColor-neutral-muted: #e4e2dd;
-  max-width: 740px;
+  max-width: calc(740px + var(--pm-left-gutter));
   line-height: 1.65;
 }
 :root[data-theme="editorial"] .markdown-body h1,
@@ -1229,7 +1294,7 @@ mark.pm-find.pm-find-current {
   font-family: var(--fontStack-monospace, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace);
   font-size: 13px;
   line-height: 1.55;
-  max-width: 880px;
+  max-width: calc(880px + var(--pm-left-gutter));
 }
 /* Monospace headers scale down: 2em mono reads as shouting. */
 :root[data-theme="terminal"] .markdown-body h1 { font-size: 1.6em; }
@@ -1417,20 +1482,16 @@ mark.pm-find.pm-find-current {
 }
 
 /* ---- Content width: Standard (default cascade above) / Wide / Full ----
-   Placed last: the width choice outranks per-theme measures and the blame
-   variants of both. Wide stays capped — around the researched ceiling of
+   Placed last: the width choice outranks the per-theme measures. Every
+   capped measure adds --pm-left-gutter back. Wide stays capped — around the researched ceiling of
    comfortable line length — so only Full Width is truly unbounded. The
    split-diff grid (pm-wide, 1500px) is already wider than Wide's cap and
    keeps its own measure until Full Width releases it too. */
 
 :root[data-width="wide"] .markdown-body {
-  max-width: 1200px;
-}
-:root[data-width="wide"].pm-blame-on .markdown-body {
-  max-width: 1256px; /* 1200 + the 56px gutter margin */
+  max-width: calc(1200px + var(--pm-left-gutter));
 }
 :root[data-width="full"] .markdown-body,
-:root[data-width="full"].pm-blame-on .markdown-body,
 :root[data-width="full"] .markdown-body.pm-wide {
   max-width: none;
 }

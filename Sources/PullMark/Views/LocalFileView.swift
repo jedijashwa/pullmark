@@ -185,7 +185,7 @@ struct LocalFileView: View {
             updateActiveDocument()
         }
         .onChange(of: inGitRepo) { _ in loadBlame() }
-        .modifier(ContentWidthApplier(proxy: proxy))
+        .modifier(PagePreferenceApplier(proxy: proxy))
         // Commits don't touch the file, so the watcher can't see them: the
         // compare menu, blame, and titlebar branch went stale the moment
         // one landed. Refresh when the app returns from a terminal…
