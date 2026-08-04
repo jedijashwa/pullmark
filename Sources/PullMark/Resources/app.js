@@ -1672,6 +1672,7 @@
     bodyEl.style.display = "none";
     bodyEl.after(root);
     grow();
+    root.scrollIntoView({ block: "nearest", inline: "nearest" });
     ta.focus();
     ta.setSelectionRange(ta.value.length, ta.value.length);
   }
@@ -2094,6 +2095,11 @@
     openComposer = st;
     updateState();
     grow();
+    // The rail bubble can open a composer that lands below the fold —
+    // WebKit's focus scroll reveals only enough textarea to type, not
+    // the actions. Bring the whole card in (nearest: no motion when it
+    // is already visible).
+    container.scrollIntoView({ block: "nearest", inline: "nearest" });
     ta.focus();
     if (!draft && opts.prefillSuggestion && ta.value !== "") {
       // Caret at the end of the seeded lines, inside the fence, ready to
