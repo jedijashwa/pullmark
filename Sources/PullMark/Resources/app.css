@@ -149,19 +149,23 @@ body {
   padding: 4px 6px;
   z-index: 5;
 }
-/* Split-view cells keep CSS hover; inline pm-block buttons are shown
-   and placed by attachBlockHover (they sit outside the content edge,
-   past the wrapper's hover box, so CSS :hover could never keep them
-   reachable). */
+/* Split-view cells keep CSS hover; inline pm-block bubbles are shown
+   and placed by attachBlockHover on the margin rail, past the
+   wrapper's hover box where CSS :hover could never keep them
+   reachable. */
 .pm-cell:hover .pm-comment-btn {
   display: flex;
 }
 .pm-comment-btn:hover {
   border-color: rgba(128, 128, 128, 0.9);
 }
-/* Edit-as-suggestion pencil: split cells keep it left of the bubble;
-   inline blocks stack it below via attachBlockHover. */
-.pm-cell .pm-edit-btn { right: 40px; }
+/* Commentable pages reserve real margin for the bubble rail: bubble
+   (28) + inset (6) + block bleed (14) + clearance (8). The padding
+   sits outside the reading measure, so every width mode keeps room. */
+:root.pm-comment-room .markdown-body,
+:root.pm-commenting-on .markdown-body {
+  padding-right: 56px;
+}
 /* Local-document block editing: the pencil is the only button, flush right;
    blocks anchor it and reveal on hover. */
 .pm-editable { position: relative; }

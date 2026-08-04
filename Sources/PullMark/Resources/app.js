@@ -1221,31 +1221,8 @@
     return btn;
   }
 
-  // Pencil in the SF-Symbols outline style of COMMENT_ICON.
-  var EDIT_ICON =
-    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"' +
-    ' stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">' +
-    '<path d="M11.1 2.4a1.55 1.55 0 0 1 2.2 2.2l-7.6 7.6-3 .8.8-3z"/>' +
-    '<path d="M9.7 3.8l2.2 2.2"/>' +
-    "</svg>";
 
-  /// The pencil opens the same composer with a ```suggestion fence
-  /// pre-filled from the block's current lines and focused. Only new-side
-  /// lines can carry a suggestion (GitHub applies it in place of the
-  /// commented RIGHT-side lines).
-  function editButton(seg, target) {
-    var btn = document.createElement("button");
-    btn.className = "pm-comment-btn pm-edit-btn";
-    btn.type = "button";
-    btn.innerHTML = EDIT_ICON;
-    btn.title = "Suggest an edit to lines " + seg.lineStart + "–" + seg.lineEnd;
-    btn.setAttribute("aria-label", btn.title);
-    btn.addEventListener("click", function (event) {
-      event.stopPropagation();
-      composerForSegment(seg, target, true);
-    });
-    return btn;
-  }
+
 
   function threadsEl(threads) {
     var wrap = document.createElement("div");
@@ -2287,19 +2264,28 @@
     tools.className = "pm-result-tools";
     tools.setAttribute("data-pm-for", blockStart + "-" + blockEnd);
     var hideTimer = null;
+    function hideNow() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      tools.style.display = "none";
+    }
     function position() {
       var cRect = content.getBoundingClientRect();
       var rect = el.getBoundingClientRect();
       // Below any marker badges stacked at the block top (one row each).
       var badges = (el.classList.contains("pm-commented") ? 1 : 0)
         + (el.classList.contains("pm-pending-anchor") ? 1 : 0);
-      tools.style.left = Math.round(rect.right - cRect.left - 2) + "px";
+      var tw = tools.getBoundingClientRect().width || 28;
+      // The margin rail: the page reserves comment-room padding, so the
+      // bubble aligns across blocks and never overlaps content.
+      tools.style.left = Math.round(cRect.width - tw - 6) + "px";
       tools.style.top = Math.round(rect.top - cRect.top + 2 + badges * 28) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-      position();
+      if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
+      activeBlockBubble = hideNow;
       tools.style.display = "flex";
+      position();
     }
     function hide() {
       if (hideTimer) { clearTimeout(hideTimer); }
@@ -2351,17 +2337,10 @@
       event.stopPropagation();
       open(false);
     });
-    var pencil = document.createElement("button");
-    pencil.type = "button";
-    pencil.className = "pm-comment-btn pm-edit-btn";
-    pencil.innerHTML = EDIT_ICON;
-    pencil.title = "Suggest an edit to lines " + mapped[0] + "–" + mapped[1];
-    pencil.setAttribute("aria-label", pencil.title);
-    pencil.addEventListener("click", function (event) {
-      event.stopPropagation();
-      open(true);
-    });
-    tools.append(bubble, pencil);
+    // One affordance: the bubble. Suggestion editing lives inside the
+    // composer (pm-composer-suggest) — a second hover button doubled it
+    // and the stacked pair collided with short neighbors.
+    tools.append(bubble);
     layer.append(tools);
   }
 
@@ -2435,7 +2414,6 @@
     }
     if (payload.commentable !== false) {
       wrap.append(commentButton(seg, target));
-      if (seg.side === "RIGHT") { wrap.append(editButton(seg, target)); }
       attachBlockHover(wrap);
     }
     return wrap;
@@ -2449,51 +2427,63 @@
   // content edge, stacked like .pm-result-tools; JS show/hide with the
   // same grace so buttons past the wrapper's hover box stay reachable.
   function attachBlockHover(wrap) {
-    var btns = wrap.querySelectorAll(":scope > .pm-comment-btn");
-    if (!btns.length) { return; }
+    var btn = wrap.querySelector(":scope > .pm-comment-btn");
+    if (!btn) { return; }
     var hideTimer = null;
+    function hideNow() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      btn.style.display = "none";
+    }
     function place() {
+      btn.style.display = "flex";
       var wr = wrap.getBoundingClientRect();
-      var right = 0;
+      var art = content.getBoundingClientRect();
+      var bw = btn.getBoundingClientRect().width || 28;
+      // The page reserves comment-room padding (app.css), so the rail
+      // always fits: inset from the article edge, clear of the block
+      // bleed, aligned across blocks.
+      btn.style.left = Math.round(art.right - art.left - bw - 6 - (wr.left - art.left)) + "px";
+      btn.style.right = "auto";
+      // Anchored to the first line of visible content, not the wrapper
+      // box — a heading's interior margin must not float the bubble.
       var top = null;
       wrap.querySelectorAll(":scope > div:not(.pm-threads)").forEach(function (d) {
+        if (top !== null) { return; }
         for (var c = d.firstElementChild; c; c = c.nextElementSibling) {
           var r = c.getBoundingClientRect();
-          if (r.width && r.right > right) { right = r.right; }
-          if (top === null && r.height) { top = r.top; }
+          if (r.height) { top = r.top; break; }
         }
         if (top === null) {
           var dr = d.getBoundingClientRect();
-          if (dr.height) { top = dr.top; right = Math.max(right, dr.right); }
+          if (dr.height) { top = dr.top; }
         }
       });
-      if (top === null) { top = wr.top; right = wr.right; }
-      btns.forEach(function (b, i) {
-        b.style.left = Math.round(right - wr.left + 8) + "px";
-        b.style.right = "auto";
-        b.style.top = Math.round(top - wr.top + i * 34) + "px";
-        b.style.display = "flex";
-      });
+      if (top === null) { top = wr.top; }
+      btn.style.top = Math.round(top - wr.top) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      // Exactly one bubble at a time: a lingering neighbor (hide grace)
+      // must vanish the moment another block's bubble appears.
+      if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
+      activeBlockBubble = hideNow;
       place();
     }
     function hide() {
       if (hideTimer) { clearTimeout(hideTimer); }
-      hideTimer = setTimeout(function () {
-        btns.forEach(function (b) { b.style.display = "none"; });
-      }, 120);
+      hideTimer = setTimeout(function () { btn.style.display = "none"; }, 120);
     }
     wrap.addEventListener("mouseenter", show);
     wrap.addEventListener("mouseleave", hide);
-    btns.forEach(function (b) {
-      b.addEventListener("mouseenter", show);
-      b.addEventListener("mouseleave", hide);
-    });
+    btn.addEventListener("mouseenter", show);
+    btn.addEventListener("mouseleave", hide);
   }
+  var activeBlockBubble = null;
 
   function renderInline(segments) {
+    if (payload.commentable !== false) {
+      document.documentElement.classList.add("pm-comment-room");
+    }
     segments.forEach(function (seg) {
       // The composer inserts after the segment's LAST associated element
       // (thread and pending cards included) — a sibling of the cards.
@@ -2559,7 +2549,6 @@
                      anchor: right, split: true };
       if (payload.commentable !== false) {
         (seg.side === "LEFT" ? left : right).append(commentButton(seg, target));
-        if (seg.side === "RIGHT") { right.append(editButton(seg, target)); }
       }
       grid.append(left, right);
       if (seg.threads && seg.threads.length) {
