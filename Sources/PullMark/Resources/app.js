@@ -2480,6 +2480,52 @@
   }
   var activeBlockBubble = null;
 
+  // The margin rail is part of each block's hover zone. The bubble lives
+  // in the reserved right margin, but blocks' real hover boxes end at
+  // their bleed — a pointer parked in the margin (or scrolling with it
+  // parked there) hovered nothing and the rail went dead. This virtual
+  // hover probes which block sits at the pointer's height whenever the
+  // pointer is inside the margin band, re-evaluated on scroll, with
+  // explicit leave dispatch so a bubble can't outlive its block.
+  var pointerAt = null;
+  var virtualHover = null;
+  var probeQueued = false;
+  function setVirtualHover(target) {
+    if (virtualHover === target) { return; }
+    if (virtualHover) { virtualHover.dispatchEvent(new Event("mouseleave")); }
+    virtualHover = target;
+    if (target) { target.dispatchEvent(new Event("mouseenter")); }
+  }
+  function marginHoverProbe() {
+    probeQueued = false;
+    if (!pointerAt) { return; }
+    if (!document.documentElement.classList.contains("pm-comment-room")
+        && !document.documentElement.classList.contains("pm-commenting-on")) { return; }
+    var art = content.getBoundingClientRect();
+    var inBand = pointerAt.x >= art.right - 60 && pointerAt.x <= art.right + 4
+      && pointerAt.y >= art.top && pointerAt.y <= art.bottom;
+    if (!inBand) { setVirtualHover(null); return; }
+    // Probe at content altitude on the same row; the bubble itself may be
+    // under the pointer — the probe x dodges it so the block still wins.
+    var probe = document.elementFromPoint(
+      Math.max(art.left + 20, art.right - 90), pointerAt.y);
+    var target = probe && probe.closest
+      ? probe.closest(".pm-block, .pm-commentable") : null;
+    setVirtualHover(target);
+  }
+  function queueProbe() {
+    if (probeQueued) { return; }
+    probeQueued = true;
+    // A timeout, not requestAnimationFrame: rAF stalls in occluded or
+    // headless webviews, and this must fire while scrolling regardless.
+    setTimeout(marginHoverProbe, 16);
+  }
+  document.addEventListener("mousemove", function (event) {
+    pointerAt = { x: event.clientX, y: event.clientY };
+    queueProbe();
+  }, { passive: true });
+  window.addEventListener("scroll", queueProbe, { passive: true });
+
   function renderInline(segments) {
     if (payload.commentable !== false) {
       document.documentElement.classList.add("pm-comment-room");
