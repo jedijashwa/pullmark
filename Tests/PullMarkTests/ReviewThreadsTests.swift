@@ -48,6 +48,36 @@ import Testing
         #expect(threads[0].root.id == 7)
     }
 
+    @Test func deletedRootKeepsSurvivingRepliesTogether() {
+        // Root 1 was deleted; replies 2, 3, 4 still point at it. They must
+        // form ONE thread rooted at the earliest surviving comment, not
+        // three orphan threads.
+        let threads = ReviewThreads.group([
+            comment(id: 2, replyTo: 1),
+            comment(id: 3, replyTo: 1),
+            comment(id: 4, replyTo: 1),
+        ])
+        #expect(threads.count == 1)
+        #expect(threads[0].root.id == 2)
+        #expect(threads[0].replies.map(\.id) == [3, 4])
+    }
+
+    @Test func deletedRootRegroupingLeavesOtherThreadsAlone() {
+        let threads = ReviewThreads.group([
+            comment(id: 10),
+            comment(id: 11, replyTo: 10),
+            comment(id: 21, replyTo: 20), // root 20 deleted
+            comment(id: 22, replyTo: 20),
+            comment(id: 30),
+        ])
+        #expect(threads.count == 3)
+        #expect(threads[0].root.id == 10)
+        #expect(threads[0].replies.map(\.id) == [11])
+        #expect(threads[1].root.id == 21)
+        #expect(threads[1].replies.map(\.id) == [22])
+        #expect(threads[2].root.id == 30)
+    }
+
     @Test func placesThreadInContainingSegment() {
         let segments = [segment("unchanged", 1, 3), segment("added", 4, 8), segment("unchanged", 9, 12)]
         let placed = ReviewThreads.place(ReviewThreads.group([comment(id: 1, line: 6)]), in: segments)

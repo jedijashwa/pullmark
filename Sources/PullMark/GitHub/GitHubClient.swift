@@ -104,8 +104,51 @@ final class GitHubClient {
     }
 
     /// Resolution state and GraphQL node id per thread, keyed by the thread's
-    /// root comment id (REST databaseId). Resolution is GraphQL-only.
+    /// root comment id (REST databaseId), plus per-comment viewer state
+    /// (reactionGroups.viewerHasReacted, lastEditedAt, comment node ids) —
+    /// all GraphQL-only signals REST cannot provide.
     func reviewThreadMeta(_ ref: PullRequestRef) async throws -> [Int: ThreadMeta] {
+        let query = """
+        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+          repository(owner: $owner, name: $repo) {
+            pullRequest(number: $number) {
+              reviewThreads(first: 100, after: $after) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  id isResolved
+                  comments(first: 100) {
+                    nodes {
+                      id databaseId lastEditedAt
+                      reactionGroups { content viewerHasReacted }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        var meta: [Int: ThreadMeta] = [:]
+        var cursor: String?
+        // Cursor pagination so PRs with more than 100 review threads keep
+        // their resolution state; 30 pages bounds a pathological PR.
+        for _ in 1...30 {
+            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo, "number": ref.number]
+            if let cursor { variables["after"] = cursor }
+            let data = try await graphQL(query, variables: variables)
+            let page = try Self.parseThreadMetaPage(data)
+            meta.merge(page.meta) { _, new in new }
+            guard let next = page.nextCursor else { break }
+            cursor = next
+        }
+        return meta
+    }
+
+    /// One page of the thread-meta query. A thread's comments cap at 100
+    /// per page (a longer thread degrades to counts-only chips for the
+    /// tail, never a failure).
+    nonisolated static func parseThreadMetaPage(_ data: Data) throws
+        -> (meta: [Int: ThreadMeta], nextCursor: String?) {
         struct Response: Decodable {
             struct DataBox: Decodable { let repository: Repo? }
             struct Repo: Decodable { let pullRequest: PR? }
@@ -124,40 +167,63 @@ final class GitHubClient {
                 let comments: Comments
             }
             struct Comments: Decodable { let nodes: [Comment] }
-            struct Comment: Decodable { let databaseId: Int? }
+            struct Comment: Decodable {
+                struct ReactionGroup: Decodable {
+                    let content: String
+                    let viewerHasReacted: Bool
+                }
+                let id: String
+                let databaseId: Int?
+                let lastEditedAt: String?
+                let reactionGroups: [ReactionGroup]?
+            }
             let data: DataBox?
         }
-        let query = """
-        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
-          repository(owner: $owner, name: $repo) {
-            pullRequest(number: $number) {
-              reviewThreads(first: 100, after: $after) {
-                pageInfo { hasNextPage endCursor }
-                nodes { id isResolved comments(first: 1) { nodes { databaseId } } }
-              }
-            }
-          }
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard let threads = response.data?.repository?.pullRequest?.reviewThreads else {
+            return ([:], nil)
         }
-        """
         var meta: [Int: ThreadMeta] = [:]
-        var cursor: String?
-        // Cursor pagination so PRs with more than 100 review threads keep
-        // their resolution state; 30 pages bounds a pathological PR.
-        for _ in 1...30 {
-            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo, "number": ref.number]
-            if let cursor { variables["after"] = cursor }
-            let data = try await graphQL(query, variables: variables)
-            let response = try JSONDecoder().decode(Response.self, from: data)
-            guard let threads = response.data?.repository?.pullRequest?.reviewThreads else { break }
-            for node in threads.nodes {
-                if let rootID = node.comments.nodes.first?.databaseId {
-                    meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved)
-                }
+        for node in threads.nodes {
+            guard let rootID = node.comments.nodes.first?.databaseId else { continue }
+            var comments: [Int: ReviewCommentMeta] = [:]
+            for comment in node.comments.nodes {
+                guard let id = comment.databaseId else { continue }
+                let reacted = (comment.reactionGroups ?? [])
+                    .filter(\.viewerHasReacted)
+                    .compactMap { ReactionKind(graphQL: $0.content)?.rawValue }
+                comments[id] = ReviewCommentMeta(nodeID: comment.id,
+                                                 viewerReacted: Set(reacted),
+                                                 edited: comment.lastEditedAt != nil)
             }
-            guard threads.pageInfo.hasNextPage, let next = threads.pageInfo.endCursor else { break }
-            cursor = next
+            meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved,
+                                      comments: comments)
         }
-        return meta
+        let nextCursor = threads.pageInfo.hasNextPage ? threads.pageInfo.endCursor : nil
+        return (meta, nextCursor)
+    }
+
+    /// Adds or removes the viewer's reaction on a comment.
+    ///
+    /// API choice: GraphQL, not REST. REST's remove route
+    /// (DELETE …/pulls/comments/{id}/reactions/{reaction_id}) needs the
+    /// viewer's reaction id, which would take an extra listing call to
+    /// find; addReaction/removeReaction take subject node id + content
+    /// symmetrically, and the thread-meta query already carries every
+    /// comment's node id.
+    func setReaction(subjectID: String, content: ReactionKind, add: Bool) async throws {
+        let mutation = add
+            ? "mutation($id: ID!, $content: ReactionContent!) { addReaction(input: { subjectId: $id, content: $content }) { reaction { id } } }"
+            : "mutation($id: ID!, $content: ReactionContent!) { removeReaction(input: { subjectId: $id, content: $content }) { reaction { id } } }"
+        _ = try await graphQL(mutation, variables: ["id": subjectID,
+                                                    "content": content.graphQLName])
+    }
+
+    /// Edits the body of a review comment (the viewer's own).
+    func updateReviewComment(_ ref: PullRequestRef, commentID: Int, body: String) async throws {
+        let payload = try Self.editCommentRequestBody(body: body)
+        _ = try await request("PATCH", "/repos/\(ref.owner)/\(ref.repo)/pulls/comments/\(commentID)",
+                              jsonBody: payload)
     }
 
     func setThreadResolved(nodeID: String, resolved: Bool) async throws {
@@ -632,6 +698,10 @@ final class GitHubClient {
     }
 
     nonisolated static func issueCommentRequestBody(body: String) throws -> Data {
+        try encoder.encode(["body": body])
+    }
+
+    nonisolated static func editCommentRequestBody(body: String) throws -> Data {
         try encoder.encode(["body": body])
     }
 
