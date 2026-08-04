@@ -607,7 +607,14 @@
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: "strict",
-      theme: darkQuery.matches ? "dark" : "default"
+      theme: darkQuery.matches ? "dark" : "default",
+      themeVariables: {
+        // Edge-label chips ("yes"/"no") default to an opaque gray that
+        // clashes on dark and themed paper — sit them on the page surface
+        // instead. Recomputed on every render, so appearance flips and
+        // reading themes both track.
+        edgeLabelBackground: getComputedStyle(document.body).backgroundColor
+      }
     });
     mermaid.run({ querySelector: ".mermaid" }).catch(function () {
       /* invalid diagram source: leave the raw text visible */
@@ -1067,9 +1074,9 @@
     }
     function updateResolvedControl() {
       if (!resolvedControl) { return; }
-      resolvedControl.textContent = resolvedShown
-        ? "Hide resolved conversations"
-        : resolvedCount + " resolved conversation" + (resolvedCount === 1 ? "" : "s");
+      // Symmetric verb labels: both states say what the click will do.
+      resolvedControl.textContent = (resolvedShown ? "Hide " : "Show ")
+        + resolvedCount + " resolved conversation" + (resolvedCount === 1 ? "" : "s");
     }
 
     function applyVisibility() {
@@ -1133,15 +1140,29 @@
 
     function positionMarkers() {
       var cRect = content.getBoundingClientRect();
-      // In the margin when the content column leaves one; overlaying the
-      // right edge at Full width (content-width interaction).
-      var space = window.innerWidth - cRect.right;
-      var x = space >= 44 ? cRect.width + 10 : cRect.width - 36;
+      // In the margin when the content column leaves room for the WIDEST
+      // badge (plus clearance); otherwise overlaying inside the content
+      // edge, inset by each badge's real width. A badge must never extend
+      // the document's scrollable width: absolutely positioned boxes
+      // still grow scrollWidth, and one badge past the edge gives the
+      // whole page a horizontal scrollbar. clientWidth, not innerWidth —
+      // classic (non-overlay) scrollbars eat into the viewport.
+      var viewport = document.documentElement.clientWidth;
+      var widest = 0;
+      clusters.forEach(function (cluster) {
+        [cluster.badge, cluster.pendingBadge].forEach(function (badge) {
+          if (!badge || badge.style.display === "none") { return; }
+          widest = Math.max(widest, badge.offsetWidth);
+        });
+      });
+      var inMargin = viewport - cRect.right >= widest + 18;
       clusters.forEach(function (cluster) {
         var rect = cluster.el.getBoundingClientRect();
         var offset = 0;
         [cluster.badge, cluster.pendingBadge].forEach(function (badge) {
           if (!badge || badge.style.display === "none") { return; }
+          var x = inMargin ? cRect.width + 10
+                           : cRect.width - badge.offsetWidth - 12;
           badge.style.left = Math.round(x) + "px";
           badge.style.top = Math.round(rect.top - cRect.top + offset) + "px";
           offset += 28;
@@ -1232,10 +1253,14 @@
     threads.forEach(function (thread) {
       var box = document.createElement("div");
       box.className = "pm-thread";
+      var header = document.createElement("div");
+      header.className = "pm-thread-header";
       if (thread.resolved === true) {
         // Resolved threads collapse to a one-line header (author ·
         // "Resolved") that expands on click — settled conversations never
-        // carry full-prominence cards (spec §2).
+        // carry full-prominence cards (spec §2). The one-liner lives IN
+        // the header row, so expanding folds it into the card header —
+        // one header, "Resolved" said once.
         box.classList.add("pm-thread-resolved", "pm-thread-collapsed");
         var summary = document.createElement("button");
         summary.type = "button";
@@ -1247,14 +1272,12 @@
           var collapsed = box.classList.toggle("pm-thread-collapsed");
           summary.setAttribute("aria-expanded", collapsed ? "false" : "true");
         });
-        box.append(summary);
+        header.append(summary);
       }
-      var header = document.createElement("div");
-      header.className = "pm-thread-header";
       if (thread.lineLabel) {
         var label = document.createElement("div");
         label.className = "pm-thread-line";
-        label.textContent = thread.lineLabel + (thread.resolved === true ? " · Resolved" : "");
+        label.textContent = thread.lineLabel;
         header.append(label);
       }
       if (thread.rootID) {
@@ -2024,12 +2047,16 @@
       var seed = seedText();
       if (seed === null) { return; }
       if (ta.value !== "" && !/\n$/.test(ta.value)) { ta.value += "\n"; }
+      // Caret at the end of the seeded lines, INSIDE the fence, ready to
+      // edit — same landing as the pencil's prefill.
+      var caret = ta.value.length + suggestionFence(seed).length
+        + "suggestion\n".length + seed.length;
       ta.value += suggestionBlock(seed) + "\n";
       grow();
       updateState();
       scheduleDraftSync();
       ta.focus();
-      ta.setSelectionRange(ta.value.length, ta.value.length);
+      ta.setSelectionRange(caret, caret);
     });
     cancel.addEventListener("click", function () {
       draftDiscard(st.draftKey);
@@ -2243,9 +2270,15 @@
   function attachResultAffordance(el, blockStart, blockEnd, docLines) {
     el.classList.add("pm-commentable");
     var mapped = clampRangeToRuns("RIGHT", blockStart, blockEnd);
+    // Both affordances live in one hover container beside the block (in
+    // the content column's right padding gutter, where the markers live)
+    // instead of overlaying wide content like tables. The container
+    // overlaps the block edge slightly so hover hands off without a gap.
+    var tools = document.createElement("div");
+    tools.className = "pm-result-tools pm-annotation";
     var bubble = document.createElement("button");
     bubble.type = "button";
-    bubble.className = "pm-comment-btn pm-annotation";
+    bubble.className = "pm-comment-btn";
     bubble.innerHTML = COMMENT_ICON;
     if (!mapped) {
       bubble.classList.add("pm-comment-unavailable");
@@ -2253,7 +2286,8 @@
         + "GitHub can only attach comments to changed lines.";
       bubble.setAttribute("aria-disabled", "true");
       bubble.setAttribute("aria-label", bubble.title);
-      el.append(bubble);
+      tools.append(bubble);
+      el.append(tools);
       return;
     }
     var sourceLines = docLines.slice(blockStart - 1, blockEnd);
@@ -2286,7 +2320,7 @@
     });
     var pencil = document.createElement("button");
     pencil.type = "button";
-    pencil.className = "pm-comment-btn pm-edit-btn pm-annotation";
+    pencil.className = "pm-comment-btn pm-edit-btn";
     pencil.innerHTML = EDIT_ICON;
     pencil.title = "Suggest an edit to lines " + mapped[0] + "–" + mapped[1];
     pencil.setAttribute("aria-label", pencil.title);
@@ -2294,7 +2328,8 @@
       event.stopPropagation();
       open(true);
     });
-    el.append(bubble, pencil);
+    tools.append(bubble, pencil);
+    el.append(tools);
   }
 
   // ---- Resolved-conversation visibility (Result view, spec §1) ----

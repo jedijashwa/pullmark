@@ -149,7 +149,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .prResult: return "Result"
         case .prFlipLayout: return "Flip Diff Layout"
         case .reviewChanges: return "Review Changes…"
-        case .showResolvedConversations: return "Show Resolved Conversations"
+        // The menu item's title flips Show/Hide with state; the settings
+        // row names the toggle itself.
+        case .showResolvedConversations: return "Show/Hide Resolved Conversations"
         }
     }
 
