@@ -119,6 +119,21 @@ struct OpenQuicklyPalette: View {
                 icon: "doc.text",
                 action: { state.selection = .local(file.url) }))
         }
+        // Folder trees are fully scanned in the background at open time
+        // (see AppState.rescanFolder), so ⌘K stays complete without a
+        // palette-time walk.
+        for folder in state.folders {
+            for path in folder.filePaths {
+                let url = folder.fileURL(for: path)
+                items.append(QuickItem(
+                    id: "f:" + url.path,
+                    title: (path as NSString).lastPathComponent,
+                    subtitle: folder.displayName + "/"
+                        + (path as NSString).deletingLastPathComponent,
+                    icon: "doc.text",
+                    action: { state.selection = .local(url) }))
+            }
+        }
         for session in state.prSessions {
             let refTitle = "\(session.ref.repo) #\(session.ref.number)"
             items.append(QuickItem(

@@ -77,6 +77,7 @@ enum DefaultsKeys {
     static let composerDrafts = "pm.composerDrafts"
     /// Sidebar sections: expansion state (default expanded).
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
+    static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
     static let sidebarRecentExpanded = "pm.sidebar.recentExpanded"

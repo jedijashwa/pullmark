@@ -45,10 +45,21 @@ struct PRSession: Identifiable {
 
 enum SidebarSelection: Hashable {
     case local(URL)
+    /// An opened folder root (spec §1) — selecting it shows the folder
+    /// placeholder; a file is only selected when the user picks one.
+    case folder(URL)
+    /// A directory row inside a folder tree: (root, relative path).
+    /// Selectable so ←/→ keyboard tree navigation works (spec §8.1).
+    case folderNode(URL, String)
     case prOverview(String)
     case prFile(String, String)
     /// A repo document browsed from PR content: (session id, repo path).
     case prDoc(String, String)
+    /// Review Request and Recents rows participate in selection and
+    /// keyboard navigation (spec §1); opening happens on click/Return,
+    /// not on arrow-selection.
+    case inboxItem(String)
+    case recentItem(String)
 }
 
 struct MessageError: LocalizedError {
@@ -132,8 +143,18 @@ struct DocumentCommandRequest: Equatable {
 @MainActor
 final class AppState: ObservableObject {
     @Published var localFiles: [LocalFile] = []
+    /// Opened folder roots (spec §1) — closeable places with trees,
+    /// alongside the individually opened documents in `localFiles`.
+    @Published var folders: [LocalFolder] = []
     @Published var prSessions: [PRSession] = []
     @Published var selection: SidebarSelection?
+    /// File/folder recents whose paths currently don't resolve — dimmed
+    /// in the sidebar, revived automatically when the path returns
+    /// (spec §6). Recomputed on app activation and window open.
+    @Published var missingRecentIDs: Set<String> = []
+    /// A dead recent the user clicked: presents the quiet notice with a
+    /// Remove from Recents action instead of the old error-and-purge.
+    @Published var deadRecent: RecentItem?
     @Published var showAddPR = false
     @Published var lastError: String?
     /// The native media inspector (click an image/diagram/formula).
@@ -249,6 +270,14 @@ final class AppState: ObservableObject {
                 await self?.checkForPRUpdates()
                 await self?.refreshInboxIfDue()
             }
+        }
+        // Recents truth + folder-root revival on every return to the app
+        // (spec §6) — a cheap existence pass, no watchers on recents.
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.validateSidebarPaths() }
         }
         // Demo launches (PM_DEMO=1) fabricate their session below and show
         // nothing real — no recents, no inbox, no restore.
@@ -392,13 +421,49 @@ final class AppState: ObservableObject {
     /// every new snapshot so an offline launch can't erase them.
     private var pendingRestorePRs: Set<String> = []
 
+    /// Snapshot v2 (spec: session restore): folder ROOTS with their view
+    /// modes and expansion — not the flattened file list, so files added
+    /// while the app was closed appear on relaunch. Array order is the
+    /// manual order. The v1 dictionary format migrates on read.
+    private struct SessionSnapshot: Codable {
+        struct Folder: Codable {
+            var path: String
+            var viewMode: LocalFolder.ViewMode
+            var expanded: [String]
+        }
+        var files: [String]
+        var folders: [Folder]
+        var prs: [String]
+    }
+
     func snapshotSession() {
         let openPRs = prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" }
-        let snapshot: [String: [String]] = [
-            "files": localFiles.map(\.url.path),
-            "prs": Array(Set(openPRs).union(pendingRestorePRs)),
-        ]
-        UserDefaults.pullmark.set(snapshot, forKey: DefaultsKeys.sessionSnapshot)
+        let snapshot = SessionSnapshot(
+            files: localFiles.map(\.url.path),
+            folders: folders.map {
+                .init(path: $0.rootURL.path, viewMode: $0.viewMode,
+                      expanded: Array($0.expandedPaths))
+            },
+            prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) })
+        if let data = try? JSONEncoder().encode(snapshot) {
+            UserDefaults.pullmark.set(data, forKey: DefaultsKeys.sessionSnapshot)
+        }
+    }
+
+    /// The stored snapshot in v2 form: decodes v2 data, else migrates the
+    /// v1 dictionary (flat file list — no way to tell folder-scanned
+    /// files apart, so they all land in Files, per spec).
+    private static func loadSnapshot() -> SessionSnapshot? {
+        if let data = UserDefaults.pullmark.data(forKey: DefaultsKeys.sessionSnapshot),
+           let snapshot = try? JSONDecoder().decode(SessionSnapshot.self, from: data) {
+            return snapshot
+        }
+        if let legacy = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.sessionSnapshot)
+            as? [String: [String]] {
+            return SessionSnapshot(files: legacy["files"] ?? [], folders: [],
+                                   prs: legacy["prs"] ?? [])
+        }
+        return nil
     }
 
     private func restoreSessionIfWanted() {
@@ -406,15 +471,26 @@ final class AppState: ObservableObject {
         // not clones of the last session.
         guard Self.keyInstance === self,
               UserDefaults.pullmark.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
-              localFiles.isEmpty, prSessions.isEmpty,
-              let snapshot = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.sessionSnapshot)
-                  as? [String: [String]]
+              localFiles.isEmpty, folders.isEmpty, prSessions.isEmpty,
+              let snapshot = Self.loadSnapshot()
         else { return }
-        for path in snapshot["files"] ?? [] where FileManager.default.fileExists(atPath: path) {
+        for path in snapshot.files where FileManager.default.fileExists(atPath: path) {
             add(url: URL(fileURLWithPath: path))
         }
+        for saved in snapshot.folders {
+            let root = URL(fileURLWithPath: saved.path)
+            var folder = LocalFolder(rootURL: root)
+            folder.viewMode = saved.viewMode
+            folder.expandedPaths = Set(saved.expanded)
+            folder.scanning = true
+            // A missing root restores dimmed rather than vanishing —
+            // rescan marks it missing and later activation revives it.
+            folders.append(folder)
+            watchFolder(root)
+            rescanFolder(root: root)
+        }
         selection = nil
-        pendingRestorePRs = Set(snapshot["prs"] ?? [])
+        pendingRestorePRs = Set(snapshot.prs)
         for pr in pendingRestorePRs {
             Task { [weak self] in
                 do {
@@ -457,6 +533,72 @@ final class AppState: ObservableObject {
         for url in panel.urls { add(url: url) }
     }
 
+    /// Empty-state buttons (spec §8.4) offer the two opens separately.
+    func openFilesPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = true
+        panel.message = "Open Markdown files"
+        guard panel.runModal() == .OK else { return }
+        for url in panel.urls { add(url: url) }
+    }
+
+    func openFolderPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Open a folder containing Markdown files"
+        guard panel.runModal() == .OK else { return }
+        for url in panel.urls { add(url: url) }
+    }
+
+    /// The local URL the selection points at — drives the File menu's
+    /// Reveal in Finder and Copy Path commands.
+    var selectionLocalURL: URL? {
+        switch selection {
+        case .local(let url): return url
+        case .folder(let root): return root
+        case .folderNode(let root, let path):
+            return folder(for: root)?.fileURL(for: path)
+        default: return nil
+        }
+    }
+
+    /// The folder root the selection lives in (Refresh Folder's target).
+    var selectionFolderRoot: URL? {
+        switch selection {
+        case .folder(let root), .folderNode(let root, _):
+            return root
+        case .local(let url):
+            return folders.first { url.path.hasPrefix($0.rootURL.path + "/") }?.rootURL
+        default:
+            return nil
+        }
+    }
+
+    /// ⌫ on the selected sidebar item (spec §4): the same non-destructive
+    /// removal as the context menus, only for removable top-level items.
+    func removeSelectedSidebarItem() {
+        switch selection {
+        case .local(let url):
+            // Only ad-hoc Files rows remove; tree files are contents of a
+            // place, not removable items.
+            if let file = localFiles.first(where: { $0.url == url }) {
+                removeLocalFile(file)
+            }
+        case .folder(let root):
+            removeFolder(root)
+        case .prOverview(let id):
+            removePR(id)
+        case .recentItem(let id):
+            removeRecent(id: id)
+        default:
+            break
+        }
+    }
+
     func add(url: URL) {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
@@ -478,8 +620,17 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Resolves a selection URL to a document. Ad-hoc opens live in
+    /// `localFiles`; folder-tree files synthesize their entry on the fly
+    /// (relative display name, root as resource root) so the detail view
+    /// works identically for both.
     func localFile(for url: URL) -> LocalFile? {
-        localFiles.first { $0.url == url }
+        if let file = localFiles.first(where: { $0.url == url }) { return file }
+        for folder in folders where url.path.hasPrefix(folder.rootURL.path + "/") {
+            let relative = String(url.path.dropFirst(folder.rootURL.path.count + 1))
+            return LocalFile(url: url, displayName: relative, resourceRoot: folder.rootURL)
+        }
+        return nil
     }
 
     func removeLocalFile(_ file: LocalFile) {
@@ -487,29 +638,125 @@ final class AppState: ObservableObject {
         if selection == .local(file.url) { selection = nil }
     }
 
+    // MARK: - Folder roots (spec §2)
+
+    func folder(for root: URL) -> LocalFolder? {
+        folders.first { $0.rootURL == root }
+    }
+
     private func addFolder(_ root: URL) {
-        // Enumeration walks the whole tree — off the main thread so a huge
-        // folder can't freeze the UI; results land back on the main actor.
+        if folders.contains(where: { $0.rootURL == root }) {
+            selection = .folder(root)
+            rescanFolder(root: root)
+            return
+        }
+        var folder = LocalFolder(rootURL: root)
+        folder.scanning = true
+        // "" is the root's own expansion entry — new roots open unfolded.
+        folder.expandedPaths.insert("")
+        folders.append(folder)
+        // Opening a folder selects the root, not some scan-order file —
+        // the user picks a file when they're ready (spec §8.6).
+        selection = .folder(root)
+        watchFolder(root)
+        rescanFolder(root: root)
+    }
+
+    /// Removes the root and its whole tree in one gesture — the missing
+    /// "close the folder" operation (spec §4).
+    func removeFolder(_ root: URL) {
+        folders.removeAll { $0.rootURL == root }
+        folderWatchers[root] = nil
+        switch selection {
+        case .folder(root):
+            selection = nil
+        case .local(let url) where url.path.hasPrefix(root.path + "/")
+            && !localFiles.contains(where: { $0.url == url }):
+            selection = nil
+        default:
+            break
+        }
+    }
+
+    func setFolderViewMode(_ root: URL, _ mode: LocalFolder.ViewMode) {
+        guard let index = folders.firstIndex(where: { $0.rootURL == root }) else { return }
+        folders[index].viewMode = mode
+    }
+
+    func setFolderExpanded(_ root: URL, path: String, _ expanded: Bool) {
+        guard let index = folders.firstIndex(where: { $0.rootURL == root }) else { return }
+        if expanded {
+            folders[index].expandedPaths.insert(path)
+        } else {
+            folders[index].expandedPaths.remove(path)
+        }
+    }
+
+    /// Rescans a root off the main thread and swaps the tree in. Also the
+    /// manual Refresh Folder backstop and the watcher's coalesced target.
+    func rescanFolder(root: URL) {
         Task.detached(priority: .userInitiated) { [weak self] in
-            let scan = Self.scanForMarkdown(in: root)
+            var isDirectory: ObjCBool = false
+            let exists = FileManager.default.fileExists(atPath: root.path, isDirectory: &isDirectory)
+                && isDirectory.boolValue
+            let scan = exists ? Self.scanFolderTree(root: root) : (paths: [], truncated: false)
+            let nodes = PathTree.build(scan.paths)
             guard let self else { return }
             await MainActor.run {
-                for (url, relative) in scan.files {
-                    self.addFile(url, displayName: relative, resourceRoot: root)
-                }
-                if scan.files.isEmpty {
-                    self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
-                } else if scan.truncated {
-                    self.lastNotice = "Showing the first \(Self.folderFileLimit) Markdown files in "
-                        + "\(root.lastPathComponent) — open a subfolder to see the rest."
+                guard let index = self.folders.firstIndex(where: { $0.rootURL == root }) else { return }
+                self.folders[index].scanning = false
+                if exists {
+                    // A returned root revives with fresh contents.
+                    self.folders[index].missing = false
+                    self.folders[index].nodes = nodes
+                    self.folders[index].filePaths = nodes.flatMap(PathTree.leafPaths)
+                    self.folders[index].truncated = scan.truncated
+                    if scan.paths.isEmpty {
+                        self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
+                    } else if scan.truncated {
+                        self.lastNotice = "Showing the first \(Self.folderFileLimit) Markdown files in "
+                            + "\(root.lastPathComponent)."
+                    }
+                } else {
+                    // The root vanished (unmounted volume, deleted
+                    // checkout): dim it, keep the last tree, revive later.
+                    self.folders[index].missing = true
                 }
             }
         }
     }
 
-    nonisolated private static let folderFileLimit = 500
+    private var folderWatchers: [URL: FolderWatcher] = [:]
 
-    nonisolated private static func scanForMarkdown(in root: URL) -> (files: [(URL, String)], truncated: Bool) {
+    private func watchFolder(_ root: URL) {
+        folderWatchers[root] = FolderWatcher(root: root) { [weak self] in
+            Task { @MainActor in self?.rescanFolder(root: root) }
+        }
+    }
+
+    /// Cheap truth pass (spec §6): recents validate and folder roots
+    /// revive on app activation and window open.
+    func validateSidebarPaths() {
+        var missing: Set<String> = []
+        for item in recents where item.kind != .pr {
+            if let path = item.path, !FileManager.default.fileExists(atPath: path) {
+                missing.insert(item.id)
+            }
+        }
+        missingRecentIDs = missing
+        for folder in folders {
+            let exists = FileManager.default.fileExists(atPath: folder.rootURL.path)
+            if exists == folder.missing { rescanFolder(root: folder.rootURL) }
+        }
+    }
+
+    nonisolated private static let folderFileLimit = 2000
+
+    /// Full background enumeration per root. The spec sketched lazy
+    /// per-disclosure scanning, but empty-directory pruning and the
+    /// ⌘K/⇧⌘F completeness rule need the full walk anyway — one scan
+    /// with a generous cap keeps every guarantee with less machinery.
+    nonisolated private static func scanFolderTree(root: URL) -> (paths: [String], truncated: Bool) {
         let skippedDirectories: Set<String> = ["node_modules", "vendor", ".build", "dist"]
         guard let enumerator = FileManager.default.enumerator(
             at: root,
@@ -517,8 +764,11 @@ final class AppState: ObservableObject {
             options: [.skipsHiddenFiles, .skipsPackageDescendants]
         ) else { return ([], false) }
 
-        var files: [(URL, String)] = []
+        var paths: [String] = []
+        var visited = 0
         for case let url as URL in enumerator {
+            visited += 1
+            if visited > 50_000 { return (paths, true) }
             if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
                 if skippedDirectories.contains(url.lastPathComponent) {
                     enumerator.skipDescendants()
@@ -529,10 +779,10 @@ final class AppState: ObservableObject {
             let relative = url.path.hasPrefix(root.path + "/")
                 ? String(url.path.dropFirst(root.path.count + 1))
                 : url.lastPathComponent
-            files.append((url, relative))
-            if files.count >= folderFileLimit { return (files, true) }
+            paths.append(relative)
+            if paths.count >= folderFileLimit { return (paths, true) }
         }
-        return (files, false)
+        return (paths, false)
     }
 
     private func addFile(_ url: URL, displayName: String, resourceRoot: URL) {
@@ -713,10 +963,14 @@ final class AppState: ObservableObject {
             guard let path = item.path else { return }
             let url = URL(fileURLWithPath: path)
             guard FileManager.default.fileExists(atPath: url.path) else {
-                lastError = "\(item.title) no longer exists at \(path)."
-                removeRecent(id: item.id)
+                // No error-and-purge (spec §6): the entry stays, dimmed —
+                // built for git branch switches and unmounted volumes,
+                // where the file comes back. The notice offers removal.
+                missingRecentIDs.insert(item.id)
+                deadRecent = item
                 return
             }
+            missingRecentIDs.remove(item.id)
             add(url: url)
         case .pr:
             guard let ref = item.ref else { return }
