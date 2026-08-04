@@ -372,6 +372,171 @@ body {
 .pm-reply-composer .pm-composer-actions {
   margin-top: 8px;
 }
+/* Edit-in-place variant: it replaces the body inside the comment, so it
+   needs no separating rule of its own. */
+.pm-edit-composer {
+  border-top: none;
+  padding-top: 2px;
+  margin-top: 0;
+}
+
+/* ---- Emoji reactions on comments (spec) ----
+   Chips at the comment foot; the viewer's own tinted accent. The smiley
+   reveals on hover and opens the eight-reaction picker. */
+
+.pm-reactions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+.pm-reaction-chip {
+  font: 600 12px -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: var(--fgColor-muted, #57606a);
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.08));
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
+  border-radius: 999px;
+  padding: 1px 9px;
+  cursor: pointer;
+}
+.pm-reaction-chip:disabled {
+  cursor: default;
+}
+.pm-reaction-chip:hover:not(:disabled) {
+  border-color: var(--fgColor-accent, #0969da);
+}
+.pm-reaction-chip.pm-reaction-mine {
+  color: var(--fgColor-accent, #0969da);
+  border-color: var(--fgColor-accent, #0969da);
+  background: rgba(9, 105, 218, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-reaction-chip.pm-reaction-mine { background: rgba(88, 166, 255, 0.15); }
+}
+.pm-react-add {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fgColor-muted, #6e7781);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.pm-thread-comment:hover .pm-react-add,
+.pm-react-add:focus-visible,
+.pm-reactions:focus-within .pm-react-add {
+  opacity: 1;
+}
+.pm-react-add:hover {
+  color: var(--fgColor-accent, #0969da);
+}
+.pm-react-picker {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  gap: 2px;
+  background: var(--bgColor-default, #fff);
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.4));
+  border-radius: 999px;
+  padding: 3px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 20;
+}
+.pm-react-option {
+  font-size: 15px;
+  line-height: 1.3;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.pm-react-option:hover {
+  background: rgba(128, 128, 128, 0.18);
+}
+.pm-react-option.pm-reaction-mine {
+  background: rgba(9, 105, 218, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-react-option.pm-reaction-mine { background: rgba(88, 166, 255, 0.22); }
+}
+
+/* ---- ⋯ menu on the viewer's own comments (Edit / Delete, spec) ---- */
+
+.pm-thread-comment {
+  position: relative;
+}
+.pm-owned > .pm-thread-head {
+  padding-right: 28px;
+}
+.pm-comment-menu-btn {
+  position: absolute;
+  top: 5px;
+  right: 0;
+  font: 700 13px/1 -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 2px 7px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.pm-thread-comment:hover > .pm-comment-menu-btn,
+.pm-comment-menu-btn:focus-visible {
+  opacity: 1;
+}
+.pm-comment-menu-btn:hover {
+  color: var(--fgColor-default, inherit);
+  background: rgba(128, 128, 128, 0.14);
+}
+.pm-comment-menu {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bgColor-default, #fff);
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.4));
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 20;
+}
+.pm-comment-menu button {
+  font: 12px -apple-system, sans-serif;
+  text-align: left;
+  color: var(--fgColor-default, inherit);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.pm-comment-menu button:hover {
+  background: rgba(128, 128, 128, 0.14);
+}
+.pm-comment-menu .pm-menu-destructive {
+  color: #cf222e;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-comment-menu .pm-menu-destructive { color: #f85149; }
+}
+/* GitHub's quiet "edited" affordance in the byline. */
+.pm-edited {
+  font-weight: 400;
+  color: var(--fgColor-muted, #6e7781);
+}
 
 /* Result-view comment affordances: blocks that anchor a bubble/pencil on
    hover, like the diff views' blocks. */
