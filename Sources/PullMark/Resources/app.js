@@ -29,6 +29,12 @@
   if (payload.preview) {
     document.documentElement.dataset.preview = "1";
   }
+  // Line numbers apply to the rendered views only — the source and patch
+  // views have real per-line gutters of their own.
+  if (payload.lineNumbers && !payload.preview
+      && (payload.mode === "document" || payload.mode === "diff")) {
+    document.documentElement.classList.add("pm-line-numbers");
+  }
 
   // Parse through a real Marked instance: the UMD namespace's methods are
   // read-only getters, so fixWalkTokens couldn't patch walkTokens on it.
@@ -906,6 +912,121 @@
     }
     window.addEventListener("resize", positionEntries);
   }
+
+  // ---- Line numbers (rendered views) ----
+  // Rendered lines don't correspond to source lines, so numbering is per
+  // block: each block's START line as a label in the left gutter, the
+  // full range in its tooltip. Document/Result blocks derive labels from
+  // their live data-pm-lines annotations (edits re-stamp those); diff
+  // blocks are stamped with data-pm-num/-num-tip at render time, where
+  // the per-side coordinates are known. Split cells are the exception —
+  // their labels are grid items (see app.css), only nudged here.
+
+  function rangeText(start, end) {
+    return start === end ? "Line " + start : "Lines " + start + "–" + end;
+  }
+
+  // The y of the first line of visible content — not the box top: a
+  // heading's interior margin would misplace a label aligned to the box
+  // (the comment rail learned this the hard way).
+  function firstContentTop(el) {
+    var wraps;
+    if (el.classList.contains("pm-cell")) {
+      wraps = [el];
+    } else if (el.classList.contains("pm-block")) {
+      wraps = el.querySelectorAll(":scope > div:not(.pm-threads)");
+    } else {
+      return el.getBoundingClientRect().top;
+    }
+    for (var i = 0; i < wraps.length; i++) {
+      for (var c = wraps[i].firstElementChild; c; c = c.nextElementSibling) {
+        if (c.getBoundingClientRect().height > 0) {
+          return c.getBoundingClientRect().top;
+        }
+      }
+    }
+    return el.getBoundingClientRect().top;
+  }
+
+  var lnLayer = null;
+
+  function refreshLineNumbers() {
+    if (!lnLayer
+        || !document.documentElement.classList.contains("pm-line-numbers")) {
+      return;
+    }
+    lnLayer.textContent = "";
+    var cRect = content.getBoundingClientRect();
+    var padLeft = parseFloat(getComputedStyle(content).paddingLeft) || 0;
+    var targets = [];
+    content.querySelectorAll("[data-pm-num], [data-pm-lines]")
+      .forEach(function (el) {
+        if (el.closest(".pm-split")) { return; }
+        var num, tip, old = false;
+        if (el.hasAttribute("data-pm-num")) {
+          num = el.getAttribute("data-pm-num");
+          tip = el.getAttribute("data-pm-num-tip") || "";
+          old = el.hasAttribute("data-pm-num-old");
+        } else {
+          // Nested annotations (edit-mode splits) label the outer block only.
+          if (el.parentElement
+              && el.parentElement.closest("[data-pm-lines]")) { return; }
+          var m = /^(\d+)-(\d+)$/.exec(el.getAttribute("data-pm-lines") || "");
+          if (!m) { return; }
+          num = m[1];
+          tip = rangeText(+m[1], +m[2]);
+        }
+        // Hidden while its in-place editor is open.
+        if (!el.offsetHeight) { return; }
+        targets.push({ el: el, num: num, tip: tip, old: old });
+      });
+    // One aligned column per page, 12px clear of the widest box a block
+    // can paint. Diff blocks and the open block editor bleed 14px left of
+    // the text edge (negative margins), so diff and editable pages hold
+    // the column out by that much — constant per page, so a number can
+    // never drift out of the column and the column never jumps while an
+    // editor opens.
+    var bleed = (payload.mode === "diff" || payload.editable) ? 14 : 0;
+    var labelLeft = Math.round(padLeft - bleed - 12 - 36);
+    targets.forEach(function (t) {
+      var label = document.createElement("span");
+      label.className = "pm-linenum" + (t.old ? " pm-linenum-old" : "");
+      label.textContent = t.num;
+      label.title = t.tip;
+      label.style.left = labelLeft + "px";
+      label.style.top = Math.round(firstContentTop(t.el) - cRect.top) + "px";
+      lnLayer.append(label);
+    });
+    content.querySelectorAll(".pm-split > .pm-linenum").forEach(function (label) {
+      var cell = label.nextElementSibling;
+      if (!cell || !cell.offsetHeight || !label.textContent) { return; }
+      label.style.paddingTop = Math.round(
+        firstContentTop(cell) - cell.getBoundingClientRect().top) + "px";
+    });
+  }
+
+  function setupLineNumbers() {
+    if (lnLayer || payload.preview) { return; }
+    lnLayer = document.createElement("div");
+    lnLayer.className = "pm-linenum-layer";
+    content.append(lnLayer);
+    refreshLineNumbers();
+    if (typeof ResizeObserver === "function") {
+      new ResizeObserver(refreshLineNumbers).observe(content);
+    }
+    window.addEventListener("resize", refreshLineNumbers);
+  }
+
+  // Live Settings flip: reserve/release the gutter and (re)build in place.
+  // An explicit payload false is a page-level opt-out (PR overview body,
+  // preview sheets) — those ignore the flip too.
+  window.__pmSetLineNumbers = function (on) {
+    if (payload.preview || payload.lineNumbers === false
+        || (payload.mode !== "document" && payload.mode !== "diff")) { return; }
+    document.documentElement.classList.toggle("pm-line-numbers", !!on);
+    if (on) { setupLineNumbers(); }
+    refreshLineNumbers();
+  };
 
   // ---- Result-view thread markers (spec §1) ----
   // A small comment badge in the right margin, aligned with the anchored
@@ -2422,7 +2543,28 @@
       wrap.append(commentButton(seg, target));
       attachBlockHover(wrap);
     }
+    stampSegmentNumber(wrap, seg);
     return wrap;
+  }
+
+  // Line-number annotations for a diff block, resolved here where the
+  // segment's sides are known. One number per block — new-file by default;
+  // a removed block's is an old-file coordinate and styled as such. The
+  // word-diff merged rendering is a single block, so it gets a single
+  // new-side number with both truths in the tooltip.
+  function stampSegmentNumber(wrap, seg) {
+    var tip = rangeText(seg.lineStart, seg.lineEnd);
+    if (seg.kind === "removed") {
+      tip = "Old " + tip.toLowerCase();
+      wrap.setAttribute("data-pm-num-old", "1");
+    } else if (seg.kind === "modified" && seg.oldLineStart) {
+      tip += " · was " + (seg.oldLineStart === seg.oldLineEnd
+        ? seg.oldLineStart : seg.oldLineStart + "–" + seg.oldLineEnd);
+    } else if (seg.kind === "moved" && seg.movedFromLine) {
+      tip += " · moved from " + seg.movedFromLine;
+    }
+    wrap.setAttribute("data-pm-num", seg.lineStart);
+    wrap.setAttribute("data-pm-num-tip", tip);
   }
 
   // Inline-diff affordances get the Result-view treatment: positioned at
@@ -2557,6 +2699,20 @@
     });
   }
 
+  // A split-view line-number grid item. Both columns are first-class
+  // sides here, so numbers are plain; the tooltip still names the old
+  // file on the left. Empty cells get an empty item (placement filler).
+  function splitNumberEl(range, oldSide) {
+    var label = document.createElement("span");
+    label.className = "pm-linenum";
+    if (range) {
+      label.textContent = range[0];
+      var text = rangeText(range[0], range[1]);
+      label.title = oldSide ? "Old " + text.toLowerCase() : text;
+    }
+    return label;
+  }
+
   function renderSplit(segments) {
     content.classList.add("pm-wide");
     var grid = document.createElement("div");
@@ -2602,7 +2758,18 @@
       if (payload.commentable !== false) {
         (seg.side === "LEFT" ? left : right).append(commentButton(seg, target));
       }
-      grid.append(left, right);
+      // Line-number grid items — one per cell, empty for empty cells, so
+      // each row always contributes four items and auto-placement holds.
+      var leftRange = null;
+      var rightRange = null;
+      if (seg.kind === "removed") {
+        leftRange = [seg.lineStart, seg.lineEnd];
+      } else {
+        if (seg.oldLineStart) { leftRange = [seg.oldLineStart, seg.oldLineEnd]; }
+        rightRange = [seg.lineStart, seg.lineEnd];
+      }
+      grid.append(splitNumberEl(leftRange, true), left,
+                  splitNumberEl(rightRange, false), right);
       if (seg.threads && seg.threads.length) {
         var full = document.createElement("div");
         full.className = "pm-split-full";
@@ -3432,5 +3599,9 @@
     if (window.hljs) { try { hljs.highlightElement(sourceCode); } catch (e) {} }
   } else if (payload.mode === "patch") {
     renderPatch(payload.patch, payload.patchThreads);
+  }
+
+  if (document.documentElement.classList.contains("pm-line-numbers")) {
+    setupLineNumbers();
   }
 })();

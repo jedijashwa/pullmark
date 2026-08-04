@@ -375,7 +375,8 @@ struct ReleaseNotesSheet: View {
                 let style = ThemeSelection.pageStyle(from: themeRaw)
                 return HTMLBuilder.documentPage(
                     markdown: markdown, title: title,
-                    theme: style.theme, customCSS: style.customCSS
+                    theme: style.theme, customCSS: style.customCSS,
+                    lineNumberEligible: false // a preview sheet, not a file
                 )
             }())
                 .background(ThemePaper.color(for: themeRaw))
@@ -445,18 +446,23 @@ struct PRUpdateBanner: View {
     }
 }
 
-/// Applies content-width changes to a loaded page in place. The html
-/// builders read the preference themselves (fresh loads are born at the
-/// right width); this modifier only handles the live flip, as a CSS
-/// reflow that keeps the reader's rough position — recomputing the html
-/// would reload the page and land at the top.
-struct ContentWidthApplier: ViewModifier {
+/// Applies layout-preference changes (content width, line numbers) to a
+/// loaded page in place. The html builders read the preferences themselves
+/// (fresh loads are born right); this modifier only handles the live flip,
+/// as an in-page reflow that keeps the reader's rough position —
+/// recomputing the html would reload the page and land at the top.
+struct PagePreferenceApplier: ViewModifier {
     let proxy: WebViewProxy
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var raw = ContentWidth.standard.rawValue
+    @AppStorage(LineNumbers.defaultsKey, store: UserDefaults.pullmark) private var lineNumbers = false
 
     func body(content: Content) -> some View {
-        content.onChange(of: raw) { newValue in
-            proxy.setContentWidth(ContentWidth(rawValue: newValue)?.dataValue ?? nil)
-        }
+        content
+            .onChange(of: raw) { newValue in
+                proxy.setContentWidth(ContentWidth(rawValue: newValue)?.dataValue ?? nil)
+            }
+            .onChange(of: lineNumbers) { newValue in
+                proxy.setLineNumbers(newValue)
+            }
     }
 }

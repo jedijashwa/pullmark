@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The Settings window (⌘,): a General tab for appearance and behavior, and
-/// a Themes tab whose live preview cards render a fixed sample document
-/// through the real WKWebView pipeline, one per theme.
+/// The Settings window (⌘,): a General tab for behavior, an Appearance tab
+/// for how rendered pages look (themes — live preview cards through the
+/// real WKWebView pipeline — plus content width and line numbers), and a
+/// Keyboard tab.
 struct SettingsView: View {
     /// Persisted so Settings reopens on the tab you last used.
     @AppStorage(DefaultsKeys.settingsTab, store: UserDefaults.pullmark) private var tab = "general"
@@ -13,8 +14,8 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gearshape") }
                 .tag("general")
             ThemeSettingsTab()
-                .tabItem { Label("Themes", systemImage: "paintpalette") }
-                .tag("themes")
+                .tabItem { Label("Appearance", systemImage: "paintpalette") }
+                .tag("themes") // tag kept stable so the saved tab choice survives the rename
             KeyboardSettingsTab()
                 .tabItem { Label("Keyboard", systemImage: "keyboard") }
                 .tag("keyboard")
@@ -157,6 +158,7 @@ struct GeneralSettingsTab: View {
 struct ThemeSettingsTab: View {
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
+    @AppStorage(LineNumbers.defaultsKey, store: UserDefaults.pullmark) private var lineNumbersOn = false
     @State private var customNames: [String] = []
 
     private var selection: ThemeSelection {
@@ -166,6 +168,8 @@ struct ThemeSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                Text("Theme")
+                    .font(.headline)
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(Theme.allCases) { theme in
                         ThemePreviewCard(
@@ -197,6 +201,17 @@ struct ThemeSettingsTab: View {
                         }
                     }
                 }
+                HStack(spacing: 10) {
+                    Button("Open Themes Folder") {
+                        NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
+                    }
+                    Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
+                }
+                .padding(.top, 2)
+                Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there).")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("Content width")
                     .font(.headline)
                     .padding(.top, 10)
@@ -211,14 +226,18 @@ struct ThemeSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 10) {
-                    Button("Open Themes Folder") {
-                        NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
+                Text("Line numbers")
+                    .font(.headline)
+                    .padding(.top, 10)
+                HStack(alignment: .top, spacing: 16) {
+                    LineNumberPreviewCard(showNumbers: false, selected: !lineNumbersOn) {
+                        lineNumbersOn = false
                     }
-                    Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
+                    LineNumberPreviewCard(showNumbers: true, selected: lineNumbersOn) {
+                        lineNumbersOn = true
+                    }
                 }
-                .padding(.top, 6)
-                Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there).")
+                Text("Each block's starting source line, in the margin of rendered documents and diffs — hover a number for the block's full range. Rendered text wraps freely, so numbering is per block, not per visual line. The raw source view always shows its own line numbers.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -303,6 +322,82 @@ struct WidthPreviewCard: View {
         .onTapGesture(perform: select)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(width.label) content width")
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction(.default, select)
+    }
+}
+
+/// One selectable line-numbers card: the width cards' miniature-page idiom,
+/// with or without block-start numbers in the margin. Both cards reserve
+/// the number slot so the text column sits identically in each — the two
+/// states read as equals, not as a default and a decoration.
+struct LineNumberPreviewCard: View {
+    let showNumbers: Bool
+    let selected: Bool
+    let select: () -> Void
+
+    /// Miniature blocks: a heading and two prose paragraphs, numbered at
+    /// their starting lines like the real gutter.
+    private static let lines: [(width: CGFloat, height: CGFloat, emphasis: Bool, number: String?)] = [
+        (0.42, 6, true, "1"),
+        (1.0, 3.5, false, "3"), (0.97, 3.5, false, nil), (1.0, 3.5, false, nil),
+        (0.88, 3.5, false, "7"), (1.0, 3.5, false, nil), (0.58, 3.5, false, nil),
+    ]
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(Array(Self.lines.enumerated()), id: \.offset) { _, line in
+                        HStack(alignment: .center, spacing: 5) {
+                            Text(showNumbers ? (line.number ?? "") : "")
+                                .font(.system(size: 7, design: .monospaced))
+                                .foregroundStyle(.secondary.opacity(0.8))
+                                // Sized to the bar, not the glyph, so the
+                                // numbered miniature keeps the same row
+                                // rhythm (and centering) as the bare one.
+                                .frame(width: 12, height: line.height, alignment: .trailing)
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(.secondary.opacity(line.emphasis ? 0.55 : 0.3))
+                                .frame(width: max(10, 176 * 0.55 * line.width),
+                                       height: line.height)
+                        }
+                    }
+                }
+            }
+            .frame(width: 200, height: 108)
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+            .overlay(
+                RoundedRectangle(cornerRadius: 9)
+                    .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor),
+                                  lineWidth: selected ? 2.5 : 1)
+            )
+            .overlay(alignment: .bottomTrailing) {
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(Color.white, Color.accentColor)
+                        .background(Circle().fill(.white).padding(2))
+                        .padding(7)
+                }
+            }
+            .padding(.bottom, 4)
+            Text(showNumbers ? "Shown" : "Hidden")
+                .font(.callout.weight(selected ? .semibold : .medium))
+            Text(showNumbers ? "Each block's source line in the margin" : "A clean margin, numbers on demand in Source")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 200)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: select)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(showNumbers ? "Line numbers shown" : "Line numbers hidden")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction(.default, select)
     }

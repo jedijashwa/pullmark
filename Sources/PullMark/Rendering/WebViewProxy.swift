@@ -175,6 +175,15 @@ final class WebViewProxy: ObservableObject {
         webView?.evaluateJavaScript(js, completionHandler: nil)
     }
 
+    /// Applies a line-numbers toggle to the loaded page in place — the
+    /// page reserves/releases its gutter and rebuilds the labels without
+    /// a reload.
+    func setLineNumbers(_ enabled: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmSetLineNumbers && __pmSetLineNumbers(\(enabled));",
+            completionHandler: nil)
+    }
+
     /// The source line of the topmost block visible in the viewport — the
     /// anchor for keeping the reader's place across an edit-mode flip.
     func firstVisibleLine(_ completion: @escaping (Int?) -> Void) {

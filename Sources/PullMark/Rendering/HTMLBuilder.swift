@@ -40,6 +40,11 @@ enum HTMLBuilder {
         /// the default cascade stays untouched. Stamped centrally in
         /// page(payload:) from the user preference.
         var width: String?
+        /// Per-block source line numbers in the rendered views (document
+        /// and diff modes). Stamped centrally in page(payload:) from the
+        /// user preference; app.js mirrors it onto the pm-line-numbers
+        /// root class.
+        var lineNumbers: Bool?
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
@@ -122,12 +127,14 @@ enum HTMLBuilder {
                              threads: [ThreadPayload]? = nil,
                              pending: [PendingPayload]? = nil,
                              commentableLines: CommentableLines.Payload? = nil,
-                             reviewPending: Bool = false) -> String {
+                             reviewPending: Bool = false,
+                             lineNumberEligible: Bool = true) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
                                     resourceDir: remote?.resourceDir,
                                     theme: theme,
+                                    lineNumbers: lineNumberEligible ? nil : false,
                                     preview: preview ? true : nil,
                                     editable: editable ? true : nil,
                                     blame: blame,
@@ -281,10 +288,16 @@ enum HTMLBuilder {
     private static func page(payload: RenderPayload, title: String,
                              customCSS: String? = nil) -> String {
         var payload = payload
-        // Every real page follows the content-width preference; the
-        // miniature Settings previews keep their own fixed layout.
+        // Every real page follows the content-width and line-number
+        // preferences; the miniature Settings previews keep their own
+        // fixed layout. A page can opt out of line numbers with an
+        // explicit false (PR overview body, preview sheets — prose that
+        // isn't a file, where a source coordinate means nothing).
         if payload.preview != true {
             payload.width = ContentWidth.current.dataValue
+            if payload.lineNumbers == nil {
+                payload.lineNumbers = LineNumbers.enabled ? true : nil
+            }
         }
         return """
         <!DOCTYPE html>
