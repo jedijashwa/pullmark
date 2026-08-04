@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.25.0 - 2026-08-04
 
 - **A `pullmark` command** — open files and folders from the shell:
   `pullmark README.md`, `pullmark docs/`, or bare `pullmark` for the
