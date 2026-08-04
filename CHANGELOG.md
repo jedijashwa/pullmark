@@ -4,6 +4,38 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **The sidebar navigator, rebuilt**
+  ([#32](https://github.com/jedijashwa/pullmark/issues/32)) — the
+  navigation panel's interactions are now first class:
+  - **Folders are real places**: opening a folder shows a closeable
+    root with a live file tree — folders first, single-child chains
+    compressed (`docs/en/guide`), empty directories pruned — instead
+    of a flat dump of every file. Files added, renamed, or deleted on
+    disk appear in the tree as they happen, and a root whose path
+    disappears (branch switch, unmounted volume) dims and revives
+    instead of vanishing. View as List remains per root.
+  - **Five honest sections**: Files (documents you opened
+    individually), Folders, Pull Requests — whose changed-file lists
+    are now the same trees, with status icons and unresolved-comment
+    badges — Review Requests, and Recents. Every row selects and
+    participates in keyboard navigation.
+  - **Closing things is easy**: hover any removable row for ✕, press
+    ⌫ on a selection, or use the grown context menus — Remove,
+    Reveal in Finder, Copy Path, Refresh Folder, Clear Recents — all
+    also in the File menu as rebindable commands.
+  - **Recents tell the truth**: an entry whose file has gone missing
+    dims with a "last seen at" tooltip and revives automatically when
+    the file returns; clicking one offers Remove from Recents instead
+    of an error.
+  - **Session restore keeps up**: relaunching restores folder roots
+    with their expansion — including files added while the app was
+    closed. Drag top-level rows to reorder; the order persists.
+  - Plus: ⌥-click deep-expands a subtree, Space Quick Looks the
+    selected file (macOS 14+), empty sections offer Open buttons, and
+    ⌘K / ⇧⌘F cover everything in folder trees.
+
 ## 0.23.0 - 2026-08-04
 
 - **Line numbers in rendered views** — a new Appearance setting, off by
