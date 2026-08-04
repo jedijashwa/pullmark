@@ -4,6 +4,20 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **A `pullmark` command** — open files and folders from the shell:
+  `pullmark README.md`, `pullmark docs/`, or bare `pullmark` for the
+  app itself, with relative paths resolved against your working
+  directory. Homebrew installs it automatically; DMG installs add it
+  with one click in Settings → General → Command line.
+- **Links go where they point** — relative links in local documents now
+  follow symlinks (including ones that lead outside the folder you
+  opened — common in cloud-drive setups) and `../` paths to sibling
+  folders, instead of failing silently. A link whose target genuinely
+  doesn't exist says so, naming the path. Images and other resources
+  the page loads by itself keep their stricter containment.
+
 ## 0.24.0 - 2026-08-04
 
 - **The sidebar navigator, rebuilt**
