@@ -35,6 +35,9 @@ final class GitHubClient {
     // MARK: - Auth
 
     func authToken() async -> String? {
+        // Demo mode never resolves credentials: no subprocess, no token,
+        // and every auth-gated path reads as cleanly unauthenticated.
+        if DemoMode.active { return nil }
         if !tokenResolved {
             cachedToken = await Task.detached(priority: .userInitiated) {
                 SystemGitCredentials.resolveToken()
@@ -85,9 +88,17 @@ final class GitHubClient {
 
     /// Raw bytes of a repo file (used for images referenced by PR Markdown).
     func fileData(_ ref: PullRequestRef, path: String, at sha: String) async throws -> Data {
-        try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/contents/\(path)",
-                          query: [URLQueryItem(name: "ref", value: sha)],
-                          accept: "application/vnd.github.raw+json")
+        // Demo mode serves the fixture texts; anything unknown surfaces
+        // the same error shape a real 404 would.
+        if DemoMode.active {
+            guard let text = DemoSession.fileContent(path: path, at: sha) else {
+                throw APIError(status: 404, message: "No demo content for \(path)")
+            }
+            return Data(text.utf8)
+        }
+        return try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/contents/\(path)",
+                                 query: [URLQueryItem(name: "ref", value: sha)],
+                                 accept: "application/vnd.github.raw+json")
     }
 
     func reviewComments(_ ref: PullRequestRef) async throws -> [ReviewComment] {
@@ -242,6 +253,9 @@ final class GitHubClient {
 
     /// Per-line blame ranges for a repo file at a commit (GraphQL; requires auth).
     func blame(ref: PullRequestRef, path: String, sha: String) async throws -> [BlameRange] {
+        // Demo mode: fixture blame with locally generated data-URI avatars
+        // — the same pipeline real GitHub avatar URLs feed.
+        if DemoMode.active { return DemoSession.blameRanges(path: path) }
         let data = try await graphQL(GitHubBlame.query,
                                      variables: ["owner": ref.owner, "repo": ref.repo,
                                                  "expr": sha, "path": path])
@@ -341,6 +355,7 @@ final class GitHubClient {
     /// History panel's data for PR files — GitHub has no line-history API).
     func fileHistory(ref: PullRequestRef, path: String, sha: String,
                      limit: Int = 15) async throws -> [BlameCommit] {
+        if DemoMode.active { return DemoSession.historyCommits() }
         let data = try await graphQL(GitHubHistory.query,
                                      variables: ["owner": ref.owner, "repo": ref.repo,
                                                  "expr": sha, "path": path, "first": limit])
@@ -350,6 +365,7 @@ final class GitHubClient {
     /// SHAs of the commits on the PR branch (REST, paginated). Used to split
     /// the History panel between PR-branch and base-branch commits.
     func prCommitSHAs(_ ref: PullRequestRef) async throws -> [String] {
+        if DemoMode.active { return DemoSession.prCommitSHAs }
         struct CommitRow: Decodable { let sha: String }
         var all: [String] = []
         for page in 1...3 {
@@ -711,6 +727,12 @@ final class GitHubClient {
                          query: [URLQueryItem] = [],
                          accept: String = "application/vnd.github+json",
                          jsonBody: Data? = nil) async throws -> Data {
+        // The one transport choke point (REST and GraphQL both land
+        // here): demo mode is offline by construction, not by hoping
+        // every caller remembered its own guard.
+        guard !DemoMode.active else {
+            throw APIError(status: -1, message: "PullMark is in demo mode — network access is disabled.")
+        }
         var components = URLComponents(string: "https://api.github.com")!
         components.path = path
         if !query.isEmpty { components.queryItems = query }

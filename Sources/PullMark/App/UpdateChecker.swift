@@ -249,7 +249,7 @@ final class UpdateChecker: ObservableObject {
     private static let releaseListURL =
         URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases?per_page=20")!
 
-    init(currentVersion: String? = nil, defaults: UserDefaults = .standard) {
+    init(currentVersion: String? = nil, defaults: UserDefaults = .pullmark) {
         self.currentVersion = currentVersion
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "0.0.0"
@@ -272,7 +272,9 @@ final class UpdateChecker: ObservableObject {
     /// Launch/periodic check: shows the banner unless this version was
     /// already dismissed. Silent on any failure.
     func checkAutomatically() async {
-        guard currentVersion != "0.0.0" else { return }
+        // Demo launches (PM_DEMO=1) are offline and screenshot-bound —
+        // no update fetch, no banner.
+        guard !DemoMode.active, currentVersion != "0.0.0" else { return }
         guard let release = try? await fetch(UpdateRelease.self, from: Self.latestReleaseURL) else { return }
         apply(release, ignoringDismissal: false)
     }
