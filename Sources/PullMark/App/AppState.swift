@@ -250,15 +250,41 @@ final class AppState: ObservableObject {
                 await self?.refreshInboxIfDue()
             }
         }
-        loadRecents()
-        loadInboxCounts()
+        // Demo launches (PM_DEMO=1) fabricate their session below and show
+        // nothing real — no recents, no inbox, no restore.
+        if !DemoMode.active {
+            loadRecents()
+            loadInboxCounts()
+        }
         Task { @MainActor [weak self] in
             // Brief grace so launch-time opens (CLI, Finder) land first —
             // restore skips itself when anything is already open.
             try? await Task.sleep(nanoseconds: 300_000_000)
-            self?.restoreSessionIfWanted()
-            await self?.refreshInboxIfDue()
+            if DemoMode.active {
+                self?.installDemoSessionIfNeeded()
+            } else {
+                self?.restoreSessionIfWanted()
+                await self?.refreshInboxIfDue()
+            }
         }
+    }
+
+    // MARK: - Demo mode (PM_DEMO=1)
+
+    /// Fabricates the curated demo session directly — the same shape
+    /// `addPR` builds from live responses, but entirely offline (see
+    /// DemoSession for the content and DemoMode for the persistence
+    /// seam). First window only, and only while it is still empty,
+    /// mirroring the session-restore rules.
+    private func installDemoSessionIfNeeded() {
+        guard Self.keyInstance === self, localFiles.isEmpty, prSessions.isEmpty
+        else { return }
+        localFiles = DemoSession.installLocalDocs()
+        let session = DemoSession.makeSession()
+        viewerLogin = DemoSession.viewerLogin
+        adoptionKnown.insert(session.id)
+        prSessions = [session]
+        selection = .prOverview(session.id)
     }
 
     // MARK: - Review-request inbox
@@ -276,7 +302,7 @@ final class AppState: ObservableObject {
     private var lastInboxRefresh: Date?
 
     var inboxEnabled: Bool {
-        UserDefaults.standard.object(forKey: DefaultsKeys.inboxEnabled) as? Bool ?? true
+        UserDefaults.pullmark.object(forKey: DefaultsKeys.inboxEnabled) as? Bool ?? true
     }
 
     /// Search-API rate limits are tight (30/min): refresh at most every
@@ -284,7 +310,8 @@ final class AppState: ObservableObject {
     func refreshInboxIfDue() async {
         // Only the key window polls — N windows sharing one rate limit
         // would multiply identical searches for identical results.
-        guard inboxEnabled, Self.keyInstance === self else { return }
+        // Demo mode never polls: the fixture is the whole world.
+        guard !DemoMode.active, inboxEnabled, Self.keyInstance === self else { return }
         if let last = lastInboxRefresh, Date().timeIntervalSince(last) < 300 { return }
         lastInboxRefresh = Date()
         guard let items = try? await client.reviewRequests() else { return }
@@ -313,12 +340,12 @@ final class AppState: ObservableObject {
     }
 
     private func persistInboxCounts() {
-        UserDefaults.standard.set(inboxMDCounts, forKey: DefaultsKeys.inboxMDCounts)
-        UserDefaults.standard.set(inboxCountStamps, forKey: DefaultsKeys.inboxCountStamps)
+        UserDefaults.pullmark.set(inboxMDCounts, forKey: DefaultsKeys.inboxMDCounts)
+        UserDefaults.pullmark.set(inboxCountStamps, forKey: DefaultsKeys.inboxCountStamps)
     }
 
     func loadInboxCounts() {
-        let defaults = UserDefaults.standard
+        let defaults = UserDefaults.pullmark
         if let counts = defaults.dictionary(forKey: DefaultsKeys.inboxMDCounts) as? [String: Int] {
             inboxMDCounts = counts
         }
@@ -328,12 +355,12 @@ final class AppState: ObservableObject {
     }
 
     func inboxIsUnread(_ item: GitHubClient.InboxPR) -> Bool {
-        let seen = UserDefaults.standard.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String]
+        let seen = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String]
         return seen?[item.id] != item.updatedAt
     }
 
     func openInboxItem(_ item: GitHubClient.InboxPR) {
-        var seen = UserDefaults.standard.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
+        var seen = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
         seen[item.id] = item.updatedAt
         // Bounded, but never pruned against the current (single-page) inbox
         // — that resurrected read state for anything briefly absent.
@@ -344,7 +371,7 @@ final class AppState: ObservableObject {
                 if seen.count <= 200 { break }
             }
         }
-        UserDefaults.standard.set(seen, forKey: DefaultsKeys.inboxSeen)
+        UserDefaults.pullmark.set(seen, forKey: DefaultsKeys.inboxSeen)
         objectWillChange.send()
         Task {
             do {
@@ -371,16 +398,16 @@ final class AppState: ObservableObject {
             "files": localFiles.map(\.url.path),
             "prs": Array(Set(openPRs).union(pendingRestorePRs)),
         ]
-        UserDefaults.standard.set(snapshot, forKey: DefaultsKeys.sessionSnapshot)
+        UserDefaults.pullmark.set(snapshot, forKey: DefaultsKeys.sessionSnapshot)
     }
 
     private func restoreSessionIfWanted() {
         // Only the first window restores — ⌘N must open EMPTY windows,
         // not clones of the last session.
         guard Self.keyInstance === self,
-              UserDefaults.standard.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
+              UserDefaults.pullmark.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
               localFiles.isEmpty, prSessions.isEmpty,
-              let snapshot = UserDefaults.standard.dictionary(forKey: DefaultsKeys.sessionSnapshot)
+              let snapshot = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.sessionSnapshot)
                   as? [String: [String]]
         else { return }
         for path in snapshot["files"] ?? [] where FileManager.default.fileExists(atPath: path) {
@@ -612,6 +639,8 @@ final class AppState: ObservableObject {
     /// Detects head movement on open PRs; sets a flag rather than reloading
     /// so an in-progress review is never yanked out from under the user.
     func checkForPRUpdates() async {
+        // The demo PR has no upstream to move.
+        guard !DemoMode.active else { return }
         for session in prSessions where !session.updateAvailable {
             guard let details = try? await client.pullRequest(session.ref) else { continue }
             updateRecentPRStatus(ref: session.ref, status: PRStatus(details: details))
@@ -728,7 +757,7 @@ final class AppState: ObservableObject {
     }
 
     private func loadRecents() {
-        guard let data = UserDefaults.standard.data(forKey: Self.recentsKey),
+        guard let data = UserDefaults.pullmark.data(forKey: Self.recentsKey),
               let decoded = try? JSONDecoder().decode([RecentItem].self, from: data)
         else { return }
         recents = decoded
@@ -736,7 +765,7 @@ final class AppState: ObservableObject {
 
     private func saveRecents() {
         if let data = try? JSONEncoder().encode(recents) {
-            UserDefaults.standard.set(data, forKey: Self.recentsKey)
+            UserDefaults.pullmark.set(data, forKey: Self.recentsKey)
         }
     }
 
@@ -845,6 +874,9 @@ final class AppState: ObservableObject {
     /// how loudly to surface).
     @discardableResult
     func adoptPendingReview(sessionID: String) async -> Bool {
+        // Demo mode: the fabricated pending review IS the truth — there is
+        // no server to reconcile against, and adoption must never clear it.
+        guard !DemoMode.active else { return true }
         guard let session = prSessions.first(where: { $0.id == sessionID }) else { return true }
         let ref = session.ref
         // Unauthenticated: no pending review can exist and no sync can run
@@ -893,6 +925,9 @@ final class AppState: ObservableObject {
     /// (comments added mid-flight get one more pass via the gate) instead
     /// of silently doing nothing.
     func syncPendingComments(sessionID: String) async {
+        // Demo mode: nothing uploads — the queued comment deliberately
+        // stays "Not uploaded" so both sync states stay visible.
+        guard !DemoMode.active else { return }
         await pendingSyncGate.run(sessionID) { [weak self] in
             await self?.performPendingSyncPass(sessionID: sessionID)
         }

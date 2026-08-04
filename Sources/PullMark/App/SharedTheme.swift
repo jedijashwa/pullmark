@@ -15,22 +15,25 @@ enum SharedTheme {
     /// observing the domain catches all of them). Cheap: writes only when
     /// the mirrored value actually differs.
     static func startMirroring() {
+        // Never from demo mode: its wiped defaults suite would mirror
+        // empty values over the user's real Quick Look preferences.
+        guard !DemoMode.active else { return }
         mirror()
         observer = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification,
-            object: UserDefaults.standard,
+            object: UserDefaults.pullmark,
             queue: .main
         ) { _ in mirror() }
     }
 
     private static func mirror() {
         guard let shared = UserDefaults(suiteName: suiteName) else { return }
-        let theme = UserDefaults.standard.string(forKey: DefaultsKeys.theme)
+        let theme = UserDefaults.pullmark.string(forKey: DefaultsKeys.theme)
         if shared.string(forKey: DefaultsKeys.theme) != theme {
             shared.set(theme, forKey: DefaultsKeys.theme)
         }
         // Rendered-vs-source preview preference rides along the same way.
-        let rendered = UserDefaults.standard.object(forKey: DefaultsKeys.qlRendered) as? Bool
+        let rendered = UserDefaults.pullmark.object(forKey: DefaultsKeys.qlRendered) as? Bool
         if shared.object(forKey: DefaultsKeys.qlRendered) as? Bool != rendered {
             shared.set(rendered, forKey: DefaultsKeys.qlRendered)
         }
