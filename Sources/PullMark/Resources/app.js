@@ -2259,23 +2259,56 @@
   // narrows it, exactly like the diff views.
   function setupResultCommenting() {
     var docLines = (payload.markdown || "").split("\n");
+    // Affordances live in a content-level layer, like the markers — NOT
+    // inside the blocks. A block like a table clips and scrolls
+    // (github-markdown gives tables overflow:auto), so anything hanging
+    // past its edge from inside would grow the block its own scrollbar.
+    document.documentElement.classList.add("pm-commenting-on");
+    var layer = document.createElement("div");
+    layer.className = "pm-affordance-layer pm-annotation";
+    content.append(layer);
     for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
       var m = /^(\d+)-(\d+)$/.exec(
         (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
       if (!m) { continue; }
-      attachResultAffordance(el, +m[1], +m[2], docLines);
+      attachResultAffordance(layer, el, +m[1], +m[2], docLines);
     }
   }
 
-  function attachResultAffordance(el, blockStart, blockEnd, docLines) {
+  function attachResultAffordance(layer, el, blockStart, blockEnd, docLines) {
     el.classList.add("pm-commentable");
     var mapped = clampRangeToRuns("RIGHT", blockStart, blockEnd);
-    // Both affordances live in one hover container beside the block (in
-    // the content column's right padding gutter, where the markers live)
-    // instead of overlaying wide content like tables. The container
-    // overlaps the block edge slightly so hover hands off without a gap.
+    // Both affordances share one hover container beside the block, in the
+    // content column's right padding gutter where the markers live —
+    // never overlaying wide content. Shown via JS hover with a short
+    // grace so the pointer can cross from the block onto the buttons;
+    // positioned at show time, so re-layouts can't leave it stale.
     var tools = document.createElement("div");
-    tools.className = "pm-result-tools pm-annotation";
+    tools.className = "pm-result-tools";
+    tools.setAttribute("data-pm-for", blockStart + "-" + blockEnd);
+    var hideTimer = null;
+    function position() {
+      var cRect = content.getBoundingClientRect();
+      var rect = el.getBoundingClientRect();
+      // Below any marker badges stacked at the block top (one row each).
+      var badges = (el.classList.contains("pm-commented") ? 1 : 0)
+        + (el.classList.contains("pm-pending-anchor") ? 1 : 0);
+      tools.style.left = Math.round(rect.right - cRect.left - 2) + "px";
+      tools.style.top = Math.round(rect.top - cRect.top + 2 + badges * 28) + "px";
+    }
+    function show() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      position();
+      tools.style.display = "flex";
+    }
+    function hide() {
+      if (hideTimer) { clearTimeout(hideTimer); }
+      hideTimer = setTimeout(function () { tools.style.display = "none"; }, 120);
+    }
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("mouseleave", hide);
+    tools.addEventListener("mouseenter", show);
+    tools.addEventListener("mouseleave", hide);
     var bubble = document.createElement("button");
     bubble.type = "button";
     bubble.className = "pm-comment-btn";
@@ -2287,7 +2320,7 @@
       bubble.setAttribute("aria-disabled", "true");
       bubble.setAttribute("aria-label", bubble.title);
       tools.append(bubble);
-      el.append(tools);
+      layer.append(tools);
       return;
     }
     var sourceLines = docLines.slice(blockStart - 1, blockEnd);
@@ -2329,7 +2362,7 @@
       open(true);
     });
     tools.append(bubble, pencil);
-    el.append(tools);
+    layer.append(tools);
   }
 
   // ---- Resolved-conversation visibility (Result view, spec §1) ----
@@ -2358,7 +2391,7 @@
         el.classList.remove("pm-commented", "pm-pending-anchor", "pm-anchor-open",
                             "pm-commentable");
       });
-    clone.classList.remove("pm-markers-on", "pm-exporting");
+    clone.classList.remove("pm-markers-on", "pm-commenting-on", "pm-exporting");
     return clone.outerHTML;
   };
 
@@ -2403,8 +2436,61 @@
     if (payload.commentable !== false) {
       wrap.append(commentButton(seg, target));
       if (seg.side === "RIGHT") { wrap.append(editButton(seg, target)); }
+      attachBlockHover(wrap);
     }
     return wrap;
+  }
+
+  // Inline-diff affordances get the Result-view treatment: positioned at
+  // hover time against the block's real CONTENT — a narrow table's own
+  // edge, not the full-column wrapper (which put buttons a window away at
+  // Full Width), and the first line's text top, not the wrapper box (which
+  // floated them into a heading's interior margin). Fully outside the
+  // content edge, stacked like .pm-result-tools; JS show/hide with the
+  // same grace so buttons past the wrapper's hover box stay reachable.
+  function attachBlockHover(wrap) {
+    var btns = wrap.querySelectorAll(":scope > .pm-comment-btn");
+    if (!btns.length) { return; }
+    var hideTimer = null;
+    function place() {
+      var wr = wrap.getBoundingClientRect();
+      var right = 0;
+      var top = null;
+      wrap.querySelectorAll(":scope > div:not(.pm-threads)").forEach(function (d) {
+        for (var c = d.firstElementChild; c; c = c.nextElementSibling) {
+          var r = c.getBoundingClientRect();
+          if (r.width && r.right > right) { right = r.right; }
+          if (top === null && r.height) { top = r.top; }
+        }
+        if (top === null) {
+          var dr = d.getBoundingClientRect();
+          if (dr.height) { top = dr.top; right = Math.max(right, dr.right); }
+        }
+      });
+      if (top === null) { top = wr.top; right = wr.right; }
+      btns.forEach(function (b, i) {
+        b.style.left = Math.round(right - wr.left + 8) + "px";
+        b.style.right = "auto";
+        b.style.top = Math.round(top - wr.top + i * 34) + "px";
+        b.style.display = "flex";
+      });
+    }
+    function show() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      place();
+    }
+    function hide() {
+      if (hideTimer) { clearTimeout(hideTimer); }
+      hideTimer = setTimeout(function () {
+        btns.forEach(function (b) { b.style.display = "none"; });
+      }, 120);
+    }
+    wrap.addEventListener("mouseenter", show);
+    wrap.addEventListener("mouseleave", hide);
+    btns.forEach(function (b) {
+      b.addEventListener("mouseenter", show);
+      b.addEventListener("mouseleave", hide);
+    });
   }
 
   function renderInline(segments) {

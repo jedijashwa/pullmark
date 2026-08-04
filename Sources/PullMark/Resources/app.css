@@ -149,15 +149,19 @@ body {
   padding: 4px 6px;
   z-index: 5;
 }
-.pm-block:hover .pm-comment-btn,
+/* Split-view cells keep CSS hover; inline pm-block buttons are shown
+   and placed by attachBlockHover (they sit outside the content edge,
+   past the wrapper's hover box, so CSS :hover could never keep them
+   reachable). */
 .pm-cell:hover .pm-comment-btn {
   display: flex;
 }
 .pm-comment-btn:hover {
   border-color: rgba(128, 128, 128, 0.9);
 }
-/* Edit-as-suggestion pencil: same treatment, sitting left of the bubble. */
-.pm-edit-btn { right: 40px; }
+/* Edit-as-suggestion pencil: split cells keep it left of the bubble;
+   inline blocks stack it below via attachBlockHover. */
+.pm-cell .pm-edit-btn { right: 40px; }
 /* Local-document block editing: the pencil is the only button, flush right;
    blocks anchor it and reveal on hover. */
 .pm-editable { position: relative; }
@@ -554,38 +558,30 @@ body {
 
 /* Result-view comment affordances: bubble + pencil in one hover container
    BESIDE the block — in the content column's right padding gutter, where
-   the markers live — never overlaying wide content (tables). The container
-   overlaps the block edge by 2px so hover hands off without a gap, and
-   the container's own hover keeps it alive while the pointer is on it. */
-.pm-commentable {
+   the markers live — never overlaying wide content (tables). The
+   containers live in a content-level layer (a block like a table clips
+   and scrolls, so nothing may hang past its edge from inside); app.js
+   shows, hides, and positions them on hover, overlapping the block edge
+   by 2px so the pointer can cross without a gap. */
+:root.pm-commenting-on .markdown-body {
   position: relative;
+}
+.pm-affordance-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 .pm-result-tools {
   position: absolute;
-  top: 2px;
-  left: calc(100% - 2px);
   display: none;
   flex-direction: column;
   gap: 4px;
+  pointer-events: auto;
   z-index: 5;
-}
-.pm-commentable:hover > .pm-result-tools,
-.pm-result-tools:hover {
-  display: flex;
 }
 .pm-result-tools .pm-comment-btn {
   position: static;
   display: flex;
-}
-/* Commented blocks carry marker badges at the block top in the same
-   gutter column — start the affordances below them (one badge row, or
-   two when published and pending badges stack). */
-.pm-commented > .pm-result-tools,
-.pm-pending-anchor > .pm-result-tools {
-  top: 30px;
-}
-.pm-commented.pm-pending-anchor > .pm-result-tools {
-  top: 58px;
 }
 .pm-comment-unavailable {
   opacity: 0.45;
