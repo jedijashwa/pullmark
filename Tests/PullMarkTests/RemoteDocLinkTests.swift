@@ -72,4 +72,14 @@ import Foundation
     @Test func wwwHostAccepted() {
         #expect(parse("https://www.github.com/o/r/blob/main/a.md") != nil)
     }
+
+    @Test func schemelessFormsWorkViaOpenQuickly() {
+        // ⌘K accepts what people actually type — no scheme.
+        #expect(OpenQuickly.directDestination(for: "github.com/o/r", fileExists: { _ in false })
+            == .remoteRepo(owner: "o", repo: "r", ref: nil))
+        #expect(OpenQuickly.directDestination(for: "github.com/o/r/blob/main/a.md",
+                                              fileExists: { _ in false })
+            == .remoteDoc(RemoteDocLink(owner: "o", repo: "r", ref: "main",
+                                        path: "a.md", fragment: nil)))
+    }
 }

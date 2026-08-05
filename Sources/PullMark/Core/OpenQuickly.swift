@@ -126,12 +126,17 @@ enum OpenQuickly {
         if let ref = PullRequestRef.parse(trimmed) {
             return .pullRequest(ref)
         }
-        if trimmed.lowercased().contains("github"), let url = URL(string: trimmed) {
-            if let link = RemoteDocLink.parse(url) {
-                return .remoteDoc(link)
-            }
-            if let repo = repoDestination(url) {
-                return repo
+        if trimmed.lowercased().contains("github") {
+            // People paste and type both forms — "github.com/owner/repo"
+            // has no scheme, so URL(string:) yields no host without help.
+            let spelled = trimmed.contains("://") ? trimmed : "https://" + trimmed
+            if let url = URL(string: spelled) {
+                if let link = RemoteDocLink.parse(url) {
+                    return .remoteDoc(link)
+                }
+                if let repo = repoDestination(url) {
+                    return repo
+                }
             }
         }
         var path = trimmed

@@ -599,10 +599,10 @@ footer .note { margin-left: auto; }
       <code>[toc]</code>, and YAML front matter folded into a tidy metadata table.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-doc.png?v=6" width="1052" height="784" loading="lazy"
-        alt="PullMark rendering a local Markdown file from a docs repo: the sidebar shows individually opened files, an opened folder as a tree of subfolders and Markdown files, and an open pull request whose changed files form a tree with status icons and a comment-count badge; the document shows a collapsed front-matter bar, formatted headings, nested ordered lists, and a footnote reference; the titlebar shows the file's folder and git branch, with a word-count pill in the corner">
-      <figcaption>Folders come in as living trees, front matter folds into a quiet bar,
-      pull requests sit beside your local files, the titlebar knows your branch — and a
+      <img src="img/app-doc.png?v=7" width="1052" height="784" loading="lazy"
+        alt="PullMark rendering a local Markdown file from a docs repo: the sidebar's Locations section shows an opened folder as a tree of subfolders and Markdown files, wearing a git branch chip and a GitHub repo mark, beside individually opened files and an open pull request whose changed files form a tree with status icons and a comment-count badge; the document shows formatted headings, bulleted and numbered lists, and links; the titlebar shows the file's folder and git branch, with a word-count pill in the corner">
+      <figcaption>Folders come in as living trees, every location wears its git branch,
+      pull requests sit beside your local files, the titlebar knows where you are — and a
       words&nbsp;·&nbsp;minutes pill keeps score.</figcaption>
     </figure>
 
@@ -642,8 +642,12 @@ footer .note { margin-left: auto; }
       <li><strong>A review inbox</strong> — PRs awaiting your review, filtered to the ones that
         actually change Markdown, with unread counts; every sidebar section collapses and
         remembers.</li>
+      <li><strong>GitHub links open in-app</strong> — click a <code>github.com</code> link to a
+        Markdown file and PullMark renders it, with an always-visible repo&nbsp;@&nbsp;branch
+        provenance bar; <kbd>⌘</kbd>-click sends it to the browser instead.</li>
       <li><strong>Open Quickly</strong> — <kbd>⌘K</kbd> jumps to any heading, file, or PR,
-        fuzzy-matched — or paste a PR URL or a file path and it opens that directly.</li>
+        fuzzy-matched — or paste a PR URL, a repo URL, or a file path and it opens that
+        directly.</li>
       <li><strong>Moved means moved</strong> — a paragraph relocated verbatim renders once with
         a quiet violet chip, not red-plus-green noise.</li>
       <li><strong>Picks up where you left off</strong> — your files, PRs, and reading position
@@ -665,6 +669,25 @@ footer .note { margin-left: auto; }
       <img src="img/app-edit.png?v=2" width="860" height="420" loading="lazy"
         alt="A rendered document in edit mode: one paragraph revealed as raw Markdown source in place, surrounded by rendered content">
       <figcaption>Edit mode: the active block shows its source; everything else stays rendered.</figcaption>
+    </figure>
+
+    <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">GitHub is a place your docs live. Read it like one.</h3>
+    <p class="prose">Click a <code>github.com</code> link to a Markdown file and PullMark fetches
+    and renders it in-app — your first click asks which behavior you want, and
+    <kbd>⌘</kbd>-click always does the other. A provenance bar above the page says exactly
+    which repo and branch you're reading, pinned to the commit it resolved to; relative links
+    keep resolving against the repo, the whole Markdown tree is one click away in the sidebar,
+    and private repos use the GitHub sign-in your PRs already use — nothing fetched ever
+    touches disk. Branches are a chip on every repo: switch in place, open another branch as
+    its own sidebar entry, or hop into a local worktree. And if the repo is already cloned on
+    your Mac on that branch, the link opens your local file instead.</p>
+
+    <figure class="shot reading-shot">
+      <img src="img/app-remote.png?v=1" width="1052" height="784" loading="lazy"
+        alt="PullMark rendering a Markdown file fetched from a GitHub repository: a provenance bar above the content reads the repository name, a branch chip, the file path, and the pinned commit, with an Open on GitHub link; the sidebar's Locations section shows the repository with a book icon and its Markdown file tree">
+      <figcaption>A doc read straight from GitHub: the provenance bar always says where you
+      are — repo, branch, pinned commit — and the branch chip switches or opens branches
+      without leaving the page.</figcaption>
     </figure>
 
     <figure class="shot shot-narrow">
