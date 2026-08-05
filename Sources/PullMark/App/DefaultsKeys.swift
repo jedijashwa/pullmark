@@ -81,7 +81,6 @@ enum DefaultsKeys {
     static let remoteLinkPolicy = "pm.remoteLinkPolicy"
 
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
-    static let sidebarGitHubExpanded = "pm.sidebar.githubExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"

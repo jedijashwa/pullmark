@@ -199,7 +199,7 @@ struct SearchPalette: View {
         case .local: return "doc.text"
         case .folder, .folderNode: return "folder"
         case .prFile, .prDoc, .prOverview: return "arrow.triangle.pull"
-        case .remoteRepo, .remoteDoc: return "arrow.triangle.branch"
+        case .remoteRepo, .remoteDoc: return "book.closed"
         case .inboxItem, .recentItem: return "clock"
         }
     }

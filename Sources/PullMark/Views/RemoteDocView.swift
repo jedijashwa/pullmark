@@ -380,7 +380,7 @@ struct RemoteProvenanceBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "arrow.triangle.branch")
+            Image(systemName: "book.closed")
                 .foregroundStyle(.secondary)
             Text("\(session.ref.owner)/\(session.ref.repo)")
                 .fontWeight(.medium)

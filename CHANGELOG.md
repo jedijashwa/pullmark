@@ -20,8 +20,8 @@ section current as features land.
   - **Remote docs are browsable**: relative links (`./sibling.md`,
     `../other/doc.md`) resolve against the repo at the same pinned
     commit, images load the same way, and Browse Repo Files fetches
-    the repo's whole Markdown tree into the sidebar's new GitHub
-    section. ⌘K accepts blob URLs and `github.com/owner/repo` too.
+    the repo's whole Markdown tree into the sidebar. ⌘K accepts blob
+    URLs and `github.com/owner/repo` too.
   - **PRs keep precedence**: a link into a repo you have open as a
     pull request opens in the PR space — the rendered diff when the
     file is part of the PR, the PR's browsed docs at its head branch —
@@ -38,6 +38,11 @@ section current as features land.
     (underscores survive, consecutive spaces keep their hyphens), so
     `#section` links written for GitHub land correctly in PullMark
     and vice versa.
+- **A calmer sidebar** — four sections instead of six. Local folders
+  and GitHub repos now share one **Locations** section (browsable
+  roots, wherever they live — repo rows wear GitHub's book icon and
+  show their ref), and Review Requests became a subgroup inside
+  **Pull Requests**, unread badge intact.
 
 ## 0.25.0 - 2026-08-04
 
