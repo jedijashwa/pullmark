@@ -43,6 +43,24 @@ enum PathTree {
     }
 
     /// The file paths of every leaf under a node, in tree order.
+    /// GitHub's rule for what a place shows by default: the directory's
+    /// README (any case, any Markdown extension), else its index file,
+    /// else nothing. `directory` is a root-relative path ("" = the root);
+    /// only that directory's own files are considered, never descendants.
+    static func readmePath(in paths: [String], directory: String = "") -> String? {
+        let prefix = directory.isEmpty ? "" : directory + "/"
+        let ownFiles = paths.filter {
+            $0.hasPrefix(prefix) && !$0.dropFirst(prefix.count).contains("/")
+        }
+        func match(_ base: String) -> String? {
+            ownFiles.first {
+                let name = (($0 as NSString).lastPathComponent as NSString).deletingPathExtension
+                return name.caseInsensitiveCompare(base) == .orderedSame
+            }
+        }
+        return match("README") ?? match("index")
+    }
+
     static func leafPaths(_ node: Node) -> [String] {
         if let filePath = node.filePath { return [filePath] }
         return node.children.flatMap(leafPaths)

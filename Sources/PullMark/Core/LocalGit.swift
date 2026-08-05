@@ -267,6 +267,99 @@ enum LocalGit {
         return ranges
     }
 
+    /// A GitHub repo among a checkout's remotes, comparable across URL
+    /// spellings (https, ssh, .git suffix) and case.
+    struct GitHubRepoID: Equatable, Hashable {
+        let owner: String
+        let repo: String
+
+        func matches(owner: String, repo: String) -> Bool {
+            self.owner.caseInsensitiveCompare(owner) == .orderedSame
+                && self.repo.caseInsensitiveCompare(repo) == .orderedSame
+        }
+    }
+
+    struct Worktree: Equatable {
+        let path: String
+        let branch: String?
+    }
+
+    /// A folder's git identity for the sidebar: repo toplevel, checked-out
+    /// branch, every GitHub repo among its remotes (origin first — display
+    /// prefers it; link matching accepts any, so fork + upstream both
+    /// count), and the repo's worktrees. Nil outside a repo.
+    struct RepoInfo: Equatable {
+        var toplevel: String
+        var branch: String?
+        var gitHubRepos: [GitHubRepoID] = []
+        var worktrees: [Worktree] = []
+
+        var primaryGitHubRepo: GitHubRepoID? { gitHubRepos.first }
+    }
+
+    /// Everything the sidebar needs about a folder's checkout, in one
+    /// background-safe call. Worktrees resolve `.git`-file indirection via
+    /// git itself, so a linked worktree reports exactly like a clone.
+    static func repoInfo(forDirectory dir: URL) -> RepoInfo? {
+        guard let out = run(["rev-parse", "--show-toplevel"], in: dir.path) else { return nil }
+        let toplevel = out.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !toplevel.isEmpty else { return nil }
+        var info = RepoInfo(toplevel: toplevel)
+        info.branch = currentBranch(in: URL(fileURLWithPath: toplevel))
+        if let remotes = run(["remote", "-v"], in: toplevel) {
+            info.gitHubRepos = parseRemotesOutput(remotes)
+        }
+        if let list = run(["worktree", "list", "--porcelain"], in: toplevel) {
+            info.worktrees = parseWorktreeList(list)
+        }
+        return info
+    }
+
+    /// Pure parser for `git remote -v`: unique GitHub repos, origin first,
+    /// otherwise in listing order.
+    static func parseRemotesOutput(_ output: String) -> [GitHubRepoID] {
+        var seen: [GitHubRepoID] = []
+        var origin: GitHubRepoID?
+        for line in output.components(separatedBy: "\n") {
+            let parts = line.components(separatedBy: "\t")
+            guard parts.count >= 2,
+                  let url = parts[1].components(separatedBy: " ").first,
+                  let (owner, repo) = parseGitHubRemote(url) else { continue }
+            let id = GitHubRepoID(owner: owner, repo: repo)
+            if !seen.contains(id) { seen.append(id) }
+            if parts[0] == "origin" { origin = id }
+        }
+        if let origin, let index = seen.firstIndex(of: origin), index != 0 {
+            seen.remove(at: index)
+            seen.insert(origin, at: 0)
+        }
+        return seen
+    }
+
+    /// Pure parser for `git worktree list --porcelain`: entries separated
+    /// by blank lines; `branch refs/heads/x` when checked out, `detached`
+    /// otherwise (branch stays nil).
+    static func parseWorktreeList(_ output: String) -> [Worktree] {
+        var result: [Worktree] = []
+        var path: String?
+        var branch: String?
+        func flush() {
+            if let p = path { result.append(Worktree(path: p, branch: branch)) }
+            path = nil
+            branch = nil
+        }
+        for line in output.components(separatedBy: "\n") {
+            if line.hasPrefix("worktree ") {
+                flush()
+                path = String(line.dropFirst("worktree ".count))
+            } else if line.hasPrefix("branch refs/heads/") {
+                branch = String(line.dropFirst("branch refs/heads/".count))
+            }
+        }
+        flush()
+        return result
+    }
+
     /// Pure parser for github.com remote URLs (https, ssh, git@, git://).
     static func parseGitHubRemote(_ remote: String) -> (owner: String, repo: String)? {
         let s = remote.trimmingCharacters(in: .whitespacesAndNewlines)

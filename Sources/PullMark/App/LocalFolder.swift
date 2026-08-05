@@ -22,6 +22,9 @@ struct LocalFolder: Identifiable, Equatable {
     var scanning = false
     var viewMode: ViewMode = .tree
     var expandedPaths: Set<String> = []
+    /// Git identity of the root, computed off-main at open/rescan and on
+    /// app activation — never during rendering. Nil outside a repo.
+    var git: LocalGit.RepoInfo?
 
     var id: URL { rootURL }
     var displayName: String { rootURL.lastPathComponent }

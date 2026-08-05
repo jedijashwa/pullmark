@@ -122,26 +122,11 @@ struct ContentView: View {
             Text("Last seen at \(state.deadRecent?.path.map { PathAbbreviator.abbreviate($0) } ?? ""). "
                 + "It will revive here if the file comes back.")
         }
-        // First GitHub Markdown link ever clicked: the choice sets the
-        // default (Settings ▸ General changes it; ⌘-click inverts it).
-        .alert("Open GitHub Markdown links in PullMark?",
-               isPresented: remoteLinkPromptPresented) {
-            Button("Open in PullMark") {
-                if let prompt = state.remoteLinkPrompt {
-                    state.resolveRemoteLinkPrompt(prompt, openInApp: true)
-                }
-            }
-            Button("Open in Browser") {
-                if let prompt = state.remoteLinkPrompt {
-                    state.resolveRemoteLinkPrompt(prompt, openInApp: false)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This link points to a Markdown file on GitHub. PullMark can fetch and "
-                + "render it in-app. Your choice becomes the default for GitHub links — "
-                + "change it anytime in Settings ▸ General, or hold ⌘ while clicking for "
-                + "the other behavior.")
+        // A GitHub Markdown link clicked while the policy is "ask": the
+        // choice sheet (a sheet, not an alert — it carries the Remember
+        // checkbox, which alerts cannot host).
+        .sheet(item: $state.remoteLinkPrompt) { prompt in
+            RemoteLinkPromptSheet(prompt: prompt)
         }
         .environmentObject(state)
         // Drop .md files or folders anywhere on the window.
@@ -200,13 +185,6 @@ struct ContentView: View {
         Binding(
             get: { state.lastNotice != nil },
             set: { if !$0 { state.lastNotice = nil } }
-        )
-    }
-
-    private var remoteLinkPromptPresented: Binding<Bool> {
-        Binding(
-            get: { state.remoteLinkPrompt != nil },
-            set: { if !$0 { state.remoteLinkPrompt = nil } }
         )
     }
 
@@ -499,8 +477,103 @@ private struct FolderRootGroup: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let folder: LocalFolder
+    @State private var ghBranches: [String] = []
+    @State private var menuAnchor = MenuAnchorBox()
+    @State private var menuPresenter = MenuActionPresenter()
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    /// The local flavor of the branch menu: worktrees open as sibling
+    /// Locations (disk truth is discovered, never mutated — PullMark does
+    /// no checkouts), and for GitHub-backed folders other branches open as
+    /// pinned remote sessions — except branches a worktree already has
+    /// checked out, which jump to that folder instead (local beats remote
+    /// whenever disk truth exists).
+    private func popBranchMenu() {
+        guard let git = folder.git else { return }
+        if git.primaryGitHubRepo != nil, ghBranches.isEmpty {
+            let ref = PullRequestRef(owner: git.gitHubRepos[0].owner,
+                                     repo: git.gitHubRepos[0].repo, number: 0)
+            Task {
+                do {
+                    ghBranches = try await state.client.branchNames(ref)
+                } catch {
+                    // Offline or unauthorized: the worktree half still works.
+                }
+                presentMenu()
+            }
+        } else {
+            presentMenu()
+        }
+    }
+
+    private func presentMenu() {
+        guard let git = folder.git else { return }
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        var actions: [() -> Void] = []
+        func item(_ title: String, checked: Bool = false, in target: NSMenu,
+                  run: @escaping () -> Void) {
+            let item = NSMenuItem(title: title,
+                                  action: #selector(MenuActionPresenter.fire(_:)),
+                                  keyEquivalent: "")
+            item.target = menuPresenter
+            item.tag = actions.count
+            item.state = checked ? .on : .off
+            actions.append(run)
+            target.addItem(item)
+        }
+        func header(_ title: String) {
+            if !menu.items.isEmpty { menu.addItem(.separator()) }
+            if #available(macOS 14.0, *) {
+                menu.addItem(NSMenuItem.sectionHeader(title: title))
+            } else {
+                let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                menu.addItem(item)
+            }
+        }
+
+        header("Worktrees")
+        for worktree in git.worktrees {
+            let path = worktree.path
+            let isHere = path == git.toplevel
+            item((worktree.branch ?? "detached") + " — " + PathAbbreviator.abbreviate(path),
+                 checked: isHere, in: menu) {
+                if !isHere { state.add(url: URL(fileURLWithPath: path)) }
+            }
+        }
+        if let repoID = git.primaryGitHubRepo, !ghBranches.isEmpty {
+            header("View Branch from GitHub")
+            for branch in ghBranches.prefix(100) where branch != git.branch {
+                if let worktree = git.worktrees.first(where: { $0.branch == branch }) {
+                    let path = worktree.path
+                    item("\(branch) — worktree", in: menu) {
+                        state.add(url: URL(fileURLWithPath: path))
+                    }
+                } else {
+                    item(branch, in: menu) {
+                        Task {
+                            await state.openRemoteRepo(owner: repoID.owner, repo: repoID.repo,
+                                                       refName: branch, loadTree: false)
+                        }
+                    }
+                }
+            }
+        }
+        if let repoID = git.primaryGitHubRepo {
+            menu.addItem(.separator())
+            let branch = git.branch
+            item("Open on GitHub", in: menu) {
+                let ref = branch.map { "/tree/\($0)" } ?? ""
+                if let url = URL(string: "https://github.com/\(repoID.owner)/\(repoID.repo)\(ref)") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+        }
+        menuPresenter.actions = actions
+        RemoteBranchMenu.pop(menu, from: menuAnchor.view)
+    }
 
     var body: some View {
         DisclosureGroup(isExpanded: Binding(
@@ -549,6 +622,20 @@ private struct FolderRootGroup: View {
                     .drawingGroup() // keeps its tint in the drag preview
             }
             .foregroundStyle(folder.missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
+            if let git = folder.git, let branch = git.branch {
+                BranchChip(text: branch, font: fonts.caption) {
+                    popBranchMenu()
+                }
+                .background(MenuAnchorReader(box: menuAnchor))
+            }
+            if let repoID = folder.git?.primaryGitHubRepo {
+                // The quiet fourth-state marker: this folder is a checkout
+                // of a GitHub repo (local-only git shows just the chip).
+                Image(systemName: "book.closed")
+                    .font(fonts.caption)
+                    .foregroundStyle(.tertiary)
+                    .help("Checkout of \(repoID.owner)/\(repoID.repo)")
+            }
             if folder.scanning {
                 ProgressView().controlSize(.mini)
             }
@@ -566,6 +653,30 @@ private struct FolderRootGroup: View {
             }
             Button("Copy Path") { SidebarActions.copyPath(folder.rootURL) }
             Button("Refresh Folder") { state.rescanFolder(root: folder.rootURL) }
+            // Right-click parity with the branch chip (SwiftUI context
+            // menus rebuild per open, so live content is safe here).
+            if let git = folder.git {
+                Divider()
+                if git.worktrees.count > 1 {
+                    Menu("Open Worktree") {
+                        ForEach(git.worktrees, id: \.path) { worktree in
+                            Button((worktree.branch ?? "detached") + " — "
+                                + PathAbbreviator.abbreviate(worktree.path)) {
+                                state.add(url: URL(fileURLWithPath: worktree.path))
+                            }
+                            .disabled(worktree.path == git.toplevel)
+                        }
+                    }
+                }
+                if let repoID = git.primaryGitHubRepo {
+                    Button("Open on GitHub") {
+                        let ref = git.branch.map { "/tree/\($0)" } ?? ""
+                        if let url = URL(string: "https://github.com/\(repoID.owner)/\(repoID.repo)\(ref)") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+            }
             Divider()
             Picker("View", selection: Binding(
                 get: { folder.viewMode },
@@ -1030,8 +1141,34 @@ private struct RemoteRepoGroup: View {
     let session: RemoteRepoSession
     @State private var expanded = true
     @State private var collapsedDirs: Set<String> = []
+    @State private var branches: [String] = []
+    @State private var menuAnchor = MenuAnchorBox()
+    @State private var menuPresenter = MenuActionPresenter()
 
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    /// Branches load on the chip's first click, never on row render.
+    private func popBranchMenu() {
+        if branches.isEmpty {
+            Task {
+                do {
+                    branches = try await state.client.branchNames(session.ref)
+                    presentMenu()
+                } catch {
+                    state.lastError = AppState.remoteFailureMessage(
+                        error, what: "branches of \(session.ref.owner)/\(session.ref.repo)")
+                }
+            }
+        } else {
+            presentMenu()
+        }
+    }
+
+    private func presentMenu() {
+        RemoteBranchMenu.present(session: session, branches: branches,
+                                 state: state, anchor: menuAnchor.view,
+                                 presenter: menuPresenter)
+    }
 
     private var tree: [PathTree.Node]? {
         session.treePaths.map { PathTree.build($0) }
@@ -1097,15 +1234,16 @@ private struct RemoteRepoGroup: View {
                         .foregroundStyle(.secondary)
                         .drawingGroup() // keeps its tint in the drag preview
                 }
-                Text(session.displayRef)
-                    .font(fonts.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                BranchChip(text: session.displayRef, font: fonts.caption) {
+                    popBranchMenu()
+                }
+                .background(MenuAnchorReader(box: menuAnchor))
             }
             .tag(SidebarSelection.remoteRepo(session.id))
             .help("\(session.ref.owner)/\(session.ref.repo) @ \(session.displayRef)")
             .contextMenu {
                 Button("Remove from Sidebar") { state.removeRemoteSession(session.id) }
+                Button("Switch or Open Branch…") { popBranchMenu() }
                 if session.treePaths == nil, !session.treeLoading {
                     Button("Browse Repo Files") {
                         Task { await state.loadRemoteTree(sessionID: session.id) }
@@ -1208,8 +1346,17 @@ struct DetailView: View {
                 placeholder
             }
         case .remoteRepo(let id):
+            // A selected repo shows its README when we know of one (from
+            // the loaded tree, or a root readme opened via link) — GitHub's
+            // own rule for what a repo "is" at a glance.
             if let session = state.remoteSession(id) {
-                remoteRepoPlaceholder(session)
+                if let readme = session.treePaths.flatMap({ PathTree.readmePath(in: $0) })
+                    ?? PathTree.readmePath(in: session.docs) {
+                    RemoteDocView(sessionID: id, path: readme)
+                        .id(id + "|" + readme)
+                } else {
+                    remoteRepoPlaceholder(session)
+                }
             } else {
                 placeholder
             }
@@ -1221,8 +1368,26 @@ struct DetailView: View {
                 placeholder
             }
         case .folder(let root):
-            folderPlaceholder(root)
-        case .folderNode, .inboxItem, .recentItem:
+            // A selected place shows its README (then index) when it has
+            // one, the count placeholder when it doesn't.
+            if let folder = state.folder(for: root), !folder.missing,
+               let readme = PathTree.readmePath(in: folder.filePaths),
+               let file = state.localFile(for: folder.fileURL(for: readme)) {
+                LocalFileView(file: file)
+                    .id(folder.fileURL(for: readme))
+            } else {
+                folderPlaceholder(root)
+            }
+        case .folderNode(let root, let path):
+            if let folder = state.folder(for: root),
+               let readme = PathTree.readmePath(in: folder.filePaths, directory: path),
+               let file = state.localFile(for: folder.fileURL(for: readme)) {
+                LocalFileView(file: file)
+                    .id(folder.fileURL(for: readme))
+            } else {
+                placeholder
+            }
+        case .inboxItem, .recentItem:
             // Navigational rows: selecting them highlights and enables
             // keyboard actions; the document area shows the empty state.
             placeholder
