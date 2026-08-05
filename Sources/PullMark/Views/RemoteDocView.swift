@@ -365,11 +365,218 @@ struct RemoteDocView: View {
     }
 }
 
+/// The branch menu every remote-repo surface pops (sidebar chip and
+/// provenance bar): the branch list switches the session in place
+/// (✓ current; ⌥ on any item opens that branch as a sibling Location),
+/// an explicit Open Branch Separately submenu does the same discoverably,
+/// and Open on GitHub rounds it out. Hand-built from live state — never a
+/// SwiftUI Menu (it caches rows).
+@MainActor
+enum RemoteBranchMenu {
+    /// Pops `menu` under `anchor`, or at the pointer when the anchor never
+    /// materialized (List rows don't always realize background
+    /// NSViewRepresentables) — the menu must appear either way.
+    static func pop(_ menu: NSMenu, from anchor: NSView?) {
+        if let anchor, anchor.window != nil {
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: anchor)
+        } else {
+            menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        }
+    }
+
+    static func present(session: RemoteRepoSession, branches: [String],
+                        state: AppState, anchor: NSView?,
+                        presenter: MenuActionPresenter) {
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        var actions: [() -> Void] = []
+        func item(_ title: String, checked: Bool = false,
+                  alternate: Bool = false, in target: NSMenu,
+                  run: @escaping () -> Void) {
+            let item = NSMenuItem(title: title,
+                                  action: #selector(MenuActionPresenter.fire(_:)),
+                                  keyEquivalent: "")
+            item.target = presenter
+            item.tag = actions.count
+            item.state = checked ? .on : .off
+            if alternate {
+                item.isAlternate = true
+                item.keyEquivalentModifierMask = .option
+            }
+            actions.append(run)
+            target.addItem(item)
+        }
+        func header(_ title: String, in target: NSMenu) {
+            if #available(macOS 14.0, *) {
+                target.addItem(NSMenuItem.sectionHeader(title: title))
+            } else {
+                let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                target.addItem(item)
+            }
+        }
+
+        let shown = branches.prefix(100)
+        header(shown.count < branches.count ? "Switch To (first 100)" : "Switch To", in: menu)
+        for branch in shown {
+            item(branch, checked: branch == session.displayRef, in: menu) {
+                state.switchRemoteSession(id: session.id, toRef: branch)
+            }
+            item("Open \(branch) Separately", alternate: true, in: menu) {
+                Task {
+                    await state.openRemoteRepo(owner: session.ref.owner, repo: session.ref.repo,
+                                               refName: branch, loadTree: false)
+                }
+            }
+        }
+        menu.addItem(.separator())
+        let separately = NSMenuItem(title: "Open Branch Separately", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        for branch in shown where branch != session.displayRef {
+            item(branch, in: submenu) {
+                Task {
+                    await state.openRemoteRepo(owner: session.ref.owner, repo: session.ref.repo,
+                                               refName: branch, loadTree: false)
+                }
+            }
+        }
+        separately.submenu = submenu
+        menu.addItem(separately)
+        menu.addItem(.separator())
+        item("Open on GitHub", in: menu) {
+            if let url = URL(string: "https://github.com/\(session.ref.owner)/"
+                + "\(session.ref.repo)/tree/\(session.displayRef)") {
+                NSWorkspace.shared.open(url)
+            }
+        }
+        presenter.actions = actions
+        pop(menu, from: anchor)
+    }
+}
+
+/// The compact ref control shown on repo rows and the provenance bar —
+/// branch glyph + name + disclosure chevron, one click to the branch menu
+/// (the Xcode-titlebar idiom brought to the row).
+struct BranchChip: View {
+    let text: String
+    /// Optional to accept ChromeFonts values (nil at zoom 1 = stock size).
+    var font: Font? = .caption
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 3) {
+                Image(systemName: "arrow.triangle.branch")
+                    .font(.system(size: 8, weight: .semibold))
+                Text(text)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 6, weight: .bold))
+                    .opacity(0.8)
+            }
+            .font(font)
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Branches and worktrees")
+    }
+}
+
+/// The ask dialog for GitHub Markdown links — a sheet, not an alert,
+/// because it carries the Remember checkbox: checked (the default), the
+/// choice becomes the standing policy; unchecked, the choice applies once
+/// and the unchecked state itself is remembered for next time.
+struct RemoteLinkPromptSheet: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
+    let prompt: RemoteLinkPrompt
+
+    @State private var remember: Bool
+
+    init(prompt: RemoteLinkPrompt) {
+        self.prompt = prompt
+        _remember = State(initialValue:
+            UserDefaults.pullmark.object(forKey: DefaultsKeys.remoteLinkRemember) as? Bool ?? true)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Open GitHub Markdown links in PullMark?")
+                .font(.headline)
+            HStack(spacing: 6) {
+                Image(systemName: "book.closed")
+                    .foregroundStyle(.secondary)
+                Text("\(prompt.link.owner)/\(prompt.link.repo)")
+                    .fontWeight(.medium)
+                Text("@ \(prompt.link.ref) · \(prompt.link.path)")
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .font(.callout)
+            Text("PullMark can fetch this file and render it in-app, or send it to your "
+                + "browser. Hold ⌘ while clicking a link for the other behavior; the "
+                + "default lives in Settings → General.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Toggle("Remember my selection", isOn: $remember)
+                .help("Make this choice the default for GitHub Markdown links")
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Open in Browser") {
+                    state.resolveRemoteLinkPrompt(prompt, openInApp: false, remember: remember)
+                    dismiss()
+                }
+                Button("Open in PullMark") {
+                    state.resolveRemoteLinkPrompt(prompt, openInApp: true, remember: remember)
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding(.top, 4)
+        }
+        .padding(20)
+        .frame(width: 440)
+    }
+}
+
 /// The always-visible origin strip: `owner/repo @ ref · path`, plus the
 /// affordance for switching to the other source (GitHub in the browser).
 struct RemoteProvenanceBar: View {
+    @EnvironmentObject private var state: AppState
     let session: RemoteRepoSession
     let path: String
+
+    @State private var branches: [String] = []
+    @State private var menuAnchor = MenuAnchorBox()
+    @State private var menuPresenter = MenuActionPresenter()
+
+    private func popBranchMenu() {
+        if branches.isEmpty {
+            Task {
+                do {
+                    branches = try await state.client.branchNames(session.ref)
+                    presentMenu()
+                } catch {
+                    state.lastError = AppState.remoteFailureMessage(
+                        error, what: "branches of \(session.ref.owner)/\(session.ref.repo)")
+                }
+            }
+        } else {
+            presentMenu()
+        }
+    }
+
+    private func presentMenu() {
+        guard let view = menuAnchor.view else { return }
+        RemoteBranchMenu.present(session: session, branches: branches,
+                                 state: state, anchor: view, presenter: menuPresenter)
+    }
 
     private var blobURL: URL? {
         URL(string: "https://github.com/\(session.ref.owner)/\(session.ref.repo)"
@@ -384,8 +591,11 @@ struct RemoteProvenanceBar: View {
                 .foregroundStyle(.secondary)
             Text("\(session.ref.owner)/\(session.ref.repo)")
                 .fontWeight(.medium)
-            Text("@ \(session.displayRef)")
-                .foregroundStyle(.secondary)
+            // The ref is the switch-branch affordance, right where it's read.
+            BranchChip(text: session.displayRef, font: .callout) {
+                popBranchMenu()
+            }
+            .background(MenuAnchorReader(box: menuAnchor))
             Text("·")
                 .foregroundStyle(.tertiary)
             Text(path)

@@ -43,6 +43,26 @@ section current as features land.
   roots, wherever they live — repo rows wear GitHub's book icon and
   show their ref), and Review Requests became a subgroup inside
   **Pull Requests**, unread badge intact.
+- **Every Location says what it is** — a plain folder is just a
+  folder; a git checkout gains a branch chip; a checkout of a GitHub
+  repo adds a small book mark; a remote repo is the book itself. The
+  chip is a control: on remote repos it switches the session's branch
+  in place or opens another branch as a sibling Location (⌥-pick does
+  it from the same list); on local checkouts it lists the repo's
+  **worktrees** — each opens as its own Location — and, for
+  GitHub-backed folders, other branches viewable from GitHub
+  (preferring a worktree when one has that branch checked out).
+  PullMark never checks anything out — disk state is discovered and
+  read, never mutated. Fork + upstream remotes both count as the
+  repo's identity, and links to a repo you have cloned on the linked
+  branch now open the **local** file instead of fetching.
+- **Places show their README** — selecting a folder, a folder in its
+  tree, or a remote repo renders that directory's README (or index
+  file) instead of an empty placeholder, GitHub-style.
+- The ask dialog for GitHub links grew a **Remember my selection**
+  checkbox: checked (the default), your choice becomes the standing
+  policy; unchecked, it applies once — and the unchecked state is
+  itself remembered.
 
 ## 0.25.0 - 2026-08-04
 

@@ -79,6 +79,9 @@ enum DefaultsKeys {
     /// What clicking a GitHub Markdown link does: RemoteLinkPolicy rawValue
     /// (absent = ask on first click).
     static let remoteLinkPolicy = "pm.remoteLinkPolicy"
+    /// The ask dialog's "Remember my selection" checkbox. Defaults on; an
+    /// uncheck persists, so the dialog keeps asking without re-arguing.
+    static let remoteLinkRemember = "pm.remoteLinkRemember"
 
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"

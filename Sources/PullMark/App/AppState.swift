@@ -781,6 +781,7 @@ final class AppState: ObservableObject {
                 && isDirectory.boolValue
             let scan = exists ? Self.scanFolderTree(root: root) : (paths: [], truncated: false)
             let nodes = PathTree.build(scan.paths)
+            let git = exists ? LocalGit.repoInfo(forDirectory: root) : nil
             guard let self else { return }
             await MainActor.run {
                 guard let index = self.folders.firstIndex(where: { $0.rootURL == root }) else { return }
@@ -791,6 +792,7 @@ final class AppState: ObservableObject {
                     self.folders[index].nodes = nodes
                     self.folders[index].filePaths = nodes.flatMap(PathTree.leafPaths)
                     self.folders[index].truncated = scan.truncated
+                    self.folders[index].git = git
                     if scan.paths.isEmpty {
                         self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
                     } else if scan.truncated {
@@ -827,6 +829,21 @@ final class AppState: ObservableObject {
         for folder in folders {
             let exists = FileManager.default.fileExists(atPath: folder.rootURL.path)
             if exists == folder.missing { rescanFolder(root: folder.rootURL) }
+        }
+        // Branch/worktree facts change outside the app (a checkout in a
+        // terminal) — refresh identities on the same activation heartbeat,
+        // off-main, publishing only actual changes.
+        for folder in folders where !folder.missing {
+            let root = folder.rootURL
+            Task.detached(priority: .utility) { [weak self] in
+                let git = LocalGit.repoInfo(forDirectory: root)
+                guard let self else { return }
+                await MainActor.run {
+                    guard let index = self.folders.firstIndex(where: { $0.rootURL == root }),
+                          self.folders[index].git != git else { return }
+                    self.folders[index].git = git
+                }
+            }
         }
     }
 
@@ -995,9 +1012,15 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// The first-click choice: sets the default, then performs it.
-    func resolveRemoteLinkPrompt(_ prompt: RemoteLinkPrompt, openInApp: Bool) {
-        remoteLinkPolicy = openInApp ? .pullmark : .browser
+    /// The ask dialog's choice. With `remember` the choice becomes the
+    /// default (the policy leaves `.ask`); without it the choice applies
+    /// once and the dialog returns next click. The checkbox state itself
+    /// persists either way — an uncheck stays unchecked.
+    func resolveRemoteLinkPrompt(_ prompt: RemoteLinkPrompt, openInApp: Bool, remember: Bool) {
+        UserDefaults.pullmark.set(remember, forKey: DefaultsKeys.remoteLinkRemember)
+        if remember {
+            remoteLinkPolicy = openInApp ? .pullmark : .browser
+        }
         if openInApp {
             openGitHubDoc(prompt.link)
         } else {
@@ -1022,6 +1045,25 @@ final class AppState: ObservableObject {
                 return
             }
         }
+        // Local precedence: a clone or worktree of this repo checked out on
+        // the link's exact branch serves the file from disk — editable,
+        // offline, and labeled by the folder row's own branch chip. Any
+        // other ref falls through to a pinned remote session; disk truth
+        // only wins when it IS the linked ref.
+        for folder in folders {
+            guard let git = folder.git,
+                  git.branch == link.ref,
+                  git.gitHubRepos.contains(where: { $0.matches(owner: link.owner, repo: link.repo) })
+            else { continue }
+            let url = URL(fileURLWithPath: git.toplevel).appendingPathComponent(link.path)
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            if localFile(for: url) != nil {
+                selection = .local(url)
+            } else {
+                add(url: url)
+            }
+            return
+        }
         let sessionID = "\(link.owner)/\(link.repo)@\(link.ref)"
         if let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
             if !remoteSessions[index].docs.contains(link.path) {
@@ -1041,8 +1083,11 @@ final class AppState: ObservableObject {
 
     /// ⌘K with `owner/repo` or a repo URL: open the repo for browsing at
     /// its default branch (or the given ref) and load the tree — pasting a
-    /// repo *is* the browse intent, so this one fetches immediately.
-    func openRemoteRepo(owner: String, repo: String, refName: String?) async {
+    /// repo *is* the browse intent, so that path fetches immediately.
+    /// "Open Branch Separately" reuses this with `loadTree: false` (the
+    /// sibling session appears instantly; its tree stays on demand).
+    func openRemoteRepo(owner: String, repo: String, refName: String?,
+                        loadTree: Bool = true) async {
         let ref = PullRequestRef(owner: owner, repo: repo, number: 0)
         do {
             let resolvedRef: String
@@ -1056,9 +1101,42 @@ final class AppState: ObservableObject {
                 remoteSessions.append(RemoteRepoSession(ref: ref, displayRef: resolvedRef))
             }
             selection = .remoteRepo(sessionID)
-            await loadRemoteTree(sessionID: sessionID)
+            if loadTree {
+                await loadRemoteTree(sessionID: sessionID)
+            }
         } catch {
             lastError = Self.remoteFailureMessage(error, what: "\(owner)/\(repo)")
+        }
+    }
+
+    /// Re-pins a remote session to another branch in place: same open
+    /// docs (refetched at the new ref — a doc missing there says so
+    /// loudly), selection follows, the tree refetches only if it was
+    /// already loaded. If the target ref is already open as its own
+    /// session, switching just goes there — sessions never merge.
+    func switchRemoteSession(id: String, toRef newRef: String) {
+        guard let index = remoteSessions.firstIndex(where: { $0.id == id }),
+              remoteSessions[index].displayRef != newRef else { return }
+        let old = remoteSessions[index]
+        let newID = "\(old.ref.owner)/\(old.ref.repo)@\(newRef)"
+        if remoteSessions.contains(where: { $0.id == newID }) {
+            selection = .remoteRepo(newID)
+            return
+        }
+        var session = RemoteRepoSession(ref: old.ref, displayRef: newRef)
+        session.docs = old.docs
+        remoteSessions[index] = session
+        dropPRContentCache(sessionID: id)
+        switch selection {
+        case .remoteRepo(let s) where s == id:
+            selection = .remoteRepo(newID)
+        case .remoteDoc(let s, let path) where s == id:
+            selection = .remoteDoc(newID, path)
+        default:
+            break
+        }
+        if old.treePaths != nil {
+            Task { await loadRemoteTree(sessionID: newID) }
         }
     }
 
