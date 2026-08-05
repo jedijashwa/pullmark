@@ -330,9 +330,12 @@
     var used = Object.create(null);
     root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(function (heading) {
       if (heading.id) { return; }
+      // GitHub's slugger keeps underscores and hyphenates EVERY space
+      // without collapsing runs ("a — b" → "a--b") — matching it exactly
+      // is what makes anchors written for GitHub land here (and vice versa).
       var slug = heading.textContent.trim().toLowerCase()
-        .replace(/[^\p{L}\p{N}\- ]+/gu, "")
-        .replace(/ +/g, "-");
+        .replace(/[^\p{L}\p{N}\-_ ]+/gu, "")
+        .replace(/ /g, "-");
       var unique = slug || "section";
       var counter = 1;
       while (used[unique]) { unique = slug + "-" + counter; counter += 1; }
@@ -342,14 +345,38 @@
   }
 
   // Browser-style status pill showing where a link goes before you click it.
+  // GitHub Markdown links additionally say where they'll OPEN (PullMark or
+  // browser, per the user's policy), flipping live while ⌘ is held.
   function setupLinkPreview() {
     var status = document.createElement("div");
     status.className = "pm-link-status";
     document.body.append(status);
-    document.addEventListener("mouseover", function (event) {
-      var anchor = event.target.closest ? event.target.closest("a[href]") : null;
-      if (!anchor) { status.style.display = "none"; return; }
-      var href = anchor.getAttribute("href") || "";
+    var currentAnchor = null;
+    var cmdHeld = false;
+
+    // Mirrors RemoteDocLink.parse: github.com blob URLs and raw URLs whose
+    // path ends in a Markdown extension. Approximate on purpose — this only
+    // labels the pill; the click itself re-parses natively.
+    function isGitHubDocLink(href) {
+      var m = /^https?:\/\/(?:www\.)?github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/(.+)$/.exec(href)
+        || /^https?:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/(.+)$/.exec(href);
+      if (!m) { return false; }
+      var path = m[1].split("#")[0].split("?")[0];
+      var ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+      return ["md", "markdown", "mdown", "mkd", "mdx"].indexOf(ext) !== -1;
+    }
+
+    function suffixFor(href) {
+      var policy = payload.remoteLinkPolicy;
+      if (!policy || !isGitHubDocLink(href)) { return ""; }
+      if (policy === "ask") { return "· asks where to open"; }
+      var inApp = policy === "pullmark" ? !cmdHeld : cmdHeld;
+      return inApp ? "· opens in PullMark" : "· opens in browser";
+    }
+
+    function render() {
+      if (!currentAnchor) { status.style.display = "none"; return; }
+      var href = currentAnchor.getAttribute("href") || "";
       if (!href) { status.style.display = "none"; return; }
       var label = href;
       ["pullmark-local:///", "pullmark-remote:///"].forEach(function (scheme) {
@@ -357,9 +384,47 @@
           try { label = decodeURIComponent(href.slice(scheme.length)); } catch (e) { /* keep raw */ }
         }
       });
-      status.textContent = label;
-      status.style.display = "block";
+      // Two spans: the URL may ellipsize, the destination note never does.
+      status.textContent = "";
+      var labelEl = document.createElement("span");
+      labelEl.className = "pm-link-status-label";
+      labelEl.textContent = label;
+      status.append(labelEl);
+      var suffix = suffixFor(href);
+      if (suffix) {
+        var dest = document.createElement("span");
+        dest.className = "pm-link-status-dest";
+        dest.textContent = suffix;
+        status.append(dest);
+      }
+      status.style.display = "flex";
+    }
+
+    document.addEventListener("mouseover", function (event) {
+      currentAnchor = event.target.closest ? event.target.closest("a[href]") : null;
+      render();
     });
+    // metaKey rides mouse moves too, so the flip works even when key
+    // events land elsewhere (sidebar focused).
+    document.addEventListener("mousemove", function (event) {
+      if (event.metaKey !== cmdHeld) { cmdHeld = event.metaKey; render(); }
+    });
+    window.addEventListener("keydown", function (event) {
+      if (event.key === "Meta" && !cmdHeld) { cmdHeld = true; render(); }
+    });
+    window.addEventListener("keyup", function (event) {
+      if (event.key === "Meta") { cmdHeld = false; render(); }
+    });
+    window.addEventListener("blur", function () {
+      if (cmdHeld) { cmdHeld = false; render(); }
+    });
+
+    // Live policy updates (the first-click choice, Settings) reach every
+    // open page without a reload.
+    window.__pmSetRemoteLinkPolicy = function (policy) {
+      payload.remoteLinkPolicy = policy;
+      render();
+    };
   }
 
   // ---- Code + mermaid enhancement ----

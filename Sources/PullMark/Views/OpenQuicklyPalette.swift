@@ -179,7 +179,7 @@ struct OpenQuicklyPalette: View {
             var resolved: ResolvedDirect?
             if let destination = OpenQuickly.directDestination(for: current) {
                 switch destination {
-                case .pullRequest:
+                case .pullRequest, .remoteDoc, .remoteRepo:
                     resolved = ResolvedDirect(destination: destination, isDirectory: false)
                 case .path(let path):
                     var isDirectory: ObjCBool = false
@@ -231,6 +231,22 @@ struct OpenQuicklyPalette: View {
                         }
                     }
                 })]
+        case .remoteDoc(let link):
+            return [QuickItem(
+                id: "direct:remote:\(link.owner)/\(link.repo)@\(link.ref)/\(link.path)",
+                title: "Open " + ((link.path as NSString).lastPathComponent),
+                subtitle: "\(link.owner)/\(link.repo) @ \(link.ref) — from GitHub",
+                icon: "arrow.triangle.branch",
+                action: { state.openGitHubDoc(link) })]
+        case .remoteRepo(let owner, let repo, let ref):
+            return [QuickItem(
+                id: "direct:repo:\(owner)/\(repo)@\(ref ?? "")",
+                title: "Browse \(owner)/\(repo)",
+                subtitle: ref.map { "GitHub repo @ \($0)" } ?? "GitHub repo",
+                icon: "arrow.triangle.branch",
+                action: {
+                    Task { await state.openRemoteRepo(owner: owner, repo: repo, refName: ref) }
+                })]
         }
     }
 
@@ -247,6 +263,8 @@ struct OpenQuicklyPalette: View {
                 ids.insert("pr:" + session.id)
             }
             return ids
+        case .remoteDoc, .remoteRepo:
+            return []
         }
     }
 

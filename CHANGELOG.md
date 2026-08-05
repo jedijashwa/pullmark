@@ -4,6 +4,41 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **GitHub Markdown links open in PullMark** — click a
+  `github.com/…/blob/…` (or raw) link to a Markdown file and PullMark
+  fetches and renders it in-app instead of bouncing to the browser.
+  The first click asks which behavior you want; your choice becomes
+  the default (Settings → General), and ⌘-click always does the other.
+  The link-status pill in the corner says where a hovered link will
+  open — and flips live while ⌘ is held.
+  - **Provenance is always visible**: a bar above the content reads
+    `owner/repo @ ref · path`, shows the exact commit the ref resolved
+    to, and carries the Open on GitHub control — you never have to
+    wonder whether you're reading a local file or a repo.
+  - **Remote docs are browsable**: relative links (`./sibling.md`,
+    `../other/doc.md`) resolve against the repo at the same pinned
+    commit, images load the same way, and Browse Repo Files fetches
+    the repo's whole Markdown tree into the sidebar's new GitHub
+    section. ⌘K accepts blob URLs and `github.com/owner/repo` too.
+  - **PRs keep precedence**: a link into a repo you have open as a
+    pull request opens in the PR space — the rendered diff when the
+    file is part of the PR, the PR's browsed docs at its head branch —
+    and a link to any other branch opens pinned to *that* branch.
+  - **Blame and branch compare work there too**: the blame gutter and
+    a Compare menu (rendered diff against any other branch) come along
+    from the PR machinery.
+  - **Private repos work** with the same GitHub credentials PRs
+    already use; failures say loudly whether a file is missing or
+    possibly unauthorized. Nothing fetched touches disk, sessions
+    restore as references only, and no link is fetched without an
+    explicit click.
+  - Heading anchors now match GitHub's slug rules exactly
+    (underscores survive, consecutive spaces keep their hyphens), so
+    `#section` links written for GitHub land correctly in PullMark
+    and vice versa.
+
 ## 0.25.0 - 2026-08-04
 
 - **A `pullmark` command** — open files and folders from the shell:

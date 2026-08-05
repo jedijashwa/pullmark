@@ -66,6 +66,10 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Called when the user clicks a repo-relative link to a Markdown file;
     /// receives the repo path (opened in-app at the PR's commit).
     var onOpenRemoteFile: ((String) -> Void)?
+    /// A clicked absolute GitHub link to a Markdown file (blob or raw URL):
+    /// (parsed link, original URL, ⌘ held). Unset hosts (previews) fall
+    /// back to the browser like any external link.
+    var onOpenGitHubLink: ((RemoteDocLink, URL, Bool) -> Void)?
     /// Receives the document's heading outline after each render.
     var onOutline: (([OutlineItem]) -> Void)?
     /// Scroll-spy: the heading id currently at the top of the viewport.
@@ -520,6 +524,12 @@ struct MarkdownWebView: NSViewRepresentable {
                             "That link points to a file that doesn't exist: \(shown)")
                     }
                 }
+                decisionHandler(.cancel)
+                return
+            }
+            if let onOpenGitHubLink = parent.onOpenGitHubLink,
+               let link = RemoteDocLink.parse(url) {
+                onOpenGitHubLink(link, url, navigationAction.modifierFlags.contains(.command))
                 decisionHandler(.cancel)
                 return
             }

@@ -184,6 +184,13 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    func setRemoteLinkPolicy(_ policy: String) {
+        // Rawvalue strings only ("ask"/"pullmark"/"browser") — safe to inline.
+        webView?.evaluateJavaScript(
+            "window.__pmSetRemoteLinkPolicy && __pmSetRemoteLinkPolicy('\(policy)');",
+            completionHandler: nil)
+    }
+
     /// The source line of the topmost block visible in the viewport — the
     /// anchor for keeping the reader's place across an edit-mode flip.
     func firstVisibleLine(_ completion: @escaping (Int?) -> Void) {

@@ -43,6 +43,54 @@ struct PRSession: Identifiable {
     var otherFileCount: Int { files.count - markdownFiles.count }
 }
 
+/// A GitHub repo opened for reading outside any PR: documents opened from
+/// links or ⌘K, plus an on-demand Markdown tree. `ref.number` is 0 — the
+/// established "just a repo" shape (BlameService uses the same).
+struct RemoteRepoSession: Identifiable {
+    let ref: PullRequestRef
+    /// The branch/tag/SHA exactly as the user's link spelled it — what the
+    /// provenance bar displays.
+    let displayRef: String
+    /// Commit `displayRef` resolved to on first fetch. Nil until then —
+    /// sessions restored from a snapshot stay unresolved so nothing touches
+    /// the network at launch, only when a document is actually selected.
+    var commitSHA: String?
+    /// Documents opened via links or ⌘K, in open order.
+    var docs: [String] = []
+    /// Markdown paths of the full repo tree at `commitSHA` — fetched only
+    /// when the user asks to browse (one recursive Trees API call).
+    var treePaths: [String]?
+    var treeTruncated = false
+    var treeLoading = false
+
+    var id: String { "\(ref.owner)/\(ref.repo)@\(displayRef)" }
+}
+
+/// What a click on a GitHub Markdown link does by default. `.ask` (the
+/// initial state) presents a one-time choice that sets the default;
+/// ⌘-click always inverts whatever the default is.
+enum RemoteLinkPolicy: String {
+    case ask
+    case pullmark
+    case browser
+}
+
+/// A clicked GitHub link awaiting the user's first-click choice. Keeps the
+/// original URL so "open in browser" preserves the link exactly.
+struct RemoteLinkPrompt: Identifiable {
+    let id = UUID()
+    let link: RemoteDocLink
+    let url: URL
+}
+
+/// A heading anchor to scroll to once a remote document finishes loading.
+struct RemoteAnchorRequest: Equatable {
+    let id = UUID()
+    let sessionID: String
+    let path: String
+    let fragment: String
+}
+
 enum SidebarSelection: Hashable {
     case local(URL)
     /// An opened folder root (spec §1) — selecting it shows the folder
@@ -55,6 +103,10 @@ enum SidebarSelection: Hashable {
     case prFile(String, String)
     /// A repo document browsed from PR content: (session id, repo path).
     case prDoc(String, String)
+    /// A GitHub repo session's root row: (session id).
+    case remoteRepo(String)
+    /// A document in a GitHub repo session: (session id, repo path).
+    case remoteDoc(String, String)
     /// Review Request and Recents rows participate in selection and
     /// keyboard navigation (spec §1); opening happens on click/Return,
     /// not on arrow-selection.
@@ -147,6 +199,12 @@ final class AppState: ObservableObject {
     /// alongside the individually opened documents in `localFiles`.
     @Published var folders: [LocalFolder] = []
     @Published var prSessions: [PRSession] = []
+    @Published var remoteSessions: [RemoteRepoSession] = []
+    /// Set when a GitHub link is clicked while the policy is still `.ask` —
+    /// drives the one-time choice alert.
+    @Published var remoteLinkPrompt: RemoteLinkPrompt?
+    /// Anchor scroll handed to the remote doc view once its page loads.
+    @Published var remoteAnchor: RemoteAnchorRequest?
     @Published var selection: SidebarSelection?
     /// File/folder recents whose paths currently don't resolve — dimmed
     /// in the sidebar, revived automatically when the path returns
@@ -431,9 +489,19 @@ final class AppState: ObservableObject {
             var viewMode: LocalFolder.ViewMode
             var expanded: [String]
         }
+        struct RemoteRepo: Codable {
+            var owner: String
+            var repo: String
+            var ref: String
+            var docs: [String]
+        }
         var files: [String]
         var folders: [Folder]
         var prs: [String]
+        /// Optional so pre-0.26 snapshots (and pre-0.26 apps reading newer
+        /// snapshots) keep decoding. Refs restore unresolved — the SHA is
+        /// re-resolved on first selection, never at launch.
+        var remotes: [RemoteRepo]? = nil
     }
 
     func snapshotSession() {
@@ -444,7 +512,10 @@ final class AppState: ObservableObject {
                 .init(path: $0.rootURL.path, viewMode: $0.viewMode,
                       expanded: Array($0.expandedPaths))
             },
-            prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) })
+            prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) },
+            remotes: remoteSessions.map {
+                .init(owner: $0.ref.owner, repo: $0.ref.repo, ref: $0.displayRef, docs: $0.docs)
+            })
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.pullmark.set(data, forKey: DefaultsKeys.sessionSnapshot)
         }
@@ -471,9 +542,16 @@ final class AppState: ObservableObject {
         // not clones of the last session.
         guard Self.keyInstance === self,
               UserDefaults.pullmark.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
-              localFiles.isEmpty, folders.isEmpty, prSessions.isEmpty,
+              localFiles.isEmpty, folders.isEmpty, prSessions.isEmpty, remoteSessions.isEmpty,
               let snapshot = Self.loadSnapshot()
         else { return }
+        for saved in snapshot.remotes ?? [] {
+            var session = RemoteRepoSession(
+                ref: PullRequestRef(owner: saved.owner, repo: saved.repo, number: 0),
+                displayRef: saved.ref)
+            session.docs = saved.docs
+            remoteSessions.append(session)
+        }
         for path in snapshot.files where FileManager.default.fileExists(atPath: path) {
             add(url: URL(fileURLWithPath: path))
         }
@@ -592,6 +670,8 @@ final class AppState: ObservableObject {
             removeFolder(root)
         case .prOverview(let id):
             removePR(id)
+        case .remoteRepo(let id):
+            removeRemoteSession(id)
         case .recentItem(let id):
             removeRecent(id: id)
         default:
@@ -884,6 +964,175 @@ final class AppState: ObservableObject {
             prSessions[index].browsedDocs.append(path)
         }
         selection = .prDoc(sessionID, path)
+    }
+
+    // MARK: - GitHub Markdown links (remote repo sessions)
+
+    var remoteLinkPolicy: RemoteLinkPolicy {
+        get {
+            RemoteLinkPolicy(rawValue: UserDefaults.pullmark.string(forKey: DefaultsKeys.remoteLinkPolicy) ?? "")
+                ?? .ask
+        }
+        set { UserDefaults.pullmark.set(newValue.rawValue, forKey: DefaultsKeys.remoteLinkPolicy) }
+    }
+
+    /// Entry point for clicked GitHub Markdown links. ⌘-click inverts the
+    /// default; a plain click while the policy is still `.ask` presents the
+    /// one-time choice instead of doing anything.
+    func handleGitHubLink(_ link: RemoteDocLink, url: URL, inverted: Bool) {
+        let inApp: Bool
+        switch remoteLinkPolicy {
+        case .ask:
+            remoteLinkPrompt = RemoteLinkPrompt(link: link, url: url)
+            return
+        case .pullmark: inApp = !inverted
+        case .browser: inApp = inverted
+        }
+        if inApp {
+            openGitHubDoc(link)
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// The first-click choice: sets the default, then performs it.
+    func resolveRemoteLinkPrompt(_ prompt: RemoteLinkPrompt, openInApp: Bool) {
+        remoteLinkPolicy = openInApp ? .pullmark : .browser
+        if openInApp {
+            openGitHubDoc(prompt.link)
+        } else {
+            NSWorkspace.shared.open(prompt.url)
+        }
+    }
+
+    /// Opens a GitHub Markdown link in-app, with PR precedence: a path in
+    /// an open PR's diff opens as that PR file (the diff space); the same
+    /// repo at the PR's head joins the PR's browsed docs; anything else
+    /// gets a remote repo session.
+    func openGitHubDoc(_ link: RemoteDocLink) {
+        for session in prSessions
+        where session.ref.owner.caseInsensitiveCompare(link.owner) == .orderedSame
+            && session.ref.repo.caseInsensitiveCompare(link.repo) == .orderedSame {
+            if session.files.contains(where: { $0.filename == link.path }) {
+                selection = .prFile(session.id, link.path)
+                return
+            }
+            if link.ref == session.details.head.ref || session.details.head.sha.hasPrefix(link.ref) {
+                openRemoteDoc(sessionID: session.id, path: link.path)
+                return
+            }
+        }
+        let sessionID = "\(link.owner)/\(link.repo)@\(link.ref)"
+        if let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
+            if !remoteSessions[index].docs.contains(link.path) {
+                remoteSessions[index].docs.append(link.path)
+            }
+        } else {
+            var session = RemoteRepoSession(ref: PullRequestRef(owner: link.owner, repo: link.repo, number: 0),
+                                            displayRef: link.ref)
+            session.docs = [link.path]
+            remoteSessions.append(session)
+        }
+        if let fragment = link.fragment {
+            remoteAnchor = RemoteAnchorRequest(sessionID: sessionID, path: link.path, fragment: fragment)
+        }
+        selection = .remoteDoc(sessionID, link.path)
+    }
+
+    /// ⌘K with `owner/repo` or a repo URL: open the repo for browsing at
+    /// its default branch (or the given ref) and load the tree — pasting a
+    /// repo *is* the browse intent, so this one fetches immediately.
+    func openRemoteRepo(owner: String, repo: String, refName: String?) async {
+        let ref = PullRequestRef(owner: owner, repo: repo, number: 0)
+        do {
+            let resolvedRef: String
+            if let refName {
+                resolvedRef = refName
+            } else {
+                resolvedRef = try await client.defaultBranch(ref)
+            }
+            let sessionID = "\(owner)/\(repo)@\(resolvedRef)"
+            if !remoteSessions.contains(where: { $0.id == sessionID }) {
+                remoteSessions.append(RemoteRepoSession(ref: ref, displayRef: resolvedRef))
+            }
+            selection = .remoteRepo(sessionID)
+            await loadRemoteTree(sessionID: sessionID)
+        } catch {
+            lastError = Self.remoteFailureMessage(error, what: "\(owner)/\(repo)")
+        }
+    }
+
+    func remoteSession(_ id: String) -> RemoteRepoSession? {
+        remoteSessions.first { $0.id == id }
+    }
+
+    func openRemoteSessionDoc(sessionID: String, path: String) {
+        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        if !remoteSessions[index].docs.contains(path) {
+            remoteSessions[index].docs.append(path)
+        }
+        selection = .remoteDoc(sessionID, path)
+    }
+
+    /// Resolves the session's friendly ref to a commit SHA on first use —
+    /// the moment the session actually touches the network.
+    func ensureRemoteSHA(sessionID: String) async throws -> String {
+        guard let session = remoteSession(sessionID) else {
+            throw MessageError(message: "That repository is no longer open.")
+        }
+        if let sha = session.commitSHA { return sha }
+        let sha = try await client.commitSHA(session.ref, atRef: session.displayRef)
+        if let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
+            remoteSessions[index].commitSHA = sha
+        }
+        return sha
+    }
+
+    /// Fetches the repo's Markdown tree for the sidebar (explicit user
+    /// action — the Browse row or a ⌘K repo open).
+    func loadRemoteTree(sessionID: String) async {
+        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }),
+              !remoteSessions[index].treeLoading else { return }
+        remoteSessions[index].treeLoading = true
+        do {
+            let sha = try await ensureRemoteSHA(sessionID: sessionID)
+            guard let session = remoteSession(sessionID) else { return }
+            let (paths, truncated) = try await client.markdownTreePaths(session.ref, at: sha)
+            if let i = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
+                // Same visible cap as local folder scans, and GitHub itself
+                // truncates giant trees — either way the UI says so.
+                remoteSessions[i].treePaths = Array(paths.prefix(2000))
+                remoteSessions[i].treeTruncated = truncated || paths.count > 2000
+            }
+        } catch {
+            lastError = Self.remoteFailureMessage(error, what: sessionID)
+        }
+        if let i = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
+            remoteSessions[i].treeLoading = false
+        }
+    }
+
+    func removeRemoteSession(_ id: String) {
+        remoteSessions.removeAll { $0.id == id }
+        dropPRContentCache(sessionID: id)
+        switch selection {
+        case .remoteRepo(let s) where s == id,
+             .remoteDoc(let s, _) where s == id:
+            selection = nil
+        default:
+            break
+        }
+    }
+
+    /// GitHub answers 404 both for "doesn't exist" and "private repo your
+    /// token can't see" — the message must leave both doors open (and the
+    /// client already appends a sign-in hint when no credentials resolved).
+    static func remoteFailureMessage(_ error: Error, what: String) -> String {
+        if let api = error as? GitHubClient.APIError, api.status == 404 {
+            return "Couldn't open \(what): \(api.message). It may not exist at that ref, "
+                + "or it may be a private repository your GitHub credentials can't access."
+        }
+        return "Couldn't open \(what): \(error.localizedDescription)"
     }
 
     /// Detects head movement on open PRs; sets a flag rather than reloading

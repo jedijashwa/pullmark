@@ -1,4 +1,31 @@
 import SwiftUI
+import AppKit
+
+/// Anchor + presenter for popping a hand-built NSMenu from a toolbar
+/// button. SwiftUI's toolbar Menu caches content bridged for earlier
+/// state, so menus whose rows change at runtime must be popped manually
+/// (LocalFileView's compare menu established the pattern).
+final class MenuAnchorBox {
+    weak var view: NSView?
+}
+
+struct MenuAnchorReader: NSViewRepresentable {
+    let box: MenuAnchorBox
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        box.view = view
+        return view
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+final class MenuActionPresenter: NSObject {
+    var actions: [() -> Void] = []
+    @objc func fire(_ sender: NSMenuItem) {
+        guard actions.indices.contains(sender.tag) else { return }
+        actions[sender.tag]()
+    }
+}
 
 /// Find-in-page bar shown above a MarkdownWebView (⌘F).
 struct FindBar: View {
@@ -455,6 +482,7 @@ struct PagePreferenceApplier: ViewModifier {
     let proxy: WebViewProxy
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var raw = ContentWidth.standard.rawValue
     @AppStorage(LineNumbers.defaultsKey, store: UserDefaults.pullmark) private var lineNumbers = false
+    @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var linkPolicy = "ask"
 
     func body(content: Content) -> some View {
         content
@@ -463,6 +491,9 @@ struct PagePreferenceApplier: ViewModifier {
             }
             .onChange(of: lineNumbers) { newValue in
                 proxy.setLineNumbers(newValue)
+            }
+            .onChange(of: linkPolicy) { newValue in
+                proxy.setRemoteLinkPolicy(newValue)
             }
     }
 }

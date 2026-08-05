@@ -27,8 +27,8 @@
   // rendered DOM, so [toc] links land on the anchors either pipeline emits.
   function slugify(text) {
     return String(text).trim().toLowerCase()
-      .replace(/[^\p{L}\p{N}\- ]+/gu, "")
-      .replace(/ +/g, "-");
+      .replace(/[^\p{L}\p{N}\-_ ]+/gu, "")
+      .replace(/ /g, "-");
   }
 
   function renderMath(tex, displayMode) {

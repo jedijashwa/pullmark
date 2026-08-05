@@ -45,12 +45,12 @@ enum OpenQuickly {
         for scalar in trimmed.unicodeScalars {
             if CharacterSet.letters.contains(scalar)
                 || CharacterSet.decimalDigits.contains(scalar)
-                || scalar == "-" || scalar == " " {
+                || scalar == "-" || scalar == "_" || scalar == " " {
                 kept.unicodeScalars.append(scalar)
             }
         }
-        return kept.replacingOccurrences(of: " +", with: "-",
-                                         options: .regularExpression)
+        // Every space becomes a hyphen, runs NOT collapsed — GitHub's rule.
+        return kept.replacingOccurrences(of: " ", with: "-")
     }
 
     /// Headings of a Markdown document (outside code fences), as
@@ -91,6 +91,30 @@ enum OpenQuickly {
         /// Expanded, standardized absolute path, verified to exist.
         case path(String)
         case pullRequest(PullRequestRef)
+        /// A GitHub Markdown file URL — pasting it is the open-in-app intent.
+        case remoteDoc(RemoteDocLink)
+        /// A GitHub repo URL, optionally /tree/<ref> — opens for browsing.
+        /// URL-only (never bare `owner/repo`): ⌘K feeds arbitrary fuzzy
+        /// queries here, and "docs/setup" must stay a search term.
+        case remoteRepo(owner: String, repo: String, ref: String?)
+    }
+
+    /// `github.com/<owner>/<repo>` or `…/tree/<ref…>` — the repo-browse form.
+    private static func repoDestination(_ url: URL) -> DirectDestination? {
+        guard let host = url.host?.lowercased(),
+              host == "github.com" || host == "www.github.com" else { return nil }
+        let parts = Array(url.pathComponents.dropFirst())
+        guard parts.count >= 2, !parts[0].isEmpty, !parts[1].isEmpty else { return nil }
+        let owner = parts[0]
+        var repo = parts[1]
+        if repo.hasSuffix(".git") { repo = String(repo.dropLast(4)) }
+        if parts.count == 2 {
+            return .remoteRepo(owner: owner, repo: repo, ref: nil)
+        }
+        // Branch names may contain "/" — everything after /tree/ is the ref.
+        guard parts[2] == "tree", parts.count >= 4 else { return nil }
+        return .remoteRepo(owner: owner, repo: repo,
+                           ref: parts[3...].joined(separator: "/"))
     }
 
     static func directDestination(
@@ -101,6 +125,14 @@ enum OpenQuickly {
         guard !trimmed.isEmpty else { return nil }
         if let ref = PullRequestRef.parse(trimmed) {
             return .pullRequest(ref)
+        }
+        if trimmed.lowercased().contains("github"), let url = URL(string: trimmed) {
+            if let link = RemoteDocLink.parse(url) {
+                return .remoteDoc(link)
+            }
+            if let repo = repoDestination(url) {
+                return repo
+            }
         }
         var path = trimmed
         if path.lowercased().hasPrefix("file://"),

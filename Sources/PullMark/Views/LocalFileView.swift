@@ -93,6 +93,9 @@ struct LocalFileView: View {
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
             onLocalLinkFailed: { state.lastNotice = $0 },
+            onOpenGitHubLink: { link, url, inverted in
+                state.handleGitHubLink(link, url: url, inverted: inverted)
+            },
             onOutline: handleOutline,
             onActiveSection: handleActiveSection,
             onBlameHistory: handleBlameHistory,

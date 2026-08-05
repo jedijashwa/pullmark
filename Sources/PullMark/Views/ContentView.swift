@@ -122,6 +122,27 @@ struct ContentView: View {
             Text("Last seen at \(state.deadRecent?.path.map { PathAbbreviator.abbreviate($0) } ?? ""). "
                 + "It will revive here if the file comes back.")
         }
+        // First GitHub Markdown link ever clicked: the choice sets the
+        // default (Settings ▸ General changes it; ⌘-click inverts it).
+        .alert("Open GitHub Markdown links in PullMark?",
+               isPresented: remoteLinkPromptPresented) {
+            Button("Open in PullMark") {
+                if let prompt = state.remoteLinkPrompt {
+                    state.resolveRemoteLinkPrompt(prompt, openInApp: true)
+                }
+            }
+            Button("Open in Browser") {
+                if let prompt = state.remoteLinkPrompt {
+                    state.resolveRemoteLinkPrompt(prompt, openInApp: false)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This link points to a Markdown file on GitHub. PullMark can fetch and "
+                + "render it in-app. Your choice becomes the default for GitHub links — "
+                + "change it anytime in Settings ▸ General, or hold ⌘ while clicking for "
+                + "the other behavior.")
+        }
         .environmentObject(state)
         // Drop .md files or folders anywhere on the window.
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
@@ -182,6 +203,13 @@ struct ContentView: View {
         )
     }
 
+    private var remoteLinkPromptPresented: Binding<Bool> {
+        Binding(
+            get: { state.remoteLinkPrompt != nil },
+            set: { if !$0 { state.remoteLinkPrompt = nil } }
+        )
+    }
+
     private var deadRecentPresented: Binding<Bool> {
         Binding(
             get: { state.deadRecent != nil },
@@ -201,6 +229,7 @@ struct SidebarView: View {
     @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var filesExpanded = true
     @SceneStorage(DefaultsKeys.sidebarFoldersExpanded) private var foldersExpanded = true
     @SceneStorage(DefaultsKeys.sidebarPRsExpanded) private var prsExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarGitHubExpanded) private var githubExpanded = true
     @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
     @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
     /// Space → Quick Look on the selected local row (spec §8.2).
@@ -243,6 +272,16 @@ struct SidebarView: View {
                     PRSidebarGroup(session: session)
                 }
                 .onMove { from, to in state.prSessions.move(fromOffsets: from, toOffset: to) }
+            }
+            // Repos opened for reading via GitHub Markdown links or ⌘K —
+            // link-driven, so the section only exists once something is in it.
+            if !state.remoteSessions.isEmpty {
+                CollapsibleSection("GitHub", isExpanded: $githubExpanded) {
+                    ForEach(state.remoteSessions) { session in
+                        RemoteRepoGroup(session: session)
+                    }
+                    .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
+                }
             }
             if inboxEnabled, !visibleInbox.isEmpty {
                 // The unread count keeps demotion honest: collapsed or
@@ -968,6 +1007,155 @@ private struct PRNodeView: View {
     }
 }
 
+/// A GitHub repo opened for reading: the docs that arrived via links, plus
+/// an on-demand full Markdown tree (one explicit "Browse" fetch).
+private struct RemoteRepoGroup: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let session: RemoteRepoSession
+    @State private var expanded = true
+    @State private var collapsedDirs: Set<String> = []
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    private var tree: [PathTree.Node]? {
+        session.treePaths.map { PathTree.build($0) }
+    }
+
+    /// Link-opened docs the fetched tree doesn't already display.
+    private var looseDocs: [String] {
+        guard let treePaths = session.treePaths else { return session.docs }
+        let inTree = Set(treePaths)
+        return session.docs.filter { !inTree.contains($0) }
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            if let tree {
+                ForEach(tree) { node in
+                    RemoteNodeView(session: session, node: node,
+                                   collapsedDirs: $collapsedDirs)
+                }
+                if session.treeTruncated {
+                    Text("Large repo — not all files shown")
+                        .font(fonts.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            ForEach(looseDocs, id: \.self) { path in
+                Label {
+                    Text(path)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                } icon: {
+                    Image(systemName: "doc.text")
+                        .foregroundStyle(.secondary)
+                }
+                .font(fonts.row)
+                .tag(SidebarSelection.remoteDoc(session.id, path))
+            }
+            if tree == nil {
+                if session.treeLoading {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.small)
+                        Text("Loading repo files…")
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    // The one explicit network action: fetches the repo's
+                    // Markdown tree so the whole repo is browsable.
+                    Button("Browse Repo Files…") {
+                        Task { await state.loadRemoteTree(sessionID: session.id) }
+                    }
+                    .font(fonts.callout)
+                }
+            }
+        } label: {
+            RemovableRow(help: "Remove from Sidebar",
+                         remove: { state.removeRemoteSession(session.id) }) {
+                Label {
+                    Text("\(session.ref.repo)")
+                        .font(fonts.row)
+                } icon: {
+                    Image(systemName: "arrow.triangle.branch")
+                        .foregroundStyle(.secondary)
+                        .drawingGroup() // keeps its tint in the drag preview
+                }
+                Text(session.displayRef)
+                    .font(fonts.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .tag(SidebarSelection.remoteRepo(session.id))
+            .help("\(session.ref.owner)/\(session.ref.repo) @ \(session.displayRef)")
+            .contextMenu {
+                Button("Remove from Sidebar") { state.removeRemoteSession(session.id) }
+                if session.treePaths == nil, !session.treeLoading {
+                    Button("Browse Repo Files") {
+                        Task { await state.loadRemoteTree(sessionID: session.id) }
+                    }
+                }
+                Button("Reveal on GitHub") {
+                    if let url = URL(string: "https://github.com/\(session.ref.owner)/"
+                        + "\(session.ref.repo)/tree/\(session.displayRef)") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// One node of a remote repo tree: plain folders and docs, `.remoteDoc` tags.
+private struct RemoteNodeView: View {
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let session: RemoteRepoSession
+    let node: PathTree.Node
+    @Binding var collapsedDirs: Set<String>
+
+    private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
+
+    var body: some View {
+        if node.isDirectory {
+            DisclosureGroup(isExpanded: Binding(
+                get: { !collapsedDirs.contains(node.path) },
+                set: { expanded in
+                    if expanded {
+                        collapsedDirs.remove(node.path)
+                    } else {
+                        collapsedDirs.insert(node.path)
+                    }
+                }
+            )) {
+                ForEach(node.children) { child in
+                    RemoteNodeView(session: session, node: child,
+                                   collapsedDirs: $collapsedDirs)
+                }
+            } label: {
+                Label {
+                    Text(node.name)
+                } icon: {
+                    Image(systemName: "folder")
+                        .foregroundStyle(.secondary)
+                }
+                .font(fonts.row)
+            }
+        } else if let filePath = node.filePath {
+            Label {
+                Text(node.name)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+            } icon: {
+                Image(systemName: "doc.text")
+                    .foregroundStyle(.secondary)
+            }
+            .font(fonts.row)
+            .tag(SidebarSelection.remoteDoc(session.id, filePath))
+        }
+    }
+}
+
 struct DetailView: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
@@ -1004,6 +1192,19 @@ struct DetailView: View {
             } else {
                 placeholder
             }
+        case .remoteRepo(let id):
+            if let session = state.remoteSession(id) {
+                remoteRepoPlaceholder(session)
+            } else {
+                placeholder
+            }
+        case .remoteDoc(let id, let path):
+            if state.remoteSession(id) != nil {
+                RemoteDocView(sessionID: id, path: path)
+                    .id(id + "|" + path)
+            } else {
+                placeholder
+            }
         case .folder(let root):
             folderPlaceholder(root)
         case .folderNode, .inboxItem, .recentItem:
@@ -1029,6 +1230,29 @@ struct DetailView: View {
                 ? "Folder not found — it will revive when the path returns"
                 : count == 1 ? "1 Markdown file — pick one from the sidebar"
                 : "\(count) Markdown files — pick one from the sidebar")
+                .font(.system(size: 13 * factor))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Selecting a remote repo root shows the place: repo, ref, and how
+    /// much of it is browsable.
+    private func remoteRepoPlaceholder(_ session: RemoteRepoSession) -> some View {
+        let factor = DocumentZoom.clamped(zoom)
+        let count = session.treePaths?.count
+        return VStack(spacing: 12 * factor) {
+            Image(systemName: "arrow.triangle.branch")
+                .font(.system(size: 42 * factor))
+                .foregroundStyle(.secondary)
+            Text("\(session.ref.owner)/\(session.ref.repo)")
+                .font(.system(size: 15 * factor, weight: .semibold))
+            Text("@ \(session.displayRef)")
+                .font(.system(size: 13 * factor))
+                .foregroundStyle(.secondary)
+            Text(count.map { $0 == 1 ? "1 Markdown file — pick one from the sidebar"
+                    : "\($0) Markdown files — pick one from the sidebar" }
+                ?? "Browse Repo Files in the sidebar to see what's here")
                 .font(.system(size: 13 * factor))
                 .foregroundStyle(.secondary)
         }

@@ -101,6 +101,61 @@ final class GitHubClient {
                                  accept: "application/vnd.github.raw+json")
     }
 
+    // MARK: - Repo browsing (GitHub Markdown links; ref.number is 0 here)
+
+    /// Commit SHA a branch, tag, or SHA-ish string resolves to right now —
+    /// remote docs pin to this at open time so the provenance display and a
+    /// later reload can detect that the friendly ref moved.
+    func commitSHA(_ ref: PullRequestRef, atRef refName: String) async throws -> String {
+        struct Commit: Decodable { let sha: String }
+        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/commits/\(refName)")
+        return try Self.decoder.decode(Commit.self, from: data).sha
+    }
+
+    func defaultBranch(_ ref: PullRequestRef) async throws -> String {
+        struct Repo: Decodable { let defaultBranch: String }
+        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)")
+        return try Self.decoder.decode(Repo.self, from: data).defaultBranch
+    }
+
+    /// Branch names for the compare picker (first 300 by API order —
+    /// enough for a picker; not a completeness-critical listing).
+    func branchNames(_ ref: PullRequestRef) async throws -> [String] {
+        struct Branch: Decodable { let name: String }
+        var all: [String] = []
+        for page in 1...3 {
+            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/branches",
+                                         query: [URLQueryItem(name: "per_page", value: "100"),
+                                                 URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decoder.decode([Branch].self, from: data)
+            all.append(contentsOf: batch.map(\.name))
+            if batch.count < 100 { break }
+        }
+        return all
+    }
+
+    /// Markdown file paths in the repo tree at a commit, for the sidebar
+    /// tree. One recursive Trees API call; GitHub truncates giant repos
+    /// (~100k entries) and says so — surfaced so the UI never presents a
+    /// truncated tree as complete.
+    func markdownTreePaths(_ ref: PullRequestRef, at sha: String) async throws -> (paths: [String], truncated: Bool) {
+        struct Tree: Decodable {
+            struct Entry: Decodable {
+                let path: String
+                let type: String
+            }
+            let tree: [Entry]
+            let truncated: Bool
+        }
+        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/git/trees/\(sha)",
+                                     query: [URLQueryItem(name: "recursive", value: "1")])
+        let tree = try Self.decoder.decode(Tree.self, from: data)
+        let paths = tree.tree.filter {
+            $0.type == "blob" && MarkdownFileType.matches(($0.path as NSString).pathExtension)
+        }.map(\.path)
+        return (paths, tree.truncated)
+    }
+
     func reviewComments(_ ref: PullRequestRef) async throws -> [ReviewComment] {
         var all: [ReviewComment] = []
         for page in 1...30 {
