@@ -229,14 +229,13 @@ struct SidebarView: View {
     @SceneStorage(DefaultsKeys.sidebarLocalExpanded) private var filesExpanded = true
     @SceneStorage(DefaultsKeys.sidebarFoldersExpanded) private var foldersExpanded = true
     @SceneStorage(DefaultsKeys.sidebarPRsExpanded) private var prsExpanded = true
-    @SceneStorage(DefaultsKeys.sidebarGitHubExpanded) private var githubExpanded = true
     @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
     @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
     /// Space → Quick Look on the selected local row (spec §8.2).
     @State private var quickLookURL: URL?
 
     // What you opened yourself outranks what was assigned to you: the
-    // review-request inbox sits below the opened sections.
+    // review-request subgroup sits below the opened pull requests.
     private var fonts: ChromeFonts { ChromeFonts(zoom: zoom) }
 
     var body: some View {
@@ -253,8 +252,11 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.localFiles.move(fromOffsets: from, toOffset: to) }
             }
-            CollapsibleSection("Folders", isExpanded: $foldersExpanded) {
-                if state.folders.isEmpty {
+            // Locations: browsable roots wherever they live — local folders
+            // and GitHub repos share one section (Finder's word for exactly
+            // this list); the icon and subtitle carry the origin.
+            CollapsibleSection("Locations", isExpanded: $foldersExpanded) {
+                if state.folders.isEmpty, state.remoteSessions.isEmpty {
                     Button("Open Folder…") { state.openFolderPanel() }
                         .font(fonts.callout)
                 }
@@ -262,6 +264,10 @@ struct SidebarView: View {
                     FolderRootGroup(folder: folder)
                 }
                 .onMove { from, to in state.folders.move(fromOffsets: from, toOffset: to) }
+                ForEach(state.remoteSessions) { session in
+                    RemoteRepoGroup(session: session)
+                }
+                .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
             }
             CollapsibleSection("Pull Requests", isExpanded: $prsExpanded) {
                 if state.prSessions.isEmpty {
@@ -272,25 +278,34 @@ struct SidebarView: View {
                     PRSidebarGroup(session: session)
                 }
                 .onMove { from, to in state.prSessions.move(fromOffsets: from, toOffset: to) }
-            }
-            // Repos opened for reading via GitHub Markdown links or ⌘K —
-            // link-driven, so the section only exists once something is in it.
-            if !state.remoteSessions.isEmpty {
-                CollapsibleSection("GitHub", isExpanded: $githubExpanded) {
-                    ForEach(state.remoteSessions) { session in
-                        RemoteRepoGroup(session: session)
-                    }
-                    .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
-                }
-            }
-            if inboxEnabled, !visibleInbox.isEmpty {
-                // The unread count keeps demotion honest: collapsed or
-                // scrolled away, new requests still announce themselves.
-                CollapsibleSection("Review Requests", isExpanded: $inboxExpanded,
-                                   badge: visibleInbox.filter(state.inboxIsUnread).count) {
-                    ForEach(visibleInbox) { item in
-                        InboxRow(item: item)
-                            .tag(SidebarSelection.inboxItem(item.id))
+                // The inbox is a facet of pull requests, not its own
+                // category — a subgroup whose unread count keeps demotion
+                // honest even collapsed.
+                if inboxEnabled, !visibleInbox.isEmpty {
+                    DisclosureGroup(isExpanded: $inboxExpanded) {
+                        ForEach(visibleInbox) { item in
+                            InboxRow(item: item)
+                                .tag(SidebarSelection.inboxItem(item.id))
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Label {
+                                Text("Review Requests")
+                                    .font(fonts.row)
+                            } icon: {
+                                Image(systemName: "tray")
+                                    .foregroundStyle(.secondary)
+                            }
+                            let unread = visibleInbox.filter(state.inboxIsUnread).count
+                            if unread > 0 {
+                                Spacer(minLength: 2)
+                                Text("\(unread)")
+                                    .font(fonts.caption)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+                                    .accessibilityLabel("\(unread) unread")
+                            }
+                        }
                     }
                 }
             }
@@ -1078,7 +1093,7 @@ private struct RemoteRepoGroup: View {
                     Text("\(session.ref.repo)")
                         .font(fonts.row)
                 } icon: {
-                    Image(systemName: "arrow.triangle.branch")
+                    Image(systemName: "book.closed")
                         .foregroundStyle(.secondary)
                         .drawingGroup() // keeps its tint in the drag preview
                 }
@@ -1242,7 +1257,7 @@ struct DetailView: View {
         let factor = DocumentZoom.clamped(zoom)
         let count = session.treePaths?.count
         return VStack(spacing: 12 * factor) {
-            Image(systemName: "arrow.triangle.branch")
+            Image(systemName: "book.closed")
                 .font(.system(size: 42 * factor))
                 .foregroundStyle(.secondary)
             Text("\(session.ref.owner)/\(session.ref.repo)")

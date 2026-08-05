@@ -236,14 +236,14 @@ struct OpenQuicklyPalette: View {
                 id: "direct:remote:\(link.owner)/\(link.repo)@\(link.ref)/\(link.path)",
                 title: "Open " + ((link.path as NSString).lastPathComponent),
                 subtitle: "\(link.owner)/\(link.repo) @ \(link.ref) — from GitHub",
-                icon: "arrow.triangle.branch",
+                icon: "book.closed",
                 action: { state.openGitHubDoc(link) })]
         case .remoteRepo(let owner, let repo, let ref):
             return [QuickItem(
                 id: "direct:repo:\(owner)/\(repo)@\(ref ?? "")",
                 title: "Browse \(owner)/\(repo)",
                 subtitle: ref.map { "GitHub repo @ \($0)" } ?? "GitHub repo",
-                icon: "arrow.triangle.branch",
+                icon: "book.closed",
                 action: {
                     Task { await state.openRemoteRepo(owner: owner, repo: repo, refName: ref) }
                 })]
