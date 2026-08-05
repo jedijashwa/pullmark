@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.26.0 - 2026-08-05
 
 - **GitHub Markdown links open in PullMark** — click a
   `github.com/…/blob/…` (or raw) link to a Markdown file and PullMark
