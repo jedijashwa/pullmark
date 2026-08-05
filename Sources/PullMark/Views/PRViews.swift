@@ -46,6 +46,9 @@ struct PROverviewView: View {
                         // coordinate in its margin would mean nothing.
                         lineNumberEligible: false
                     ),
+                    onOpenGitHubLink: { link, url, inverted in
+                        state.handleGitHubLink(link, url: url, inverted: inverted)
+                    },
                     onPageLoaded: {
                         // Restore find highlights if the page re-renders
                         // beneath an active find (same as the file views).
@@ -500,6 +503,9 @@ struct PRFileView: View {
                 remoteContext: remoteContext,
                 onOpenRemoteFile: { repoPath in
                     state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                },
+                onOpenGitHubLink: { link, url, inverted in
+                    state.handleGitHubLink(link, url: url, inverted: inverted)
                 },
                 onOutline: { outline = $0 },
                 onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
@@ -1068,6 +1074,9 @@ struct PRDocView: View {
                         },
                         onOpenRemoteFile: { repoPath in
                             state.openRemoteDoc(sessionID: sessionID, path: repoPath)
+                        },
+                        onOpenGitHubLink: { link, url, inverted in
+                            state.handleGitHubLink(link, url: url, inverted: inverted)
                         },
                         onOutline: { outline = $0 },
                         onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },

@@ -1147,8 +1147,6 @@ mark.pm-find.pm-find-current {
   bottom: 8px;
   left: 8px;
   max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   font: 11px -apple-system, sans-serif;
   color: #57606a;
@@ -1158,6 +1156,19 @@ mark.pm-find.pm-find-current {
   padding: 3px 9px;
   z-index: 50;
   pointer-events: none;
+}
+/* A long URL may ellipsize, but where the link OPENS never gets cut off. */
+.pm-link-status-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.pm-link-status-dest {
+  flex: none;
+  white-space: nowrap;
+  margin-left: 6px;
+  font-style: italic;
 }
 @media (prefers-color-scheme: dark) {
   .pm-link-status { color: #8b949e; }

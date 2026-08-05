@@ -35,6 +35,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
+    @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -77,6 +78,13 @@ struct GeneralSettingsTab: View {
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
+
+            Picker("GitHub Markdown links:", selection: $remoteLinkPolicyRaw) {
+                Text("Ask on first click").tag(RemoteLinkPolicy.ask.rawValue)
+                Text("Open in PullMark").tag(RemoteLinkPolicy.pullmark.rawValue)
+                Text("Open in Browser").tag(RemoteLinkPolicy.browser.rawValue)
+            }
+            .help("What clicking a link to a Markdown file on GitHub does — hold ⌘ while clicking for the other behavior")
             }
 
             Section("System") {

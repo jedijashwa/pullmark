@@ -45,6 +45,11 @@ enum HTMLBuilder {
         /// user preference; app.js mirrors it onto the pm-line-numbers
         /// root class.
         var lineNumbers: Bool?
+        /// What clicking a GitHub Markdown link does ("ask", "pullmark",
+        /// "browser") — the link-status pill says where a hovered link will
+        /// open, and flips while ⌘ is held. Stamped centrally in
+        /// page(payload:) from the user preference.
+        var remoteLinkPolicy: String?
         /// Miniature non-interactive rendering for the Settings theme cards
         /// (scaled down via CSS zoom, selection and scrollbars disabled).
         var preview: Bool?
@@ -298,6 +303,7 @@ enum HTMLBuilder {
             if payload.lineNumbers == nil {
                 payload.lineNumbers = LineNumbers.enabled ? true : nil
             }
+            payload.remoteLinkPolicy = UserDefaults.pullmark.string(forKey: DefaultsKeys.remoteLinkPolicy) ?? "ask"
         }
         return """
         <!DOCTYPE html>

@@ -76,7 +76,12 @@ enum DefaultsKeys {
     /// PR/head/file plus the page's own draft key — see ComposerDraftStore.
     static let composerDrafts = "pm.composerDrafts"
     /// Sidebar sections: expansion state (default expanded).
+    /// What clicking a GitHub Markdown link does: RemoteLinkPolicy rawValue
+    /// (absent = ask on first click).
+    static let remoteLinkPolicy = "pm.remoteLinkPolicy"
+
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
+    static let sidebarGitHubExpanded = "pm.sidebar.githubExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
