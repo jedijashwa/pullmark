@@ -623,10 +623,10 @@ private struct FolderRootGroup: View {
             }
             .foregroundStyle(folder.missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
             if let git = folder.git, let branch = git.branch {
-                BranchChip(text: branch, font: fonts.caption) {
+                BranchChip(text: branch, font: fonts.caption,
+                           anchor: menuAnchor) {
                     popBranchMenu()
                 }
-                .background(MenuAnchorReader(box: menuAnchor))
             }
             if let repoID = folder.git?.primaryGitHubRepo {
                 // The quiet fourth-state marker: this folder is a checkout
@@ -1234,10 +1234,10 @@ private struct RemoteRepoGroup: View {
                         .foregroundStyle(.secondary)
                         .drawingGroup() // keeps its tint in the drag preview
                 }
-                BranchChip(text: session.displayRef, font: fonts.caption) {
+                BranchChip(text: session.displayRef, font: fonts.caption,
+                           anchor: menuAnchor) {
                     popBranchMenu()
                 }
-                .background(MenuAnchorReader(box: menuAnchor))
             }
             .tag(SidebarSelection.remoteRepo(session.id))
             .help("\(session.ref.owner)/\(session.ref.repo) @ \(session.displayRef)")

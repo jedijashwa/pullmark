@@ -457,30 +457,61 @@ enum RemoteBranchMenu {
 /// The compact ref control shown on repo rows and the provenance bar —
 /// branch glyph + name + disclosure chevron, one click to the branch menu
 /// (the Xcode-titlebar idiom brought to the row).
+/// AppKit click target for controls inside List rows: SwiftUI Buttons and
+/// tap gestures in a sidebar row's label never receive plain clicks (the
+/// row's selection machinery wins — verified empirically), but an embedded
+/// NSView's mouseDown fires before any of it. The catcher doubles as the
+/// menu anchor, so the menu pops exactly under the control.
+struct RowClickCatcher: NSViewRepresentable {
+    final class Catcher: NSView {
+        var action: () -> Void = {}
+        override func mouseDown(with event: NSEvent) {
+            // Not calling super: the click belongs to the control, and the
+            // menu it pops would swallow the selection change anyway.
+            action()
+        }
+    }
+
+    let box: MenuAnchorBox
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> Catcher {
+        let view = Catcher()
+        view.action = action
+        box.view = view
+        return view
+    }
+
+    func updateNSView(_ view: Catcher, context: Context) {
+        view.action = action
+        box.view = view
+    }
+}
+
 struct BranchChip: View {
     let text: String
     /// Optional to accept ChromeFonts values (nil at zoom 1 = stock size).
     var font: Font? = .caption
+    let anchor: MenuAnchorBox
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 3) {
-                Image(systemName: "arrow.triangle.branch")
-                    .font(.system(size: 8, weight: .semibold))
-                Text(text)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 6, weight: .bold))
-                    .opacity(0.8)
-            }
-            .font(font)
-            .foregroundStyle(.secondary)
-            .contentShape(Rectangle())
+        HStack(spacing: 3) {
+            Image(systemName: "arrow.triangle.branch")
+                .font(.system(size: 8, weight: .semibold))
+            Text(text)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 6, weight: .bold))
+                .opacity(0.8)
         }
-        .buttonStyle(.plain)
+        .font(font)
+        .foregroundStyle(.secondary)
+        .overlay(RowClickCatcher(box: anchor, action: action))
         .help("Branches and worktrees")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Branch: \(text)")
     }
 }
 
@@ -592,10 +623,10 @@ struct RemoteProvenanceBar: View {
             Text("\(session.ref.owner)/\(session.ref.repo)")
                 .fontWeight(.medium)
             // The ref is the switch-branch affordance, right where it's read.
-            BranchChip(text: session.displayRef, font: .callout) {
+            BranchChip(text: session.displayRef, font: .callout,
+                       anchor: menuAnchor) {
                 popBranchMenu()
             }
-            .background(MenuAnchorReader(box: menuAnchor))
             Text("·")
                 .foregroundStyle(.tertiary)
             Text(path)
