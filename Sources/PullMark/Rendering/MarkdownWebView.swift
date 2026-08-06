@@ -46,6 +46,13 @@ struct MarkdownWebView: NSViewRepresentable {
     /// An in-place editor opened (true) or closed (false) — re-renders are
     /// deferred while one is open so the draft can't be destroyed.
     var onEditingState: ((Bool) -> Void)?
+    /// Margin note composed under a block: (1-based line to insert after —
+    /// 0 = top of file — and the note's Markdown body).
+    var onNoteAdd: ((Int, String) -> Void)?
+    /// Margin note body rewritten from its bubble: (note ordinal, body).
+    var onNoteEdit: ((Int, String) -> Void)?
+    /// Margin note deleted from its bubble: note ordinal.
+    var onNoteDelete: ((Int) -> Void)?
     /// Arrow navigation committed an edit: after the reload, re-open the
     /// reveal at this line (negative = caret at end).
     var onNextReveal: ((Int) -> Void)?
@@ -388,6 +395,20 @@ struct MarkdownWebView: NSViewRepresentable {
             case "editingState":
                 if let active = dict["active"] as? Bool {
                     parent.onEditingState?(active)
+                }
+            case "noteAdd":
+                if let afterLine = dict["afterLine"] as? Int,
+                   let body = dict["body"] as? String {
+                    parent.onNoteAdd?(afterLine, body)
+                }
+            case "noteEdit":
+                if let index = dict["index"] as? Int,
+                   let body = dict["body"] as? String {
+                    parent.onNoteEdit?(index, body)
+                }
+            case "noteDelete":
+                if let index = dict["index"] as? Int {
+                    parent.onNoteDelete?(index)
                 }
             case "toggleEditMode":
                 parent.onToggleEditMode?()

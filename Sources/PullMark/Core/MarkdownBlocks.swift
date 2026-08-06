@@ -33,6 +33,7 @@ enum MarkdownBlocks {
         var current: [String] = []
         var startIndex = 0
         var fenceMarker: String?
+        var inComment = false
         var firstLineIndex = 0
 
         if let close = frontMatterCloseIndex(lines) {
@@ -71,6 +72,20 @@ enum MarkdownBlocks {
                 fenceMarker = String(trimmed.prefix(3))
                 continue
             }
+            // An HTML comment runs to its `-->` regardless of blank lines
+            // (CommonMark HTML block type 2) — kept atomic so a multi-line
+            // margin note is one block for editing and diffing.
+            if inComment {
+                current.append(line)
+                if line.contains("-->") { inComment = false }
+                continue
+            }
+            if trimmed.hasPrefix("<!--"), !line.contains("-->") {
+                if current.isEmpty { startIndex = i }
+                current.append(line)
+                inComment = true
+                continue
+            }
             if trimmed.isEmpty {
                 flush(lastLineIndex: i - 1)
             } else {
@@ -91,6 +106,13 @@ enum MarkdownBlocks {
         return lines.count >= 2
             && normalized(lines[0]) == "---"
             && lines[lines.count - 1].trimmingCharacters(in: .whitespacesAndNewlines) == "---"
+    }
+
+    /// The 1-based line number closing a leading YAML front matter fence,
+    /// or nil without one — shared with the margin-note parser so notes
+    /// are never recognized inside metadata.
+    static func frontMatterEndLine(_ lines: [String]) -> Int? {
+        frontMatterCloseIndex(lines).map { $0 + 1 }
     }
 
     /// The 0-based index of the line closing a leading front matter fence,

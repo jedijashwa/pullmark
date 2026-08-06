@@ -23,6 +23,7 @@ struct LocalFileView: View {
     @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
@@ -89,6 +90,9 @@ struct LocalFileView: View {
             html: html,
             onEditLocal: handleEditLocal,
             onEditingState: handleEditingState,
+            onNoteAdd: handleNoteAdd,
+            onNoteEdit: handleNoteEdit,
+            onNoteDelete: handleNoteDelete,
             onNextReveal: handleNextReveal,
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
@@ -248,6 +252,20 @@ struct LocalFileView: View {
         guard request != nil else { return }
         if state.take(.reload) { load() }
         if state.take(.toggleEditMode) { handleToggleEditMode() }
+        if state.take(.addMarginNote) { openNoteComposer(fileLevel: false) }
+        if state.take(.addFileMarginNote) { openNoteComposer(fileLevel: true) }
+    }
+
+    /// Menu-driven note composers. Comparisons and the source view show
+    /// text that isn't the document; hidden notes would make an invisible
+    /// write — all three bail to a notice instead of half-working.
+    private func openNoteComposer(fileLevel: Bool) {
+        guard compare == nil, !state.sourceViewVisible else { return }
+        guard marginNotesVisible else {
+            state.lastNotice = "Margin notes are hidden — choose View → Show Margin Notes first."
+            return
+        }
+        proxy.openNoteComposer(fileLevel: fileLevel)
     }
 
     private var editToggle: some View {
@@ -439,6 +457,8 @@ struct LocalFileView: View {
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
+        let notes = marginNotesVisible
+            ? MarginNotePayload.payloads(from: MarginNotes.parse(currentText)) : []
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
@@ -446,7 +466,9 @@ struct LocalFileView: View {
                                         customCSS: style.customCSS,
                                         editable: editMode,
                                         blame: blameVisible ? blamePayloads : nil,
-                                        blameNote: blameVisible ? blameNote : nil)
+                                        blameNote: blameVisible ? blameNote : nil,
+                                        marginNotes: notes,
+                                        noteAuthoring: marginNotesVisible)
     }
 
     /// Block-editor apply: edit-mode commits write straight to disk — the
@@ -499,6 +521,69 @@ struct LocalFileView: View {
         } catch {
             state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
             proxy.cancelInlineEdit()
+        }
+    }
+
+    // MARK: Margin notes
+
+    /// Adding a note under a block (afterLine = the block's last source
+    /// line; 0 = file-level, which lands after any front matter).
+    private func handleNoteAdd(_ afterLine: Int, body: String) {
+        // Annotating is commitment beyond reading: it pins a preview.
+        state.pinPreviewIfNeeded(url: file.url)
+        let author = MarginNoteAuthor.current(viewerLogin: state.viewerLogin)
+        applyNoteChange { text in
+            let at = afterLine > 0 ? afterLine
+                : (MarkdownBlocks.frontMatterEndLine(text.components(separatedBy: "\n")) ?? 0)
+            return MarginNotes.inserting(author: author, body: body, afterLine: at, in: text)
+        }
+    }
+
+    private func handleNoteEdit(_ index: Int, body: String) {
+        applyNoteChange { text in
+            let notes = MarginNotes.parse(text)
+            guard notes.indices.contains(index) else { return nil }
+            return MarginNotes.replacingBody(of: notes[index], with: body, in: text)
+        }
+    }
+
+    private func handleNoteDelete(_ index: Int) {
+        applyNoteChange { text in
+            let notes = MarginNotes.parse(text)
+            guard notes.indices.contains(index) else { return nil }
+            return MarginNotes.removing(notes[index], from: text)
+        }
+    }
+
+    /// The shared note write path: surgery on LF-normalized text (CRLF
+    /// files round-trip through it losslessly), one Revert snapshot per
+    /// gesture, and the reader's scroll position preserved across the
+    /// re-render. A nil transform means the file changed underneath the
+    /// bubble — surface it, write nothing.
+    private func applyNoteChange(_ transform: @escaping (String) -> String?) {
+        proxy.scrollFraction { fraction in
+            Task { @MainActor in
+                if let fraction, fraction > 0.02 { pendingScrollRestore = fraction }
+                let wasCRLF = currentText.contains("\r\n")
+                let lf = currentText
+                    .replacingOccurrences(of: "\r\n", with: "\n")
+                    .replacingOccurrences(of: "\r", with: "\n")
+                guard var newText = transform(lf) else {
+                    state.lastNotice = "\(file.url.lastPathComponent) changed while you were "
+                        + "annotating — nothing was saved. The current notes are shown now."
+                    return
+                }
+                if wasCRLF {
+                    newText = newText.replacingOccurrences(of: "\n", with: "\r\n")
+                }
+                do {
+                    EditHistory.snapshot(file.url)
+                    try newText.write(to: file.url, atomically: true, encoding: .utf8)
+                } catch {
+                    state.lastError = "Couldn't save \(file.url.lastPathComponent): "
+                        + error.localizedDescription
+                }
+            }
         }
     }
 

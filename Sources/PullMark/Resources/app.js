@@ -2549,6 +2549,316 @@
     layer.append(tools);
   }
 
+  // ---- Margin notes (beta) ----
+  // `<!-- note @author: … -->` comments render as bubbles pinned to the
+  // comment's own spot in the document. Swift parses the file
+  // (Core/MarginNotes) and passes the notes in document order; the page
+  // pairs them with the DOM comment nodes matching the same marker —
+  // same grammar, same order — so no positional math is ever needed.
+  // Authoring (local documents) posts noteAdd/noteEdit/noteDelete over
+  // the bridge; Swift rewrites the file and the reload re-renders.
+
+  var NOTE_MARKER = /^\s*note\s+@/;
+  var openNoteEditor = null;
+
+  function noteCommentNodes() {
+    var walker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT);
+    var nodes = [];
+    var node;
+    while ((node = walker.nextNode())) {
+      if (NOTE_MARKER.test(node.nodeValue || "")) { nodes.push(node); }
+    }
+    return nodes;
+  }
+
+  function closeNoteEditor(save) {
+    if (!openNoteEditor) { return; }
+    var st = openNoteEditor;
+    openNoteEditor = null;
+    document.removeEventListener("mousedown", st.onAway, true);
+    st.container.remove();
+    if (st.onClose) { st.onClose(save); }
+    post({ type: "editingState", active: false });
+  }
+
+  // Minimal composer shared by add and edit: a textarea with Cancel and
+  // one primary action. Opening posts editingState so Swift defers
+  // file-watcher reloads under the draft, exactly like the block editor.
+  // opts: { anchor (insert after; null → prepend to content), seed,
+  //   placeholder, primaryLabel, onSubmit(body), onClose }
+  function noteComposerOpen(opts) {
+    closeNoteEditor(false);
+    closeComposer(true);
+
+    var root = document.createElement("div");
+    root.className = "pm-composer pm-note-composer pm-annotation";
+    var ta = document.createElement("textarea");
+    ta.className = "pm-composer-text";
+    ta.placeholder = opts.placeholder || "Leave a margin note";
+    ta.rows = 3;
+    var actions = document.createElement("div");
+    actions.className = "pm-composer-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    var primary = document.createElement("button");
+    primary.type = "button";
+    primary.className = "pm-composer-primary";
+    primary.textContent = opts.primaryLabel || "Add Note";
+    primary.title = "⌘↩";
+    actions.append(cancel, primary);
+    root.append(ta, actions);
+
+    var st = { container: root, ta: ta, onClose: opts.onClose || null };
+
+    function grow() {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(72, ta.scrollHeight) + "px";
+    }
+    function updateState() {
+      primary.disabled = ta.value.trim() === "";
+    }
+    function submit() {
+      var body = ta.value.trim();
+      if (body === "") { return; }
+      // The note post goes FIRST: closing releases any deferred reload
+      // (editingState false), and a stale disk read must never beat the
+      // write into the page — same ordering rule as commitReveal.
+      opts.onSubmit(body);
+      closeNoteEditor(true);
+    }
+
+    cancel.addEventListener("click", function () { closeNoteEditor(false); });
+    primary.addEventListener("click", submit);
+    ta.addEventListener("input", function () { grow(); updateState(); });
+    ta.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        event.preventDefault();
+        closeNoteEditor(false);
+        return;
+      }
+      if (event.isComposing) { return; }
+      if (event.key === "Enter" && event.metaKey && !event.altKey && !event.ctrlKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        submit();
+      }
+    });
+    st.onAway = function (event) {
+      if (root.contains(event.target)) { return; }
+      if (event.target.closest && event.target.closest(".pm-comment-btn")) { return; }
+      closeNoteEditor(false);
+    };
+    document.addEventListener("mousedown", st.onAway, true);
+
+    ta.value = opts.seed || "";
+    if (opts.anchor) {
+      opts.anchor.after(root);
+    } else {
+      content.prepend(root);
+    }
+    openNoteEditor = st;
+    post({ type: "editingState", active: true });
+    updateState();
+    grow();
+    root.scrollIntoView({ block: "nearest", inline: "nearest" });
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+
+  function noteCardEl(note, authoring) {
+    var card = document.createElement("div");
+    card.className = "pm-note pm-annotation" + (note.fileLevel ? " pm-note-file" : "");
+    var head = document.createElement("div");
+    head.className = "pm-note-head";
+    var author = document.createElement("span");
+    author.className = "pm-note-author";
+    author.textContent = "@" + note.author;
+    head.append(author);
+    if (note.fileLevel) {
+      var scope = document.createElement("span");
+      scope.className = "pm-note-scope";
+      scope.textContent = "whole document";
+      head.append(scope);
+    }
+    var body = document.createElement("div");
+    body.className = "pm-note-body";
+    body.innerHTML = render(note.body);
+    rewriteLocalResources(body);
+    rewriteRemoteResources(body);
+    enhance(body);
+    card.append(head, body);
+    if (authoring) {
+      var actions = document.createElement("div");
+      actions.className = "pm-note-actions";
+      var edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", function () {
+        card.style.display = "none";
+        noteComposerOpen({
+          anchor: card,
+          seed: note.body,
+          primaryLabel: "Save",
+          onSubmit: function (text) {
+            post({ type: "noteEdit", index: note.index, body: text });
+          },
+          onClose: function () { card.style.display = ""; }
+        });
+      });
+      var del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "Delete";
+      del.addEventListener("click", function () {
+        post({ type: "noteDelete", index: note.index });
+      });
+      actions.append(edit, del);
+      head.append(actions);
+    }
+    return card;
+  }
+
+  // Replaces each note comment's position with its bubble. The comment
+  // node itself stays in the DOM (invisible, harmless) so indices remain
+  // stable however many bubbles render.
+  function setupMarginNotes(notes, authoring) {
+    var nodes = noteCommentNodes();
+    notes.forEach(function (note, i) {
+      if (i >= nodes.length) { return; }
+      var node = nodes[i];
+      var card = noteCardEl(note, authoring);
+      // Anchor at the nearest content-level position: the comment sits
+      // between blocks normally, but an unspaced one can end up inside a
+      // rendered element — the bubble then follows that element.
+      var host = node;
+      while (host.parentNode && host.parentNode !== content) {
+        host = host.parentNode;
+      }
+      if (host === node) {
+        content.insertBefore(card, node.nextSibling);
+      } else {
+        host.after(card);
+      }
+    });
+  }
+
+  // Hover affordance on blocks of a local document: the margin-rail
+  // bubble opens the note composer under the block. A text selection
+  // inside the block is quoted into the seed — how a note points at a
+  // sentence instead of a paragraph.
+  function attachNoteAffordance(layer, el, blockStart, blockEnd) {
+    el.classList.add("pm-commentable");
+    var tools = document.createElement("div");
+    tools.className = "pm-result-tools";
+    var hideTimer = null;
+    function hideNow() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      tools.style.display = "none";
+    }
+    function position() {
+      var cRect = content.getBoundingClientRect();
+      var rect = el.getBoundingClientRect();
+      var tw = tools.getBoundingClientRect().width || 28;
+      tools.style.left = Math.round(cRect.width - tw - 6) + "px";
+      tools.style.top = Math.round(rect.top - cRect.top + 2) + "px";
+    }
+    function show() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
+      activeBlockBubble = hideNow;
+      tools.style.display = "flex";
+      position();
+    }
+    function hide() {
+      if (hideTimer) { clearTimeout(hideTimer); }
+      hideTimer = setTimeout(function () { tools.style.display = "none"; }, 120);
+    }
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("mouseleave", hide);
+    tools.addEventListener("mouseenter", show);
+    tools.addEventListener("mouseleave", hide);
+    var bubble = document.createElement("button");
+    bubble.type = "button";
+    bubble.className = "pm-comment-btn";
+    bubble.innerHTML = COMMENT_ICON;
+    bubble.title = "Add a margin note";
+    bubble.setAttribute("aria-label", bubble.title);
+    bubble.addEventListener("click", function (event) {
+      event.stopPropagation();
+      openNoteComposerAt(el, blockEnd);
+    });
+    tools.append(bubble);
+    layer.append(tools);
+  }
+
+  // The composer lands after the block's trailing note bubbles, matching
+  // where the note itself will render.
+  function openNoteComposerAt(el, afterLine) {
+    var selected = selectionTextWithin(el);
+    var seed = "";
+    if (selected) {
+      seed = selected.split("\n").map(function (line) {
+        return "> " + line;
+      }).join("\n") + "\n\n";
+    }
+    var anchor = el;
+    while (anchor.nextElementSibling
+           && anchor.nextElementSibling.classList.contains("pm-note")) {
+      anchor = anchor.nextElementSibling;
+    }
+    noteComposerOpen({
+      anchor: anchor,
+      seed: seed,
+      onSubmit: function (body) {
+        post({ type: "noteAdd", afterLine: afterLine, body: body });
+      }
+    });
+  }
+
+  function setupNoteAffordances() {
+    document.documentElement.classList.add("pm-commenting-on");
+    var layer = document.createElement("div");
+    layer.className = "pm-affordance-layer pm-annotation";
+    content.append(layer);
+    for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+      var m = /^(\d+)-(\d+)$/.exec(
+        (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
+      if (!m) { continue; }
+      attachNoteAffordance(layer, el, +m[1], +m[2]);
+    }
+  }
+
+  // Menu-driven entry (Add Margin Note / File Margin Note): file-level
+  // opens at the top; otherwise the composer opens on the block nearest
+  // the top of the viewport — the one the reader is on.
+  window.__pmOpenNoteComposer = function (fileLevel) {
+    if (fileLevel) {
+      noteComposerOpen({
+        anchor: null,
+        placeholder: "Leave a note about the whole document",
+        onSubmit: function (body) {
+          post({ type: "noteAdd", afterLine: 0, body: body });
+        }
+      });
+      return;
+    }
+    var target = null;
+    var targetEnd = 0;
+    for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
+      var m = /^(\d+)-(\d+)$/.exec(
+        (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
+      if (!m) { continue; }
+      if (!target) { target = el; targetEnd = +m[2]; }
+      if (el.getBoundingClientRect().bottom > 80) {
+        target = el;
+        targetEnd = +m[2];
+        break;
+      }
+    }
+    if (target) { openNoteComposerAt(target, targetEnd); }
+  };
+
   // ---- Resolved-conversation visibility (Result view, spec §1) ----
   // Hidden by default; the in-page "N resolved conversations" control and
   // the native View menu item mirror each other through this hook.
@@ -3620,6 +3930,12 @@
     populateToc(reportOutline(content));
     enhance(content);
     reportStats(content);
+    // Margin notes render after stats (bubble text is not document text)
+    // and before mermaid, so diagrams inside note bodies render too.
+    if ((payload.marginNotes || []).length) {
+      setupMarginNotes(payload.marginNotes,
+                       !!payload.noteAuthoring && !payload.preview);
+    }
     renderMermaid();
     if (blameAnnotated) { setupBlameGutter(payload.blame); }
     if (linesAnnotated
@@ -3632,6 +3948,13 @@
     if (linesAnnotated && payload.commentableLines && !payload.preview
         && !payload.editable) {
       setupResultCommenting();
+    }
+    // Local documents: the margin-note affordance on every block. Edit
+    // mode keeps the page clear for block reveals (bubbles still carry
+    // their own Edit/Delete there).
+    if (linesAnnotated && payload.noteAuthoring && !payload.preview
+        && !payload.editable) {
+      setupNoteAffordances();
     }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];

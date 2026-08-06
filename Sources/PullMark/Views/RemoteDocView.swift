@@ -44,6 +44,8 @@ struct RemoteDocView: View {
         return RemoteResourceContext(ref: session.ref, commitSHA: sha)
     }
 
+    @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
+
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
@@ -60,12 +62,18 @@ struct RemoteDocView: View {
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
+        // Margin notes in remote files render read-only: the bubbles show
+        // (a doc annotated by its authors reads the same everywhere), but
+        // there is no file on disk to write to, so no authoring chrome.
+        let notes = marginNotesVisible
+            ? MarginNotePayload.payloads(from: MarginNotes.parse(markdown)) : []
         return HTMLBuilder.documentPage(markdown: markdown, title: path,
                                         remote: HTMLBuilder.RemoteAssets(filePath: path),
                                         theme: style.theme,
                                         customCSS: style.customCSS,
                                         blame: blameVisible ? blamePayloads : nil,
-                                        blameNote: blameVisible ? blameNote : nil)
+                                        blameNote: blameVisible ? blameNote : nil,
+                                        marginNotes: notes)
     }
 
     var body: some View {

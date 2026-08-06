@@ -83,6 +83,12 @@ enum HTMLBuilder {
         /// Patch-line file provenance (patch mode): renders the clickable
         /// line-number gutter that sets the composer's range.
         var patchLines: [PatchLinePayload]?
+        /// Margin notes parsed from the document (Core/MarginNotes) —
+        /// rendered as bubbles at their comments' own positions.
+        var marginNotes: [MarginNotePayload]?
+        /// Local documents: bubbles offer Edit/Delete and blocks grow the
+        /// add-note affordance. Absent for read-only (remote) renders.
+        var noteAuthoring: Bool?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -133,7 +139,9 @@ enum HTMLBuilder {
                              pending: [PendingPayload]? = nil,
                              commentableLines: CommentableLines.Payload? = nil,
                              reviewPending: Bool = false,
-                             lineNumberEligible: Bool = true) -> String {
+                             lineNumberEligible: Bool = true,
+                             marginNotes: [MarginNotePayload]? = nil,
+                             noteAuthoring: Bool = false) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -147,7 +155,9 @@ enum HTMLBuilder {
                                     threads: threads?.isEmpty == false ? threads : nil,
                                     pendingComments: pending?.isEmpty == false ? pending : nil,
                                     commentableLines: commentableLines,
-                                    reviewPending: reviewPending ? true : nil),
+                                    reviewPending: reviewPending ? true : nil,
+                                    marginNotes: marginNotes?.isEmpty == false ? marginNotes : nil,
+                                    noteAuthoring: noteAuthoring ? true : nil),
              title: title, customCSS: customCSS)
     }
 

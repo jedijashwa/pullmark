@@ -47,6 +47,7 @@ struct PullMarkApp: App {
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
+    @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -286,6 +287,16 @@ struct PullMarkApp: App {
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .editMode))
                     .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
                     .help("Make the page writable — then click any block")
+                Divider()
+                Button("Add Margin Note") { state?.send(.addMarginNote) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .addMarginNote))
+                    .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
+                    .help("Leave a note on the block you're reading — it's saved into the "
+                        + "file as a <!-- note --> comment")
+                Button("File Margin Note…") { state?.send(.addFileMarginNote) }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .addFileMarginNote))
+                    .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
+                    .help("Leave a note about the whole document, at the top")
             }
             CommandGroup(replacing: .help) {
                 Button("PullMark Website") {
@@ -333,6 +344,11 @@ struct PullMarkApp: App {
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
                     .disabled(activeLocalFileURL == nil)
                     .help("Re-read this file from disk")
+                Button(marginNotesVisible ? "Hide Margin Notes" : "Show Margin Notes") {
+                    marginNotesVisible.toggle()
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleMarginNotes))
+                .help("Margin-note bubbles (<!-- note --> comments) in rendered documents")
                 Divider()
                 // Zoom sits below the show/hide cluster with Actual Size
                 // first — the Safari/Preview View-menu convention.

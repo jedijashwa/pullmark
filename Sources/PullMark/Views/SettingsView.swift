@@ -37,6 +37,8 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
+    @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
+    @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -95,6 +97,19 @@ struct GeneralSettingsTab: View {
                 + "one italicized entry (in Open Files, or under its GitHub repo) "
                 + "that the next preview replaces. Double-click a file, or just "
                 + "start editing, to keep it open. Open Fully keeps every file you click.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Margin Notes") {
+            TextField("Sign notes as:", text: $marginNoteAuthor,
+                      prompt: Text(NSUserName()))
+            Text("The @name your margin notes carry — the notes you leave "
+                + "on a document are saved into the file as "
+                + "<!-- note @name: … --> comments. Left empty, your GitHub "
+                + "login signs them (or this Mac's account name when "
+                + "signed out).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -163,6 +178,23 @@ struct GeneralSettingsTab: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+            }
+
+            Picker("Update channel:", selection: $updateChannelRaw) {
+                ForEach(UpdateChannel.allCases) { channel in
+                    Text(channel.label).tag(channel.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .help("Beta offers pre-release versions with features still being tested")
+            if updateChannelRaw == UpdateChannel.beta.rawValue {
+                Text("Beta versions are signed and notarized like any release, but "
+                    + "their features are still settling — see pullmark.app/docs/beta. "
+                    + "Homebrew installs can switch with: brew uninstall --cask pullmark "
+                    + "&& brew install --cask jedijashwa/tap/pullmark@beta")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             LabeledContent("Updates:") {

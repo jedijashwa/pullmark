@@ -121,6 +121,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     case zoomIn, zoomOut, actualSize
     case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
     case reviewChanges, showResolvedConversations
+    case addMarginNote, addFileMarginNote, toggleMarginNotes
 
     var title: String {
         switch self {
@@ -157,6 +158,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
         // The menu item's title flips Show/Hide with state; the settings
         // row names the toggle itself.
         case .showResolvedConversations: return "Show/Hide Resolved Conversations"
+        case .addMarginNote: return "Add Margin Note"
+        case .addFileMarginNote: return "File Margin Note…"
+        case .toggleMarginNotes: return "Show/Hide Margin Notes"
         }
     }
 
@@ -168,11 +172,11 @@ enum ShortcutAction: String, CaseIterable, Codable {
              .revertLastEdit, .revealInFinder, .copyPath, .refreshFolder,
              .clearRecents, .pageSetup, .printDocument, .exportPDF, .exportHTML:
             return "File"
-        case .editMode, .copyAsMarkdown,
+        case .editMode, .copyAsMarkdown, .addMarginNote, .addFileMarginNote,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
             return "Edit"
         case .toggleOutline, .toggleSource, .reloadDocument,
-             .zoomIn, .zoomOut, .actualSize:
+             .zoomIn, .zoomOut, .actualSize, .toggleMarginNotes:
             return "View"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout, .reviewChanges,
              .showResolvedConversations:
@@ -202,6 +206,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
             return "In a pull request"
         case .showResolvedConversations:
             return "In a pull request file's Result view"
+        case .addMarginNote, .addFileMarginNote:
+            return "In a local document"
         default:
             return nil
         }
@@ -254,6 +260,12 @@ enum ShortcutAction: String, CaseIterable, Codable {
         // ⌥⌘R ("Resolved"): same discipline — ShortcutStore.init unbinds
         // any pre-existing user recording of this combo.
         case .showResolvedConversations: return KeyCombo(key: "r", command: true, option: true)
+        // ⌥⌘M ("Margin note"): free of the reserved table and every
+        // other default; the file-level and visibility variants ship
+        // unbound.
+        case .addMarginNote: return KeyCombo(key: "m", command: true, option: true)
+        case .addFileMarginNote: return nil
+        case .toggleMarginNotes: return nil
         }
     }
 }
