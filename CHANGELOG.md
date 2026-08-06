@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.28.0-beta.2 - 2026-08-06
 
 - Margin-note and review-comment bubbles in the margin rail now stay
   clear of the overlay scrollbar when the web view is narrow (sidebar
