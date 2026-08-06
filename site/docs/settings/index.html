@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — PullMark Docs</title>
+<meta name="description" content="Every PullMark setting: General, Appearance, and Keyboard, with defaults and what each control changes.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="./" aria-current="page">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Settings</h1>
+      <p class="article-lede">Everything behind ⌘, — three tabs: General for
+      behavior, Appearance for how rendered pages look, Keyboard for the key
+      map. The window reopens on whichever tab you used last.</p>
+
+      <h2 id="general">General</h2>
+
+      <h3>Appearance</h3>
+      <table>
+        <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
+        <tr><td>Appearance</td><td>System · Light · Dark — <em>System</em></td>
+          <td>Light/dark override for the whole app, chrome and rendered pages
+          alike. Also switchable mid-read from the toolbar or View menu.</td></tr>
+      </table>
+
+      <h3>Reviewing</h3>
+      <table>
+        <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
+        <tr><td>Default diff layout</td><td>Inline · Side by Side — <em>Inline</em></td>
+          <td>How PR rendered diffs open. Flippable per file with ⌥⌘L.</td></tr>
+        <tr><td>Quick Look previews</td><td>Rendered · Raw Source — <em>Rendered</em></td>
+          <td>What pressing Space in Finder shows for Markdown files.</td></tr>
+        <tr><td>Show review requests in the sidebar</td><td>on/off — <em>on</em></td>
+          <td>The Review Requests subgroup: open PRs where your review is
+          requested. Hidden either way when you're not signed in.</td></tr>
+        <tr><td>Only requests that change Markdown</td><td>on/off — <em>on</em></td>
+          <td>Hides review requests with no Markdown files — PullMark has
+          nothing to show for them.</td></tr>
+      </table>
+
+      <h3>Reading</h3>
+      <table>
+        <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
+        <tr><td>Restore files and pull requests from the last session</td>
+          <td>on/off — <em>on</em></td>
+          <td>Reopens what was in the sidebar when PullMark last quit —
+          files, folders, PRs, browsed repos, and the preview entry (still
+          as a preview).</td></tr>
+        <tr><td>GitHub Markdown links</td>
+          <td>Ask on first click · Open in PullMark · Open in Browser —
+          <em>Ask on first click</em></td>
+          <td>What clicking a link to a Markdown file on GitHub does. Hold ⌘
+          while clicking for the other behavior. The first-click dialog's
+          "Remember my selection" checkbox sets this for you.</td></tr>
+        <tr><td id="clicking-files">Clicking files in Locations</td>
+          <td>Preview First · Open Fully — <em>Preview First</em></td>
+          <td>Preview First shows a file with one click without keeping it —
+          it appears in Open Files in italics until the next preview replaces
+          it; double-click or start editing to keep it. Open Fully keeps
+          every file you click. See
+          <a href="../sidebar/#previews">Previews</a>.</td></tr>
+      </table>
+
+      <h3>System</h3>
+      <table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr><td>Default Markdown app</td>
+          <td>Shows which app currently opens <code>.md</code> files;
+          <strong>Make PullMark the Default</strong> claims the binding in
+          one click. If a later upgrade makes macOS drop it, PullMark
+          notices and offers to take it back.</td></tr>
+        <tr><td>Command line</td>
+          <td>Installs the <a href="../cli/"><code>pullmark</code>
+          command</a> into <code>/usr/local/bin</code> for DMG installs
+          (Homebrew users already have it). Shows a checkmark when a
+          <code>pullmark</code> is already on your PATH.</td></tr>
+        <tr><td>Updates</td>
+          <td><strong>Check for Updates…</strong> on demand; PullMark also
+          checks at launch and periodically, offering a banner with one-click
+          update.</td></tr>
+      </table>
+
+      <h2 id="appearance-tab">Appearance</h2>
+      <p>Every choice here is a card with a live preview rendered through
+      the real pipeline — what you see is what documents get.</p>
+
+      <h3>Theme</h3>
+      <table>
+        <tr><th>Theme</th><th>Look</th></tr>
+        <tr><td>GitHub <em>(default)</em></td><td>The classic look, exactly as on github.com.</td></tr>
+        <tr><td>Editorial</td><td>Bookish serif headers on warm paper.</td></tr>
+        <tr><td>Terminal</td><td>Monospace with a phosphor-green accent.</td></tr>
+      </table>
+      <p><strong>Custom themes:</strong> drop <code>.css</code> files into
+      the Themes folder (button in this tab) and they appear as cards. They
+      apply on top of the GitHub look, follow the Light/Dark appearance, and
+      restyle diffs too. Quick Look previews follow your theme (custom
+      themes fall back to their GitHub base there).</p>
+
+      <h3>Content width</h3>
+      <table>
+        <tr><th>Choice</th><th>Meaning</th></tr>
+        <tr><td>Standard <em>(default)</em></td><td>A classic book-like reading measure.</td></tr>
+        <tr><td>Wide</td><td>Longer lines, more on screen — still caps the line length.</td></tr>
+        <tr><td>Full Width</td><td>Text uses the whole window — handy in full screen.</td></tr>
+      </table>
+      <p>Applies everywhere, live, and composes with themes, blame, diffs,
+      and zoom. Also switchable mid-read from View → Content Width.</p>
+
+      <h3>Line numbers</h3>
+      <table>
+        <tr><th>Choice</th><th>Meaning</th></tr>
+        <tr><td>Hidden <em>(default)</em></td><td>A clean margin; numbers on demand in the Source view.</td></tr>
+        <tr><td>Shown</td><td>Each block's starting source line in the margin of rendered
+          documents and diffs — hover a number for the block's full range.
+          Numbering is per block, not per visual line (rendered text wraps
+          freely). The raw source view always shows its own line
+          numbers.</td></tr>
+      </table>
+
+      <h2 id="keyboard">Keyboard</h2>
+      <p>Every menu action's shortcut is rebindable — see
+      <a href="../shortcuts/">Keyboard Shortcuts</a> for the full map and
+      how recording, conflicts, and Restore Defaults work.</p>
+
+      <h2 id="where-things-are-stored">Where things are stored</h2>
+      <p>All preferences live in the <code>app.pullmark.PullMark</code>
+      defaults domain. Sessions, reading positions, and drafts are metadata
+      only — PullMark never copies your documents anywhere, and content
+      fetched from GitHub stays in memory.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

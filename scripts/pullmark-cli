@@ -1,11 +1,96 @@
-#!/bin/sh
-# The `pullmark` command: opens files, folders, or URLs in PullMark from
-# the shell. Installed by the Homebrew cask's binary stanza, which
-# symlinks this script (inside the app bundle) into the brew prefix.
-# `open -a` resolves the app through Launch Services wherever it lives,
-# resolves relative paths against the caller's working directory, and
-# lands everything in the frontmost window.
-if [ "$#" -eq 0 ]; then
-    exec open -a "PullMark"
+#!/bin/bash
+# The `pullmark` command: opens files and folders in PullMark from the
+# shell. Ships inside the app bundle (Contents/Resources/pullmark); the
+# Homebrew cask's binary stanza and Settings → General → "Install
+# pullmark Command…" both symlink it onto the PATH, and `make
+# install-cli` copies it for dev checkouts.
+set -eu
+
+usage() {
+    cat <<'EOF'
+pullmark — open files and folders in PullMark
+
+USAGE
+  pullmark                     launch (or focus) PullMark
+  pullmark <path> ...          open files and/or folders
+  pullmark -h, --help          show this help
+  pullmark --version           print the app version
+
+WHAT OPENING DOES
+  Files land in the sidebar's Open Files section and the last one is
+  shown. Folders — including git worktrees — become Locations:
+  browsable Markdown trees. Pass both together and the folder opens as
+  a Location with the file shown alongside it:
+
+      pullmark ~/wt/feature ~/wt/feature/docs/plan.md
+
+  If PullMark is already running, everything opens in the frontmost
+  window; a second instance is never started. Relative paths resolve
+  against the current directory.
+
+EXAMPLES
+  pullmark README.md                     read one file
+  pullmark ~/notes                       browse a folder
+  pullmark docs specs/design.md          a Location plus one document
+
+Docs: https://pullmark.app/docs/cli/
+EOF
+}
+
+version() {
+    # The script lives inside the app bundle, so its own Info.plist is a
+    # readlink away; a dev checkout falls back to Launch Services.
+    local script="$0" target
+    while [ -L "$script" ]; do
+        target=$(readlink "$script")
+        case "$target" in
+            /*) script="$target" ;;
+            *)  script="$(dirname "$script")/$target" ;;
+        esac
+    done
+    local plist
+    plist="$(dirname "$script")/../Info.plist"
+    if [ ! -f "$plist" ]; then
+        plist="$(mdfind "kMDItemCFBundleIdentifier == 'app.pullmark.PullMark'" \
+            2>/dev/null | head -1)/Contents/Info.plist"
+    fi
+    if [ -f "$plist" ]; then
+        echo "PullMark $(plutil -extract CFBundleShortVersionString raw "$plist")"
+    else
+        echo "pullmark: PullMark.app not found" >&2
+        exit 1
+    fi
+}
+
+paths=()
+parsing_flags=true
+for arg in "$@"; do
+    if $parsing_flags; then
+        case "$arg" in
+            -h|--help) usage; exit 0 ;;
+            --version) version; exit 0 ;;
+            --) parsing_flags=false; continue ;;
+            -*) echo "pullmark: unknown option '$arg' (try: pullmark --help)" >&2
+                exit 64 ;;
+        esac
+    fi
+    case "$arg" in
+        /*) paths+=("$arg") ;;
+        *)  paths+=("$PWD/$arg") ;;
+    esac
+done
+
+# All-or-nothing: a typo'd path aborts the whole open, so a script never
+# half-succeeds silently.
+missing=()
+for path in ${paths+"${paths[@]}"}; do
+    [ -e "$path" ] || missing+=("$path")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+    for path in "${missing[@]}"; do
+        echo "pullmark: no such file or folder: $path" >&2
+    done
+    exit 1
 fi
-exec open -a "PullMark" "$@"
+
+exec open -a "PullMark" ${paths+"${paths[@]}"}

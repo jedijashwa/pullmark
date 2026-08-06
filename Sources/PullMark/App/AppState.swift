@@ -75,6 +75,14 @@ enum RemoteLinkPolicy: String {
     case browser
 }
 
+/// What a single click on a file inside a Location does. `.preview` (the
+/// default) shows the file and keeps at most one transient, italicized
+/// entry in Open Files; `.open` pins a full entry on every click.
+enum FolderClickAction: String {
+    case preview
+    case open
+}
+
 /// A clicked GitHub link awaiting the user's first-click choice. Keeps the
 /// original URL so "open in browser" preserves the link exactly.
 struct RemoteLinkPrompt: Identifiable {
@@ -205,7 +213,20 @@ final class AppState: ObservableObject {
     @Published var remoteLinkPrompt: RemoteLinkPrompt?
     /// Anchor scroll handed to the remote doc view once its page loads.
     @Published var remoteAnchor: RemoteAnchorRequest?
-    @Published var selection: SidebarSelection?
+    /// The transient working-set entry (at most one per window): the file
+    /// last single-clicked in a Location's tree, shown italicized at the
+    /// end of Open Files. Replaced by the next preview, promoted to a
+    /// pinned entry by double-click or any authoring interaction.
+    @Published var previewFile: LocalFile?
+    @Published var selection: SidebarSelection? {
+        didSet {
+            guard selection != oldValue else { return }
+            let current = selection
+            // Deferred: the binding writes during event handling, and this
+            // may publish localFiles/previewFile changes in response.
+            Task { @MainActor [weak self] in self?.reactToSelection(current) }
+        }
+    }
     /// File/folder recents whose paths currently don't resolve — dimmed
     /// in the sidebar, revived automatically when the path returns
     /// (spec §6). Recomputed on app activation and window open.
@@ -502,6 +523,9 @@ final class AppState: ObservableObject {
         /// snapshots) keep decoding. Refs restore unresolved — the SHA is
         /// re-resolved on first selection, never at launch.
         var remotes: [RemoteRepo]? = nil
+        /// The transient preview entry's path — restored still-as-preview,
+        /// so a reading position doesn't silently harden into a pin.
+        var preview: String? = nil
     }
 
     func snapshotSession() {
@@ -515,7 +539,8 @@ final class AppState: ObservableObject {
             prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) },
             remotes: remoteSessions.map {
                 .init(owner: $0.ref.owner, repo: $0.ref.repo, ref: $0.displayRef, docs: $0.docs)
-            })
+            },
+            preview: previewFile?.url.path)
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.pullmark.set(data, forKey: DefaultsKeys.sessionSnapshot)
         }
@@ -566,6 +591,11 @@ final class AppState: ObservableObject {
             folders.append(folder)
             watchFolder(root)
             rescanFolder(root: root)
+        }
+        if let path = snapshot.preview, FileManager.default.fileExists(atPath: path) {
+            // Folders are appended above (trees still scanning), so the
+            // prefix check treeFile needs already answers.
+            previewFile = treeFile(for: URL(fileURLWithPath: path))
         }
         selection = nil
         pendingRestorePRs = Set(snapshot.prs)
@@ -687,6 +717,8 @@ final class AppState: ObservableObject {
             noteRecent(RecentItem(kind: .folder, path: url.path,
                                   title: url.lastPathComponent, lastOpened: Date()))
         } else {
+            // An explicit open pins; a matching preview entry is absorbed.
+            if previewFile?.url == url { previewFile = nil }
             addFile(url, displayName: url.lastPathComponent,
                     resourceRoot: url.deletingLastPathComponent())
             noteRecent(RecentItem(kind: .file, path: url.path,
@@ -718,6 +750,109 @@ final class AppState: ObservableObject {
         if selection == .local(file.url) { selection = nil }
     }
 
+    // MARK: - Preview (transient working-set entry)
+
+    var folderClickAction: FolderClickAction {
+        FolderClickAction(rawValue: UserDefaults.pullmark.string(
+            forKey: DefaultsKeys.folderClickAction) ?? "") ?? .preview
+    }
+
+    /// A file synthesized from the Location tree that contains it — nil
+    /// for anything not under an open folder root.
+    private func treeFile(for url: URL) -> LocalFile? {
+        for folder in folders where url.path.hasPrefix(folder.rootURL.path + "/") {
+            let relative = String(url.path.dropFirst(folder.rootURL.path.count + 1))
+            return LocalFile(url: url, displayName: relative, resourceRoot: folder.rootURL)
+        }
+        return nil
+    }
+
+    /// Selecting an unpinned file inside a Location is "viewing" — it
+    /// previews (or pins, per the setting). Runs deferred from the
+    /// selection didSet; anything else selected leaves the preview alone,
+    /// the way a preview tab survives focusing another tab.
+    private func reactToSelection(_ value: SidebarSelection?) {
+        guard value == selection, case .local(let url) = value,
+              !localFiles.contains(where: { $0.url == url }),
+              let file = treeFile(for: url)
+        else { return }
+        switch folderClickAction {
+        case .preview:
+            if previewFile != file { previewFile = file }
+        case .open:
+            localFiles.append(file)
+            if previewFile?.url == url { previewFile = nil }
+        }
+    }
+
+    /// Double-click on a tree row or the preview row: keep the file open.
+    func pinFile(at url: URL) {
+        if previewFile?.url == url { previewFile = nil }
+        guard !localFiles.contains(where: { $0.url == url }),
+              let file = treeFile(for: url) else {
+            selection = .local(url)
+            return
+        }
+        localFiles.append(file)
+        selection = .local(url)
+    }
+
+    /// Authoring beats previewing: the first non-reading interaction with
+    /// a previewed file (editing, commenting) pins it. Reading — blame,
+    /// history, inspecting an image — never does.
+    func pinPreviewIfNeeded(url: URL) {
+        guard previewFile?.url == url else { return }
+        pinFile(at: url)
+    }
+
+    func dismissPreview() {
+        guard let preview = previewFile else { return }
+        previewFile = nil
+        if selection == .local(preview.url) { selection = nil }
+    }
+
+    /// In-app navigation (a relative link in a rendered document): files
+    /// that live in an open Location preview rather than pin — following
+    /// a link is still reading. Everything else pins as before.
+    func openViaLink(url: URL) {
+        if !localFiles.contains(where: { $0.url == url }), treeFile(for: url) != nil {
+            selection = .local(url)
+        } else {
+            add(url: url)
+        }
+    }
+
+    /// The Open Files section header's one bulk gesture.
+    func closeAllOpenFiles() {
+        let closing = Set(localFiles.map(\.url) + (previewFile.map { [$0.url] } ?? []))
+        localFiles.removeAll()
+        previewFile = nil
+        if case .local(let url) = selection, closing.contains(url) { selection = nil }
+    }
+
+    /// The root of the open Location containing `url`, if any — gates the
+    /// Reveal in Location menu item.
+    func folderRootContaining(_ url: URL) -> URL? {
+        folders.first { url.path.hasPrefix($0.rootURL.path + "/") }?.rootURL
+    }
+
+    /// Expands every ancestor of `url` in its Location's tree and selects
+    /// the file — the bridge from a working-set row back to where it lives.
+    func revealInLocation(_ url: URL) {
+        guard let index = folders.firstIndex(where: {
+            url.path.hasPrefix($0.rootURL.path + "/")
+        }) else { return }
+        let root = folders[index].rootURL
+        folders[index].expandedPaths.insert("")
+        var relative = url.deletingLastPathComponent().path
+        while relative.count > root.path.count {
+            folders[index].expandedPaths.insert(
+                String(relative.dropFirst(root.path.count + 1)))
+            relative = (relative as NSString).deletingLastPathComponent
+        }
+        selection = .local(url)
+    }
+
     // MARK: - Folder roots (spec §2)
 
     func folder(for root: URL) -> LocalFolder? {
@@ -747,6 +882,10 @@ final class AppState: ObservableObject {
     func removeFolder(_ root: URL) {
         folders.removeAll { $0.rootURL == root }
         folderWatchers[root] = nil
+        // The preview belongs to the place it was browsed from.
+        if let preview = previewFile, preview.url.path.hasPrefix(root.path + "/") {
+            previewFile = nil
+        }
         switch selection {
         case .folder(root):
             selection = nil
@@ -826,6 +965,10 @@ final class AppState: ObservableObject {
             }
         }
         missingRecentIDs = missing
+        if let preview = previewFile,
+           !FileManager.default.fileExists(atPath: preview.url.path) {
+            previewFile = nil
+        }
         for folder in folders {
             let exists = FileManager.default.fileExists(atPath: folder.rootURL.path)
             if exists == folder.missing { rescanFolder(root: folder.rootURL) }

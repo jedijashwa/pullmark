@@ -37,7 +37,7 @@ run:
 	swift run PullMark
 
 install-cli:
-	install -m 0755 bin/pullmark $(BIN_DIR)/pullmark
+	install -m 0755 scripts/pullmark-cli $(BIN_DIR)/pullmark
 	@echo "Installed $(BIN_DIR)/pullmark"
 
 clean:

@@ -349,7 +349,7 @@ struct LocalFileView: View {
     /// In-place editor commit from the page. The seed is the text the
     /// editor was opened with — applyBlockEdit's guard compares it against
     /// the current lines, so a file changed underneath still aborts.
-    private func handleOpenLocalFile(_ url: URL) { state.add(url: url) }
+    private func handleOpenLocalFile(_ url: URL) { state.openViaLink(url: url) }
     private func handleOutline(_ items: [OutlineItem]) { outline = items }
     private func handleStats(_ documentStats: DocumentStats) { stats = documentStats }
     private func handleBlameHistory(_ start: Int, _ end: Int) {
@@ -368,6 +368,8 @@ struct LocalFileView: View {
     /// die with it), keeps the scroll position, and force-releases the
     /// reload deferral: the torn-down page can never post editingState.
     private func setEditMode(_ newValue: Bool) {
+        // Entering edit mode is the clearest "I'm not just looking" signal.
+        if newValue { state.pinPreviewIfNeeded(url: file.url) }
         proxy.commitInlineEdit()
         proxy.scrollFraction { fraction in
             proxy.firstVisibleLine { line in
@@ -451,6 +453,8 @@ struct LocalFileView: View {
     /// mode boundary is the save gesture (seed-guarded; one history
     /// snapshot per editing session).
     private func applyBlockEdit(_ target: BlockEditTarget, replacement: String) {
+        // Authoring beats previewing: writing to a previewed file pins it.
+        state.pinPreviewIfNeeded(url: file.url)
         // Optimistic concurrency: if the file changed underneath the open
         // editor (another editor, an agent), the seed no longer matches its
         // line range — abort rather than splice into the wrong lines.
