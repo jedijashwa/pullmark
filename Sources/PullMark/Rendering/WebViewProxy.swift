@@ -268,6 +268,14 @@ final class WebViewProxy: ObservableObject {
     /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
     /// view thread markers). In-place — no reload, the reader's position
     /// survives; pages without markers ignore it.
+    /// Opens the margin-note composer: file-level at the top of the
+    /// document, otherwise on the block nearest the top of the viewport.
+    func openNoteComposer(fileLevel: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmOpenNoteComposer && __pmOpenNoteComposer(\(fileLevel));",
+            completionHandler: nil)
+    }
+
     func setResolvedConversationsVisible(_ visible: Bool) {
         webView?.evaluateJavaScript(
             "window.__pmSetResolvedShown && __pmSetResolvedShown(\(visible));",

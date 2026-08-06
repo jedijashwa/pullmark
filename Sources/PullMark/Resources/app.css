@@ -276,6 +276,79 @@ body {
   display: none;
 }
 
+/* ---- Margin notes (beta) ----
+   The thread-card family, tinted its own way: notes live in the file,
+   not on GitHub, and the violet edge keeps the two unconfusable. */
+
+.pm-note {
+  border: 1px solid rgba(130, 80, 223, 0.4);
+  border-left: 3px solid rgba(130, 80, 223, 0.65);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 10px 0 14px;
+  background: rgba(130, 80, 223, 0.05);
+}
+.pm-note-file {
+  margin-top: 0;
+}
+.pm-note-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.pm-note-author {
+  font: 600 12px -apple-system, sans-serif;
+  color: #6639ba;
+}
+.pm-note-scope {
+  font: 400 11px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+}
+.pm-note-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.pm-note:hover .pm-note-actions {
+  opacity: 1;
+}
+.pm-note-actions button {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6639ba;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.pm-note-body {
+  font-size: 14px;
+}
+.pm-note-body > *:last-child {
+  margin-bottom: 0;
+}
+.pm-note-composer {
+  margin: 10px 0 14px;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-note {
+    border-color: rgba(163, 113, 247, 0.4);
+    border-left-color: rgba(163, 113, 247, 0.65);
+    background: rgba(163, 113, 247, 0.08);
+  }
+  .pm-note-author,
+  .pm-note-actions button { color: #a371f7; }
+}
+/* Notes are margin, not content: paper never carries them (exports drop
+   them with the rest of .pm-annotation via __pmExportDOM). */
+@media print {
+  .pm-note,
+  .pm-note-composer { display: none; }
+}
+
 /* ---- Pending comments at their anchors (spec §3) ---- */
 
 .pm-thread.pm-pending {

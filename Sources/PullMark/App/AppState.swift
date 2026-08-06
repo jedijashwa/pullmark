@@ -193,6 +193,10 @@ enum DocumentCommand: Equatable {
     case flipDiffLayout
     /// Opens the review popover on the active PR surface (spec §3).
     case reviewChanges
+    /// Margin notes (beta): the composer on the block the reader is on,
+    /// and the file-level variant at the top of the document.
+    case addMarginNote
+    case addFileMarginNote
 }
 
 struct DocumentCommandRequest: Equatable {
@@ -202,7 +206,9 @@ struct DocumentCommandRequest: Equatable {
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var localFiles: [LocalFile] = []
+    @Published var localFiles: [LocalFile] = [] {
+        didSet { scheduleNoteTracking() }
+    }
     /// Opened folder roots (spec §1) — closeable places with trees,
     /// alongside the individually opened documents in `localFiles`.
     @Published var folders: [LocalFolder] = []
@@ -223,7 +229,49 @@ final class AppState: ObservableObject {
         case local(LocalFile)
         case remote(sessionID: String, path: String)
     }
-    @Published var preview: PreviewEntry?
+    @Published var preview: PreviewEntry? {
+        didSet { scheduleNoteTracking() }
+    }
+
+    /// Margin-note counts for the working set (file path → count) — the
+    /// Open Files bubble chips. Kept live by per-file watchers so an
+    /// agent working through a document's notes updates the chip as it
+    /// deletes them.
+    @Published var marginNoteCounts: [String: Int] = [:]
+    private var noteWatchers: [String: FileWatcher] = [:]
+
+    /// Deferred: the triggering didSet runs mid-publish, and tracking
+    /// publishes marginNoteCounts changes of its own.
+    private func scheduleNoteTracking() {
+        Task { @MainActor [weak self] in self?.syncNoteTracking() }
+    }
+
+    private func syncNoteTracking() {
+        var wanted: [String: URL] = [:]
+        for file in localFiles { wanted[file.url.path] = file.url }
+        if case .local(let file) = preview { wanted[file.url.path] = file.url }
+        for path in noteWatchers.keys where wanted[path] == nil {
+            noteWatchers[path] = nil
+            marginNoteCounts[path] = nil
+        }
+        for (path, url) in wanted where noteWatchers[path] == nil {
+            noteWatchers[path] = FileWatcher(url: url) { [weak self] in
+                self?.refreshNoteCount(url: url)
+            }
+            refreshNoteCount(url: url)
+        }
+    }
+
+    private func refreshNoteCount(url: URL) {
+        Task.detached(priority: .utility) { [weak self] in
+            let text = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+            let count = MarginNotes.count(in: text)
+            // Rebound to a `let` so the MainActor closure captures an
+            // immutable reference (weak `self` is a var — a Swift 6 error).
+            guard let self else { return }
+            await MainActor.run { self.marginNoteCounts[url.path] = count }
+        }
+    }
 
     /// The local preview, when that's what the preview is — what the Open
     /// Files section renders.

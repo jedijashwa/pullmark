@@ -22,7 +22,25 @@ enum SemVer {
         return s.split(separator: ".").map { Int($0) ?? 0 }
     }
 
-    /// Numeric, component-wise comparison: 1.2.3 < 1.10.0, 1.2 == 1.2.0.
+    /// Dot-separated prerelease identifiers ("1.2.3-beta.1+45" →
+    /// ["beta", "1"]); nil for a release version. Build metadata (+…)
+    /// never participates in ordering.
+    static func prereleaseIdentifiers(_ version: String) -> [String]? {
+        var s = normalized(version)
+        if let plus = s.firstIndex(of: "+") { s = String(s[..<plus]) }
+        guard let dash = s.firstIndex(of: "-") else { return nil }
+        return s[s.index(after: dash)...].split(separator: ".").map(String.init)
+    }
+
+    static func isPrerelease(_ version: String) -> Bool {
+        prereleaseIdentifiers(version) != nil
+    }
+
+    /// Numeric, component-wise comparison — 1.2.3 < 1.10.0, 1.2 == 1.2.0 —
+    /// with SemVer §11 prerelease ordering on an equal core: a prerelease
+    /// precedes its release (0.28.0-beta.1 < 0.28.0), numeric identifiers
+    /// compare numerically (beta.2 < beta.10), and a longer identifier
+    /// list wins a shared prefix (beta < beta.1).
     static func compare(_ a: String, _ b: String) -> ComparisonResult {
         let ca = components(a), cb = components(b)
         for i in 0..<max(ca.count, cb.count) {
@@ -30,7 +48,27 @@ enum SemVer {
             let y = i < cb.count ? cb[i] : 0
             if x != y { return x < y ? .orderedAscending : .orderedDescending }
         }
-        return .orderedSame
+        switch (prereleaseIdentifiers(a), prereleaseIdentifiers(b)) {
+        case (nil, nil): return .orderedSame
+        case (nil, _): return .orderedDescending
+        case (_, nil): return .orderedAscending
+        case (let pa?, let pb?):
+            for i in 0..<max(pa.count, pb.count) {
+                guard i < pa.count else { return .orderedAscending }
+                guard i < pb.count else { return .orderedDescending }
+                let x = pa[i], y = pb[i]
+                if x == y { continue }
+                switch (Int(x), Int(y)) {
+                case (let nx?, let ny?):
+                    return nx < ny ? .orderedAscending : .orderedDescending
+                case (_?, nil): return .orderedAscending  // numeric < alphanumeric
+                case (nil, _?): return .orderedDescending
+                case (nil, nil):
+                    return x < y ? .orderedAscending : .orderedDescending
+                }
+            }
+            return .orderedSame
+        }
     }
 
     static func isNewer(_ candidate: String, than current: String) -> Bool {
@@ -84,12 +122,15 @@ struct UpdateRelease: Decodable, Equatable {
     }
 
     /// Full releases newer than `stored`, up to and including `current`,
-    /// newest first. Used for the post-update "What's New" sheet.
+    /// newest first. Used for the post-update "What's New" sheet; on the
+    /// beta channel prereleases join the range (a beta-to-beta update has
+    /// notes too).
     static func between(_ releases: [UpdateRelease],
                         after stored: String,
-                        upTo current: String) -> [UpdateRelease] {
+                        upTo current: String,
+                        includePrereleases: Bool = false) -> [UpdateRelease] {
         releases
-            .filter { $0.draft != true && $0.prerelease != true }
+            .filter { $0.draft != true && (includePrereleases || $0.prerelease != true) }
             .filter {
                 SemVer.isNewer($0.tagName, than: stored)
                     && !SemVer.isNewer($0.tagName, than: current)
@@ -98,10 +139,31 @@ struct UpdateRelease: Decodable, Equatable {
     }
 }
 
+/// Which releases the update checker offers. Stable (the default) sees
+/// only full releases; Beta also sees GitHub prereleases. The channel is
+/// a UserDefaults setting — the release itself is never feature-flagged.
+enum UpdateChannel: String, CaseIterable, Identifiable {
+    case stable, beta
+
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .stable: return "Stable"
+        case .beta: return "Beta"
+        }
+    }
+
+    static func current(from defaults: UserDefaults) -> UpdateChannel {
+        defaults.string(forKey: DefaultsKeys.updateChannel)
+            .flatMap(UpdateChannel.init(rawValue:)) ?? .stable
+    }
+}
+
 /// How the update banner's primary action behaves.
 enum UpdateMethod: Equatable {
-    /// The install is brew-managed: "Update Now" runs `brew upgrade`.
-    case brew(brewPath: String)
+    /// The install is brew-managed by `cask`: "Update Now" runs
+    /// `brew upgrade --cask <cask>`.
+    case brew(brewPath: String, cask: String)
     /// A real .app outside brew management: "Update Now" downloads the
     /// release zip, verifies its signature, and swaps the bundle in place.
     case selfUpdate
@@ -114,13 +176,18 @@ enum UpdateMethod: Equatable {
 /// Process execution is injected so tests never actually run brew.
 enum BrewUpdate {
     static let caskName = "pullmark"
+    /// The opt-in beta track's cask (docs/beta): same app, prerelease
+    /// versions. Probed after the stable cask when detecting management.
+    static let betaCaskName = "pullmark@beta"
+    static var caskCandidates: [String] { [caskName, betaCaskName] }
     /// Apple Silicon Homebrew first, then Intel.
     static let brewCandidatePaths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
     /// The user-facing command (fallback text + clipboard).
     static let command = "brew upgrade --cask \(caskName)"
 
-    static var listArguments: [String] { ["list", "--cask", caskName] }
-    static var upgradeArguments: [String] { ["upgrade", "--cask", caskName] }
+    static func command(cask: String) -> String { "brew upgrade --cask \(cask)" }
+    static func listArguments(cask: String) -> [String] { ["list", "--cask", cask] }
+    static func upgradeArguments(cask: String) -> [String] { ["upgrade", "--cask", cask] }
 
     /// True when the RUNNING bundle is the copy brew manages: the cask's
     /// install target (/Applications/PullMark.app) or a copy inside brew's
@@ -131,12 +198,13 @@ enum BrewUpdate {
         if path == "/Applications/PullMark.app" { return true }
         let brewPrefix = ((brewPath as NSString).deletingLastPathComponent
             as NSString).deletingLastPathComponent
-        return path.hasPrefix("\(brewPrefix)/Caskroom/\(caskName)/")
+        return caskCandidates.contains { path.hasPrefix("\(brewPrefix)/Caskroom/\($0)/") }
     }
 
     /// Decision tiers, checked against the RUNNING bundle:
-    /// - the bundle is brew's install target and `brew list --cask pullmark`
-    ///   succeeds → brew-managed ("Update Now" runs brew);
+    /// - the bundle is brew's install target and `brew list --cask` finds
+    ///   it under the stable or beta cask → brew-managed ("Update Now"
+    ///   runs brew on that cask);
     /// - otherwise a real .app → self-update (download + verify + swap);
     /// - not an .app at all (dev build) → download (open the release page).
     /// `runner` returns true when the command exits 0.
@@ -148,7 +216,10 @@ enum BrewUpdate {
               isBrewInstalledBundle(bundlePath: bundlePath, brewPath: brew) else {
             return fallback
         }
-        return runner(brew, listArguments) ? .brew(brewPath: brew) : fallback
+        for cask in caskCandidates where runner(brew, listArguments(cask: cask)) {
+            return .brew(brewPath: brew, cask: cask)
+        }
+        return fallback
     }
 
     /// Path to relaunch after a brew upgrade: the running .app bundle, or the
@@ -179,12 +250,12 @@ enum BrewUpdate {
         return process.terminationStatus == 0
     }
 
-    /// Runs `brew upgrade --cask pullmark`; nil on success, a short
+    /// Runs `brew upgrade --cask <cask>`; nil on success, a short
     /// user-facing error otherwise. Blocks — call off the main thread.
-    static func runUpgrade(brewPath: String) -> String? {
+    static func runUpgrade(brewPath: String, cask: String = caskName) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: brewPath)
-        process.arguments = upgradeArguments
+        process.arguments = upgradeArguments(cask: cask)
         let stderr = Pipe()
         process.standardOutput = FileHandle.nullDevice
         process.standardError = stderr
@@ -269,13 +340,31 @@ final class UpdateChecker: ObservableObject {
 
     // MARK: Update banner
 
+    /// The user's release track, read live so a Settings flip takes
+    /// effect on the next check without a restart.
+    var channel: UpdateChannel { UpdateChannel.current(from: defaults) }
+
+    /// The newest offerable release for the current channel: the stable
+    /// channel asks GitHub's `releases/latest` (which excludes
+    /// prereleases by design); the beta channel scans the release list
+    /// and takes the semver-max including prereleases.
+    private func fetchCandidate() async throws -> UpdateRelease? {
+        guard channel == .beta else {
+            return try await fetch(UpdateRelease.self, from: Self.latestReleaseURL)
+        }
+        let releases = try await fetch([UpdateRelease].self, from: Self.releaseListURL)
+        return releases
+            .filter { $0.draft != true }
+            .max { SemVer.compare($0.tagName, $1.tagName) == .orderedAscending }
+    }
+
     /// Launch/periodic check: shows the banner unless this version was
     /// already dismissed. Silent on any failure.
     func checkAutomatically() async {
         // Demo launches (PM_DEMO=1) are offline and screenshot-bound —
         // no update fetch, no banner.
         guard !DemoMode.active, currentVersion != "0.0.0" else { return }
-        guard let release = try? await fetch(UpdateRelease.self, from: Self.latestReleaseURL) else { return }
+        guard let release = try? await fetchCandidate() else { return }
         apply(release, ignoringDismissal: false)
     }
 
@@ -287,8 +376,8 @@ final class UpdateChecker: ObservableObject {
             return "This is a development build, so update checks are disabled."
         }
         do {
-            let release = try await fetch(UpdateRelease.self, from: Self.latestReleaseURL)
-            if SemVer.isNewer(release.tagName, than: currentVersion) {
+            if let release = try await fetchCandidate(),
+               SemVer.isNewer(release.tagName, than: currentVersion) {
                 apply(release, ignoringDismissal: true)
                 return nil
             }
@@ -300,8 +389,10 @@ final class UpdateChecker: ObservableObject {
 
     /// Raises the banner for a qualifying release. Internal (not private)
     /// so the dismissal rules stay unit-testable without the network.
+    /// Prereleases qualify only on the beta channel.
     func apply(_ release: UpdateRelease, ignoringDismissal: Bool) {
-        guard release.draft != true, release.prerelease != true,
+        guard release.draft != true,
+              channel == .beta || release.prerelease != true,
               SemVer.isNewer(release.tagName, than: currentVersion) else { return }
         let version = SemVer.normalized(release.tagName)
         if !ignoringDismissal,
@@ -328,9 +419,15 @@ final class UpdateChecker: ObservableObject {
     }
 
     func copyBrewCommand() {
+        let command: String
+        if case .brew(_, let cask) = updateMethod {
+            command = BrewUpdate.command(cask: cask)
+        } else {
+            command = BrewUpdate.command
+        }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(BrewUpdate.command, forType: .string)
+        pasteboard.setString(command, forType: .string)
     }
 
     // MARK: Update Now
@@ -358,8 +455,17 @@ final class UpdateChecker: ObservableObject {
     /// the release page.
     func updateNow() {
         switch updateMethod {
-        case .brew(let brewPath):
-            runBrewUpgrade(brewPath: brewPath)
+        case .brew(let brewPath, let cask):
+            // The stable cask can't deliver a prerelease — a beta offered
+            // to a `pullmark`-cask install goes through the verified
+            // in-place swap instead (brew re-stabilizes it at the next
+            // newer stable release; docs/beta covers the trade).
+            if let availableVersion, SemVer.isPrerelease(availableVersion),
+               cask == BrewUpdate.caskName {
+                runSelfUpdate()
+            } else {
+                runBrewUpgrade(brewPath: brewPath, cask: cask)
+            }
         case .selfUpdate:
             runSelfUpdate()
         case .download, nil:
@@ -374,11 +480,11 @@ final class UpdateChecker: ObservableObject {
         }
     }
 
-    private func runBrewUpgrade(brewPath: String) {
+    private func runBrewUpgrade(brewPath: String, cask: String) {
         guard !isUpdating else { return }
         updateRun = .updating("Updating…")
         Task.detached(priority: .userInitiated) { [weak self] in
-            let failure = BrewUpdate.runUpgrade(brewPath: brewPath)
+            let failure = BrewUpdate.runUpgrade(brewPath: brewPath, cask: cask)
             guard let self else { return }
             await MainActor.run {
                 if let failure {
@@ -496,7 +602,9 @@ final class UpdateChecker: ObservableObject {
         }
         defaults.set(currentVersion, forKey: Self.lastRunVersionKey)
         guard let releases = try? await fetch([UpdateRelease].self, from: Self.releaseListURL) else { return }
-        let relevant = UpdateRelease.between(releases, after: stored, upTo: currentVersion)
+        let relevant = UpdateRelease.between(releases, after: stored, upTo: currentVersion,
+                                             includePrereleases: channel == .beta
+                                                || SemVer.isPrerelease(currentVersion))
         guard !relevant.isEmpty else { return }
         whatsNewMarkdown = relevant.map { release in
             "## PullMark \(SemVer.normalized(release.tagName))\n\n" + (release.body ?? "_No notes._")

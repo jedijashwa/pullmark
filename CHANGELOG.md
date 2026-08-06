@@ -4,6 +4,33 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Margin notes (beta)** — leave comments on any local Markdown
+  document, the way you would on a pull request. Hover a block for the
+  note bubble (or select text first to quote it), write in Markdown,
+  and the note is saved into the file itself as a plain HTML comment —
+  `<!-- note @you: like this -->` — invisible to GitHub and every other
+  renderer, but rendered by PullMark as a comment bubble pinned to that
+  spot. Built for reviewing documents an agent wrote for you: tell the
+  agent to address the notes and delete them as it goes, and watch the
+  bubbles disappear live.
+  - Edit and delete from each bubble; **File Margin Note** (Edit menu)
+    for document-level notes; ⌥⌘M notes the block you're reading.
+  - Open Files rows show a comment-count chip while a document still
+    carries notes.
+  - Notes render read-only in browsed GitHub files, never appear in
+    print or exports, and View → Hide Margin Notes clears the page.
+  - The format is a documented convention, not an app database:
+    [pullmark.app/docs/beta/margin-notes](https://pullmark.app/docs/beta/margin-notes/)
+    has the two-sentence spec and a paste-into-your-CLAUDE.md snippet
+    for agents.
+- **A beta channel** — this release inaugurates it. Betas are signed
+  and notarized like any release; get them with
+  `brew install --cask jedijashwa/tap/pullmark@beta` (or the release
+  DMG), and Settings → General → Update channel keeps you on the
+  track you choose. Stable installs never see prereleases.
+
 ## 0.27.0 - 2026-08-06
 
 - **Open Files, with previews** — the Files section is now Open Files:

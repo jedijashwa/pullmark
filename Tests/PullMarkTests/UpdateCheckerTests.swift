@@ -25,10 +25,31 @@ import Testing
         #expect(SemVer.isNewer("1.2.1", than: "1.2"))
     }
 
-    @Test func prereleaseAndBuildSuffixesIgnored() {
-        #expect(SemVer.compare("1.2.3-beta.1", "1.2.3") == .orderedSame)
-        #expect(SemVer.isNewer("v1.3.0-rc.1+build.5", than: "1.2.9"))
+    @Test func buildMetadataIgnored() {
         #expect(!SemVer.isNewer("1.2.3+42", than: "1.2.3"))
+        #expect(SemVer.compare("1.2.3+42", "1.2.3") == .orderedSame)
+        #expect(SemVer.isNewer("v1.3.0-rc.1+build.5", than: "1.2.9"))
+    }
+
+    @Test func prereleaseOrdering() {
+        // SemVer §11: a prerelease precedes its release…
+        #expect(SemVer.compare("0.28.0-beta.1", "0.28.0") == .orderedAscending)
+        #expect(SemVer.isNewer("0.28.0", than: "0.28.0-beta.1"))
+        // …numeric identifiers compare numerically…
+        #expect(SemVer.isNewer("0.28.0-beta.2", than: "0.28.0-beta.1"))
+        #expect(SemVer.isNewer("0.28.0-beta.10", than: "0.28.0-beta.2"))
+        // …a longer identifier list wins a shared prefix…
+        #expect(SemVer.isNewer("0.28.0-beta.1", than: "0.28.0-beta"))
+        // …and prereleases of different cores follow the core.
+        #expect(SemVer.isNewer("0.29.0-beta.1", than: "0.28.0"))
+        #expect(SemVer.compare("0.28.0-beta.1", "0.28.0-beta.1") == .orderedSame)
+    }
+
+    @Test func prereleaseDetection() {
+        #expect(SemVer.isPrerelease("v0.28.0-beta.1"))
+        #expect(!SemVer.isPrerelease("0.28.0"))
+        #expect(!SemVer.isPrerelease("0.28.0+45"))
+        #expect(SemVer.prereleaseIdentifiers("0.28.0-beta.1+45") == ["beta", "1"])
     }
 
     @Test func normalizedStripsPrefix() {
@@ -89,11 +110,37 @@ import Testing
         #expect(checker.availableZipURL == nil)
     }
 
-    @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBanner() {
+    @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBannerOnStable() {
         let checker = makeChecker()
         checker.apply(release("v0.4.0", draft: true), ignoringDismissal: false)
         checker.apply(release("v0.4.0", prerelease: true), ignoringDismissal: false)
         #expect(checker.availableVersion == nil)
+    }
+
+    @Test @MainActor func betaChannelOffersPrereleasesButNeverDrafts() {
+        let suite = "pm.tests.updatechecker.beta"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(UpdateChannel.beta.rawValue, forKey: DefaultsKeys.updateChannel)
+        let checker = UpdateChecker(currentVersion: "0.0.0", defaults: defaults)
+        checker.apply(release("v0.28.0-beta.1", draft: true, prerelease: true),
+                      ignoringDismissal: false)
+        #expect(checker.availableVersion == nil)
+        checker.apply(release("v0.28.0-beta.1", prerelease: true), ignoringDismissal: false)
+        #expect(checker.availableVersion == "0.28.0-beta.1")
+    }
+
+    @Test @MainActor func betaToStablePromotionRaisesTheBanner() {
+        let suite = "pm.tests.updatechecker.beta2"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(UpdateChannel.beta.rawValue, forKey: DefaultsKeys.updateChannel)
+        // Running the beta, the matching stable release is an update.
+        // 9.9.9 keeps init's automatic check inert: nothing GitHub really
+        // hosts can outrank it, so a live fetch can't race the assertion.
+        let checker = UpdateChecker(currentVersion: "9.9.9-beta.2", defaults: defaults)
+        checker.apply(release("v9.9.9"), ignoringDismissal: false)
+        #expect(checker.availableVersion == "9.9.9")
     }
 }
 
@@ -119,7 +166,7 @@ import Testing
             fileExists: { _ in true },  // both paths exist → first wins
             runner: { path, args in probed = (path, args); return true }
         )
-        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew"))
+        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew", cask: "pullmark"))
         #expect(probed?.0 == "/opt/homebrew/bin/brew")
         #expect(probed?.1 == ["list", "--cask", "pullmark"])
     }
@@ -130,7 +177,28 @@ import Testing
             fileExists: { $0 == "/usr/local/bin/brew" },
             runner: { path, _ in path == "/usr/local/bin/brew" }
         )
-        #expect(method == .brew(brewPath: "/usr/local/bin/brew"))
+        #expect(method == .brew(brewPath: "/usr/local/bin/brew", cask: "pullmark"))
+    }
+
+    @Test func betaCaskInstallDetectedWhenStableCaskAbsent() {
+        var probes: [[String]] = []
+        let method = BrewUpdate.detectMethod(
+            bundlePath: installedApp,
+            fileExists: { $0 == "/opt/homebrew/bin/brew" },
+            runner: { _, args in
+                probes.append(args)
+                return args == ["list", "--cask", "pullmark@beta"]
+            }
+        )
+        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew", cask: "pullmark@beta"))
+        #expect(probes == [["list", "--cask", "pullmark"],
+                           ["list", "--cask", "pullmark@beta"]])
+    }
+
+    @Test func betaCaskroomBundleCountsAsBrewManaged() {
+        #expect(BrewUpdate.isBrewInstalledBundle(
+            bundlePath: "/opt/homebrew/Caskroom/pullmark@beta/0.28.0-beta.1/PullMark.app",
+            brewPath: "/opt/homebrew/bin/brew"))
     }
 
     @Test func brewPresentButCaskNotInstalledMeansSelfUpdate() {
@@ -161,7 +229,7 @@ import Testing
             fileExists: { $0 == "/opt/homebrew/bin/brew" },
             runner: { _, _ in true }
         )
-        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew"))
+        #expect(method == .brew(brewPath: "/opt/homebrew/bin/brew", cask: "pullmark"))
     }
 
     @Test func nonBundleDevBuildFallsBackToDownload() {
@@ -193,8 +261,9 @@ import Testing
 
     @Test func commandConstruction() {
         #expect(BrewUpdate.command == "brew upgrade --cask pullmark")
-        #expect(BrewUpdate.upgradeArguments == ["upgrade", "--cask", "pullmark"])
-        #expect(BrewUpdate.listArguments == ["list", "--cask", "pullmark"])
+        #expect(BrewUpdate.command(cask: "pullmark@beta") == "brew upgrade --cask pullmark@beta")
+        #expect(BrewUpdate.upgradeArguments(cask: "pullmark") == ["upgrade", "--cask", "pullmark"])
+        #expect(BrewUpdate.listArguments(cask: "pullmark@beta") == ["list", "--cask", "pullmark@beta"])
     }
 
     @Test func relaunchTargetsTheRunningAppBundle() {
@@ -297,5 +366,23 @@ import Testing
         ]
         let picked = UpdateRelease.between(releases, after: "0.1.0", upTo: "0.3.0")
         #expect(picked.map(\.tagName) == ["v0.3.0", "v0.2.0", "v0.1.1"])
+    }
+
+    @Test func betweenIncludesPrereleasesWhenAsked() {
+        func release(_ tag: String, prerelease: Bool = false) -> UpdateRelease {
+            UpdateRelease(tagName: tag, body: nil, htmlUrl: "https://example.com/\(tag)",
+                          prerelease: prerelease, draft: false)
+        }
+        let releases = [
+            release("v0.27.0"),
+            release("v0.28.0-beta.1", prerelease: true),
+            release("v0.28.0-beta.2", prerelease: true),
+        ]
+        let picked = UpdateRelease.between(releases, after: "0.27.0",
+                                           upTo: "0.28.0-beta.2",
+                                           includePrereleases: true)
+        #expect(picked.map(\.tagName) == ["v0.28.0-beta.2", "v0.28.0-beta.1"])
+        #expect(UpdateRelease.between(releases, after: "0.27.0",
+                                      upTo: "0.28.0-beta.2").isEmpty)
     }
 }

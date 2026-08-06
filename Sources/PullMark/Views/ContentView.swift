@@ -461,27 +461,41 @@ private struct SidebarFileRow: View {
         RemovableRow(help: isPreview ? "Dismiss Preview" : "Remove from Sidebar",
                      remove: { isPreview ? state.dismissPreview()
                                          : state.removeLocalFile(file) }) {
-            Label {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(file.url.lastPathComponent)
-                        .italic(isPreview)
-                        .lineLimit(1)
-                        .font(fonts.row)
-                    if showsPath {
-                        Text(PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path))
+            HStack(spacing: 4) {
+                Label {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(file.url.lastPathComponent)
+                            .italic(isPreview)
                             .lineLimit(1)
-                            .truncationMode(.head)
-                            .font(fonts.caption)
-                            .foregroundStyle(.secondary)
+                            .font(fonts.row)
+                        if showsPath {
+                            Text(PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path))
+                                .lineLimit(1)
+                                .truncationMode(.head)
+                                .font(fonts.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                } icon: {
+                    // Rasterized: the List drag preview repaints template
+                    // symbols white (mismatching the black text); a flattened
+                    // icon keeps its tint in the ghost.
+                    Image(systemName: "doc.text")
+                        .foregroundStyle(.secondary)
+                        .drawingGroup()
                 }
-            } icon: {
-                // Rasterized: the List drag preview repaints template
-                // symbols white (mismatching the black text); a flattened
-                // icon keeps its tint in the ghost.
-                Image(systemName: "doc.text")
-                    .foregroundStyle(.secondary)
-                    .drawingGroup()
+                // The PR files' comment chip, for margin notes: which docs
+                // still carry notes, at a glance. Live — the count watcher
+                // sees an agent deleting notes as it addresses them.
+                if let count = state.marginNoteCounts[file.url.path], count > 0 {
+                    Spacer(minLength: 2)
+                    Label("\(count)", systemImage: "bubble.left")
+                        .font(fonts.caption)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(.titleAndIcon)
+                        .help(count == 1 ? "1 margin note" : "\(count) margin notes")
+                        .accessibilityLabel("\(count) margin note\(count == 1 ? "" : "s")")
+                }
             }
         }
         .overlay(isPreview ? DoubleClickCatcher { state.pinFile(at: file.url) } : nil)

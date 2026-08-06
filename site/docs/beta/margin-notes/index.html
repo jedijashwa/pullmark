@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Margin Notes — PullMark Docs</title>
+<meta name="description" content="Margin notes: PR-style comments on any Markdown file, saved into the file itself as <!-- note @you: … --> comments. The full format spec, and instructions for agents.">
+<link rel="icon" href="../../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../../"><img src="../../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../../">Overview</a></li>
+        <li><a href="../../features/">Features</a></li>
+        <li><a href="../../sidebar/">The Sidebar</a></li>
+        <li><a href="../../settings/">Settings</a></li>
+        <li><a href="../../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../../cli/">Command Line</a></li>
+        <li><a href="../../troubleshooting/">Troubleshooting</a></li>
+        <li><a href="../" aria-current="page">Beta Features</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs / beta</p>
+      <h1>Margin notes<span class="beta-badge">beta</span></h1>
+      <p class="article-lede">Comment on any local Markdown document the way
+      you'd comment on a pull request — except the comments live in the
+      file itself, as plain HTML comments every other tool ignores. Built
+      for one loop in particular: an agent writes you a document, you read
+      it in PullMark leaving notes as you go, then hand the file back with
+      "address the notes and delete them as you're done."</p>
+
+      <h2 id="using">Using them in PullMark</h2>
+      <ul>
+        <li><strong>Add a note</strong> — hover any block in a local
+        document and click the bubble in the margin (the same gesture as
+        commenting on a PR). Select text first and the note opens with the
+        selection quoted — how you point at a sentence instead of a
+        paragraph. <kbd>⌥⌘M</kbd> notes the block you're reading;
+        <strong>Edit&nbsp;→&nbsp;File Margin Note…</strong> leaves a note
+        about the whole document, at the top.</li>
+        <li><strong>Write Markdown</strong> — bold, code spans, fenced
+        code, links, lists; <kbd>⌘↩</kbd> saves. Each save is one edit in
+        the file (undo with File&nbsp;→&nbsp;Revert Last Edit).</li>
+        <li><strong>Edit / Delete</strong> — hover a note bubble for its
+        actions. Deleting a note is how it gets resolved: no state, no
+        archive — an addressed note is an absent note.</li>
+        <li><strong>The chip</strong> — Open Files rows show a
+        comment-count chip while a document still carries notes. It's
+        live: as an agent works through the file deleting notes, the count
+        falls and the bubbles disappear in front of you.</li>
+        <li><strong>Everywhere else</strong> — notes render read-only in
+        browsed GitHub files, never appear in print, PDF/HTML export, or
+        Quick Look, and <strong>View&nbsp;→&nbsp;Hide Margin Notes</strong>
+        clears the page when you want to read clean.</li>
+        <li><strong>Your signature</strong> — notes are signed
+        <code>@your-github-login</code> by default; change it in
+        Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;Margin&nbsp;Notes.</li>
+      </ul>
+
+      <h2 id="format">The format</h2>
+      <p>A margin note is an HTML comment with a <code>note</code> keyword
+      and an author tag, placed on its own line after the block it's about:</p>
+      <pre><code>Requests retry three times with exponential backoff.
+
+&lt;!-- note @josh: Section 2 says five times. Which is it? --&gt;</code></pre>
+      <p>Longer notes put the closing marker on its own line; the body is
+      full Markdown, blank lines and fenced code included:</p>
+      <pre><code>&lt;!-- note @josh:
+This contradicts the design doc. Either reconcile them or
+drop this section.
+
+```suggestion
+Requests retry five times with exponential backoff.
+```
+--&gt;</code></pre>
+      <p>The complete grammar:</p>
+      <table>
+        <tr><th>Rule</th><th>Detail</th></tr>
+        <tr><td>Marker</td><td><code>&lt;!-- note @</code> begins a note; ordinary
+          HTML comments (lint directives, TODOs) are left alone.</td></tr>
+        <tr><td>Author</td><td>Everything between <code>@</code> and the
+          <em>first</em> colon. Spaces allowed; short handles read best.</td></tr>
+        <tr><td>Body</td><td>Markdown, from the colon to <code>--&gt;</code> —
+          same line for short notes, following lines for long ones.</td></tr>
+        <tr><td>Escaping</td><td>A literal <code>--&gt;</code> inside a body is
+          written <code>--\&gt;</code> (the only reserved sequence; PullMark
+          escapes and unescapes it for you).</td></tr>
+        <tr><td>Placement</td><td>On its own line, blank lines around it,
+          directly after the block it annotates. Above the first heading =
+          a note about the whole document.</td></tr>
+        <tr><td>Threads</td><td>Adjacent notes under the same block read as a
+          conversation — reply by adding another note below.</td></tr>
+        <tr><td>Reserved</td><td><code>@name (attrs):</code> — the
+          parenthesized slot is reserved for future use and preserved
+          verbatim; nothing writes or reads it today.</td></tr>
+        <tr><td>Code blocks</td><td>A note-shaped comment inside a fenced
+          code block is code, not a note.</td></tr>
+      </table>
+      <p>Because HTML comments are invisible to every Markdown renderer, a
+      file with notes in it renders normally on GitHub, in editors, and in
+      any other tool — the notes simply don't show. PullMark is the pretty
+      client for a format that works everywhere.</p>
+
+      <h2 id="agents">For agents</h2>
+      <p>The handoff is zero-protocol: agents read files, and the notes are
+      in the file, physically adjacent to the text they're about. Paste
+      this into your <code>CLAUDE.md</code> / <code>AGENTS.md</code> (or
+      just say it):</p>
+      <pre><code>## Margin notes
+
+Markdown files may contain review notes as HTML comments:
+`&lt;!-- note @name: comment --&gt;` (possibly multi-line, closing
+with `--&gt;` on its own line). Each note sits directly after the
+passage it's about; a note above the first heading is about the
+whole document. `--\&gt;` inside a note means a literal `--&gt;`.
+
+When asked to address notes: work through each one, apply or
+answer it, and DELETE the note (with its surrounding blank line)
+once addressed. To reply or ask instead, leave your own note in
+the same format below the original, signed with your own @name.
+Don't add notes to code examples inside fenced blocks.</code></pre>
+      <p>The convergence loop follows from the format: remaining bubbles
+      are remaining work, and an empty file is a finished review. If notes
+      must never reach a pull request, a CI check is one line —
+      <code>grep -rn '&lt;!-- note @' docs/ && exit 1</code>.</p>
+
+      <h2 id="why-beta">Why it's in beta</h2>
+      <p>The mechanics are done; what may still move is the
+      <em>convention</em> — the grammar above becomes a small public
+      format the moment agents learn it, so it gets a beta cycle before
+      it's frozen. If the syntax changes, release notes will say exactly
+      how, and PullMark will keep reading the old shape.
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Feedback
+      welcome</a>.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

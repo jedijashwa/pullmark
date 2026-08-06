@@ -85,6 +85,16 @@ enum DefaultsKeys {
     /// What a single click on a file in a Location does: FolderClickAction
     /// rawValue (absent = preview).
     static let folderClickAction = "pm.folderClickAction"
+    /// Update channel: UpdateChannel rawValue (absent = stable). Beta
+    /// offers GitHub prereleases in the update banner.
+    static let updateChannel = "pm.updateChannel"
+    /// Author handle written into margin notes ("josh" in
+    /// `<!-- note @josh: … -->`). Absent = GitHub login, then macOS
+    /// username.
+    static let marginNoteAuthor = "pm.marginNoteAuthor"
+    /// Whether margin-note bubbles render in documents (default on;
+    /// View → Hide Margin Notes flips it app-wide).
+    static let marginNotesVisible = "pm.marginNotesVisible"
 
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"
