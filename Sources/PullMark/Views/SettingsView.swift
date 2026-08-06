@@ -92,9 +92,9 @@ struct GeneralSettingsTab: View {
                 Text("Open Fully").tag(FolderClickAction.open.rawValue)
             }
             Text("Preview First shows a file with one click without keeping it — "
-                + "it appears in Open Files in italics until the next preview replaces it. "
-                + "Double-click a file, or just start editing, to keep it open. "
-                + "Open Fully keeps every file you click.")
+                + "one italicized entry (in Open Files, or under its GitHub repo) "
+                + "that the next preview replaces. Double-click a file, or just "
+                + "start editing, to keep it open. Open Fully keeps every file you click.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

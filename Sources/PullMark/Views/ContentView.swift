@@ -1241,6 +1241,57 @@ private struct RemoteRepoGroup: View {
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
+            // The session's working set — kept docs, then the one preview —
+            // sits above the tree so it never drowns under a big repo.
+            ForEach(looseDocs, id: \.self) { path in
+                RemovableRow(help: "Remove from Sidebar",
+                             remove: { state.removeRemoteDoc(sessionID: session.id, path: path) }) {
+                    Label {
+                        Text(path)
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                    } icon: {
+                        Image(systemName: "doc.text")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(fonts.row)
+                }
+                .tag(SidebarSelection.remoteDoc(session.id, path))
+                .contextMenu {
+                    Button("Remove from Sidebar") {
+                        state.removeRemoteDoc(sessionID: session.id, path: path)
+                    }
+                }
+            }
+            // The one transient entry, when it's this session's — same
+            // italics, same double-click-to-keep as Open Files.
+            if case .remote(let sessionID, let path) = state.preview,
+               sessionID == session.id, !session.docs.contains(path) {
+                RemovableRow(help: "Dismiss Preview",
+                             remove: { state.dismissPreview() }) {
+                    Label {
+                        Text(path)
+                            .italic()
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                    } icon: {
+                        Image(systemName: "doc.text")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(fonts.row)
+                }
+                .tag(SidebarSelection.remoteDoc(session.id, path))
+                .overlay(DoubleClickCatcher {
+                    state.pinRemoteDoc(sessionID: session.id, path: path)
+                })
+                .help("Previewing — double-click to keep open")
+                .contextMenu {
+                    Button("Keep Open") {
+                        state.pinRemoteDoc(sessionID: session.id, path: path)
+                    }
+                    Button("Dismiss Preview") { state.dismissPreview() }
+                }
+            }
             if let tree {
                 ForEach(tree) { node in
                     RemoteNodeView(session: session, node: node,
@@ -1251,18 +1302,6 @@ private struct RemoteRepoGroup: View {
                         .font(fonts.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-            ForEach(looseDocs, id: \.self) { path in
-                Label {
-                    Text(path)
-                        .lineLimit(1)
-                        .truncationMode(.head)
-                } icon: {
-                    Image(systemName: "doc.text")
-                        .foregroundStyle(.secondary)
-                }
-                .font(fonts.row)
-                .tag(SidebarSelection.remoteDoc(session.id, path))
             }
             if tree == nil {
                 if session.treeLoading {
@@ -1320,6 +1359,7 @@ private struct RemoteRepoGroup: View {
 
 /// One node of a remote repo tree: plain folders and docs, `.remoteDoc` tags.
 private struct RemoteNodeView: View {
+    @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let session: RemoteRepoSession
     let node: PathTree.Node
@@ -1363,6 +1403,16 @@ private struct RemoteNodeView: View {
             }
             .font(fonts.row)
             .tag(SidebarSelection.remoteDoc(session.id, filePath))
+            // Same gesture pair as local trees: single click previews
+            // (through the List's selection), double click keeps.
+            .overlay(DoubleClickCatcher {
+                state.pinRemoteDoc(sessionID: session.id, path: filePath)
+            })
+            .contextMenu {
+                Button("Keep Open") {
+                    state.pinRemoteDoc(sessionID: session.id, path: filePath)
+                }
+            }
         }
     }
 }

@@ -213,11 +213,24 @@ final class AppState: ObservableObject {
     @Published var remoteLinkPrompt: RemoteLinkPrompt?
     /// Anchor scroll handed to the remote doc view once its page loads.
     @Published var remoteAnchor: RemoteAnchorRequest?
-    /// The transient working-set entry (at most one per window): the file
-    /// last single-clicked in a Location's tree, shown italicized at the
-    /// end of Open Files. Replaced by the next preview, promoted to a
-    /// pinned entry by double-click or any authoring interaction.
-    @Published var previewFile: LocalFile?
+    /// The transient working-set entry (at most ONE per window, local or
+    /// remote): the file last single-clicked in a Location, shown
+    /// italicized where it belongs — the end of Open Files for local
+    /// files, the session's docs area for remote docs. Replaced by the
+    /// next preview, promoted by double-click, Keep Open, or (locally)
+    /// any authoring interaction.
+    enum PreviewEntry: Equatable {
+        case local(LocalFile)
+        case remote(sessionID: String, path: String)
+    }
+    @Published var preview: PreviewEntry?
+
+    /// The local preview, when that's what the preview is — what the Open
+    /// Files section renders.
+    var previewFile: LocalFile? {
+        if case .local(let file) = preview { return file }
+        return nil
+    }
     @Published var selection: SidebarSelection? {
         didSet {
             guard selection != oldValue else { return }
@@ -526,6 +539,13 @@ final class AppState: ObservableObject {
         /// The transient preview entry's path — restored still-as-preview,
         /// so a reading position doesn't silently harden into a pin.
         var preview: String? = nil
+        /// Its remote twin: (session id, repo path). At most one of the
+        /// two preview fields is set.
+        struct RemotePreview: Codable {
+            var session: String
+            var path: String
+        }
+        var remotePreview: RemotePreview? = nil
     }
 
     func snapshotSession() {
@@ -540,7 +560,13 @@ final class AppState: ObservableObject {
             remotes: remoteSessions.map {
                 .init(owner: $0.ref.owner, repo: $0.ref.repo, ref: $0.displayRef, docs: $0.docs)
             },
-            preview: previewFile?.url.path)
+            preview: previewFile?.url.path,
+            remotePreview: {
+                if case .remote(let sessionID, let path) = preview {
+                    return .init(session: sessionID, path: path)
+                }
+                return nil
+            }())
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.pullmark.set(data, forKey: DefaultsKeys.sessionSnapshot)
         }
@@ -592,10 +618,14 @@ final class AppState: ObservableObject {
             watchFolder(root)
             rescanFolder(root: root)
         }
-        if let path = snapshot.preview, FileManager.default.fileExists(atPath: path) {
+        if let saved = snapshot.remotePreview,
+           remoteSessions.contains(where: { $0.id == saved.session }) {
+            preview = .remote(sessionID: saved.session, path: saved.path)
+        } else if let path = snapshot.preview, FileManager.default.fileExists(atPath: path),
+                  let file = treeFile(for: URL(fileURLWithPath: path)) {
             // Folders are appended above (trees still scanning), so the
             // prefix check treeFile needs already answers.
-            previewFile = treeFile(for: URL(fileURLWithPath: path))
+            preview = .local(file)
         }
         selection = nil
         pendingRestorePRs = Set(snapshot.prs)
@@ -718,7 +748,7 @@ final class AppState: ObservableObject {
                                   title: url.lastPathComponent, lastOpened: Date()))
         } else {
             // An explicit open pins; a matching preview entry is absorbed.
-            if previewFile?.url == url { previewFile = nil }
+            if case .local(let p) = preview, p.url == url { preview = nil }
             addFile(url, displayName: url.lastPathComponent,
                     resourceRoot: url.deletingLastPathComponent())
             noteRecent(RecentItem(kind: .file, path: url.path,
@@ -772,22 +802,38 @@ final class AppState: ObservableObject {
     /// selection didSet; anything else selected leaves the preview alone,
     /// the way a preview tab survives focusing another tab.
     private func reactToSelection(_ value: SidebarSelection?) {
-        guard value == selection, case .local(let url) = value,
-              !localFiles.contains(where: { $0.url == url }),
-              let file = treeFile(for: url)
-        else { return }
-        switch folderClickAction {
-        case .preview:
-            if previewFile != file { previewFile = file }
-        case .open:
-            localFiles.append(file)
-            if previewFile?.url == url { previewFile = nil }
+        guard value == selection else { return }
+        switch value {
+        case .local(let url):
+            guard !localFiles.contains(where: { $0.url == url }),
+                  let file = treeFile(for: url) else { return }
+            switch folderClickAction {
+            case .preview:
+                if preview != .local(file) { preview = .local(file) }
+            case .open:
+                localFiles.append(file)
+                if case .local(let p) = preview, p.url == url { preview = nil }
+            }
+        case .remoteDoc(let sessionID, let path):
+            guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }),
+                  !remoteSessions[index].docs.contains(path) else { return }
+            switch folderClickAction {
+            case .preview:
+                if preview != .remote(sessionID: sessionID, path: path) {
+                    preview = .remote(sessionID: sessionID, path: path)
+                }
+            case .open:
+                remoteSessions[index].docs.append(path)
+                if preview == .remote(sessionID: sessionID, path: path) { preview = nil }
+            }
+        default:
+            return
         }
     }
 
     /// Double-click on a tree row or the preview row: keep the file open.
     func pinFile(at url: URL) {
-        if previewFile?.url == url { previewFile = nil }
+        if case .local(let p) = preview, p.url == url { preview = nil }
         guard !localFiles.contains(where: { $0.url == url }),
               let file = treeFile(for: url) else {
             selection = .local(url)
@@ -797,18 +843,41 @@ final class AppState: ObservableObject {
         selection = .local(url)
     }
 
+    /// The remote twin: keep a browsed doc open in its session's docs list.
+    func pinRemoteDoc(sessionID: String, path: String) {
+        if preview == .remote(sessionID: sessionID, path: path) { preview = nil }
+        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        if !remoteSessions[index].docs.contains(path) {
+            remoteSessions[index].docs.append(path)
+        }
+        selection = .remoteDoc(sessionID, path)
+    }
+
+    /// Removes a pinned doc from a remote session's working set — the ✕
+    /// gesture the docs rows earned once pinning became deliberate.
+    func removeRemoteDoc(sessionID: String, path: String) {
+        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        remoteSessions[index].docs.removeAll { $0 == path }
+        if selection == .remoteDoc(sessionID, path) { selection = nil }
+    }
+
     /// Authoring beats previewing: the first non-reading interaction with
     /// a previewed file (editing, commenting) pins it. Reading — blame,
     /// history, inspecting an image — never does.
     func pinPreviewIfNeeded(url: URL) {
-        guard previewFile?.url == url else { return }
+        guard case .local(let p) = preview, p.url == url else { return }
         pinFile(at: url)
     }
 
     func dismissPreview() {
-        guard let preview = previewFile else { return }
-        previewFile = nil
-        if selection == .local(preview.url) { selection = nil }
+        guard let dismissed = preview else { return }
+        preview = nil
+        switch dismissed {
+        case .local(let file):
+            if selection == .local(file.url) { selection = nil }
+        case .remote(let sessionID, let path):
+            if selection == .remoteDoc(sessionID, path) { selection = nil }
+        }
     }
 
     /// In-app navigation (a relative link in a rendered document): files
@@ -822,11 +891,15 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// The Open Files section header's one bulk gesture.
+    /// The Open Files section header's one bulk gesture. Local only — a
+    /// remote preview belongs to its session, not this section.
     func closeAllOpenFiles() {
-        let closing = Set(localFiles.map(\.url) + (previewFile.map { [$0.url] } ?? []))
+        var closing = Set(localFiles.map(\.url))
         localFiles.removeAll()
-        previewFile = nil
+        if case .local(let file) = preview {
+            closing.insert(file.url)
+            preview = nil
+        }
         if case .local(let url) = selection, closing.contains(url) { selection = nil }
     }
 
@@ -883,8 +956,8 @@ final class AppState: ObservableObject {
         folders.removeAll { $0.rootURL == root }
         folderWatchers[root] = nil
         // The preview belongs to the place it was browsed from.
-        if let preview = previewFile, preview.url.path.hasPrefix(root.path + "/") {
-            previewFile = nil
+        if case .local(let p) = preview, p.url.path.hasPrefix(root.path + "/") {
+            preview = nil
         }
         switch selection {
         case .folder(root):
@@ -965,9 +1038,9 @@ final class AppState: ObservableObject {
             }
         }
         missingRecentIDs = missing
-        if let preview = previewFile,
-           !FileManager.default.fileExists(atPath: preview.url.path) {
-            previewFile = nil
+        if case .local(let p) = preview,
+           !FileManager.default.fileExists(atPath: p.url.path) {
+            preview = nil
         }
         for folder in folders {
             let exists = FileManager.default.fileExists(atPath: folder.rootURL.path)
@@ -1174,8 +1247,10 @@ final class AppState: ObservableObject {
     /// Opens a GitHub Markdown link in-app, with PR precedence: a path in
     /// an open PR's diff opens as that PR file (the diff space); the same
     /// repo at the PR's head joins the PR's browsed docs; anything else
-    /// gets a remote repo session.
-    func openGitHubDoc(_ link: RemoteDocLink) {
+    /// gets a remote repo session. Link clicks are navigation — reading —
+    /// so the doc previews; `pin: true` (⌘K, an explicit destination)
+    /// pins it into the session's docs.
+    func openGitHubDoc(_ link: RemoteDocLink, pin: Bool = false) {
         for session in prSessions
         where session.ref.owner.caseInsensitiveCompare(link.owner) == .orderedSame
             && session.ref.repo.caseInsensitiveCompare(link.repo) == .orderedSame {
@@ -1209,13 +1284,15 @@ final class AppState: ObservableObject {
         }
         let sessionID = "\(link.owner)/\(link.repo)@\(link.ref)"
         if let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
-            if !remoteSessions[index].docs.contains(link.path) {
+            if pin, !remoteSessions[index].docs.contains(link.path) {
                 remoteSessions[index].docs.append(link.path)
             }
         } else {
             var session = RemoteRepoSession(ref: PullRequestRef(owner: link.owner, repo: link.repo, number: 0),
                                             displayRef: link.ref)
-            session.docs = [link.path]
+            // Unpinned opens leave docs empty — the selection didSet
+            // previews the doc under its new session instead.
+            session.docs = pin ? [link.path] : []
             remoteSessions.append(session)
         }
         if let fragment = link.fragment {
@@ -1269,6 +1346,11 @@ final class AppState: ObservableObject {
         var session = RemoteRepoSession(ref: old.ref, displayRef: newRef)
         session.docs = old.docs
         remoteSessions[index] = session
+        // The preview rides along like the docs do — refetched at the new
+        // ref; a doc missing there says so loudly.
+        if case .remote(let sessionID, let path) = preview, sessionID == id {
+            preview = .remote(sessionID: newID, path: path)
+        }
         dropPRContentCache(sessionID: id)
         switch selection {
         case .remoteRepo(let s) where s == id:
@@ -1287,11 +1369,11 @@ final class AppState: ObservableObject {
         remoteSessions.first { $0.id == id }
     }
 
+    /// A relative link inside a remote doc — navigation, so the target
+    /// previews (the selection didSet applies the click policy); already
+    /// pinned docs just select.
     func openRemoteSessionDoc(sessionID: String, path: String) {
-        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-        if !remoteSessions[index].docs.contains(path) {
-            remoteSessions[index].docs.append(path)
-        }
+        guard remoteSessions.contains(where: { $0.id == sessionID }) else { return }
         selection = .remoteDoc(sessionID, path)
     }
 
@@ -1335,6 +1417,7 @@ final class AppState: ObservableObject {
 
     func removeRemoteSession(_ id: String) {
         remoteSessions.removeAll { $0.id == id }
+        if case .remote(let sessionID, _) = preview, sessionID == id { preview = nil }
         dropPRContentCache(sessionID: id)
         switch selection {
         case .remoteRepo(let s) where s == id,
