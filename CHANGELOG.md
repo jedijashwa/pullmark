@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.28.0-beta.1 - 2026-08-06
 
 - **Margin notes (beta)** — leave comments on any local Markdown
   document, the way you would on a pull request. Hover a block for the
