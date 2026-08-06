@@ -600,11 +600,12 @@ footer .note { margin-left: auto; }
       <code>[toc]</code>, and YAML front matter folded into a tidy metadata table.</p>
 
     <figure class="shot reading-shot">
-      <img src="img/app-doc.png?v=7" width="1052" height="784" loading="lazy"
-        alt="PullMark rendering a local Markdown file from a docs repo: the sidebar's Locations section shows an opened folder as a tree of subfolders and Markdown files, wearing a git branch chip and a GitHub repo mark, beside individually opened files and an open pull request whose changed files form a tree with status icons and a comment-count badge; the document shows formatted headings, bulleted and numbered lists, and links; the titlebar shows the file's folder and git branch, with a word-count pill in the corner">
-      <figcaption>Folders come in as living trees, every location wears its git branch,
-      pull requests sit beside your local files, the titlebar knows where you are — and a
-      words&nbsp;·&nbsp;minutes pill keeps score.</figcaption>
+      <img src="img/app-doc.png?v=8" width="1052" height="784" loading="lazy"
+        alt="PullMark rendering a local Markdown file from a docs repo: the sidebar's Open Files section lists three kept documents and one italicized preview entry; the Locations section shows the folder as a tree of subfolders and Markdown files, wearing a git branch chip and a GitHub repo mark; an open pull request's changed files form a tree with status icons and a comment-count badge; the rendered document shows headings, lists, a link, and a Tip alert; the titlebar shows the file's folder and git branch, with a word-count pill in the corner">
+      <figcaption>Folders come in as living trees, every location wears its git branch, and
+      browsing shows files as <em>previews</em> — the italic entry in Open Files that the next
+      click replaces. Pull requests sit beside your local files, and the titlebar knows where
+      you are.</figcaption>
     </figure>
 
     <ul class="readlist">
@@ -612,6 +613,9 @@ footer .note { margin-left: auto; }
         blocks; hover for author, date, and commit; click for the full line history.</li>
       <li><strong>Always current</strong> — save from any editor and the page has already
         re-rendered.</li>
+      <li><strong>Browse without burying yourself</strong> — single-click through a folder or
+        a repo and each file shows as a <em>preview</em>: one italicized entry in Open Files
+        that the next click replaces. Double-click (or just start editing) to keep it.</li>
       <li><strong>Outline sidebar</strong> — a navigator-style map of your headings, one
         toggle away.</li>
       <li><strong>Find anything</strong> — <kbd>⌘F</kbd> steps through matches on the page;
@@ -624,25 +628,11 @@ footer .note { margin-left: auto; }
         aren't stuck at column width — and save or share exactly what you're
         inspecting (diagrams as real SVGs).</li>
       <li><strong>Take it anywhere</strong> — export as PDF or a single self-contained
-        HTML file.</li>
-      <li><strong>Copy that pastes right</strong> — <kbd>⌘C</kbd> gives rich text for Docs and
-        Slack; <kbd>⌥⌘C</kbd> gives the original Markdown source.</li>
+        HTML file; <kbd>⌘C</kbd> pastes rich into Docs and Slack, <kbd>⌥⌘C</kbd> gives the
+        Markdown back.</li>
       <li><strong>Three reading themes</strong> — Editorial, GitHub, and Terminal, with live
-        previews in Settings — or drop in your own CSS.</li>
-      <li><strong>Your line length</strong> — Standard, Wide, or Full Width content, switchable
-        mid-read from the View menu; Full Width was made for full screen.</li>
-      <li><strong>Light &amp; dark</strong> — follows the system and restyles everything,
-        Mermaid included.</li>
-      <li><strong>Painless updates</strong> — one banner button upgrades and relaunches, and a
-        What's New sheet catches you up after.</li>
-      <li><strong>Source at a keystroke</strong> — <kbd>⌥⌘U</kbd> flips any document to its raw
-        Markdown and back; Quick Look can prefer raw source too.</li>
-      <li><strong>The page is the editor</strong> — <kbd>⌘E</kbd> and you're typing: blocks
-        reveal their source in place, and leaving a block saves it (guarded,
-        revertible); <kbd>⌃⌘K</kbd> commits, with branch-guarding on main and optional push.</li>
-      <li><strong>A review inbox</strong> — PRs awaiting your review, filtered to the ones that
-        actually change Markdown, with unread counts; every sidebar section collapses and
-        remembers.</li>
+        previews in Settings — or drop in your own CSS. Light &amp; dark restyle everything,
+        Mermaid included, and the line length is yours: Standard, Wide, or Full Width.</li>
       <li><strong>GitHub links open in-app</strong> — click a <code>github.com</code> link to a
         Markdown file and PullMark renders it, with an always-visible repo&nbsp;@&nbsp;branch
         provenance bar; <kbd>⌘</kbd>-click sends it to the browser instead.</li>
@@ -653,11 +643,11 @@ footer .note { margin-left: auto; }
         a quiet violet chip, not red-plus-green noise.</li>
       <li><strong>Picks up where you left off</strong> — your files, PRs, and reading position
         restore at launch.</li>
-      <li><strong>Windows &amp; tabs</strong> — <kbd>⌘N</kbd> for independent windows, merged
-        into native macOS tabs when you want one frame.</li>
-      <li><strong>Your keys, your way</strong> — every command lives in the menus, and
-        Settings → Keyboard rebinds any of them.</li>
     </ul>
+
+    <p class="prose">Those are the highlights. The <a href="docs/">docs</a> cover the rest —
+    every feature, every setting, every icon, the full keyboard map, and the
+    <code>pullmark</code> command.</p>
 
     <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">Read by default. Edit in place.</h3>
     <p class="prose">Press <kbd>⌘E</kbd> and the page becomes the editor: the block under your
@@ -711,8 +701,9 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>A real CLI</h3>
-        <p><code>pullmark README.md</code>, <code>pullmark ~/notes docs/</code> — files and
-        folders open in the running app.</p>
+        <p><code>pullmark README.md</code>, <code>pullmark ~/wt docs/plan.md</code> — files,
+        folders, and worktrees open in the running app, always in the frontmost window.
+        <code>pullmark --help</code> documents it; so do the <a href="docs/cli/">docs</a>.</p>
       </div>
       <div class="cell">
         <h3>Default app for .md</h3>
