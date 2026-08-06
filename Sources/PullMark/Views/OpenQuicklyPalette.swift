@@ -237,7 +237,7 @@ struct OpenQuicklyPalette: View {
                 title: "Open " + ((link.path as NSString).lastPathComponent),
                 subtitle: "\(link.owner)/\(link.repo) @ \(link.ref) — from GitHub",
                 icon: "book.closed",
-                action: { state.openGitHubDoc(link) })]
+                action: { state.openGitHubDoc(link, pin: true) })]
         case .remoteRepo(let owner, let repo, let ref):
             return [QuickItem(
                 id: "direct:repo:\(owner)/\(repo)@\(ref ?? "")",
