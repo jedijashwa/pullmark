@@ -26,14 +26,15 @@ section current as features land.
     the preview survives relaunch, still as a preview.
   - Clicking a relative link to a file in an open Location now
     previews it instead of pinning a row.
-  - **Remote repos preview too** — browsing a GitHub repo's tree or
-    following links inside a remote doc keeps the same single italic
-    entry (shown at the top of the repo's group, above its tree)
-    instead of permanently growing the session's docs list. One
-    preview per window, local or remote; double-click or Keep Open
-    pins a doc into the repo's list, kept docs get a hover-✕, and ⌘K
-    opens still pin directly. Kept docs and the preview now sit above
-    the tree so they never drown under a big repo.
+  - **Remote repos preview too, in the same place** — browsing a
+    GitHub repo's tree or following links inside a remote doc puts
+    the same single italic entry in Open Files (book icon,
+    `owner/repo @ ref` second line) instead of permanently growing
+    the session's docs list. One preview per window, local or
+    remote. Keeping a remote doc — double-click or Keep Open — files
+    it with its repo under Locations; kept docs get a hover-✕, sit
+    above the tree so they never drown under a big repo, and ⌘K
+    opens still pin directly.
 - **A real CLI** — `pullmark --help` and `--version` exist now, with
   errors that name the path that didn't resolve (and abort the whole
   open, so scripts fail loudly). `pullmark <worktree> <file>` opens

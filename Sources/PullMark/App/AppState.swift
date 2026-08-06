@@ -891,14 +891,19 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// The Open Files section header's one bulk gesture. Local only — a
-    /// remote preview belongs to its session, not this section.
+    /// The Open Files section header's one bulk gesture: pinned local
+    /// files plus the preview slot, whatever it holds.
     func closeAllOpenFiles() {
         var closing = Set(localFiles.map(\.url))
         localFiles.removeAll()
-        if case .local(let file) = preview {
+        switch preview {
+        case .local(let file):
             closing.insert(file.url)
             preview = nil
+        case .remote:
+            dismissPreview()
+        case nil:
+            break
         }
         if case .local(let url) = selection, closing.contains(url) { selection = nil }
     }
