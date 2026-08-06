@@ -4,6 +4,39 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Open Files, with previews** — the Files section is now Open Files:
+  the flat, reorderable working set of everything you've explicitly
+  opened. Single-clicking a file inside a Location shows it as a
+  *preview* — one italicized entry, always last in the section, that
+  the next single-click replaces — so browsing a big tree never piles
+  up rows, and the file you were just reading always has exactly one
+  place to be found.
+  - **Keeping a file**: double-click it (in the tree or on the italic
+    entry), choose Keep Open from the right-click menu, or just start
+    editing — authoring always pins; reading (blame, history,
+    inspecting an image) never does. External opens — Finder, drag &
+    drop, ⌘O, the CLI — pin as before.
+  - **A setting to taste**: Settings → General → "Clicking files in
+    Locations" — Preview First (default) or Open Fully, which keeps
+    every file you click.
+  - **Reveal in Location** on any Open Files row jumps to where the
+    file lives in its tree; Close All lives on the section header;
+    the preview survives relaunch, still as a preview.
+  - Clicking a relative link to a file in an open Location now
+    previews it instead of pinning a row.
+- **A real CLI** — `pullmark --help` and `--version` exist now, with
+  errors that name the path that didn't resolve (and abort the whole
+  open, so scripts fail loudly). `pullmark <worktree> <file>` opens
+  the worktree as a Location and shows the file — made for agents
+  putting a document in front of you. Everything still lands in the
+  frontmost window of a running app.
+- **Docs** — pullmark.app grew a documentation section:
+  [pullmark.app/docs](https://pullmark.app/docs/) covers the features,
+  the sidebar and every icon, all settings, the full keyboard map, the
+  CLI, and troubleshooting.
+
 ## 0.26.1 - 2026-08-05
 
 - ⌘K now accepts GitHub URLs typed without the scheme —

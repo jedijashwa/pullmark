@@ -36,6 +36,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
+    @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -85,6 +86,18 @@ struct GeneralSettingsTab: View {
                 Text("Open in Browser").tag(RemoteLinkPolicy.browser.rawValue)
             }
             .help("What clicking a link to a Markdown file on GitHub does — hold ⌘ while clicking for the other behavior")
+
+            Picker("Clicking files in Locations:", selection: $folderClickRaw) {
+                Text("Preview First").tag(FolderClickAction.preview.rawValue)
+                Text("Open Fully").tag(FolderClickAction.open.rawValue)
+            }
+            Text("Preview First shows a file with one click without keeping it — "
+                + "it appears in Open Files in italics until the next preview replaces it. "
+                + "Double-click a file, or just start editing, to keep it open. "
+                + "Open Fully keeps every file you click.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("System") {

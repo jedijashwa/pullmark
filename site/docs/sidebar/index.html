@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Sidebar — PullMark Docs</title>
+<meta name="description" content="PullMark's sidebar explained: Open Files and previews, Locations, Pull Requests, Recents, and what every icon means.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="./" aria-current="page">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>The sidebar</h1>
+      <p class="article-lede">Four sections, organized by what things
+      <em>mean</em> rather than where they come from: what you have open, the
+      places you browse, the pull requests you're reviewing, and where you've
+      been.</p>
+
+      <h2 id="open-files">Open Files</h2>
+      <p>The working set: every document you've explicitly opened — from
+      Finder, drag &amp; drop, ⌘O, the <a href="../cli/">command line</a>, or
+      by keeping a file from a Location. Flat, reorderable by dragging, each
+      row removable with the hover ✕ (or ⌫ on the selected row). Right-click
+      the section header for <strong>Close All</strong>.</p>
+
+      <h3 id="previews">Previews</h3>
+      <p>Single-click a file inside a Location and it renders immediately —
+      and appears in Open Files as a <em>preview</em>: one italicized entry,
+      always last in the section. Click another file and the preview entry is
+      replaced, so browsing a big tree never piles up rows. It's the same
+      idea as VS Code's preview tabs or Xcode's temporary editor, wearing
+      the same italics.</p>
+      <p>A preview becomes a normal, pinned entry when you show it any
+      commitment beyond reading:</p>
+      <ul>
+        <li><strong>Double-click</strong> the file in the tree, or the italic
+        entry itself</li>
+        <li><strong>Start editing</strong> — entering Edit Mode or saving a
+        block edit pins it</li>
+        <li><strong>Keep Open</strong> in the right-click menu</li>
+      </ul>
+      <p>Reading interactions — blame, line history, inspecting an image or
+      diagram — deliberately never promote a preview. If you'd rather every
+      click open files fully, flip
+      <a href="../settings/#clicking-files">Clicking files in Locations</a>
+      in Settings.</p>
+      <p>Any Open Files row that lives inside an open Location gets
+      <strong>Reveal in Location</strong> in its right-click menu — the jump
+      back from "what I'm reading" to "where it lives."</p>
+
+      <h2 id="locations">Locations</h2>
+      <p>Browsable roots, wherever they live. Two kinds share the section,
+      distinguished by icon:</p>
+      <table>
+        <tr><th>Row</th><th>Meaning</th></tr>
+        <tr><td>📁 folder icon</td><td>A local folder — its Markdown files as a tree (or a flat
+          list; right-click → View as List). Watched for changes.</td></tr>
+        <tr><td>📕 book icon</td><td>A GitHub repository opened for browsing — fetched from the
+          API, nothing written to disk.</td></tr>
+      </table>
+      <p>A local folder that's a git checkout grows a <strong>branch
+      chip</strong> (branch glyph + name); if its remote is on GitHub, a
+      small closed-book mark appears too — hover it to see which repo.
+      Clicking the branch chip opens the branches-and-worktrees menu:</p>
+      <ul>
+        <li><strong>Worktrees</strong> — every worktree of the repo, with a
+        checkmark on the one this row is; choose another to open it as its
+        own Location. Worktrees are never checked out or switched from
+        PullMark — it opens the folder that's already there.</li>
+        <li><strong>View Branch from GitHub</strong> — read another branch's
+        files remotely, without touching your checkout. A branch that
+        already has a local worktree jumps to the worktree instead — local
+        beats remote.</li>
+        <li><strong>Open on GitHub</strong> — the repo (at this branch) in
+        your browser.</li>
+      </ul>
+      <p>On a remote (book-icon) repo, the same chip lists branches:
+      <strong>Switch To</strong> re-pins the session to another branch, and
+      holding ⌥ offers <strong>Open Branch Separately</strong> for
+      side-by-side reading. <strong>Browse Repo Files…</strong> loads the
+      repo's whole Markdown tree.</p>
+      <p>A folder whose path stops resolving (an unmounted volume, a deleted
+      worktree) dims with a question-mark badge instead of vanishing — it
+      revives by itself when the path returns.</p>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <p>Each opened PR is a group: the overview row (status icon + changed
+      Markdown count), then its changed Markdown files — a comment bubble
+      with a count marks files with unresolved review threads. Below your
+      opened PRs, <strong>Review Requests</strong> collects PRs waiting on
+      your review, with an unread count that stays visible even collapsed
+      (hideable in Settings, and filterable to Markdown-touching PRs
+      only).</p>
+      <p>Status icons on PR rows:</p>
+      <table>
+        <tr><th>Status</th><th>Icon</th></tr>
+        <tr><td>Draft</td><td>pull-request arrows, gray</td></tr>
+        <tr><td>Open</td><td>pull-request arrows, green</td></tr>
+        <tr><td>Merged</td><td>merge arrows, purple</td></tr>
+        <tr><td>Closed</td><td>✕ circle, red</td></tr>
+        <tr><td>Unavailable</td><td>trash can, gray — the PR (or your access) went away</td></tr>
+      </table>
+      <p>Per-file markers inside a PR: <strong>+</strong> circle (green) for
+      added, <strong>−</strong> circle (red) for removed, <strong>→</strong>
+      circle for renamed, pencil circle for modified.</p>
+
+      <h2 id="recents">Recents</h2>
+      <p>Recently opened files, folders, and pull requests that aren't
+      already visible above. PR entries carry their live status icon; a
+      recent whose file has gone missing dims (clock badge) instead of
+      disappearing and revives when the path returns — built for branch
+      switches and unmounted volumes. Right-click the header to
+      <strong>Clear Recents</strong>.</p>
+
+      <h2 id="removal">Removing things</h2>
+      <p>Hover any top-level row for the ✕ — it removes the row from the
+      sidebar, never anything from disk or GitHub. ⌫ on a selected row does
+      the same. Files inside a Location's tree have no ✕: they're contents
+      of a place, not sidebar items.</p>
+
+      <h2 id="icon-glossary">Icon glossary</h2>
+      <table>
+        <tr><th>Icon</th><th>Meaning</th></tr>
+        <tr><td>Document</td><td>A Markdown file</td></tr>
+        <tr><td>Document, italic name</td><td>The preview — replaced by your next single-click</td></tr>
+        <tr><td>Folder</td><td>A local folder or directory</td></tr>
+        <tr><td>Folder + ?</td><td>Folder not found right now — dimmed, will revive</td></tr>
+        <tr><td>Document + clock</td><td>A recent file that's gone missing</td></tr>
+        <tr><td>Closed book</td><td>A GitHub repository (as a row icon: browsed remotely;
+          as a small trailing mark: this local folder is a checkout of one)</td></tr>
+        <tr><td>Branch glyph + name</td><td>The branch chip — click for branches and worktrees</td></tr>
+        <tr><td>Pull-request arrows</td><td>A pull request</td></tr>
+        <tr><td>Tray</td><td>Review Requests — PRs awaiting your review</td></tr>
+        <tr><td>Speech bubble + count</td><td>Unresolved review comments on that file</td></tr>
+        <tr><td>Colored dot (left edge)</td><td>An unread review request</td></tr>
+        <tr><td>✕ in a circle (on hover)</td><td>Remove from sidebar / dismiss preview</td></tr>
+      </table>
+      <p class="table-note">The branch glyph appears only on actual git refs
+      (chips, never as a folder icon) — a folder is a folder, a repo is a
+      book, a branch is a branch.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

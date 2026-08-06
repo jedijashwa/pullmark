@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features — PullMark Docs</title>
+<meta name="description" content="A guided tour of PullMark: reading Markdown, reviewing PR diffs, browsing GitHub, editing in place, and getting documents back out.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="./" aria-current="page">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Features</h1>
+      <p class="article-lede">The tour, grouped by what you're doing:
+      reading, reviewing, browsing GitHub, editing, and getting documents
+      back out. PullMark is deliberately <em>not</em> a full review client —
+      it shows the Markdown in a change; your usual tools remain right for
+      the code.</p>
+
+      <h2 id="reading">Reading</h2>
+      <ul>
+        <li><strong>GitHub-faithful rendering</strong> — tables, task lists,
+        footnotes, alerts, collapsible <code>&lt;details&gt;</code>, syntax
+        highlighting, Mermaid diagrams, and KaTeX math (<code>$…$</code> /
+        <code>$$…$$</code>), all offline. A paragraph of just
+        <code>[toc]</code> becomes a linked table of contents;
+        <code>==highlight==</code>, <code>~sub~</code>, <code>^sup^</code>
+        render too.</li>
+        <li><strong>Click to inspect</strong> — images, diagrams, and block
+        formulas open in a pan-and-zoom overlay; Save As… and Share export
+        exactly what you're inspecting (diagrams as real SVG).</li>
+        <li><strong>Live files</strong> — documents re-render when saved
+        from any editor; relative images and links resolve, and clicking a
+        link to another Markdown file opens it in place (as a
+        <a href="../sidebar/#previews">preview</a> when it lives in an open
+        Location).</li>
+        <li><strong>Navigation</strong> — the outline sidebar (⌥⌘O), ⌘F
+        find-in-page, ⇧⌘F search across every file in the sidebar, and ⌘K
+        Open Quickly for headings, files, PRs, recents — or paste a path or
+        GitHub URL straight into it.</li>
+        <li><strong>Blame at reading altitude</strong> — a quiet gutter of
+        authorship: one avatar per run of blocks, hover for the commit,
+        click through for line history. GitHub's blame API where the file
+        lives on GitHub, plain <code>git blame</code> otherwise.</li>
+        <li><strong>Reading comfort</strong> — themes, content width, line
+        numbers (<a href="../settings/">Settings</a>), browser-style zoom,
+        light/dark, full screen, and reading positions remembered per
+        document.</li>
+      </ul>
+
+      <h2 id="reviewing">Reviewing pull requests</h2>
+      <ul>
+        <li><strong>Rendered diffs</strong> — added, removed, and changed
+        blocks highlighted in the rendered page, word-level diffs where the
+        edit is small enough to make sense, inline or side-by-side (⌥⌘L),
+        plus the raw Source Diff (⌘2) and the final Result (⌘3). Moved
+        paragraphs get a quiet "moved" chip instead of red-plus-green
+        noise.</li>
+        <li><strong>Review threads in place</strong> — existing comments
+        appear under the blocks they discuss; hover a block to Comment Now,
+        Add to Review, or Insert Suggestion (and the pencil edits the block
+        as a suggestion). Reviews submit with a verdict, or save to GitHub
+        as a pending review.</li>
+        <li><strong>Stays current</strong> — open PRs are checked every
+        minute; a banner offers refresh when the branch moves, and your
+        draft comments survive. Comments written offline queue and upload
+        when they can.</li>
+        <li><strong>Review requests</strong> — PRs awaiting your review, in
+        the sidebar with unread counts. PR images and repo-relative links
+        resolve at the PR's commit.</li>
+      </ul>
+
+      <h2 id="github">GitHub, without the browser</h2>
+      <ul>
+        <li><strong>Markdown links open in-app</strong> — click a
+        <code>github.com/…/blob/…</code> link and PullMark renders it (the
+        first click asks; ⌘-click inverts your default). A provenance bar
+        pins <code>owner/repo @ ref · path</code> with a way back to
+        GitHub.</li>
+        <li><strong>Browse whole repos</strong> — load a repo's Markdown
+        tree into <a href="../sidebar/#locations">Locations</a>, switch
+        branches, compare against other branches, view blame — private
+        repos use the credentials PRs already use, and nothing fetched ever
+        touches disk.</li>
+        <li><strong>Branches and worktrees</strong> — local checkouts wear a
+        branch chip; its menu opens worktrees as their own Locations and
+        reads other branches remotely. Local always beats remote when a
+        worktree already has the branch.</li>
+      </ul>
+
+      <h2 id="editing">Editing and committing</h2>
+      <ul>
+        <li><strong>Edit in place</strong> — a block's pencil (or ⌘E for the
+        whole document) turns blocks into editors inside the rendered page;
+        ⌘↩ saves, Esc cancels. Saves are guarded against the file changing
+        underneath, and versioned for Revert Last Edit.</li>
+        <li><strong>Commit from the app</strong> — ⌃⌘K opens the commit
+        sheet for the file's repo: pick files, write the message,
+        optionally push, with a guard before committing straight to
+        main.</li>
+      </ul>
+
+      <h2 id="output">Getting documents out</h2>
+      <ul>
+        <li><strong>Export</strong> — PDF (one continuous page) or fully
+        self-contained HTML; Share sends the document anywhere macOS
+        can.</li>
+        <li><strong>Copy in two flavors</strong> — ⌘C is rich text for
+        Docs/Slack; ⌥⌘C is the underlying Markdown.</li>
+        <li><strong>Print</strong> — ⌘P, at 100% regardless of zoom.</li>
+        <li><strong>Quick Look</strong> — Space in Finder previews Markdown
+        with PullMark's own rendering.</li>
+      </ul>
+
+      <h2 id="everything-else">Everything else</h2>
+      <ul>
+        <li><strong>Windows and tabs</strong> — ⌘N opens an independent
+        window; merge into native tabs. External opens land in the
+        frontmost window.</li>
+        <li><strong>The <code>pullmark</code> command</strong> — files,
+        folders, and worktrees from any terminal. See
+        <a href="../cli/">Command Line</a>.</li>
+        <li><strong>Default-app control</strong> — make PullMark the
+        <code>.md</code> handler in one click, and it notices if an upgrade
+        drops the binding.</li>
+        <li><strong>Built-in updates</strong> — signed, notarized releases
+        with one-click update and a What's New sheet.</li>
+        <li><strong>Privacy posture</strong> — GitHub content is fetched
+        over the API and kept in memory; documents are never copied
+        anywhere; no analytics.</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

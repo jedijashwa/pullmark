@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard Shortcuts — PullMark Docs</title>
+<meta name="description" content="PullMark's full keyboard map — every default shortcut and how to rebind them.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="./" aria-current="page">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Keyboard shortcuts</h1>
+      <p class="article-lede">The full map. Every one of these is rebindable
+      in <strong>Settings → Keyboard</strong>; unbound rows ship without a
+      key on purpose — give them one if you use them often.</p>
+
+      <h2 id="file">File</h2>
+      <table>
+        <tr><th>Action</th><th>Default</th><th>Notes</th></tr>
+        <tr><td>Open…</td><td><kbd>⌘O</kbd></td><td>Files or folders</td></tr>
+        <tr><td>Open Pull Request…</td><td><kbd>⇧⌘O</kbd></td><td></td></tr>
+        <tr><td>Open Quickly…</td><td><kbd>⌘K</kbd></td><td>Headings, files, PRs, recents — or paste a path, PR, or GitHub URL</td></tr>
+        <tr><td>Commit Changes…</td><td><kbd>⌃⌘K</kbd></td><td>For the selected file's repo</td></tr>
+        <tr><td>Revert Last Edit</td><td>—</td><td></td></tr>
+        <tr><td>Reveal in Finder</td><td>—</td><td>With a local file or folder selected</td></tr>
+        <tr><td>Copy Path</td><td>—</td><td>With a local file or folder selected</td></tr>
+        <tr><td>Refresh Folder</td><td>—</td><td>With a folder selected</td></tr>
+        <tr><td>Clear Recents</td><td>—</td><td></td></tr>
+        <tr><td>Page Setup…</td><td><kbd>⇧⌘P</kbd></td><td></td></tr>
+        <tr><td>Print…</td><td><kbd>⌘P</kbd></td><td></td></tr>
+        <tr><td>Export as PDF… / as HTML…</td><td>—</td><td></td></tr>
+      </table>
+
+      <h2 id="edit">Edit</h2>
+      <table>
+        <tr><th>Action</th><th>Default</th><th>Notes</th></tr>
+        <tr><td>Edit Mode</td><td><kbd>⌘E</kbd></td><td>In a local document</td></tr>
+        <tr><td>Copy as Markdown</td><td><kbd>⌥⌘C</kbd></td><td>The source behind the selection (whole document when nothing is selected)</td></tr>
+        <tr><td>Find in Page</td><td><kbd>⌘F</kbd></td><td></td></tr>
+        <tr><td>Find Next / Previous</td><td><kbd>⌘G</kbd> / <kbd>⇧⌘G</kbd></td><td>While the find bar is open</td></tr>
+        <tr><td>Search All Files…</td><td><kbd>⇧⌘F</kbd></td><td>Across everything in the sidebar</td></tr>
+      </table>
+
+      <h2 id="view">View</h2>
+      <table>
+        <tr><th>Action</th><th>Default</th><th>Notes</th></tr>
+        <tr><td>Show/Hide Outline</td><td><kbd>⌥⌘O</kbd></td><td>In a local document</td></tr>
+        <tr><td>Show/Hide Markdown Source</td><td><kbd>⌥⌘U</kbd></td><td></td></tr>
+        <tr><td>Reload Document</td><td><kbd>⌘R</kbd></td><td>In a local document</td></tr>
+        <tr><td>Zoom In / Out</td><td><kbd>⌘=</kbd> / <kbd>⌘-</kbd></td><td><kbd>⌘+</kbd> works too; pinch and ⌘-scroll on the page as well</td></tr>
+        <tr><td>Actual Size</td><td><kbd>⌘0</kbd></td><td></td></tr>
+      </table>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <table>
+        <tr><th>Action</th><th>Default</th><th>Notes</th></tr>
+        <tr><td>Rendered Diff / Source Diff / Result</td><td><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></td><td>In a pull request file</td></tr>
+        <tr><td>Flip Diff Layout</td><td><kbd>⌥⌘L</kbd></td><td>Inline ↔ side by side</td></tr>
+        <tr><td>Review Changes…</td><td><kbd>⇧⌘R</kbd></td><td>Summary, verdict, and your pending comments</td></tr>
+        <tr><td>Show/Hide Resolved Conversations</td><td><kbd>⌥⌘R</kbd></td><td>In a PR file's Result view</td></tr>
+      </table>
+
+      <h2 id="fixed">Fixed keys</h2>
+      <p>These are built in and can't be changed:</p>
+      <table>
+        <tr><th>Context</th><th>Keys</th></tr>
+        <tr><td>Sidebar: remove the selected row</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>Sidebar: Quick Look the selected file</td><td><kbd>Space</kbd> (macOS 14+)</td></tr>
+        <tr><td>Edit mode: move between blocks</td><td><kbd>↑</kbd> <kbd>↓</kbd></td></tr>
+        <tr><td>Edit mode: merge with previous block</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>Edit mode: discard this block's edits</td><td><kbd>⎋</kbd></td></tr>
+        <tr><td>Palettes: move / open / dismiss</td><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>↩</kbd> <kbd>⎋</kbd></td></tr>
+        <tr><td>Commit sheet and composers: confirm</td><td><kbd>⌘↩</kbd></td></tr>
+        <tr><td>Sheets: dismiss</td><td><kbd>⎋</kbd></td></tr>
+      </table>
+      <p>System-standard keys (⌘N new window, ⌘W, ⌘Q, ⌘C/⌘V, ⌘Z…) behave as
+      macOS intends and stay reserved. There's deliberately no ⌘S —
+      edit-mode commits write to disk as they land.</p>
+
+      <h2 id="rebinding">Rebinding</h2>
+      <p>In <strong>Settings → Keyboard</strong>: click a shortcut (or
+      select a row and press <kbd>↩</kbd>), then type the new keys.
+      <kbd>⌫</kbd> removes a binding, <kbd>⎋</kbd> cancels. Shortcuts need
+      ⌘ or ⌃ (function keys can stand alone); system-reserved combos are
+      refused with an explanation, and taking a combo another action holds
+      offers <strong>Use Anyway</strong>, which unbinds the previous owner.
+      <strong>Restore Defaults…</strong> puts everything back; each
+      customized row also has its own revert arrow.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

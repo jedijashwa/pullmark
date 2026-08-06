@@ -82,6 +82,9 @@ enum DefaultsKeys {
     /// The ask dialog's "Remember my selection" checkbox. Defaults on; an
     /// uncheck persists, so the dialog keeps asking without re-arguing.
     static let remoteLinkRemember = "pm.remoteLinkRemember"
+    /// What a single click on a file in a Location does: FolderClickAction
+    /// rawValue (absent = preview).
+    static let folderClickAction = "pm.folderClickAction"
 
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"

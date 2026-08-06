@@ -27,6 +27,37 @@ final class MenuActionPresenter: NSObject {
     }
 }
 
+/// Fires on double-click while letting single clicks fall through to the
+/// List's own row selection. SwiftUI gestures inside sidebar rows never
+/// see plain clicks (the selection machinery wins — RowClickCatcher's
+/// lesson), so an NSView takes the mouseDown first: click-count 2 runs
+/// the action, everything else forwards up the responder chain and the
+/// row selects as if the overlay weren't there.
+struct DoubleClickCatcher: NSViewRepresentable {
+    var action: () -> Void
+
+    final class Catcher: NSView {
+        var action: () -> Void = {}
+        override func mouseDown(with event: NSEvent) {
+            if event.clickCount == 2 {
+                action()
+            } else {
+                super.mouseDown(with: event)
+            }
+        }
+    }
+
+    func makeNSView(context: Context) -> Catcher {
+        let view = Catcher()
+        view.action = action
+        return view
+    }
+
+    func updateNSView(_ view: Catcher, context: Context) {
+        view.action = action
+    }
+}
+
 /// Find-in-page bar shown above a MarkdownWebView (⌘F).
 struct FindBar: View {
     @EnvironmentObject private var state: AppState

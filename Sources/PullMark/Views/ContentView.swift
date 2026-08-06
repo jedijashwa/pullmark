@@ -218,8 +218,15 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $state.selection) {
-            CollapsibleSection("Files", isExpanded: $filesExpanded) {
-                if state.localFiles.isEmpty {
+            // The working set: explicitly opened documents, flat and
+            // ordered, plus the single italic preview entry last. Trees
+            // answer "where does it live"; this section answers "what do
+            // I have open" (Sublime's exact label for the same list).
+            CollapsibleSection("Open Files", isExpanded: $filesExpanded, headerMenu: {
+                AnyView(Button("Close All") { state.closeAllOpenFiles() }
+                    .disabled(state.localFiles.isEmpty && state.previewFile == nil))
+            }) {
+                if state.localFiles.isEmpty, state.previewFile == nil {
                     Button("Open File…") { state.openFilesPanel() }
                         .font(fonts.callout)
                 }
@@ -229,6 +236,14 @@ struct SidebarView: View {
                         .tag(SidebarSelection.local(file.url))
                 }
                 .onMove { from, to in state.localFiles.move(fromOffsets: from, toOffset: to) }
+                // The preview holds a stable slot at the end so promotion
+                // never reorders the pinned rows above it.
+                if let preview = state.previewFile {
+                    SidebarFileRow(file: preview,
+                                   showsPath: duplicateFileNames.contains(preview.url.lastPathComponent),
+                                   isPreview: true)
+                        .tag(SidebarSelection.local(preview.url))
+                }
             }
             // Locations: browsable roots wherever they live — local folders
             // and GitHub repos share one section (Finder's word for exactly
@@ -342,7 +357,8 @@ struct SidebarView: View {
     /// Display names shared by two or more visible rows grow a dimmed
     /// parent-path second line (spec §5, VS Code's rule).
     private var duplicateFileNames: Set<String> {
-        duplicates(state.localFiles.map { $0.url.lastPathComponent })
+        duplicates((state.localFiles + (state.previewFile.map { [$0] } ?? []))
+            .map { $0.url.lastPathComponent })
     }
 
     private var duplicateRecentNames: Set<String> {
@@ -421,20 +437,25 @@ private struct RemovableRow<Content: View>: View {
     }
 }
 
-/// An ad-hoc opened document in Files.
+/// An explicitly opened document in Open Files — or, italicized, the one
+/// transient preview entry (`isPreview`). Double-clicking the preview
+/// keeps it open; the next tree click replaces it.
 private struct SidebarFileRow: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let file: LocalFile
     let showsPath: Bool
+    var isPreview = false
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        RemovableRow(help: "Remove from Sidebar",
-                     remove: { state.removeLocalFile(file) }) {
+        RemovableRow(help: isPreview ? "Dismiss Preview" : "Remove from Sidebar",
+                     remove: { isPreview ? state.dismissPreview()
+                                         : state.removeLocalFile(file) }) {
             Label {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(file.url.lastPathComponent)
+                        .italic(isPreview)
                         .lineLimit(1)
                         .font(fonts.row)
                     if showsPath {
@@ -454,9 +475,19 @@ private struct SidebarFileRow: View {
                     .drawingGroup()
             }
         }
-        .help(PathAbbreviator.abbreviate(file.url.path))
+        .overlay(isPreview ? DoubleClickCatcher { state.pinFile(at: file.url) } : nil)
+        .help(PathAbbreviator.abbreviate(file.url.path)
+            + (isPreview ? " — previewing; double-click to keep open" : ""))
         .contextMenu {
-            Button("Remove from Sidebar") { state.removeLocalFile(file) }
+            if isPreview {
+                Button("Keep Open") { state.pinFile(at: file.url) }
+                Button("Dismiss Preview") { state.dismissPreview() }
+            } else {
+                Button("Remove from Sidebar") { state.removeLocalFile(file) }
+            }
+            if state.folderRootContaining(file.url) != nil {
+                Button("Reveal in Location") { state.revealInLocation(file.url) }
+            }
             Divider()
             Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([file.url]) }
             Button("Copy Path") { SidebarActions.copyPath(file.url) }
@@ -596,6 +627,9 @@ private struct FolderRootGroup: View {
                     }
                     .font(fonts.row)
                     .tag(SidebarSelection.local(folder.fileURL(for: path)))
+                    .overlay(DoubleClickCatcher {
+                        state.pinFile(at: folder.fileURL(for: path))
+                    })
                     .contextMenu { fileMenu(folder.fileURL(for: path)) }
                 }
             }
@@ -691,6 +725,8 @@ private struct FolderRootGroup: View {
 
     @ViewBuilder
     private func fileMenu(_ url: URL) -> some View {
+        Button("Keep Open") { state.pinFile(at: url) }
+        Divider()
         Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         Button("Copy Path") { SidebarActions.copyPath(url) }
     }
@@ -752,8 +788,17 @@ private struct FolderNodeView: View {
             }
                 .font(fonts.row)
                 .tag(SidebarSelection.local(folder.fileURL(for: node.path)))
+                // Single click selects (and previews) through the List as
+                // usual; a double click keeps the file open.
+                .overlay(DoubleClickCatcher {
+                    state.pinFile(at: folder.fileURL(for: node.path))
+                })
                 .help(PathAbbreviator.abbreviate(folder.fileURL(for: node.path).path))
                 .contextMenu {
+                    Button("Keep Open") {
+                        state.pinFile(at: folder.fileURL(for: node.path))
+                    }
+                    Divider()
                     Button("Reveal in Finder") {
                         NSWorkspace.shared.activateFileViewerSelecting(
                             [folder.fileURL(for: node.path)])
@@ -781,14 +826,19 @@ private struct CollapsibleSection<Content: View>: View {
     let title: String
     @Binding var isExpanded: Bool
     var badge = 0
+    /// Optional right-click actions on the section header itself (e.g.
+    /// Close All on Open Files).
+    var headerMenu: (() -> AnyView)?
     @ViewBuilder let content: () -> Content
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
 
     init(_ title: String, isExpanded: Binding<Bool>, badge: Int = 0,
+         headerMenu: (() -> AnyView)? = nil,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self._isExpanded = isExpanded
         self.badge = badge
+        self.headerMenu = headerMenu
         self.content = content
     }
 
@@ -815,9 +865,17 @@ private struct CollapsibleSection<Content: View>: View {
 
     var body: some View {
         if #available(macOS 14.0, *) {
-            Section(isExpanded: $isExpanded) { content() } header: { header }
+            Section(isExpanded: $isExpanded) { content() } header: { decoratedHeader }
         } else {
-            Section { content() } header: { header }
+            Section { content() } header: { decoratedHeader }
+        }
+    }
+
+    @ViewBuilder private var decoratedHeader: some View {
+        if let headerMenu {
+            header.contextMenu { headerMenu() }
+        } else {
+            header
         }
     }
 }

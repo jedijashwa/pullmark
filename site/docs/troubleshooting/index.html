@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting — PullMark Docs</title>
+<meta name="description" content="PullMark's error messages explained, plus fixes for Gatekeeper, GitHub authentication, and Quick Look.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="./" aria-current="page">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Troubleshooting</h1>
+      <p class="article-lede">The few things that go sideways, what
+      PullMark's messages mean, and the design behind the quieter failures —
+      most "errors" here are the app deliberately refusing to lose your
+      work.</p>
+
+      <h2 id="github-auth">GitHub: "may not exist… or may be a private repository"</h2>
+      <p><em>"Couldn't open … It may not exist at that ref, or it may be a
+      private repository your GitHub credentials can't access."</em>
+      GitHub's API reports private-without-access and doesn't-exist
+      identically, so PullMark can't tell you which. If the repo should
+      work, it's almost always authentication:</p>
+      <ol>
+        <li>PullMark uses the <a href="https://cli.github.com">GitHub
+        CLI</a>'s token first: <code>gh auth token</code> must print one.
+        If not, <code>brew install gh &amp;&amp; gh auth login</code>.</li>
+        <li>Otherwise it falls back to <code>git credential fill</code> —
+        whatever git itself uses for github.com.</li>
+        <li>Tokens scoped to select repositories won't see the others;
+        SSO-protected orgs need the token authorized for the org.</li>
+      </ol>
+
+      <h2 id="gatekeeper">Gatekeeper won't open the app</h2>
+      <p>Releases are signed with a Developer ID and notarized by Apple, so
+      a normal download shows no warning. If you built from source
+      (<code>make app</code>), the app is ad-hoc signed: right-click →
+      <strong>Open</strong> → <strong>Open</strong>, or allow it under
+      System Settings → Privacy &amp; Security.</p>
+
+      <h2 id="quick-look">Quick Look previews stopped rendering</h2>
+      <p>A Homebrew upgrade replaces the app bundle, which can silently drop
+      the Quick Look extension's registration. PullMark re-registers it on
+      every launch — so just launch the app once. If previews still show
+      raw text, check Settings → General → "Quick Look previews" is set to
+      Rendered.</p>
+
+      <h2 id="default-app">"PullMark is no longer your default Markdown app"</h2>
+      <p>Same cause: an upgrade replaced the bundle and macOS dropped the
+      <code>.md</code> binding. The banner's <strong>Make Default
+      Again</strong> reclaims it; so does Settings → General.</p>
+
+      <h2 id="editing">"… changed while you were editing this block — nothing was saved"</h2>
+      <p>The file changed on disk (another editor, an agent, a git
+      operation) between opening the block editor and saving. PullMark
+      refuses to splice into lines that moved — nothing is lost except the
+      one edit, and re-opening the block shows the current text. The same
+      guard protects commits: comparing against a ref where the file
+      doesn't exist reports it plainly instead of showing an empty
+      diff.</p>
+
+      <h2 id="dimmed">Dimmed rows: folders and recents that "aren't there"</h2>
+      <p>A Location with a question-mark badge, or a grayed recent, means
+      the path doesn't resolve right now — an unmounted volume, a switched
+      git branch, a deleted worktree. Rows dim instead of vanishing on
+      purpose: they revive automatically when the path returns. Clicking a
+      dead recent offers <strong>Remove from Recents</strong> or
+      <strong>Keep</strong>.</p>
+
+      <h2 id="pr-sync">Pull requests: banners and pending comments</h2>
+      <ul>
+        <li><em>"This pull request was updated on GitHub."</em> — the branch
+        moved since you loaded it. Refresh is one click and your draft
+        comments survive; PullMark never auto-reloads under an in-progress
+        review.</li>
+        <li><em>"Review comments couldn't be loaded…"</em> — the diff would
+        otherwise masquerade as an uncommented PR; Retry refetches.</li>
+        <li><em>"Could not upload N pending comment(s)… kept locally for
+        retry."</em> — comments written offline (or through an API hiccup)
+        queue on disk per PR-head and upload when they can. Nothing is
+        dropped.</li>
+        <li><em>"Committed …, but the push failed"</em> — the commit is
+        safely in your local history; only the push needs retrying.</li>
+      </ul>
+
+      <h2 id="updates">Updates</h2>
+      <p>The banner's <strong>Update Now</strong> runs the brew upgrade (or
+      a verified in-place install for DMG installs) and relaunches. If it
+      fails, the banner shows the exact <code>brew upgrade --cask
+      pullmark</code> command with a Copy button — running it in a terminal
+      does the same thing. Development builds don't check for updates.</p>
+
+      <h2 id="cli-troubles">The pullmark command</h2>
+      <ul>
+        <li><em>"no such file or folder"</em> — the command verifies every
+        path before opening anything; one typo aborts the whole open (exit
+        code 1) so scripts fail loudly.</li>
+        <li><em>Command not found</em> — see
+        <a href="../cli/#install">installing the command</a>.</li>
+        <li><em>"Couldn't install the command"</em> — the Settings installer
+        needs authorization to write <code>/usr/local/bin</code>; cancel
+        and rerun if you dismissed the prompt.</li>
+      </ul>
+
+      <h2 id="still-stuck">Still stuck?</h2>
+      <p><a href="https://github.com/jedijashwa/pullmark/issues">Open an
+      issue</a> — Help → Report a Bug… pre-fills one from inside the
+      app.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

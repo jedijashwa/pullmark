@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command line — PullMark Docs</title>
+<meta name="description" content="The pullmark command: open files, folders, and git worktrees in PullMark from the shell.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="./" aria-current="page">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>The command line</h1>
+      <p class="article-lede">One command, <code>pullmark</code>, that hands
+      files and folders to the app. Built for humans in a terminal and for
+      agents and scripts that want to put a document in front of you.</p>
+
+      <h2 id="install">Installing the command</h2>
+      <p>How you got PullMark decides how you get the command:</p>
+      <ul>
+        <li><strong>Homebrew</strong> — already installed; the cask links
+        <code>pullmark</code> into your brew prefix.</li>
+        <li><strong>DMG</strong> — open <strong>Settings&nbsp;(⌘,) → General</strong>
+        and click <strong>Install pullmark Command…</strong>; it links the
+        command into <code>/usr/local/bin</code> (you may be asked to
+        authorize).</li>
+        <li><strong>Source checkout</strong> — <code>make install-cli</code>
+        (add <code>BIN_DIR=~/bin</code> to choose where).</li>
+      </ul>
+      <p>No install needed for the basics, either way —
+      <code>open&nbsp;-a&nbsp;PullMark README.md ~/notes</code> does the same
+      through macOS itself.</p>
+
+      <h2 id="usage">Usage</h2>
+<pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
+pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
+pullmark -h, --help          <span class="c"># the built-in reference</span>
+pullmark --version           <span class="c"># print the app version</span></code></pre>
+
+      <h2 id="semantics">What opening does</h2>
+      <p>The rules are deliberately boring, so a script can rely on them:</p>
+      <ul>
+        <li><strong>Files</strong> land in the sidebar's
+        <a href="../sidebar/#open-files">Open Files</a> section as pinned
+        entries, and the last file passed is shown.</li>
+        <li><strong>Folders</strong> — including git worktrees — become
+        <a href="../sidebar/#locations">Locations</a>: browsable trees of the
+        Markdown files inside.</li>
+        <li><strong>Already running?</strong> Everything opens in the frontmost
+        window. A second app instance is never started.</li>
+        <li><strong>Relative paths</strong> resolve against your current
+        directory; <code>~</code> works as usual.</li>
+        <li><strong>A path that doesn't exist aborts the whole command</strong>
+        with a message and exit code 1 — nothing half-opens.</li>
+      </ul>
+
+      <h2 id="worktrees">Worktrees, and pointing at one file</h2>
+      <p>Pass a folder and a file together and you get both behaviors at once:
+      the folder opens as a Location, the file opens pinned and displayed.
+      That's the whole recipe for "open this worktree and show me this doc":</p>
+<pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
+      <p>The worktree's tree lands in Locations (with its branch chip, since a
+      worktree is just a git checkout), <code>plan.md</code> is pinned in Open
+      Files and rendered. Right-click it and choose
+      <strong>Reveal in Location</strong> to jump to where it sits in the
+      tree. This works the same when the Location was already open — opening
+      a file that lives inside it never creates a duplicate world, just a
+      working-set entry.</p>
+      <p>Order doesn't matter for the folder/file pairing, but the
+      <em>last file</em> passed is the one displayed, so put the document you
+      want on screen last.</p>
+
+      <h2 id="exit-codes">Exit codes</h2>
+      <table>
+        <tr><th>Code</th><th>Meaning</th></tr>
+        <tr><td><code>0</code></td><td>Everything was handed to PullMark.</td></tr>
+        <tr><td><code>1</code></td><td>A path didn't exist (each missing one is printed to stderr).</td></tr>
+        <tr><td><code>64</code></td><td>Unknown option.</td></tr>
+      </table>
+
+      <h2 id="examples">Examples</h2>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># read one file</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
+
+      <h2 id="agents">Notes for agents</h2>
+      <p>If you're wiring PullMark into an agent or a script:</p>
+      <ul>
+        <li>The command returns as soon as macOS accepts the open — it does
+        not wait for the app to render.</li>
+        <li>Repeating an open is idempotent: an already-open file or folder is
+        selected, not duplicated.</li>
+        <li>Everything lands in the frontmost window by design, so a human
+        watching one window sees each open arrive there.</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>
