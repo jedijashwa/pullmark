@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.27.0 - 2026-08-06
 
 - **Open Files, with previews** — the Files section is now Open Files:
   the flat, reorderable working set of everything you've explicitly
