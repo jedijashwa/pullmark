@@ -226,7 +226,7 @@ struct SidebarView: View {
                 AnyView(Button("Close All") { state.closeAllOpenFiles() }
                     .disabled(state.localFiles.isEmpty && state.previewFile == nil))
             }) {
-                if state.localFiles.isEmpty, state.previewFile == nil {
+                if state.localFiles.isEmpty, state.preview == nil {
                     Button("Open File…") { state.openFilesPanel() }
                         .font(fonts.callout)
                 }
@@ -237,12 +237,21 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.localFiles.move(fromOffsets: from, toOffset: to) }
                 // The preview holds a stable slot at the end so promotion
-                // never reorders the pinned rows above it.
-                if let preview = state.previewFile {
+                // never reorders the pinned rows above it. ONE home for it
+                // regardless of origin — "what am I reading" shouldn't
+                // depend on where the file lives; keeping a remote doc is
+                // what files it with its repo.
+                switch state.preview {
+                case .local(let preview):
                     SidebarFileRow(file: preview,
                                    showsPath: duplicateFileNames.contains(preview.url.lastPathComponent),
                                    isPreview: true)
                         .tag(SidebarSelection.local(preview.url))
+                case .remote(let sessionID, let path):
+                    RemotePreviewRow(sessionID: sessionID, path: path)
+                        .tag(SidebarSelection.remoteDoc(sessionID, path))
+                case nil:
+                    EmptyView()
                 }
             }
             // Locations: browsable roots wherever they live — local folders
@@ -491,6 +500,51 @@ private struct SidebarFileRow: View {
             Divider()
             Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([file.url]) }
             Button("Copy Path") { SidebarActions.copyPath(file.url) }
+        }
+    }
+}
+
+/// The Open Files preview slot when the previewed document is remote:
+/// same italics and gestures as a local preview, with an
+/// `owner/repo @ ref` second line since the file isn't on this Mac.
+/// Keeping it (double-click / Keep Open) pins it under its repo.
+private struct RemotePreviewRow: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let sessionID: String
+    let path: String
+
+    var body: some View {
+        let fonts = ChromeFonts(zoom: zoom)
+        RemovableRow(help: "Dismiss Preview",
+                     remove: { state.dismissPreview() }) {
+            Label {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text((path as NSString).lastPathComponent)
+                        .italic()
+                        .lineLimit(1)
+                        .font(fonts.row)
+                    if let session = state.remoteSession(sessionID) {
+                        Text("\(session.ref.owner)/\(session.ref.repo) @ \(session.displayRef)")
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } icon: {
+                Image(systemName: "book.closed")
+                    .foregroundStyle(.secondary)
+                    .drawingGroup()
+            }
+        }
+        .overlay(DoubleClickCatcher {
+            state.pinRemoteDoc(sessionID: sessionID, path: path)
+        })
+        .help("\(path) — previewing; double-click to keep it with its repo")
+        .contextMenu {
+            Button("Keep Open") { state.pinRemoteDoc(sessionID: sessionID, path: path) }
+            Button("Dismiss Preview") { state.dismissPreview() }
         }
     }
 }
@@ -1261,35 +1315,6 @@ private struct RemoteRepoGroup: View {
                     Button("Remove from Sidebar") {
                         state.removeRemoteDoc(sessionID: session.id, path: path)
                     }
-                }
-            }
-            // The one transient entry, when it's this session's — same
-            // italics, same double-click-to-keep as Open Files.
-            if case .remote(let sessionID, let path) = state.preview,
-               sessionID == session.id, !session.docs.contains(path) {
-                RemovableRow(help: "Dismiss Preview",
-                             remove: { state.dismissPreview() }) {
-                    Label {
-                        Text(path)
-                            .italic()
-                            .lineLimit(1)
-                            .truncationMode(.head)
-                    } icon: {
-                        Image(systemName: "doc.text")
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(fonts.row)
-                }
-                .tag(SidebarSelection.remoteDoc(session.id, path))
-                .overlay(DoubleClickCatcher {
-                    state.pinRemoteDoc(sessionID: session.id, path: path)
-                })
-                .help("Previewing — double-click to keep open")
-                .contextMenu {
-                    Button("Keep Open") {
-                        state.pinRemoteDoc(sessionID: session.id, path: path)
-                    }
-                    Button("Dismiss Preview") { state.dismissPreview() }
                 }
             }
             if let tree {
