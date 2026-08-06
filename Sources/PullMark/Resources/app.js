@@ -2434,6 +2434,15 @@
     ta.setSelectionRange(ta.value.length, ta.value.length);
   }
 
+  // The rail bubbles' left offset (layer coordinates): 6px inside the
+  // content's right edge, but never closer than 18px to the viewport's
+  // right edge — a narrow web view puts the content edge AT the viewport
+  // edge, where the macOS overlay scrollbar draws.
+  function railLeft(cRect, tw) {
+    return Math.min(cRect.width - tw - 6,
+                    window.innerWidth - cRect.left - tw - 18);
+  }
+
   // ---- Result-view comment affordances (spec §5) ----
   // Commenting is offered on blocks that map into the PR diff; on blocks
   // that don't, the affordance explains why not instead of vanishing.
@@ -2481,8 +2490,10 @@
         + (el.classList.contains("pm-pending-anchor") ? 1 : 0);
       var tw = tools.getBoundingClientRect().width || 28;
       // The margin rail: the page reserves comment-room padding, so the
-      // bubble aligns across blocks and never overlaps content.
-      tools.style.left = Math.round(cRect.width - tw - 6) + "px";
+      // bubble aligns across blocks and never overlaps content — clamped
+      // clear of the viewport edge, where a narrow web view (sidebar +
+      // outline open) would otherwise put it under the overlay scrollbar.
+      tools.style.left = Math.round(railLeft(cRect, tw)) + "px";
       tools.style.top = Math.round(rect.top - cRect.top + 2 + badges * 28) + "px";
     }
     function show() {
@@ -2760,7 +2771,7 @@
       var cRect = content.getBoundingClientRect();
       var rect = el.getBoundingClientRect();
       var tw = tools.getBoundingClientRect().width || 28;
-      tools.style.left = Math.round(cRect.width - tw - 6) + "px";
+      tools.style.left = Math.round(railLeft(cRect, tw)) + "px";
       tools.style.top = Math.round(rect.top - cRect.top + 2) + "px";
     }
     function show() {
