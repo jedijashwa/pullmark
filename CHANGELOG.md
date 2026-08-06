@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Margin-note and review-comment bubbles in the margin rail now stay
+  clear of the overlay scrollbar when the web view is narrow (sidebar
+  and outline open) — first beta feedback, thanks!
+- Sideways trackpad swipes no longer rubber-band the page: documents
+  never scroll horizontally by design (wide code blocks and tables
+  scroll within themselves), so the page now says so.
+
 ## 0.28.0-beta.1 - 2026-08-06
 
 - **Margin notes (beta)** — leave comments on any local Markdown
