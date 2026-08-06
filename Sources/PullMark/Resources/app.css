@@ -1,3 +1,10 @@
+html {
+  /* The document never scrolls horizontally by design (wide content —
+     tables, code, split diffs — scrolls inside its own container), so a
+     sideways trackpad swipe must not rubber-band the page. Vertical
+     elasticity is untouched. */
+  overscroll-behavior-x: none;
+}
 body {
   margin: 0;
   background: #ffffff;
