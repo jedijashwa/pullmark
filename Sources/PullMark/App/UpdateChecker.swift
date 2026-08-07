@@ -139,26 +139,6 @@ struct UpdateRelease: Decodable, Equatable {
     }
 }
 
-/// Which releases the update checker offers. Stable (the default) sees
-/// only full releases; Beta also sees GitHub prereleases. The channel is
-/// a UserDefaults setting — the release itself is never feature-flagged.
-enum UpdateChannel: String, CaseIterable, Identifiable {
-    case stable, beta
-
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .stable: return "Stable"
-        case .beta: return "Beta"
-        }
-    }
-
-    static func current(from defaults: UserDefaults) -> UpdateChannel {
-        defaults.string(forKey: DefaultsKeys.updateChannel)
-            .flatMap(UpdateChannel.init(rawValue:)) ?? .stable
-    }
-}
-
 /// How the update banner's primary action behaves.
 enum UpdateMethod: Equatable {
     /// The install is brew-managed by `cask`: "Update Now" runs
@@ -294,6 +274,10 @@ final class UpdateChecker: ObservableObject {
     /// Post-update sheet: concatenated notes since the last-run version.
     @Published var showWhatsNew = false
     @Published var whatsNewMarkdown = ""
+    /// Help ▸ Release Notes: the full-history sheet (content fetched on
+    /// demand by the menu action).
+    @Published var showHistory = false
+    @Published var historyMarkdown = ""
     /// The quiet alternative when auto-show is off: "Updated to PullMark
     /// X" with a What's New button and a dismiss — this one can't be
     /// turned off; an update always announces itself somehow.
@@ -342,24 +326,23 @@ final class UpdateChecker: ObservableObject {
 
     // MARK: Update banner
 
-    /// The user's release track, read live so a Settings flip takes
-    /// effect on the next check without a restart.
-    var channel: UpdateChannel { UpdateChannel.current(from: defaults) }
+    /// A running prerelease (the retired beta channel's installs) still
+    /// reads its own history coherently; fresh offers are stable-only.
+    private var runningPrerelease: Bool { SemVer.isPrerelease(currentVersion) }
 
-    /// The newest offerable release for the current channel — semver-max
-    /// of the release list, prereleases included only on beta — plus the
-    /// CONCATENATED notes of every release between the running version
-    /// and it: an update from 0.26 to 0.28 tells the whole story, not
-    /// just the last chapter.
+    /// The newest offerable release — semver-max of the stable releases —
+    /// plus the CONCATENATED notes of every release between the running
+    /// version and it: an update from 0.26 to 0.28 tells the whole
+    /// story, not just the last chapter.
     private func fetchCandidate() async throws -> (release: UpdateRelease, notes: String)? {
         let releases = try await fetch([UpdateRelease].self, from: Self.releaseListURL)
         let candidate = releases
-            .filter { $0.draft != true && (channel == .beta || $0.prerelease != true) }
+            .filter { $0.draft != true && $0.prerelease != true }
             .max { SemVer.compare($0.tagName, $1.tagName) == .orderedAscending }
         guard let candidate else { return nil }
         let span = UpdateRelease.between(releases, after: currentVersion,
                                          upTo: candidate.tagName,
-                                         includePrereleases: channel == .beta)
+                                         includePrereleases: runningPrerelease)
         // Every note carries its version as a heading IN the content —
         // one release or five, the sheet reads the same way.
         let noted = span.isEmpty ? [candidate] : span
@@ -401,12 +384,10 @@ final class UpdateChecker: ObservableObject {
 
     /// Raises the banner for a qualifying release. Internal (not private)
     /// so the dismissal rules stay unit-testable without the network.
-    /// Prereleases qualify only on the beta channel. `notes` carries the
-    /// cumulative story when the update spans several releases; absent,
-    /// the release's own body shows.
+    /// `notes` carries the cumulative story when the update spans
+    /// several releases; absent, the release's own body shows.
     func apply(_ release: UpdateRelease, notes: String? = nil, ignoringDismissal: Bool) {
-        guard release.draft != true,
-              channel == .beta || release.prerelease != true,
+        guard release.draft != true, release.prerelease != true,
               SemVer.isNewer(release.tagName, than: currentVersion) else { return }
         let version = SemVer.normalized(release.tagName)
         if !ignoringDismissal,
@@ -617,8 +598,7 @@ final class UpdateChecker: ObservableObject {
         defaults.set(currentVersion, forKey: Self.lastRunVersionKey)
         guard let releases = try? await fetch([UpdateRelease].self, from: Self.releaseListURL) else { return }
         let relevant = UpdateRelease.between(releases, after: stored, upTo: currentVersion,
-                                             includePrereleases: channel == .beta
-                                                || SemVer.isPrerelease(currentVersion))
+                                             includePrereleases: runningPrerelease)
         guard !relevant.isEmpty else { return }
         whatsNewMarkdown = relevant.map { release in
             "## PullMark \(SemVer.normalized(release.tagName))\n\n" + (release.body ?? "_No notes._")
@@ -628,6 +608,28 @@ final class UpdateChecker: ObservableObject {
         } else {
             updatedBanner = currentVersion
         }
+    }
+
+    // MARK: Release-notes history
+
+    /// Everything published up to (and including) the running version,
+    /// newest first — Help ▸ Release Notes and What's New's "view all".
+    /// Prereleases appear only when the running version is one.
+    func releaseNotesHistory() async -> String? {
+        guard let releases = try? await fetch([UpdateRelease].self, from: Self.releaseListURL)
+        else { return nil }
+        let shown = releases
+            .filter {
+                $0.draft != true
+                    && (runningPrerelease || $0.prerelease != true)
+                    && !SemVer.isNewer($0.tagName, than: currentVersion)
+            }
+            .sorted { SemVer.compare($0.tagName, $1.tagName) == .orderedDescending }
+        guard !shown.isEmpty else { return nil }
+        return shown.map { release in
+            "## PullMark \(SemVer.normalized(release.tagName))\n\n"
+                + (release.body ?? "_No notes._")
+        }.joined(separator: "\n\n---\n\n")
     }
 
     // MARK: Networking

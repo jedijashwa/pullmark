@@ -121,33 +121,20 @@ import Testing
         #expect(checker.availableZipURL == nil)
     }
 
-    @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBannerOnStable() {
+    @Test @MainActor func draftsAndPrereleasesNeverRaiseTheBanner() {
         let checker = makeChecker()
         checker.apply(release("v0.4.0", draft: true), ignoringDismissal: false)
         checker.apply(release("v0.4.0", prerelease: true), ignoringDismissal: false)
         #expect(checker.availableVersion == nil)
     }
 
-    @Test @MainActor func betaChannelOffersPrereleasesButNeverDrafts() {
-        let suite = "pm.tests.updatechecker.beta"
+    @Test @MainActor func aRunningPrereleaseStillTakesTheStablePromotion() {
+        let suite = "pm.tests.updatechecker.pre"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
-        defaults.set(UpdateChannel.beta.rawValue, forKey: DefaultsKeys.updateChannel)
-        let checker = UpdateChecker(currentVersion: "0.0.0", defaults: defaults)
-        checker.apply(release("v0.28.0-beta.1", draft: true, prerelease: true),
-                      ignoringDismissal: false)
-        #expect(checker.availableVersion == nil)
-        checker.apply(release("v0.28.0-beta.1", prerelease: true), ignoringDismissal: false)
-        #expect(checker.availableVersion == "0.28.0-beta.1")
-    }
-
-    @Test @MainActor func betaToStablePromotionRaisesTheBanner() {
-        let suite = "pm.tests.updatechecker.beta2"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        defaults.set(UpdateChannel.beta.rawValue, forKey: DefaultsKeys.updateChannel)
-        // Running the beta, the matching stable release is an update.
-        // 9.9.9 keeps init's automatic check inert: nothing GitHub really
+        // The retired beta channel's installs run prerelease versions;
+        // the matching stable release must offer as an update. 9.9.9
+        // keeps init's automatic check inert: nothing GitHub really
         // hosts can outrank it, so a live fetch can't race the assertion.
         let checker = UpdateChecker(currentVersion: "9.9.9-beta.2", defaults: defaults)
         checker.apply(release("v9.9.9"), ignoringDismissal: false)

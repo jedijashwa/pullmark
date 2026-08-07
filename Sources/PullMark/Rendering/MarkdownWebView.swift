@@ -109,6 +109,9 @@ struct MarkdownWebView: NSViewRepresentable {
     var onPageLoaded: (() -> Void)?
     /// Media clicked for inspection — present the native lightbox.
     var onLightboxRequest: ((LightboxRequest) -> Void)?
+    /// A clicked pullmark:// link (release notes deep-link into the app,
+    /// e.g. pullmark://settings/experimental). Unset, such links no-op.
+    var onAppLink: ((URL) -> Void)?
     /// Optional handle for scrolling / find-in-page from SwiftUI.
     var proxy: WebViewProxy?
     /// False for the Settings theme-preview cards: the web view refuses all
@@ -545,6 +548,11 @@ struct MarkdownWebView: NSViewRepresentable {
                             "That link points to a file that doesn't exist: \(shown)")
                     }
                 }
+                decisionHandler(.cancel)
+                return
+            }
+            if url.scheme == "pullmark" {
+                parent.onAppLink?(url)
                 decisionHandler(.cancel)
                 return
             }

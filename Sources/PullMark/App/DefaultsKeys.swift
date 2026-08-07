@@ -85,9 +85,9 @@ enum DefaultsKeys {
     /// What a single click on a file in a Location does: FolderClickAction
     /// rawValue (absent = preview).
     static let folderClickAction = "pm.folderClickAction"
-    /// Update channel: UpdateChannel rawValue (absent = stable). Beta
-    /// offers GitHub prereleases in the update banner.
-    static let updateChannel = "pm.updateChannel"
+    /// Experimental tab: alpha-level features are listed (absent = off).
+    /// Turning it on confirms the alpha contract first.
+    static let showAlphaFeatures = "pm.showAlphaFeatures"
     /// Locations show hidden files and folders (absent = off). Toggled
     /// from Settings and with Finder's ⇧⌘. — every root rescans on flip.
     static let showHiddenFiles = "pm.showHiddenFiles"

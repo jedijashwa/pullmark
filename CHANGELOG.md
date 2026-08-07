@@ -6,14 +6,57 @@ section current as features land.
 
 ## Unreleased
 
-- What's New reads the same before and after an update: every
-  release's notes carry their version as a heading in the content
-  (the pending-update sheet used to put the version in the title
-  instead).
-- **Settings → Updates → "Show What's New after an update"** — off
-  swaps the automatic sheet for a quiet "Updated to PullMark X"
-  banner with a What's New button and a dismiss. The banner itself
-  can't be turned off: an update always announces itself somehow.
+- **Margin notes** *(experimental, alpha)* — comment on any local
+  Markdown document the way you'd comment on a pull request. Hover a
+  block for the note bubble (select text first to quote it), write in
+  Markdown, and the note saves into the file itself as a plain HTML
+  comment — `<!-- note @you: like this -->` — invisible to GitHub and
+  every other renderer, rendered by PullMark as a bubble pinned to
+  that spot. Built for reviewing documents an agent wrote for you:
+  tell the agent to address the notes and delete them as it goes, and
+  watch the bubbles disappear live. Edit and delete from each bubble,
+  ⌥⌘M notes the block you're reading, Open Files rows carry a count
+  chip, notes render read-only in browsed GitHub files, and they never
+  appear in print or exports. Off by default — turn it on in
+  [Settings → Experimental](pullmark://settings/experimental), where a
+  copy-paste snippet teaches your agent the format. The full spec:
+  [margin notes](https://pullmark.app/docs/experimental/margin-notes/).
+- **An Experimental tab in Settings** — features now land with an
+  honesty label. *Beta* features get a real compatibility effort
+  between versions and are likely to graduate; *alpha* features (like
+  margin notes) carry no guarantees at all. Alpha features stay hidden
+  until you opt in. [How experimental features
+  work](https://pullmark.app/docs/experimental/).
+- **Big repos stopped nagging** — the folder scan now takes up to
+  20,000 Markdown files (was 2,000), and hitting a limit no longer
+  pops a dialog: the quiet note inside the folder's own tree is the
+  single indicator.
+- **Hidden files, when you want them** — Settings → General → "Show
+  hidden files", View → Show Hidden Files, or Finder's own ⇧⌘.
+  (rebindable). Every open Location rescans on the flip, so `.github/`
+  docs appear in place.
+- **Settings, reorganized** — every section now predicts its contents:
+  General reads Reading · Reviewing · Updates · System, the
+  Light/Dark/System picker moved to the top of the Appearance tab, and
+  Experimental got its own tab.
+- **Release notes, wherever you need them** — What's New shows the
+  notes of *every* release between your version and the new one, with
+  versions as headings in the content; **Help → Release Notes** shows
+  the full history up to the version you're running; and What's New
+  can deep-link into the app — like that Settings link above, which
+  closes the sheet and lands on the right tab. Settings offers updates
+  in place when one is already known (What's New · Update Now · check
+  again), and a new option swaps the automatic post-update sheet for a
+  quiet banner.
+- **Help → Report a Bug…** pre-fills the issue form's version and
+  macOS fields.
+- Jumping from the outline (or ⌘K, or an anchor link) highlights the
+  destination instead of flashing every heading it glides past, and
+  sideways trackpad swipes no longer rubber-band the page.
+- The short-lived beta release channel is retired in favor of the
+  Experimental tab — one release train, features labeled by how
+  settled they are. (If you ran a 0.28 beta: thank you — this is the
+  same build you tested, and your settings carry over unchanged.)
 
 ## 0.28.0-beta.5 - 2026-08-07
 

@@ -19,6 +19,9 @@ struct SettingsView: View {
             KeyboardSettingsTab()
                 .tabItem { Label("Keyboard", systemImage: "keyboard") }
                 .tag("keyboard")
+            ExperimentalSettingsTab()
+                .tabItem { Label("Experimental", systemImage: "testtube.2") }
+                .tag("experimental")
         }
         .frame(width: 680)
     }
@@ -36,9 +39,6 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
-    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
-    @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
-    @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
     @AppStorage(DefaultsKeys.autoShowWhatsNew, store: UserDefaults.pullmark) private var autoShowWhatsNew = true
     @State private var updateStatus: String?
@@ -95,23 +95,6 @@ struct GeneralSettingsTab: View {
             }
 
             Section("Updates") {
-            Picker("Update channel:", selection: $updateChannelRaw) {
-                ForEach(UpdateChannel.allCases) { channel in
-                    Text(channel.label).tag(channel.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-            .help("Beta offers pre-release versions with features still being tested")
-            if updateChannelRaw == UpdateChannel.beta.rawValue {
-                // A single literal: concatenation would select Text's
-                // verbatim String initializer and the markdown link
-                // would render as its raw source.
-                Text("Betas ship features whose design is still settling — [about beta features](https://pullmark.app/docs/beta/).")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
             Toggle("Show What's New after an update", isOn: $autoShowWhatsNew)
                 .help("Off shows a quiet banner instead — the notes stay one click away")
 
@@ -251,26 +234,6 @@ struct GeneralSettingsTab: View {
             .help("What pressing space in Finder shows for Markdown files")
             }
 
-            Section("Experimental") {
-            Toggle("Margin notes", isOn: $marginNotesEnabled)
-                .help("Comment on local Markdown documents the way you'd comment on a PR")
-            Text("Notes save into the file itself as <!-- note @you: … --> "
-                + "comments — invisible to every other tool, rendered by "
-                + "PullMark as bubbles, and written so agents can read and "
-                + "act on them. Turning this on adds the authoring tools "
-                + "(hover a block, ⌥⌘M); documents that already contain "
-                + "notes always show them either way. Details: "
-                + "pullmark.app/docs/beta/margin-notes")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            TextField("Sign notes as:", text: $marginNoteAuthor,
-                      prompt: Text(NSUserName()))
-                .disabled(!marginNotesEnabled)
-                .padding(.leading, 20)
-                .help("The @name your notes carry — empty uses your GitHub "
-                    + "login, or this Mac's account name when signed out")
-            }
         }
         .formStyle(.grouped)
         .frame(height: 560)
@@ -301,6 +264,186 @@ struct GeneralSettingsTab: View {
                 updateStatus = "PullMark \(after) is still the newest available."
             }
             checking = false
+        }
+    }
+}
+
+// MARK: - Experimental
+
+/// How settled an experimental feature is. Two levels, one contract
+/// each: beta features get a valiant compatibility effort and are
+/// likely to graduate; alpha features carry no guarantees at all —
+/// they may change incompatibly or disappear.
+enum ExperimentalLevel {
+    case alpha, beta
+
+    var label: String {
+        switch self {
+        case .alpha: return "ALPHA"
+        case .beta: return "BETA"
+        }
+    }
+}
+
+/// The level badge every experimental feature wears.
+struct ExperimentalBadge: View {
+    let level: ExperimentalLevel
+
+    var body: some View {
+        Text(level.label)
+            .font(.system(size: 9, weight: .bold))
+            .kerning(0.6)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(
+                Capsule().fill(level == .alpha
+                    ? Color.orange.opacity(0.22) : Color.purple.opacity(0.18)))
+            .foregroundStyle(level == .alpha ? Color.orange : Color.purple)
+            .accessibilityLabel("\(level.label) experimental feature")
+    }
+}
+
+/// The Experimental tab: the levels contract up top, an alpha
+/// visibility switch (confirmed before it turns on), then every
+/// experimental feature as its own labeled section — with empty states
+/// for "none right now" and "all alpha, alpha hidden".
+struct ExperimentalSettingsTab: View {
+    @AppStorage(DefaultsKeys.showAlphaFeatures, store: UserDefaults.pullmark) private var showAlphaFeatures = false
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
+    @State private var confirmingAlpha = false
+    @State private var copiedSnippet = false
+
+    /// The current roster, by level. Margin notes is the only resident
+    /// today; the empty states below already cover the day it leaves.
+    private static let alphaFeatureCount = 1
+    private static let betaFeatureCount = 0
+
+    var body: some View {
+        Form {
+            Section {
+                // A single literal: concatenation would select Text's
+                // verbatim String initializer and render raw markdown.
+                Text("Features land here before their design is settled. **Beta** features get a real compatibility effort between versions and are likely to graduate. **Alpha** features carry no guarantees: they may change incompatibly, their data formats may not migrate, and they may disappear entirely. [About experimental features](https://pullmark.app/docs/experimental/)")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle("Show alpha features", isOn: alphaBinding)
+            }
+
+            if Self.betaFeatureCount == 0 && !showAlphaFeatures {
+                emptyState(
+                    "Nothing to show at this level",
+                    detail: Self.alphaFeatureCount > 0
+                        ? "Every current experimental feature is alpha — turn on "
+                            + "“Show alpha features” to see \(Self.alphaFeatureCount == 1 ? "it" : "them")."
+                        : "There are no experimental features right now.")
+            }
+
+            if showAlphaFeatures {
+                marginNotesSection
+            }
+        }
+        .formStyle(.grouped)
+        .frame(height: 560)
+        .alert("Show alpha features?", isPresented: $confirmingAlpha) {
+            Button("Show Alpha Features") { showAlphaFeatures = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Alpha features are the frontier: their behavior and data "
+                + "formats may change incompatibly between versions, "
+                + "transitions may not be supported, and a feature may be "
+                + "removed entirely. Use them at your own risk.")
+        }
+    }
+
+    /// The switch itself never flips on directly — the confirmation
+    /// dialog owns that; turning alpha OFF needs no ceremony.
+    private var alphaBinding: Binding<Bool> {
+        Binding(
+            get: { showAlphaFeatures },
+            set: { wanted in
+                if wanted { confirmingAlpha = true } else { showAlphaFeatures = false }
+            }
+        )
+    }
+
+    private func emptyState(_ title: String, detail: String) -> some View {
+        Section {
+            VStack(spacing: 8) {
+                Image(systemName: "testtube.2")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.tertiary)
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 28)
+        }
+    }
+
+    private var marginNotesSection: some View {
+        Section {
+            // Visible whether or not the feature is on: what it is, and
+            // where to read more.
+            Text("Comment on any local Markdown document the way you'd comment on a PR. Notes save into the file itself as `<!-- note @you: … -->` comments — invisible to every other tool, rendered by PullMark as bubbles pinned to their spot, and written so agents can read and act on them. [How margin notes work](https://pullmark.app/docs/experimental/margin-notes/)")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Toggle("Enable margin notes", isOn: $marginNotesEnabled)
+                .help("Adds the authoring tools — hover a block, ⌥⌘M; documents "
+                    + "that already contain notes always show them either way")
+
+            if marginNotesEnabled {
+                TextField("Sign notes as:", text: $marginNoteAuthor,
+                          prompt: Text(NSUserName()))
+                    .help("The @name your notes carry — empty uses your GitHub "
+                        + "login, or this Mac's account name when signed out")
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Using it")
+                        .font(.callout.weight(.semibold))
+                    Text("Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Teach your agent")
+                            .font(.callout.weight(.semibold))
+                        Spacer()
+                        Button(copiedSnippet ? "Copied" : "Copy") {
+                            let pasteboard = NSPasteboard.general
+                            pasteboard.clearContents()
+                            pasteboard.setString(MarginNotes.agentInstructions, forType: .string)
+                            copiedSnippet = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                copiedSnippet = false
+                            }
+                        }
+                        .help("Copies instructions for CLAUDE.md / AGENTS.md — how to "
+                            + "read margin notes and delete them as they're addressed")
+                    }
+                    Text("Paste the copied snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in the file\" becomes a complete handoff — the agent deletes each note as it resolves it, and you watch the bubbles disappear.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        } header: {
+            HStack(spacing: 8) {
+                Text("Margin Notes")
+                ExperimentalBadge(level: .alpha)
+            }
         }
     }
 }

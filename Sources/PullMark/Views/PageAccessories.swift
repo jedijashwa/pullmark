@@ -448,18 +448,34 @@ struct DefaultAppBanner: View {
 }
 
 /// Sheet rendering release-notes Markdown with the app's own renderer.
+/// Web links open in the browser; pullmark://settings/<tab> links close
+/// the sheet and land on that Settings tab. `fullHistory` (when given)
+/// puts a "View All Release Notes" control in the header that swaps the
+/// content for the complete history.
 struct ReleaseNotesSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     let title: String
     let markdown: String
+    var fullHistory: (() async -> String?)? = nil
+
+    @State private var showingAll = false
+    @State private var allMarkdown: String?
+    @State private var loadingAll = false
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(title)
+                Text(showingAll ? "PullMark Release Notes" : title)
                     .font(.headline)
                 Spacer()
+                if fullHistory != nil, !showingAll {
+                    if loadingAll {
+                        ProgressView().controlSize(.small)
+                    }
+                    Button("View All Release Notes") { loadAll() }
+                        .disabled(loadingAll)
+                }
                 Button("Close") { dismiss() }
                     .keyboardShortcut(.cancelAction)
             }
@@ -468,14 +484,38 @@ struct ReleaseNotesSheet: View {
             MarkdownWebView(html: {
                 let style = ThemeSelection.pageStyle(from: themeRaw)
                 return HTMLBuilder.documentPage(
-                    markdown: markdown, title: title,
+                    markdown: showingAll ? (allMarkdown ?? markdown) : markdown,
+                    title: title,
                     theme: style.theme, customCSS: style.customCSS,
                     lineNumberEligible: false // a preview sheet, not a file
                 )
-            }())
+            }(), onAppLink: handleAppLink)
                 .background(ThemePaper.color(for: themeRaw))
         }
         .frame(width: 640, height: 520)
+    }
+
+    private func loadAll() {
+        guard let fullHistory else { return }
+        loadingAll = true
+        Task { @MainActor in
+            if let all = await fullHistory() {
+                allMarkdown = all
+                showingAll = true
+            }
+            loadingAll = false
+        }
+    }
+
+    /// pullmark://settings/<tab>: the sheet yields to the place it
+    /// pointed at — Settings opens on that tab once the dismiss lands.
+    private func handleAppLink(_ url: URL) {
+        guard url.host == "settings" else { return }
+        let tab = url.pathComponents.count > 1 ? url.pathComponents[1] : "general"
+        dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            SettingsOpener.open(tab: tab)
+        }
     }
 }
 

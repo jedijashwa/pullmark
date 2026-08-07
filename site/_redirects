@@ -1,0 +1,2 @@
+/docs/beta/ /docs/experimental/ 301
+/docs/beta/* /docs/experimental/:splat 301

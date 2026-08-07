@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experimental Features — PullMark Docs</title>
+<meta name="description" content="PullMark's experimental features: what alpha and beta levels promise, what's experimental now, and how to opt in.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+        <li><a href="./" aria-current="page">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs / experimental</p>
+      <h1>Experimental features</h1>
+      <p class="article-lede">Some features ship before their design is
+      settled — clearly labeled, off the beaten path, and honest about
+      how settled they are. They live in
+      <strong>Settings&nbsp;→&nbsp;Experimental</strong>, each wearing
+      its level.</p>
+
+      <h2 id="levels">The two levels</h2>
+      <table>
+        <tr><th>Level</th><th>The contract</th></tr>
+        <tr><td><span class="beta-badge">beta</span></td>
+        <td>The design is mostly settled. We make a real effort to keep
+        behavior and data formats compatible between versions, and the
+        feature is likely to graduate out of Experimental — though
+        nothing is guaranteed until it does.</td></tr>
+        <tr><td><span class="beta-badge alpha">alpha</span></td>
+        <td>No guarantees, use at your own risk. Behavior and data
+        formats may change incompatibly between versions — we may
+        support transitioning older formats, or may not — and the
+        feature may be removed entirely. Alpha features stay hidden
+        until you turn on <em>Show alpha features</em>, which explains
+        this contract before it takes effect.</td></tr>
+      </table>
+      <p>Features can move up (alpha → beta → a regular feature), and
+      any experimental feature can be pulled at any level. Release
+      notes always say when either happens.</p>
+
+      <h2 id="whats-experimental">Experimental now</h2>
+      <ul class="doc-cards">
+        <li><a href="margin-notes/">
+          <p class="card-title">Margin Notes <span class="beta-badge alpha">alpha</span></p>
+          <p class="card-sub">Comment on any local Markdown document the
+          way you'd comment on a PR — saved into the file itself, in a
+          format agents can read. Includes the format spec and an
+          instructions snippet for your agent.</p>
+        </a></li>
+      </ul>
+
+      <h2 id="opt-in">Trying them</h2>
+      <p>Open <strong>Settings&nbsp;→&nbsp;Experimental</strong>. Beta
+      features are listed right there; alpha features appear after you
+      turn on <em>Show alpha features</em> and accept what alpha means.
+      Each feature has its own enable switch — nothing experimental is
+      ever on by default.</p>
+
+      <h2 id="feedback">Feedback</h2>
+      <p>Experimental features change <em>because</em> of what early
+      users report.
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Open
+      an issue</a> — Help&nbsp;→&nbsp;Report&nbsp;a&nbsp;Bug… pre-fills
+      your version.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -33,13 +33,13 @@
         <li><a href="../../shortcuts/">Keyboard Shortcuts</a></li>
         <li><a href="../../cli/">Command Line</a></li>
         <li><a href="../../troubleshooting/">Troubleshooting</a></li>
-        <li><a href="../" aria-current="page">Beta Features</a></li>
+        <li><a href="../" aria-current="page">Experimental</a></li>
       </ul>
     </nav>
 
     <article>
       <p class="kicker">docs / beta</p>
-      <h1>Margin notes<span class="beta-badge">beta</span></h1>
+      <h1>Margin notes<span class="beta-badge alpha">alpha</span></h1>
       <p class="article-lede">Comment on any local Markdown document the way
       you'd comment on a pull request — except the comments live in the
       file itself, as plain HTML comments every other tool ignores. Built
@@ -50,12 +50,13 @@
       <h2 id="using">Using them in PullMark</h2>
       <ul>
         <li><strong>Turn them on</strong> — margin notes are an
-        experimental feature, off by default:
-        <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;Experimental&nbsp;→
-        Margin&nbsp;notes</strong>. The switch adds the authoring tools;
-        a document that already contains notes shows its bubbles either
-        way (read-only), so a file annotated by a teammate or an agent
-        never renders as silently empty.</li>
+        <a href="../">alpha experimental feature</a>, off by default:
+        <strong>Settings&nbsp;→&nbsp;Experimental</strong>, turn on
+        <em>Show alpha features</em>, then <em>Enable margin notes</em>.
+        The switch adds the authoring tools; a document that already
+        contains notes shows its bubbles either way (read-only), so a
+        file annotated by a teammate or an agent never renders as
+        silently empty.</li>
         <li><strong>Add a note</strong> — hover any block in a local
         document and click the bubble in the margin (the same gesture as
         commenting on a PR). Select text first and the note opens with the
@@ -78,8 +79,9 @@
         Quick Look, and <strong>View&nbsp;→&nbsp;Hide Margin Notes</strong>
         clears the page when you want to read clean.</li>
         <li><strong>Your signature</strong> — notes are signed
-        <code>@your-github-login</code> by default; change it in
-        Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;Margin&nbsp;Notes.</li>
+        <code>@your-github-login</code> by default; change it under the
+        feature's own switch in
+        Settings&nbsp;→&nbsp;Experimental.</li>
       </ul>
 
       <h2 id="format">The format</h2>
@@ -129,8 +131,9 @@ Requests retry five times with exponential backoff.
       <h2 id="agents">For agents</h2>
       <p>The handoff is zero-protocol: agents read files, and the notes are
       in the file, physically adjacent to the text they're about. Paste
-      this into your <code>CLAUDE.md</code> / <code>AGENTS.md</code> (or
-      just say it):</p>
+      this into your <code>CLAUDE.md</code> / <code>AGENTS.md</code> —
+      Settings&nbsp;→&nbsp;Experimental has a Copy button with the same
+      text (or just say it):</p>
       <pre><code>## Margin notes
 
 Markdown files may contain review notes as HTML comments:
@@ -149,12 +152,14 @@ Don't add notes to code examples inside fenced blocks.</code></pre>
       must never reach a pull request, a CI check is one line —
       <code>grep -rn '&lt;!-- note @' docs/ && exit 1</code>.</p>
 
-      <h2 id="why-beta">Why it's in beta</h2>
-      <p>The mechanics are done; what may still move is the
-      <em>convention</em> — the grammar above becomes a small public
-      format the moment agents learn it, so it gets a beta cycle before
-      it's frozen. If the syntax changes, release notes will say exactly
-      how, and PullMark will keep reading the old shape.
+      <h2 id="why-alpha">Why it's alpha</h2>
+      <p>The mechanics work; everything else is still up for grabs. The
+      grammar becomes a small public format the moment agents learn it,
+      the workflow may not fit flows beyond the one it was designed in,
+      and — per the <a href="../">alpha contract</a> — it may change
+      incompatibly or be removed. If the syntax changes while in alpha,
+      we may support transitioning older files, or may not; release
+      notes will say exactly what happened either way.
       <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Feedback
       welcome</a>.</p>
     </article>

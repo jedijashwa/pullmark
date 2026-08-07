@@ -98,11 +98,17 @@ struct ContentView: View {
             // Version-less on purpose: the notes carry their versions as
             // headings in the content, matching the post-update sheet.
             ReleaseNotesSheet(title: "What's New in PullMark",
-                              markdown: updates.availableNotes)
+                              markdown: updates.availableNotes,
+                              fullHistory: { await updates.releaseNotesHistory() })
         }
         .sheet(isPresented: $updates.showWhatsNew) {
             ReleaseNotesSheet(title: "What's New in PullMark",
-                              markdown: updates.whatsNewMarkdown)
+                              markdown: updates.whatsNewMarkdown,
+                              fullHistory: { await updates.releaseNotesHistory() })
+        }
+        .sheet(isPresented: $updates.showHistory) {
+            ReleaseNotesSheet(title: "PullMark Release Notes",
+                              markdown: updates.historyMarkdown)
         }
         .alert("Something went wrong", isPresented: errorPresented) {
             Button("OK", role: .cancel) {}
