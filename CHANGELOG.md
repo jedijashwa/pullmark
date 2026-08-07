@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.28.0-beta.3 - 2026-08-07
 
 - **Margin notes are now an experimental setting** — off by default,
   switched on in Settings → General → **Experimental**. The toggle
