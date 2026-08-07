@@ -82,6 +82,11 @@ section current as features land.
   DMG), and Settings → General → Update channel keeps you on the
   track you choose. Stable installs never see prereleases.
 
+## 0.27.2 - 2026-08-07
+
+- The update-channel note in Settings is now one sentence with a
+  clickable link to the beta docs.
+
 ## 0.27.1 - 2026-08-07
 
 - **PullMark has a beta channel now** — and this update is how the
