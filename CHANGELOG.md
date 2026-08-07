@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Update Now actually updates now** — the in-app Homebrew upgrade
+  refreshed nothing first, so a stale local tap could "upgrade" you to
+  the version you already had, report success, and relaunch you into
+  the same banner forever. The updater now fast-forwards the tap
+  before upgrading and verifies the version on disk is the one it
+  offered before relaunching — a mismatch is reported instead of
+  looped.
+
 ## 0.28.3 - 2026-08-07
 
 - **Deep links land on the exact setting now** — a

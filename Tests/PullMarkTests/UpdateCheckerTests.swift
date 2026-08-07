@@ -257,6 +257,13 @@ import Testing
             bundlePath: "/Applications/PullMark Helper.app", brewPath: brew))
     }
 
+    @Test func tapPathDerivesFromBrewPrefix() {
+        #expect(BrewUpdate.tapPath(brewPath: "/opt/homebrew/bin/brew")
+            == "/opt/homebrew/Library/Taps/jedijashwa/homebrew-tap")
+        #expect(BrewUpdate.tapPath(brewPath: "/usr/local/bin/brew")
+            == "/usr/local/Library/Taps/jedijashwa/homebrew-tap")
+    }
+
     @Test func commandConstruction() {
         #expect(BrewUpdate.command == "brew upgrade --cask pullmark")
         #expect(BrewUpdate.command(cask: "pullmark@beta") == "brew upgrade --cask pullmark@beta")
