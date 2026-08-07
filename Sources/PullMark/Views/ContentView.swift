@@ -9,6 +9,7 @@ struct ContentView: View {
     /// Observed so the toolbar's shortcut hints follow a rebind.
     @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
+    @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
     @Environment(\.controlActiveState) private var controlActiveState
 
     var body: some View {
@@ -147,6 +148,10 @@ struct ContentView: View {
         .onChange(of: controlActiveState) { active in
             if active == .key { AppState.keyInstance = state }
         }
+        // The show-hidden flip changes what a folder scan even sees —
+        // rebuild every root's tree (Settings toggle, ⇧⌘., or the View
+        // menu all flow through the same stored flag).
+        .onChange(of: showHiddenFiles) { _ in state.rescanAllFolders() }
         // Closing the last window IS the app's default quit path, and the
         // weak keyInstance nils before applicationWillTerminate can use it
         // — snapshot here while this window's state is still alive.
@@ -702,9 +707,11 @@ private struct FolderRootGroup: View {
                 }
             }
             if folder.truncated {
-                Text("Showing the first \(folder.filePaths.count) files")
+                Text("Showing the first \(folder.filePaths.count) Markdown files")
                     .font(fonts.caption)
                     .foregroundStyle(.secondary)
+                    .help("This folder has more Markdown files than PullMark scans — "
+                        + "open a subfolder as its own Location to see the rest")
             }
         } label: {
             rootRow

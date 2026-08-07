@@ -6,6 +6,17 @@ section current as features land.
 
 ## Unreleased
 
+- **Big repos stopped nagging** — the folder scan now takes up to
+  20,000 Markdown files (was 2,000), and hitting a limit no longer
+  pops a dialog — let alone one per file change. The quiet "Showing
+  the first N Markdown files" note inside the folder's own tree is the
+  single indicator, and it should now be rare outside pathological
+  roots.
+- **Hidden files, when you want them** — Settings → General → "Show
+  hidden files", View → Show Hidden Files, or Finder's own ⇧⌘.
+  (rebindable). Every open Location rescans on the flip, so
+  `.github/` docs and friends appear in place. The `.git` store is
+  always skipped.
 - **Settings, reorganized so every section predicts its contents** —
   the Light/Dark/System picker now lives at the top of the Appearance
   tab (its General section collided with the tab's name); General is

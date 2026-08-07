@@ -39,6 +39,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
     @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
+    @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -52,6 +53,9 @@ struct GeneralSettingsTab: View {
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
+
+            Toggle("Show hidden files", isOn: $showHiddenFiles)
+                .help("Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder")
 
             Picker("GitHub Markdown links:", selection: $remoteLinkPolicyRaw) {
                 Text("Ask on first click").tag(RemoteLinkPolicy.ask.rawValue)

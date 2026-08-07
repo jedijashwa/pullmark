@@ -122,6 +122,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
     case reviewChanges, showResolvedConversations
     case addMarginNote, addFileMarginNote, toggleMarginNotes
+    case toggleHiddenFiles
 
     var title: String {
         switch self {
@@ -161,6 +162,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .addMarginNote: return "Add Margin Note"
         case .addFileMarginNote: return "File Margin Note…"
         case .toggleMarginNotes: return "Show/Hide Margin Notes"
+        case .toggleHiddenFiles: return "Show/Hide Hidden Files"
         }
     }
 
@@ -176,7 +178,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
             return "Edit"
         case .toggleOutline, .toggleSource, .reloadDocument,
-             .zoomIn, .zoomOut, .actualSize, .toggleMarginNotes:
+             .zoomIn, .zoomOut, .actualSize, .toggleMarginNotes, .toggleHiddenFiles:
             return "View"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout, .reviewChanges,
              .showResolvedConversations:
@@ -266,6 +268,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .addMarginNote: return KeyCombo(key: "m", command: true, option: true)
         case .addFileMarginNote: return nil
         case .toggleMarginNotes: return nil
+        // Finder's own combo for the same idea — pure muscle memory.
+        case .toggleHiddenFiles: return KeyCombo(key: ".", command: true, shift: true)
         }
     }
 }

@@ -88,6 +88,9 @@ enum DefaultsKeys {
     /// Update channel: UpdateChannel rawValue (absent = stable). Beta
     /// offers GitHub prereleases in the update banner.
     static let updateChannel = "pm.updateChannel"
+    /// Locations show hidden files and folders (absent = off). Toggled
+    /// from Settings and with Finder's ⇧⌘. — every root rescans on flip.
+    static let showHiddenFiles = "pm.showHiddenFiles"
     /// Experimental: margin-note AUTHORING (hover affordance, ⌥⌘M, menu
     /// items, bubble Edit/Delete). Absent = off. Files containing notes
     /// always render them read-only regardless — notes are a
