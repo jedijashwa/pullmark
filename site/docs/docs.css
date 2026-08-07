@@ -207,6 +207,21 @@ article td:first-child { color: var(--ink); white-space: nowrap; }
 .doc-cards .card-sub { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.55; }
 
 /* the "## " kicker, same trick as the front page */
+/* deep links into the app: setting names link to their own row */
+a.setting-link {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--faint);
+}
+a.setting-link:hover { border-bottom-color: var(--ink); }
+.setting-jump {
+  font-size: 13px;
+  text-decoration: none;
+  opacity: 0.45;
+  margin-left: 7px;
+}
+.setting-jump:hover { opacity: 1; }
+
 /* beta badge */
 .beta-badge {
   display: inline-block;

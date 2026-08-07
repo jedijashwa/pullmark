@@ -9,6 +9,8 @@ enum AppLinks {
     /// host/path forms this build can open. Grows with new targets;
     /// entries for retired targets are removed, which is what makes old
     /// notes' links quietly stop being links.
+    /// Tab targets, plus per-setting anchors the tabs can scroll to and
+    /// highlight. Anchor ids mirror the docs pages' spellings.
     static let supported: Set<String> = [
         "settings",
         "settings/general",
@@ -16,6 +18,23 @@ enum AppLinks {
         "settings/keyboard",
         "settings/experimental",
         "settings/experimental/margin-notes",
+        // General
+        "settings/general/restore-session",
+        "settings/general/show-hidden-files",
+        "settings/general/github-links",
+        "settings/general/clicking-files",
+        "settings/general/diff-layout",
+        "settings/general/review-requests",
+        "settings/general/whats-new",
+        "settings/general/check-updates",
+        "settings/general/default-app",
+        "settings/general/command-line",
+        "settings/general/quick-look",
+        // Appearance (stored tab tag: "themes")
+        "settings/themes/appearance-mode",
+        "settings/themes/theme",
+        "settings/themes/content-width",
+        "settings/themes/line-numbers",
     ]
 
     /// Experimental features currently at the ALPHA level — a deep link
@@ -23,8 +42,8 @@ enum AppLinks {
     /// alpha is hidden (a link to the tab alone never does).
     static let alphaFeatures: Set<String> = ["margin-notes"]
 
-    /// Parses a settings deep link: pullmark://settings/<tab>[/<feature>].
-    static func settingsTarget(_ url: URL) -> (tab: String, feature: String?)? {
+    /// Parses a settings deep link: pullmark://settings/<tab>[/<anchor>].
+    static func settingsTarget(_ url: URL) -> (tab: String, anchor: String?)? {
         guard url.scheme == "pullmark", url.host == "settings", isSupported(url)
         else { return nil }
         let parts = url.path.split(separator: "/").map(String.init)

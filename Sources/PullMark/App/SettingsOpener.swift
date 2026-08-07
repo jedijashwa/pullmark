@@ -19,11 +19,14 @@ enum SettingsOpener {
     /// appears empty. A link to the tab itself never prompts.
     static var pendingAlphaPrompt = false
 
-    static func open(tab: String? = nil, feature: String? = nil) {
+    static func open(tab: String? = nil, anchor: String? = nil) {
         if let tab {
             UserDefaults.pullmark.set(tab, forKey: DefaultsKeys.settingsTab)
-            if let feature, AppLinks.alphaFeatures.contains(feature) {
-                pendingAlphaPrompt = true
+            if let anchor {
+                SettingsAnchorFocus.shared.pending = anchor
+                if AppLinks.alphaFeatures.contains(anchor) {
+                    pendingAlphaPrompt = true
+                }
             }
         }
         NSApp.activate(ignoringOtherApps: true)

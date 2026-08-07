@@ -4,6 +4,14 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Deep links land on the exact setting now** — a
+  `pullmark://settings/<tab>/<setting>` link scrolls the Settings
+  window to that row and flashes it. The docs site's Settings page
+  uses them everywhere: every setting name is now a link that opens
+  its own row in the app.
+
 ## 0.28.2 - 2026-08-07
 
 - A release-notes or website link to Settings now brings the Settings

@@ -17,7 +17,7 @@ enum AppLinkRouter {
         lastURL = url
         lastAt = now
         if let target = AppLinks.settingsTarget(url) {
-            SettingsOpener.open(tab: target.tab, feature: target.feature)
+            SettingsOpener.open(tab: target.tab, anchor: target.anchor)
         } else {
             presentUnsupported(url)
         }
