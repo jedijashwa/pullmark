@@ -223,6 +223,12 @@ struct GeneralSettingsTab: View {
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    // A single literal: concatenation would select Text's
+                    // verbatim String initializer and render raw markdown.
+                    Text("Open files, folders, and worktrees from the shell — [about the pullmark command](https://pullmark.app/docs/cli/).")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
