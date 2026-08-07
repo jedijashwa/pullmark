@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.28.2 - 2026-08-07
 
 - A release-notes or website link to Settings now brings the Settings
   window to the front even when it was already open behind another
