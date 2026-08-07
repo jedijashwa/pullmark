@@ -91,6 +91,10 @@ enum DefaultsKeys {
     /// Locations show hidden files and folders (absent = off). Toggled
     /// from Settings and with Finder's ⇧⌘. — every root rescans on flip.
     static let showHiddenFiles = "pm.showHiddenFiles"
+    /// Present the What's New sheet automatically after an update
+    /// (absent = on). Off swaps in a quiet banner with a What's New
+    /// button — the announcement itself can't be disabled.
+    static let autoShowWhatsNew = "pm.autoShowWhatsNew"
     /// Experimental: margin-note AUTHORING (hover affordance, ⌥⌘M, menu
     /// items, bubble Edit/Delete). Absent = off. Files containing notes
     /// always render them read-only regardless — notes are a

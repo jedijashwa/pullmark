@@ -40,6 +40,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
     @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
+    @AppStorage(DefaultsKeys.autoShowWhatsNew, store: UserDefaults.pullmark) private var autoShowWhatsNew = true
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -110,6 +111,9 @@ struct GeneralSettingsTab: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Toggle("Show What's New after an update", isOn: $autoShowWhatsNew)
+                .help("Off shows a quiet banner instead — the notes stay one click away")
 
             LabeledContent("Updates:") {
                 // Trailing-aligned: the status line appearing must not widen
@@ -280,10 +284,8 @@ struct GeneralSettingsTab: View {
             updates.detectUpdateMethodIfNeeded()
         }
         .sheet(isPresented: $showAvailableNotes) {
-            ReleaseNotesSheet(
-                title: "What's New in PullMark \(updates.availableVersion ?? "")",
-                markdown: updates.availableNotes
-            )
+            ReleaseNotesSheet(title: "What's New in PullMark",
+                              markdown: updates.availableNotes)
         }
     }
 

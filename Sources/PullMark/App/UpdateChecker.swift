@@ -294,6 +294,10 @@ final class UpdateChecker: ObservableObject {
     /// Post-update sheet: concatenated notes since the last-run version.
     @Published var showWhatsNew = false
     @Published var whatsNewMarkdown = ""
+    /// The quiet alternative when auto-show is off: "Updated to PullMark
+    /// X" with a What's New button and a dismiss — this one can't be
+    /// turned off; an update always announces itself somehow.
+    @Published var updatedBanner: String?
     /// How the banner's primary action behaves; nil while still probing brew.
     @Published var updateMethod: UpdateMethod?
     /// In-banner update lifecycle; `updating`'s text is the progress phase
@@ -356,8 +360,10 @@ final class UpdateChecker: ObservableObject {
         let span = UpdateRelease.between(releases, after: currentVersion,
                                          upTo: candidate.tagName,
                                          includePrereleases: channel == .beta)
-        guard span.count > 1 else { return (candidate, candidate.body ?? "") }
-        let notes = span.map { release in
+        // Every note carries its version as a heading IN the content —
+        // one release or five, the sheet reads the same way.
+        let noted = span.isEmpty ? [candidate] : span
+        let notes = noted.map { release in
             "## PullMark \(SemVer.normalized(release.tagName))\n\n"
                 + (release.body ?? "_No notes._")
         }.joined(separator: "\n\n---\n\n")
@@ -617,7 +623,11 @@ final class UpdateChecker: ObservableObject {
         whatsNewMarkdown = relevant.map { release in
             "## PullMark \(SemVer.normalized(release.tagName))\n\n" + (release.body ?? "_No notes._")
         }.joined(separator: "\n\n---\n\n")
-        showWhatsNew = true
+        if (defaults.object(forKey: DefaultsKeys.autoShowWhatsNew) as? Bool) ?? true {
+            showWhatsNew = true
+        } else {
+            updatedBanner = currentVersion
+        }
     }
 
     // MARK: Networking

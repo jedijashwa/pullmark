@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- What's New reads the same before and after an update: every
+  release's notes carry their version as a heading in the content
+  (the pending-update sheet used to put the version in the title
+  instead).
+- **Settings → Updates → "Show What's New after an update"** — off
+  swaps the automatic sheet for a quiet "Updated to PullMark X"
+  banner with a What's New button and a dismiss. The banner itself
+  can't be turned off: an update always announces itself somehow.
+
 ## 0.28.0-beta.5 - 2026-08-07
 
 - Jumping from the outline (or ⌘K, or an anchor link) no longer

@@ -376,6 +376,38 @@ struct AppUpdateBanner: View {
     }
 }
 
+/// The quiet post-update announcement (Settings can turn off the
+/// automatic What's New sheet, never the announcement): the version
+/// that just arrived, its notes one click away, and a dismiss.
+struct UpdatedBanner: View {
+    @EnvironmentObject private var updates: UpdateChecker
+
+    var body: some View {
+        if let version = updates.updatedBanner {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                Text("Updated to PullMark \(version).")
+                Button("What's New") {
+                    updates.updatedBanner = nil
+                    updates.showWhatsNew = true
+                }
+                Spacer()
+                Button {
+                    updates.updatedBanner = nil
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help("Dismiss")
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.blue.opacity(0.15))
+        }
+    }
+}
+
 /// Banner shown when the user had made PullMark the default Markdown app and
 /// Launch Services lost the binding (typically after a brew upgrade replaced
 /// the bundle on disk). Dismissing clears the claim so it never nags.
