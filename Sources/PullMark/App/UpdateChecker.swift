@@ -315,10 +315,8 @@ final class UpdateChecker: ObservableObject {
 
     private static let dismissedVersionKey = DefaultsKeys.dismissedUpdateVersion
     private static let lastRunVersionKey = DefaultsKeys.lastRunVersion
-    private static let latestReleaseURL =
-        URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases/latest")!
     private static let releaseListURL =
-        URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases?per_page=20")!
+        URL(string: "https://api.github.com/repos/jedijashwa/pullmark/releases?per_page=50")!
 
     init(currentVersion: String? = nil, defaults: UserDefaults = .pullmark) {
         self.currentVersion = currentVersion
@@ -344,18 +342,26 @@ final class UpdateChecker: ObservableObject {
     /// effect on the next check without a restart.
     var channel: UpdateChannel { UpdateChannel.current(from: defaults) }
 
-    /// The newest offerable release for the current channel: the stable
-    /// channel asks GitHub's `releases/latest` (which excludes
-    /// prereleases by design); the beta channel scans the release list
-    /// and takes the semver-max including prereleases.
-    private func fetchCandidate() async throws -> UpdateRelease? {
-        guard channel == .beta else {
-            return try await fetch(UpdateRelease.self, from: Self.latestReleaseURL)
-        }
+    /// The newest offerable release for the current channel — semver-max
+    /// of the release list, prereleases included only on beta — plus the
+    /// CONCATENATED notes of every release between the running version
+    /// and it: an update from 0.26 to 0.28 tells the whole story, not
+    /// just the last chapter.
+    private func fetchCandidate() async throws -> (release: UpdateRelease, notes: String)? {
         let releases = try await fetch([UpdateRelease].self, from: Self.releaseListURL)
-        return releases
-            .filter { $0.draft != true }
+        let candidate = releases
+            .filter { $0.draft != true && (channel == .beta || $0.prerelease != true) }
             .max { SemVer.compare($0.tagName, $1.tagName) == .orderedAscending }
+        guard let candidate else { return nil }
+        let span = UpdateRelease.between(releases, after: currentVersion,
+                                         upTo: candidate.tagName,
+                                         includePrereleases: channel == .beta)
+        guard span.count > 1 else { return (candidate, candidate.body ?? "") }
+        let notes = span.map { release in
+            "## PullMark \(SemVer.normalized(release.tagName))\n\n"
+                + (release.body ?? "_No notes._")
+        }.joined(separator: "\n\n---\n\n")
+        return (candidate, notes)
     }
 
     /// Launch/periodic check: shows the banner unless this version was
@@ -364,8 +370,8 @@ final class UpdateChecker: ObservableObject {
         // Demo launches (PM_DEMO=1) are offline and screenshot-bound —
         // no update fetch, no banner.
         guard !DemoMode.active, currentVersion != "0.0.0" else { return }
-        guard let release = try? await fetchCandidate() else { return }
-        apply(release, ignoringDismissal: false)
+        guard let candidate = try? await fetchCandidate() else { return }
+        apply(candidate.release, notes: candidate.notes, ignoringDismissal: false)
     }
 
     /// Menu-driven check. Returns a user-facing message when there is
@@ -376,9 +382,9 @@ final class UpdateChecker: ObservableObject {
             return "This is a development build, so update checks are disabled."
         }
         do {
-            if let release = try await fetchCandidate(),
-               SemVer.isNewer(release.tagName, than: currentVersion) {
-                apply(release, ignoringDismissal: true)
+            if let candidate = try await fetchCandidate(),
+               SemVer.isNewer(candidate.release.tagName, than: currentVersion) {
+                apply(candidate.release, notes: candidate.notes, ignoringDismissal: true)
                 return nil
             }
             return "You're up to date — PullMark \(currentVersion) is the latest version."
@@ -389,8 +395,10 @@ final class UpdateChecker: ObservableObject {
 
     /// Raises the banner for a qualifying release. Internal (not private)
     /// so the dismissal rules stay unit-testable without the network.
-    /// Prereleases qualify only on the beta channel.
-    func apply(_ release: UpdateRelease, ignoringDismissal: Bool) {
+    /// Prereleases qualify only on the beta channel. `notes` carries the
+    /// cumulative story when the update spans several releases; absent,
+    /// the release's own body shows.
+    func apply(_ release: UpdateRelease, notes: String? = nil, ignoringDismissal: Bool) {
         guard release.draft != true,
               channel == .beta || release.prerelease != true,
               SemVer.isNewer(release.tagName, than: currentVersion) else { return }
@@ -400,7 +408,7 @@ final class UpdateChecker: ObservableObject {
             return
         }
         availableVersion = version
-        availableNotes = release.body ?? ""
+        availableNotes = notes ?? release.body ?? ""
         availableURL = release.htmlUrl
         availableZipURL = release.zipAssetURL
     }
