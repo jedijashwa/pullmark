@@ -4,6 +4,23 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Settings, reorganized so every section predicts its contents** —
+  the Light/Dark/System picker now lives at the top of the Appearance
+  tab (its General section collided with the tab's name); General is
+  now Reading, Reviewing, Updates, System, and Experimental, with
+  Quick Look filed under System where the integrations live and the
+  update controls promoted out of System into their own section.
+- **Updates meet you where you are** — when an update is already
+  known, Settings shows What's New (right there, not a pointer at the
+  main window), Update Now, and a refresh button that looks for
+  something even newer; progress and failures show inline.
+- **What's New tells the whole story** — the update offer now shows
+  the notes of every release between your version and the new one,
+  not just the newest: updating from 0.26 straight to 0.28 includes
+  what 0.27 changed.
+
 ## 0.28.0-beta.3 - 2026-08-07
 
 - **Margin notes are now an experimental setting** — off by default,
