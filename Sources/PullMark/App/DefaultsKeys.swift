@@ -88,6 +88,12 @@ enum DefaultsKeys {
     /// Update channel: UpdateChannel rawValue (absent = stable). Beta
     /// offers GitHub prereleases in the update banner.
     static let updateChannel = "pm.updateChannel"
+    /// Experimental: margin-note AUTHORING (hover affordance, ⌥⌘M, menu
+    /// items, bubble Edit/Delete). Absent = off. Files containing notes
+    /// always render them read-only regardless — notes are a
+    /// collaboration format, and silently showing nothing would be the
+    /// worst outcome for the receiving side.
+    static let marginNotesEnabled = "pm.marginNotesEnabled"
     /// Author handle written into margin notes ("josh" in
     /// `<!-- note @josh: … -->`). Absent = GitHub login, then macOS
     /// username.

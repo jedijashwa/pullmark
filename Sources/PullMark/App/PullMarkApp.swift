@@ -48,6 +48,7 @@ struct PullMarkApp: App {
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -290,13 +291,19 @@ struct PullMarkApp: App {
                 Divider()
                 Button("Add Margin Note") { state?.send(.addMarginNote) }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .addMarginNote))
-                    .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
-                    .help("Leave a note on the block you're reading — it's saved into the "
-                        + "file as a <!-- note --> comment")
+                    .disabled(!marginNotesEnabled || activeLocalFileURL == nil
+                        || state?.sourceViewVisible == true)
+                    .help(marginNotesEnabled
+                        ? "Leave a note on the block you're reading — it's saved into the "
+                            + "file as a <!-- note --> comment"
+                        : "Turn on margin notes in Settings → General → Experimental")
                 Button("File Margin Note…") { state?.send(.addFileMarginNote) }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .addFileMarginNote))
-                    .disabled(activeLocalFileURL == nil || state?.sourceViewVisible == true)
-                    .help("Leave a note about the whole document, at the top")
+                    .disabled(!marginNotesEnabled || activeLocalFileURL == nil
+                        || state?.sourceViewVisible == true)
+                    .help(marginNotesEnabled
+                        ? "Leave a note about the whole document, at the top"
+                        : "Turn on margin notes in Settings → General → Experimental")
             }
             CommandGroup(replacing: .help) {
                 Button("PullMark Website") {
@@ -304,7 +311,15 @@ struct PullMarkApp: App {
                 }
                 Divider()
                 Button("Report a Bug…") {
-                    open("https://github.com/jedijashwa/pullmark/issues/new?template=1-bug_report.yml")
+                    // The form's version and macOS fields arrive filled in —
+                    // the app knows both better than the reporter does.
+                    let version = Bundle.main.object(
+                        forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+                    let macOS = BugReport.macOSVersionString(
+                        ProcessInfo.processInfo.operatingSystemVersion)
+                    if let url = BugReport.url(version: version, macOSVersion: macOS) {
+                        NSWorkspace.shared.open(url)
+                    }
                 }
                 Button("Request a Feature…") {
                     open("https://github.com/jedijashwa/pullmark/issues/new?template=2-feature_request.yml")

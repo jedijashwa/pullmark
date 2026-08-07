@@ -24,6 +24,7 @@ struct LocalFileView: View {
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
@@ -261,6 +262,11 @@ struct LocalFileView: View {
     /// write — all three bail to a notice instead of half-working.
     private func openNoteComposer(fileLevel: Bool) {
         guard compare == nil, !state.sourceViewVisible else { return }
+        guard marginNotesEnabled else {
+            state.lastNotice = "Margin notes are off — turn them on in "
+                + "Settings → General → Experimental."
+            return
+        }
         guard marginNotesVisible else {
             state.lastNotice = "Margin notes are hidden — choose View → Show Margin Notes first."
             return
@@ -457,6 +463,9 @@ struct LocalFileView: View {
                                           theme: style.theme,
                                           customCSS: style.customCSS)
         }
+        // Bubbles render whenever the file carries notes (correct
+        // rendering of the file's content); the experimental switch gates
+        // only the authoring chrome — affordances and Edit/Delete.
         let notes = marginNotesVisible
             ? MarginNotePayload.payloads(from: MarginNotes.parse(currentText)) : []
         return HTMLBuilder.documentPage(markdown: currentText,
@@ -468,7 +477,7 @@ struct LocalFileView: View {
                                         blame: blameVisible ? blamePayloads : nil,
                                         blameNote: blameVisible ? blameNote : nil,
                                         marginNotes: notes,
-                                        noteAuthoring: marginNotesVisible)
+                                        noteAuthoring: marginNotesVisible && marginNotesEnabled)
     }
 
     /// Block-editor apply: edit-mode commits write straight to disk — the

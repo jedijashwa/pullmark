@@ -4,6 +4,20 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Margin notes are now an experimental setting** — off by default,
+  switched on in Settings → General → **Experimental**. The toggle
+  gates the authoring tools (the hover bubble, ⌥⌘M, the Edit-menu
+  items, Edit/Delete on bubbles); documents that already contain notes
+  always render them, so a file annotated by a teammate or an agent
+  never shows you nothing. This is the shape margin notes will keep
+  when they reach the stable channel: the beta settles the format, the
+  experimental switch lets you decide whether the workflow is for you.
+- **Help → Report a Bug…** now pre-fills the version and macOS fields
+  of the issue form — the app knows both better than you do, and it
+  matters more now that beta and stable versions coexist.
+
 ## 0.28.0-beta.2 - 2026-08-06
 
 - Margin-note and review-comment bubbles in the margin rail now stay
