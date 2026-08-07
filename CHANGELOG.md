@@ -40,6 +40,19 @@ section current as features land.
   DMG), and Settings → General → Update channel keeps you on the
   track you choose. Stable installs never see prereleases.
 
+## 0.27.1 - 2026-08-07
+
+- **PullMark has a beta channel now** — and this update is how the
+  stable channel finds out. Settings → General → **Update channel:
+  Beta** makes the update banner offer pre-release versions; Stable
+  (the default) never sees them. Betas are signed and notarized like
+  any release — what's "beta" is the feature design, which may still
+  shift with feedback.
+- First up on the channel: **margin notes** — comment on any local
+  Markdown document the way you'd comment on a PR, saved into the file
+  itself in a format agents can read and act on. The whole story:
+  [pullmark.app/docs/beta](https://pullmark.app/docs/beta/).
+
 ## 0.27.0 - 2026-08-06
 
 - **Open Files, with previews** — the Files section is now Open Files:
