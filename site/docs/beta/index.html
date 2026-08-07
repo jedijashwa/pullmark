@@ -57,20 +57,22 @@
       </ul>
 
       <h2 id="opt-in">Getting the beta</h2>
-      <p>With Homebrew, the beta is its own cask (the two conflict on
-      purpose — they install the same app):</p>
+      <p>In PullMark 0.27.1 or later, flip
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→ Update&nbsp;channel</strong>
+      to <em>Beta</em> — the update banner then offers the newest release
+      of either kind, and Check for Updates… will bring you the current
+      beta right away. Switching back to <em>Stable</em> quietly rides you
+      onto stable at the next ordinary release. Stable-channel installs
+      never see pre-releases — GitHub's own <code>releases/latest</code>
+      excludes them, so nothing beta can reach the stable channel by
+      accident.</p>
+      <p>Prefer Homebrew to manage it? The beta is its own cask (the two
+      conflict on purpose — they install the same app):</p>
       <pre><code>brew uninstall --cask pullmark   <span class="c"># if the stable cask is installed</span>
 brew install --cask jedijashwa/tap/pullmark@beta</code></pre>
-      <p>Without Homebrew, download the latest pre-release DMG from
+      <p>Or download the latest pre-release DMG from
       <a href="https://github.com/jedijashwa/pullmark/releases">GitHub
       releases</a> — betas are marked <em>Pre-release</em> there.</p>
-      <p>Once you're on a beta, <strong>Settings&nbsp;→&nbsp;General&nbsp;→
-      Update&nbsp;channel</strong> controls what the update banner offers:
-      <em>Beta</em> keeps you on the newest release of either kind, and
-      <em>Stable</em> quietly rides you back onto stable at the next
-      ordinary release. Stable installs never see pre-releases — GitHub's
-      own <code>releases/latest</code> excludes them, so nothing beta can
-      reach the stable channel by accident.</p>
 
       <h2 id="going-back">Going back to stable</h2>
       <p>Set the update channel to <em>Stable</em> and the next stable
