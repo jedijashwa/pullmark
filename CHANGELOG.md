@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.28.0-beta.4 - 2026-08-07
 
 - **Big repos stopped nagging** — the folder scan now takes up to
   20,000 Markdown files (was 2,000), and hitting a limit no longer
