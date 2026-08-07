@@ -297,6 +297,10 @@ final class UpdateChecker: ObservableObject {
     /// "0.0.0" for dev builds (`swift run`), which never prompt.
     let currentVersion: String
 
+    /// The app's one instance, for contexts outside the SwiftUI tree
+    /// (the unsupported-deep-link alert). Weak: the scene owns it.
+    static private(set) weak var shared: UpdateChecker?
+
     private let session = URLSession(configuration: .ephemeral)
     private let defaults: UserDefaults
     private var timer: Timer?
@@ -311,6 +315,7 @@ final class UpdateChecker: ObservableObject {
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "0.0.0"
         self.defaults = defaults
+        Self.shared = self
         timer = Timer.scheduledTimer(withTimeInterval: 6 * 60 * 60, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.checkAutomatically() }
         }
@@ -379,6 +384,22 @@ final class UpdateChecker: ObservableObject {
             return "You're up to date — PullMark \(currentVersion) is the latest version."
         } catch {
             return "Could not check for updates: \(error.localizedDescription)"
+        }
+    }
+
+    /// The menu-item behavior in callable form: checks, and when there
+    /// is nothing to show (up to date, dev build, failure) says so in an
+    /// alert — shared by Help-menu checks and the unsupported-deep-link
+    /// dialog's "Check for Updates" button.
+    func checkManuallyPresentingResult() {
+        Task { @MainActor in
+            if let message = await checkManually() {
+                let alert = NSAlert()
+                alert.messageText = "Check for Updates"
+                alert.informativeText = message
+                NSApp.activate(ignoringOtherApps: true)
+                alert.runModal()
+            }
         }
     }
 
