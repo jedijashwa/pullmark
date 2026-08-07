@@ -317,12 +317,12 @@ struct AppUpdateBanner: View {
                     Text("Update failed: \(message)")
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    if case .brew = updates.updateMethod {
-                        Text(BrewUpdate.command)
+                    if case .brew(_, let cask) = updates.updateMethod {
+                        Text(BrewUpdate.command(cask: cask))
                             .font(.callout.monospaced())
                             .textSelection(.enabled)
                         Button("Copy") { updates.copyBrewCommand() }
-                            .help("Copies “\(BrewUpdate.command)” to the clipboard")
+                            .help("Copies “\(BrewUpdate.command(cask: cask))” to the clipboard")
                     } else {
                         Button("Open Release Page") { updates.openReleasePage() }
                             .help("Opens the release page on GitHub to update manually")
@@ -355,11 +355,15 @@ struct AppUpdateBanner: View {
     /// install method is still being probed. "Download" for dev builds.
     @ViewBuilder private var primaryButton: some View {
         switch updates.updateMethod {
-        case .brew, nil:
+        case .brew(_, let cask):
             Button("Update Now") { updates.updateNow() }
                 .buttonStyle(.borderedProminent)
-                .disabled(updates.updateMethod == nil)
-                .help("Runs “\(BrewUpdate.command)” and relaunches PullMark")
+                .help("Runs “\(BrewUpdate.command(cask: cask))” and relaunches PullMark")
+        case nil:
+            Button("Update Now") { updates.updateNow() }
+                .buttonStyle(.borderedProminent)
+                .disabled(true)
+                .help("Determining how this copy was installed…")
         case .selfUpdate:
             Button("Update Now") { updates.updateNow() }
                 .buttonStyle(.borderedProminent)

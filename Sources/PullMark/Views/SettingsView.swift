@@ -37,6 +37,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
+    @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
     @State private var updateStatus: String?
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
@@ -163,6 +164,22 @@ struct GeneralSettingsTab: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+            }
+
+            Picker("Update channel:", selection: $updateChannelRaw) {
+                ForEach(UpdateChannel.allCases) { channel in
+                    Text(channel.label).tag(channel.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .help("Beta offers pre-release versions with features still being tested")
+            if updateChannelRaw == UpdateChannel.beta.rawValue {
+                Text("Beta versions are signed and notarized like any release, but "
+                    + "their features are still settling — see pullmark.app/docs/beta. "
+                    + "The update banner will offer the newest beta from here on.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             LabeledContent("Updates:") {

@@ -85,6 +85,9 @@ enum DefaultsKeys {
     /// What a single click on a file in a Location does: FolderClickAction
     /// rawValue (absent = preview).
     static let folderClickAction = "pm.folderClickAction"
+    /// Update channel: UpdateChannel rawValue (absent = stable). Beta
+    /// offers GitHub prereleases in the update banner.
+    static let updateChannel = "pm.updateChannel"
 
     static let sidebarLocalExpanded = "pm.sidebar.localExpanded"
     static let sidebarFoldersExpanded = "pm.sidebar.foldersExpanded"
