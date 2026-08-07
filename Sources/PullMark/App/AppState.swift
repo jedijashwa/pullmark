@@ -1050,6 +1050,12 @@ final class AppState: ObservableObject {
             guard let self else { return }
             await MainActor.run {
                 guard let index = self.folders.firstIndex(where: { $0.rootURL == root }) else { return }
+                // Only the initial add-time scan may speak up: watcher
+                // rescans repeat for every change in the folder, and a
+                // notice that re-fires per rescan is a nag, not a notice.
+                // Truncation never alerts at all — the tree's own footer
+                // row carries that fact quietly and persistently.
+                let initialScan = self.folders[index].scanning
                 self.folders[index].scanning = false
                 if exists {
                     // A returned root revives with fresh contents.
@@ -1058,11 +1064,8 @@ final class AppState: ObservableObject {
                     self.folders[index].filePaths = nodes.flatMap(PathTree.leafPaths)
                     self.folders[index].truncated = scan.truncated
                     self.folders[index].git = git
-                    if scan.paths.isEmpty {
+                    if initialScan, scan.paths.isEmpty {
                         self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
-                    } else if scan.truncated {
-                        self.lastNotice = "Showing the first \(Self.folderFileLimit) Markdown files in "
-                            + "\(root.lastPathComponent)."
                     }
                 } else {
                     // The root vanished (unmounted volume, deleted
@@ -1070,6 +1073,15 @@ final class AppState: ObservableObject {
                     self.folders[index].missing = true
                 }
             }
+        }
+    }
+
+    /// Re-walks every live root — the show-hidden-files flip changes what
+    /// a scan even sees, so all trees rebuild. Quiet by design: these are
+    /// not add-time scans, so no notices fire.
+    func rescanAllFolders() {
+        for folder in folders where !folder.missing {
+            rescanFolder(root: folder.rootURL)
         }
     }
 
@@ -1116,25 +1128,37 @@ final class AppState: ObservableObject {
         }
     }
 
-    nonisolated private static let folderFileLimit = 2000
+    /// Generous for real repos — the tree renders per-expansion, ⌘K
+    /// matches this many paths in milliseconds, and truncating a
+    /// monorepo at 2000 turned the cap into a nag. The caps that remain
+    /// are tripwires for pathological roots (opening ~ or /), not
+    /// working limits.
+    nonisolated private static let folderFileLimit = 20_000
+    nonisolated private static let folderVisitLimit = 250_000
 
     /// Full background enumeration per root. The spec sketched lazy
     /// per-disclosure scanning, but empty-directory pruning and the
     /// ⌘K/⇧⌘F completeness rule need the full walk anyway — one scan
     /// with a generous cap keeps every guarantee with less machinery.
     nonisolated private static func scanFolderTree(root: URL) -> (paths: [String], truncated: Bool) {
-        let skippedDirectories: Set<String> = ["node_modules", "vendor", ".build", "dist"]
+        // .git is unconditional: invisible while hidden files are off,
+        // but a raw object store the walker must never descend into
+        // once they're on.
+        let skippedDirectories: Set<String> = ["node_modules", "vendor", ".build", "dist", ".git"]
+        let showHidden = UserDefaults.pullmark.bool(forKey: DefaultsKeys.showHiddenFiles)
+        var options: FileManager.DirectoryEnumerationOptions = [.skipsPackageDescendants]
+        if !showHidden { options.insert(.skipsHiddenFiles) }
         guard let enumerator = FileManager.default.enumerator(
             at: root,
             includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            options: options
         ) else { return ([], false) }
 
         var paths: [String] = []
         var visited = 0
         for case let url as URL in enumerator {
             visited += 1
-            if visited > 50_000 { return (paths, true) }
+            if visited > folderVisitLimit { return (paths, true) }
             if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
                 if skippedDirectories.contains(url.lastPathComponent) {
                     enumerator.skipDescendants()
@@ -1457,8 +1481,8 @@ final class AppState: ObservableObject {
             if let i = remoteSessions.firstIndex(where: { $0.id == sessionID }) {
                 // Same visible cap as local folder scans, and GitHub itself
                 // truncates giant trees — either way the UI says so.
-                remoteSessions[i].treePaths = Array(paths.prefix(2000))
-                remoteSessions[i].treeTruncated = truncated || paths.count > 2000
+                remoteSessions[i].treePaths = Array(paths.prefix(Self.folderFileLimit))
+                remoteSessions[i].treeTruncated = truncated || paths.count > Self.folderFileLimit
             }
         } catch {
             lastError = Self.remoteFailureMessage(error, what: sessionID)

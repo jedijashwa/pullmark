@@ -49,6 +49,7 @@ struct PullMarkApp: App {
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -364,6 +365,11 @@ struct PullMarkApp: App {
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleMarginNotes))
                 .help("Margin-note bubbles (<!-- note --> comments) in rendered documents")
+                Button(showHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                    showHiddenFiles.toggle()
+                }
+                .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleHiddenFiles))
+                .help("Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder")
                 Divider()
                 // Zoom sits below the show/hide cluster with Actual Size
                 // first — the Safari/Preview View-menu convention.
