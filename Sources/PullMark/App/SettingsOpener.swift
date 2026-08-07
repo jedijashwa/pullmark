@@ -29,11 +29,17 @@ enum SettingsOpener {
         NSApp.activate(ignoringOtherApps: true)
         if let modern {
             modern()
-            return
-        }
-        // Ventura renamed the selector; try the modern one first.
-        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+        } else if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            // Ventura renamed the selector; the old name is the fallback.
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+        // Neither path re-orders a Settings window that already exists
+        // behind the main window — find it (next runloop turn, so a
+        // freshly created one is there too) and bring it forward.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            NSApp.windows.first {
+                $0.identifier?.rawValue.contains("Settings") == true
+            }?.makeKeyAndOrderFront(nil)
         }
     }
 }
