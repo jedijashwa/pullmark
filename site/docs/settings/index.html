@@ -51,23 +51,23 @@
       <h3>Reading</h3>
       <table>
         <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
-        <tr><td>Restore files and pull requests from the last session</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Open this setting in PullMark (0.28.3+)">Restore files and pull requests from the last session</a></td>
           <td>on/off — <em>on</em></td>
           <td>Reopens what was in the sidebar when PullMark last quit —
           files, folders, PRs, browsed repos, and the preview entry (still
           as a preview).</td></tr>
-        <tr><td>Show hidden files</td><td>on/off — <em>off</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Open this setting in PullMark (0.28.3+)">Show hidden files</a></td><td>on/off — <em>off</em></td>
           <td>Dotfiles and hidden folders in Locations — <code>.github/</code>
           docs and friends. Also toggled with <kbd>⇧⌘.</kbd> (Finder's own
           combo) or View → Show Hidden Files; every open Location rescans
           on the flip.</td></tr>
-        <tr><td>GitHub Markdown links</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github-links" title="Open this setting in PullMark (0.28.3+)">GitHub Markdown links</a></td>
           <td>Ask on first click · Open in PullMark · Open in Browser —
           <em>Ask on first click</em></td>
           <td>What clicking a link to a Markdown file on GitHub does. Hold ⌘
           while clicking for the other behavior. The first-click dialog's
           "Remember my selection" checkbox sets this for you.</td></tr>
-        <tr><td id="clicking-files">Clicking files in Locations</td>
+        <tr><td id="clicking-files"><a class="setting-link" href="pullmark://settings/general/clicking-files" title="Open this setting in PullMark (0.28.3+)">Clicking files in Locations</a></td>
           <td>Preview First · Open Fully — <em>Preview First</em></td>
           <td>Preview First shows a file with one click without keeping it —
           one italicized entry (in Open Files, or under its GitHub repo)
@@ -80,9 +80,9 @@
       <h3>Reviewing</h3>
       <table>
         <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
-        <tr><td>Default diff layout</td><td>Inline · Side by Side — <em>Inline</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Open this setting in PullMark (0.28.3+)">Default diff layout</a></td><td>Inline · Side by Side — <em>Inline</em></td>
           <td>How PR rendered diffs open. Flippable per file with ⌥⌘L.</td></tr>
-        <tr><td>Show review requests in the sidebar</td><td>on/off — <em>on</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Open this setting in PullMark (0.28.3+)">Show review requests in the sidebar</a></td><td>on/off — <em>on</em></td>
           <td>The Review Requests subgroup: open PRs where your review is
           requested. Hidden either way when you're not signed in.</td></tr>
         <tr><td>Only requests that change Markdown</td><td>on/off — <em>on</em></td>
@@ -93,12 +93,12 @@
       <h3>Updates</h3>
       <table>
         <tr><th>Setting</th><th>What it does</th></tr>
-        <tr><td>Show What's New after an update</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/whats-new" title="Open this setting in PullMark (0.28.3+)">Show What's New after an update</a></td>
           <td>On (the default) presents the release notes after an update
           lands; off swaps in a quiet "Updated to PullMark X" banner with
           the notes one click away — an update always announces itself
           somehow.</td></tr>
-        <tr><td>Updates</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/check-updates" title="Open this setting in PullMark (0.28.3+)">Updates</a></td>
           <td><strong>Check for Updates…</strong> on demand; PullMark also
           checks at launch and periodically. When an update is already
           known, the row offers <strong>What's New</strong>,
@@ -111,17 +111,17 @@
       <h3>System</h3>
       <table>
         <tr><th>Setting</th><th>What it does</th></tr>
-        <tr><td>Default Markdown app</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/default-app" title="Open this setting in PullMark (0.28.3+)">Default Markdown app</a></td>
           <td>Shows which app currently opens <code>.md</code> files;
           <strong>Make PullMark the Default</strong> claims the binding in
           one click. If a later upgrade makes macOS drop it, PullMark
           notices and offers to take it back.</td></tr>
-        <tr><td>Command line</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/command-line" title="Open this setting in PullMark (0.28.3+)">Command line</a></td>
           <td>Installs the <a href="../cli/"><code>pullmark</code>
           command</a> into <code>/usr/local/bin</code> for DMG installs
           (Homebrew users already have it). Shows a checkmark when a
           <code>pullmark</code> is already on your PATH.</td></tr>
-        <tr><td>Quick Look previews</td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/quick-look" title="Open this setting in PullMark (0.28.3+)">Quick Look previews</a></td>
           <td>Rendered (the default) or Raw Source — what pressing Space in
           Finder shows for Markdown files.</td></tr>
       </table>
@@ -134,7 +134,7 @@
       <p>Every choice here is a card with a live preview rendered through
       the real pipeline — what you see is what documents get.</p>
 
-      <h3>Theme</h3>
+      <h3>Theme <a class="setting-jump" href="pullmark://settings/themes/theme" title="Open in PullMark (0.28.3+)">&#8599;</a></h3>
       <table>
         <tr><th>Theme</th><th>Look</th></tr>
         <tr><td>GitHub <em>(default)</em></td><td>The classic look, exactly as on github.com.</td></tr>
@@ -147,7 +147,7 @@
       restyle diffs too. Quick Look previews follow your theme (custom
       themes fall back to their GitHub base there).</p>
 
-      <h3>Content width</h3>
+      <h3>Content width <a class="setting-jump" href="pullmark://settings/themes/content-width" title="Open in PullMark (0.28.3+)">&#8599;</a></h3>
       <table>
         <tr><th>Choice</th><th>Meaning</th></tr>
         <tr><td>Standard <em>(default)</em></td><td>A classic book-like reading measure.</td></tr>
@@ -157,7 +157,7 @@
       <p>Applies everywhere, live, and composes with themes, blame, diffs,
       and zoom. Also switchable mid-read from View → Content Width.</p>
 
-      <h3>Line numbers</h3>
+      <h3>Line numbers <a class="setting-jump" href="pullmark://settings/themes/line-numbers" title="Open in PullMark (0.28.3+)">&#8599;</a></h3>
       <table>
         <tr><th>Choice</th><th>Meaning</th></tr>
         <tr><td>Hidden <em>(default)</em></td><td>A clean margin; numbers on demand in the Source view.</td></tr>

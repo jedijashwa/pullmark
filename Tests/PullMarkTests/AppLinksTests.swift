@@ -29,12 +29,16 @@ import Testing
     @Test func settingsTargetParsesTabAndFeature() {
         let plain = AppLinks.settingsTarget(URL(string: "pullmark://settings/experimental")!)
         #expect(plain?.tab == "experimental")
-        #expect(plain?.feature == nil)
+        #expect(plain?.anchor == nil)
         let deep = AppLinks.settingsTarget(
             URL(string: "pullmark://settings/experimental/margin-notes")!)
         #expect(deep?.tab == "experimental")
-        #expect(deep?.feature == "margin-notes")
+        #expect(deep?.anchor == "margin-notes")
         #expect(AppLinks.settingsTarget(URL(string: "pullmark://settings/nope")!) == nil)
+        let row = AppLinks.settingsTarget(
+            URL(string: "pullmark://settings/general/show-hidden-files")!)
+        #expect(row?.tab == "general")
+        #expect(row?.anchor == "show-hidden-files")
         #expect(AppLinks.settingsTarget(URL(string: "https://pullmark.app")!) == nil)
     }
 

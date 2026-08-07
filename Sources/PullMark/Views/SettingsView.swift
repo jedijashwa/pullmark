@@ -49,14 +49,24 @@ struct GeneralSettingsTab: View {
     /// sheet lives on the main window, and Settings must not point at it.
     @State private var showAvailableNotes = false
 
+    /// Deep-link landing spots this tab owns (AppLinks anchor ids).
+    private static let anchors: Set<String> = [
+        "restore-session", "show-hidden-files", "github-links",
+        "clicking-files", "diff-layout", "review-requests", "whats-new",
+        "check-updates", "default-app", "command-line", "quick-look",
+    ]
+
     var body: some View {
+        ScrollViewReader { scroll in
         Form {
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
+                .settingAnchor("restore-session")
 
             Toggle("Show hidden files", isOn: $showHiddenFiles)
                 .help("Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder")
+                .settingAnchor("show-hidden-files")
 
             Picker("GitHub Markdown links:", selection: $remoteLinkPolicyRaw) {
                 Text("Ask on first click").tag(RemoteLinkPolicy.ask.rawValue)
@@ -64,11 +74,13 @@ struct GeneralSettingsTab: View {
                 Text("Open in Browser").tag(RemoteLinkPolicy.browser.rawValue)
             }
             .help("What clicking a link to a Markdown file on GitHub does — hold ⌘ while clicking for the other behavior")
+            .settingAnchor("github-links")
 
             Picker("Clicking files in Locations:", selection: $folderClickRaw) {
                 Text("Preview First").tag(FolderClickAction.preview.rawValue)
                 Text("Open Fully").tag(FolderClickAction.open.rawValue)
             }
+            .settingAnchor("clicking-files")
             Text("Preview First shows a file with one click without keeping it — "
                 + "one italicized entry (in Open Files, or under its GitHub repo) "
                 + "that the next preview replaces. Double-click a file, or just "
@@ -85,9 +97,11 @@ struct GeneralSettingsTab: View {
                 }
             }
             .pickerStyle(.segmented)
+            .settingAnchor("diff-layout")
 
             Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
                 .help("Open pull requests where your review is requested")
+                .settingAnchor("review-requests")
             Toggle("Only requests that change Markdown", isOn: $inboxMarkdownOnly)
                 .disabled(!inboxEnabled)
                 .padding(.leading, 20)
@@ -97,6 +111,7 @@ struct GeneralSettingsTab: View {
             Section("Updates") {
             Toggle("Show What's New after an update", isOn: $autoShowWhatsNew)
                 .help("Off shows a quiet banner instead — the notes stay one click away")
+                .settingAnchor("whats-new")
 
             LabeledContent("Updates:") {
                 // Trailing-aligned: the status line appearing must not widen
@@ -159,6 +174,7 @@ struct GeneralSettingsTab: View {
                     }
                 }
             }
+            .settingAnchor("check-updates")
             }
 
             Section("System") {
@@ -196,6 +212,7 @@ struct GeneralSettingsTab: View {
                     }
                 }
             }
+            .settingAnchor("default-app")
 
             LabeledContent("Command line:") {
                 // The `pullmark` command for DMG installs — Homebrew users
@@ -231,6 +248,7 @@ struct GeneralSettingsTab: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .settingAnchor("command-line")
 
             Picker("Quick Look previews:", selection: $qlRendered) {
                 Text("Rendered").tag(true)
@@ -238,11 +256,14 @@ struct GeneralSettingsTab: View {
             }
             .pickerStyle(.segmented)
             .help("What pressing space in Finder shows for Markdown files")
+            .settingAnchor("quick-look")
             }
 
         }
         .formStyle(.grouped)
         .frame(height: 560)
+        .consumesSettingAnchors(Self.anchors, proxy: scroll)
+        }
         // The binding can change behind our back (Finder's "Change All…",
         // another app claiming it) — re-resolve whenever the tab shows.
         .onAppear {
@@ -326,6 +347,7 @@ struct ExperimentalSettingsTab: View {
     private static let betaFeatureCount = 0
 
     var body: some View {
+        ScrollViewReader { scroll in
         Form {
             Section {
                 // A single literal: concatenation would select Text's
@@ -353,6 +375,18 @@ struct ExperimentalSettingsTab: View {
         }
         .formStyle(.grouped)
         .frame(height: 560)
+        // Consumed only while the section is visible: a margin-notes
+        // link with alpha hidden first runs the alpha-contract flow,
+        // and the scroll-and-flash happens once the switch flips on.
+        .consumesSettingAnchors(showAlphaFeatures ? ["margin-notes"] : [],
+                                proxy: scroll)
+        .onChange(of: showAlphaFeatures) { visible in
+            if visible, SettingsAnchorFocus.shared.pending == "margin-notes" {
+                // Re-publish so the now-armed consumer sees it.
+                let anchor = SettingsAnchorFocus.shared.pending
+                SettingsAnchorFocus.shared.pending = anchor
+            }
+        }
         .onAppear {
             // A deep link that landed here wants something alpha —
             // don't let the tab look empty; offer the switch directly.
@@ -360,6 +394,7 @@ struct ExperimentalSettingsTab: View {
                 SettingsOpener.pendingAlphaPrompt = false
                 if !showAlphaFeatures { confirmingAlpha = true }
             }
+        }
         }
         .alert("Show alpha features?", isPresented: $confirmingAlpha) {
             Button("Show Alpha Features") { showAlphaFeatures = true }
@@ -410,6 +445,7 @@ struct ExperimentalSettingsTab: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .settingAnchor("margin-notes")
 
             Toggle("Enable margin notes", isOn: $marginNotesEnabled)
                 .help("Adds the authoring tools — hover a block, ⌥⌘M; documents "
@@ -475,11 +511,18 @@ struct ThemeSettingsTab: View {
         ThemeSelection.resolve(themeRaw, availableCustom: customNames)
     }
 
+    /// Deep-link landing spots this tab owns (AppLinks anchor ids).
+    private static let anchors: Set<String> = [
+        "appearance-mode", "theme", "content-width", "line-numbers",
+    ]
+
     var body: some View {
+        ScrollViewReader { scroll in
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Appearance")
                     .font(.headline)
+                    .settingAnchor("appearance-mode")
                 Picker("Appearance", selection: $appearanceRaw) {
                     ForEach(Appearance.allCases) { appearance in
                         Text(appearance.label).tag(appearance.rawValue)
@@ -495,6 +538,7 @@ struct ThemeSettingsTab: View {
                 Text("Theme")
                     .font(.headline)
                     .padding(.top, 10)
+                    .settingAnchor("theme")
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(Theme.allCases) { theme in
                         ThemePreviewCard(
@@ -540,6 +584,7 @@ struct ThemeSettingsTab: View {
                 Text("Content width")
                     .font(.headline)
                     .padding(.top, 10)
+                    .settingAnchor("content-width")
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(ContentWidth.allCases) { width in
                         WidthPreviewCard(width: width, selected: contentWidthRaw == width.rawValue) {
@@ -554,6 +599,7 @@ struct ThemeSettingsTab: View {
                 Text("Line numbers")
                     .font(.headline)
                     .padding(.top, 10)
+                    .settingAnchor("line-numbers")
                 HStack(alignment: .top, spacing: 16) {
                     LineNumberPreviewCard(showNumbers: false, selected: !lineNumbersOn) {
                         lineNumbersOn = false
@@ -570,6 +616,8 @@ struct ThemeSettingsTab: View {
             .padding(20)
         }
         .frame(height: 620)
+        .consumesSettingAnchors(Self.anchors, proxy: scroll)
+        }
         .onAppear { customNames = CustomThemes.availableThemeNames() }
     }
 }

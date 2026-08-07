@@ -516,7 +516,7 @@ struct ReleaseNotesSheet: View {
         guard let target = AppLinks.settingsTarget(url) else { return }
         dismiss()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            SettingsOpener.open(tab: target.tab, feature: target.feature)
+            SettingsOpener.open(tab: target.tab, anchor: target.anchor)
         }
     }
 }
