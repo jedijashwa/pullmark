@@ -22,6 +22,7 @@ struct ContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 AppUpdateBanner()
+                UpdatedBanner()
                 DefaultAppBanner()
                 DetailView()
                     .overlay(alignment: .top) { ZoomHUD().padding(.top, 10) }
@@ -94,10 +95,10 @@ struct ContentView: View {
             OpenQuicklyPalette()
         }
         .sheet(isPresented: $updates.showReleaseNotes) {
-            ReleaseNotesSheet(
-                title: "What's New in PullMark \(updates.availableVersion ?? "")",
-                markdown: updates.availableNotes
-            )
+            // Version-less on purpose: the notes carry their versions as
+            // headings in the content, matching the post-update sheet.
+            ReleaseNotesSheet(title: "What's New in PullMark",
+                              markdown: updates.availableNotes)
         }
         .sheet(isPresented: $updates.showWhatsNew) {
             ReleaseNotesSheet(title: "What's New in PullMark",
