@@ -4,6 +4,11 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.27.2 - 2026-08-07
+
+- The update-channel note in Settings is now one sentence with a
+  clickable link to the beta docs.
+
 ## 0.27.1 - 2026-08-07
 
 - **PullMark has a beta channel now** — and this update is how the
