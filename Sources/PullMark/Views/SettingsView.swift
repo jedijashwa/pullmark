@@ -37,6 +37,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
     @AppStorage(DefaultsKeys.updateChannel, store: UserDefaults.pullmark) private var updateChannelRaw = UpdateChannel.stable.rawValue
     @State private var updateStatus: String?
@@ -102,17 +103,25 @@ struct GeneralSettingsTab: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Margin Notes") {
-            TextField("Sign notes as:", text: $marginNoteAuthor,
-                      prompt: Text(NSUserName()))
-            Text("The @name your margin notes carry — the notes you leave "
-                + "on a document are saved into the file as "
-                + "<!-- note @name: … --> comments. Left empty, your GitHub "
-                + "login signs them (or this Mac's account name when "
-                + "signed out).")
+            Section("Experimental") {
+            Toggle("Margin notes", isOn: $marginNotesEnabled)
+                .help("Comment on local Markdown documents the way you'd comment on a PR")
+            Text("Notes save into the file itself as <!-- note @you: … --> "
+                + "comments — invisible to every other tool, rendered by "
+                + "PullMark as bubbles, and written so agents can read and "
+                + "act on them. Turning this on adds the authoring tools "
+                + "(hover a block, ⌥⌘M); documents that already contain "
+                + "notes always show them either way. Details: "
+                + "pullmark.app/docs/beta/margin-notes")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            TextField("Sign notes as:", text: $marginNoteAuthor,
+                      prompt: Text(NSUserName()))
+                .disabled(!marginNotesEnabled)
+                .padding(.leading, 20)
+                .help("The @name your notes carry — empty uses your GitHub "
+                    + "login, or this Mac's account name when signed out")
             }
 
             Section("System") {
