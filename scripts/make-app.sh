@@ -82,6 +82,15 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
 ${ICON_NAME_ENTRY}
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>app.pullmark.PullMark</string>
+            <key>CFBundleURLSchemes</key>
+            <array><string>pullmark</string></array>
+        </dict>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

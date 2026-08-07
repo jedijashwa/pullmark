@@ -153,20 +153,10 @@ struct PullMarkApp: App {
         .defaultSize(width: 1317, height: 698)
         .commands {
             CommandGroup(after: .appInfo) {
-                Button("Check for Updates…") {
-                    Task {
-                        // An alert, not the focused window's error state: the
-                        // result must land even when Settings is key or no
-                        // window is open at all (state is nil in both).
-                        if let message = await updates.checkManually() {
-                            let alert = NSAlert()
-                            alert.messageText = "Check for Updates"
-                            alert.informativeText = message
-                            NSApp.activate(ignoringOtherApps: true)
-                            alert.runModal()
-                        }
-                    }
-                }
+                // An alert, not the focused window's error state: the
+                // result must land even when Settings is key or no window
+                // is open at all.
+                Button("Check for Updates…") { updates.checkManuallyPresentingResult() }
             }
             CommandGroup(after: .newItem) {
                 Button("Open…") { state?.openFileOrFolder() }
@@ -495,7 +485,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        OpenURLRouter.shared.deliver(urls)
+        // pullmark:// deep links route through AppLinkRouter (shared
+        // with the scene's onOpenURL — whichever path macOS picks);
+        // everything else is a document open.
+        var documents: [URL] = []
+        for url in urls {
+            if url.scheme == "pullmark" {
+                AppLinkRouter.handle(url)
+            } else {
+                documents.append(url)
+            }
+        }
+        if !documents.isEmpty {
+            OpenURLRouter.shared.deliver(documents)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

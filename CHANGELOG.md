@@ -4,6 +4,23 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- The Settings links in release notes work now — and they're honest:
+  a link this version can't honor (a feature that moved, or one from
+  a newer version's notes) renders as plain text instead of a dead
+  link.
+- A release-notes link straight to an alpha feature offers the "Show
+  alpha features" switch on arrival when alpha is hidden, instead of
+  landing on a tab with nothing in it. (A link to the Experimental tab
+  itself never prompts.)
+- The `pullmark://` links are registered with macOS now, so they work
+  from the website and anywhere else too — not just inside the app's
+  own sheets.
+- A link this version doesn't know (say, from a newer release's docs)
+  gets a proper dialog instead of silence: check for updates, file a
+  pre-filled issue carrying the link, or close.
+
 ## 0.28.0 - 2026-08-07
 
 - **Margin notes** *(experimental, alpha)* — comment on any local
@@ -18,7 +35,7 @@ section current as features land.
   ⌥⌘M notes the block you're reading, Open Files rows carry a count
   chip, notes render read-only in browsed GitHub files, and they never
   appear in print or exports. Off by default — turn it on in
-  [Settings → Experimental](pullmark://settings/experimental), where a
+  [Settings → Experimental](pullmark://settings/experimental/margin-notes), where a
   copy-paste snippet teaches your agent the format. The full spec:
   [margin notes](https://pullmark.app/docs/experimental/margin-notes/).
 - **An Experimental tab in Settings** — features now land with an

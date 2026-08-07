@@ -483,8 +483,11 @@ struct ReleaseNotesSheet: View {
             Divider()
             MarkdownWebView(html: {
                 let style = ThemeSelection.pageStyle(from: themeRaw)
+                // Deep links this build can't honor render as plain text
+                // — notes written for other versions keep only the
+                // promises this version keeps.
                 return HTMLBuilder.documentPage(
-                    markdown: showingAll ? (allMarkdown ?? markdown) : markdown,
+                    markdown: AppLinks.sanitize(showingAll ? (allMarkdown ?? markdown) : markdown),
                     title: title,
                     theme: style.theme, customCSS: style.customCSS,
                     lineNumberEligible: false // a preview sheet, not a file
@@ -507,14 +510,13 @@ struct ReleaseNotesSheet: View {
         }
     }
 
-    /// pullmark://settings/<tab>: the sheet yields to the place it
-    /// pointed at — Settings opens on that tab once the dismiss lands.
+    /// pullmark://settings/<tab>[/<feature>]: the sheet yields to the
+    /// place it pointed at — Settings opens there once the dismiss lands.
     private func handleAppLink(_ url: URL) {
-        guard url.host == "settings" else { return }
-        let tab = url.pathComponents.count > 1 ? url.pathComponents[1] : "general"
+        guard let target = AppLinks.settingsTarget(url) else { return }
         dismiss()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            SettingsOpener.open(tab: tab)
+            SettingsOpener.open(tab: target.tab, feature: target.feature)
         }
     }
 }

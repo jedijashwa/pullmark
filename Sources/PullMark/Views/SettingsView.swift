@@ -353,6 +353,14 @@ struct ExperimentalSettingsTab: View {
         }
         .formStyle(.grouped)
         .frame(height: 560)
+        .onAppear {
+            // A deep link that landed here wants something alpha —
+            // don't let the tab look empty; offer the switch directly.
+            if SettingsOpener.pendingAlphaPrompt {
+                SettingsOpener.pendingAlphaPrompt = false
+                if !showAlphaFeatures { confirmingAlpha = true }
+            }
+        }
         .alert("Show alpha features?", isPresented: $confirmingAlpha) {
             Button("Show Alpha Features") { showAlphaFeatures = true }
             Button("Cancel", role: .cancel) {}

@@ -159,6 +159,13 @@ struct ContentView: View {
         // rebuild every root's tree (Settings toggle, ⇧⌘., or the View
         // menu all flow through the same stored flag).
         .onChange(of: showHiddenFiles) { _ in state.rescanAllFolders() }
+        // Captures openSettings for SettingsOpener (release-notes deep
+        // links) — the sendAction selector no-ops on modern macOS.
+        .background(OpenSettingsGrabber())
+        // handlesExternalEvents(["*"]) makes the scene claim incoming
+        // URL events, so pullmark:// links arrive HERE, not at the app
+        // delegate — route them to the shared handler.
+        .onOpenURL { AppLinkRouter.handle($0) }
         // Closing the last window IS the app's default quit path, and the
         // weak keyInstance nils before applicationWillTerminate can use it
         // — snapshot here while this window's state is still alive.
