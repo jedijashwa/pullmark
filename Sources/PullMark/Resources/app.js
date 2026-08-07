@@ -557,9 +557,45 @@
       post({ type: "activeSection", id: current });
     }
   }
+  // Outline/⌘K/anchor jumps: the destination highlights immediately and
+  // the spy stays quiet while the glide is in flight — every heading
+  // between here and there lighting up in turn read as noise. User
+  // input interrupts the suppression instantly; the spy resyncs once
+  // the scroll settles (and self-corrects if the landing differs).
+  var __jumpTarget = null;
+  var __jumpSettleTimer = null;
+  function armJumpSettle() {
+    if (__jumpSettleTimer) { clearTimeout(__jumpSettleTimer); }
+    __jumpSettleTimer = setTimeout(function () {
+      __jumpTarget = null;
+      __jumpSettleTimer = null;
+      updateActiveSection();
+    }, 180);
+  }
+  function cancelJump() {
+    if (!__jumpTarget) { return; }
+    __jumpTarget = null;
+    if (__jumpSettleTimer) { clearTimeout(__jumpSettleTimer); __jumpSettleTimer = null; }
+    updateActiveSection();
+  }
+  window.__pmJumpTo = function (id, smooth) {
+    var el = document.getElementById(id);
+    if (!el) { return; }
+    __jumpTarget = id;
+    if (id !== __activeSection) {
+      __activeSection = id;
+      post({ type: "activeSection", id: id });
+    }
+    el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+    armJumpSettle();
+  };
+  ["wheel", "mousedown", "keydown", "touchstart"].forEach(function (type) {
+    window.addEventListener(type, cancelJump, { passive: true, capture: true });
+  });
   (function () {
     var pending = false;
     window.addEventListener("scroll", function () {
+      if (__jumpTarget) { armJumpSettle(); return; }
       if (pending) { return; }
       pending = true;
       setTimeout(function () { pending = false; updateActiveSection(); }, 120);

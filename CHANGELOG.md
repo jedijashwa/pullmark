@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Jumping from the outline (or ⌘K, or an anchor link) no longer
+  flashes every heading it glides past — the destination highlights
+  immediately and stays highlighted; scrolling yourself mid-glide
+  hands control straight back.
+- The beta note under the update-channel picker is now one sentence
+  with a clickable link to the beta docs.
+
 ## 0.28.0-beta.4 - 2026-08-07
 
 - **Big repos stopped nagging** — the folder scan now takes up to

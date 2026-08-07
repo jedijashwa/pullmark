@@ -397,10 +397,12 @@ final class WebViewProxy: ObservableObject {
     func scrollToAnchor(_ id: String) {
         // Jump instead of glide when the user asked the system for less
         // motion (the behavior parameter ignores prefers-reduced-motion).
-        let behavior = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-            ? "auto" : "smooth"
-        let js = "document.getElementById(\(HTMLBuilder.jsStringLiteral(id)))"
-            + "?.scrollIntoView({behavior: \"\(behavior)\", block: \"start\"});"
+        // __pmJumpTo pins the destination as the active section for the
+        // glide's duration — the outline must not flash every heading
+        // the animation passes.
+        let smooth = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            ? "false" : "true"
+        let js = "window.__pmJumpTo && __pmJumpTo(\(HTMLBuilder.jsStringLiteral(id)), \(smooth));"
         webView?.evaluateJavaScript(js)
     }
 
