@@ -44,6 +44,25 @@ struct MarginNotePayload: Encodable, Equatable {
 }
 
 enum MarginNotes {
+    /// Paste-into-CLAUDE.md/AGENTS.md instructions — the Settings copy
+    /// button and pullmark.app/docs/experimental/margin-notes ship the
+    /// same text.
+    static let agentInstructions = """
+    ## Margin notes
+
+    Markdown files may contain review notes as HTML comments:
+    `<!-- note @name: comment -->` (possibly multi-line, closing
+    with `-->` on its own line). Each note sits directly after the
+    passage it's about; a note above the first heading is about the
+    whole document. `--\\>` inside a note means a literal `-->`.
+
+    When asked to address notes: work through each one, apply or
+    answer it, and DELETE the note (with its surrounding blank line)
+    once addressed. To reply or ask instead, leave your own note in
+    the same format below the original, signed with your own @name.
+    Don't add notes to code examples inside fenced blocks.
+    """
+
     /// Opening-line shape: up to 3 leading spaces (4 would be a code
     /// block), `<!--`, the `note` keyword, `@`, then everything up to the
     /// first colon as author (+ optional trailing parenthesized attrs).

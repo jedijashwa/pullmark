@@ -264,7 +264,7 @@ struct LocalFileView: View {
         guard compare == nil, !state.sourceViewVisible else { return }
         guard marginNotesEnabled else {
             state.lastNotice = "Margin notes are off — turn them on in "
-                + "Settings → General → Experimental."
+                + "Settings → Experimental."
             return
         }
         guard marginNotesVisible else {

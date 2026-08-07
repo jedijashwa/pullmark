@@ -297,16 +297,31 @@ struct PullMarkApp: App {
                     .help(marginNotesEnabled
                         ? "Leave a note on the block you're reading — it's saved into the "
                             + "file as a <!-- note --> comment"
-                        : "Turn on margin notes in Settings → General → Experimental")
+                        : "Turn on margin notes in Settings → Experimental")
                 Button("File Margin Note…") { state?.send(.addFileMarginNote) }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .addFileMarginNote))
                     .disabled(!marginNotesEnabled || activeLocalFileURL == nil
                         || state?.sourceViewVisible == true)
                     .help(marginNotesEnabled
                         ? "Leave a note about the whole document, at the top"
-                        : "Turn on margin notes in Settings → General → Experimental")
+                        : "Turn on margin notes in Settings → Experimental")
             }
             CommandGroup(replacing: .help) {
+                Button("Release Notes") {
+                    guard let state else { return }
+                    Task {
+                        if let history = await updates.releaseNotesHistory() {
+                            updates.historyMarkdown = history
+                            updates.showHistory = true
+                        } else {
+                            state.lastNotice = "Release notes couldn't be loaded — "
+                                + "they're also at github.com/jedijashwa/pullmark/releases."
+                        }
+                    }
+                }
+                .disabled(state == nil)
+                .help("Every release's notes, up to the version you're running")
+                Divider()
                 Button("PullMark Website") {
                     open("https://pullmark.app")
                 }
