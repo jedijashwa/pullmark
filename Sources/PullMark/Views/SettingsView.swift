@@ -102,8 +102,10 @@ struct GeneralSettingsTab: View {
             .pickerStyle(.segmented)
             .help("Beta offers pre-release versions with features still being tested")
             if updateChannelRaw == UpdateChannel.beta.rawValue {
-                Text("Beta versions are signed and notarized like any release, but "
-                    + "their features are still settling — see pullmark.app/docs/beta.")
+                // A single literal: concatenation would select Text's
+                // verbatim String initializer and the markdown link
+                // would render as its raw source.
+                Text("Betas ship features whose design is still settling — [about beta features](https://pullmark.app/docs/beta/).")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
