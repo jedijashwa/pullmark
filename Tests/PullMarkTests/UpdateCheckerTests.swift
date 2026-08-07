@@ -97,6 +97,17 @@ import Testing
         #expect(checker.availableVersion == "0.5.0")
     }
 
+    @Test @MainActor func applyPrefersCumulativeNotesOverTheReleaseBody() {
+        let checker = makeChecker()
+        checker.apply(release("v0.4.0"),
+                      notes: "## PullMark 0.4.0\n\nnew\n\n---\n\n## PullMark 0.3.0\n\nold",
+                      ignoringDismissal: true)
+        #expect(checker.availableNotes.contains("0.3.0"))
+        checker.dismissAvailableUpdate()
+        checker.apply(release("v0.4.0"), ignoringDismissal: true)
+        #expect(checker.availableNotes == "notes for v0.4.0")
+    }
+
     @Test @MainActor func applyStoresTheZipAssetURLAndDismissClearsIt() {
         let checker = makeChecker()
         let withAsset = UpdateRelease(

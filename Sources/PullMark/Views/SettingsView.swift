@@ -29,7 +29,6 @@ struct SettingsView: View {
 struct GeneralSettingsTab: View {
     @EnvironmentObject private var updates: UpdateChecker
     @EnvironmentObject private var defaultApp: DefaultAppManager
-    @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
     @AppStorage(DefaultsKeys.qlRendered, store: UserDefaults.pullmark) private var qlRendered = true
     @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
@@ -44,41 +43,12 @@ struct GeneralSettingsTab: View {
     @State private var checking = false
     @State private var cliStatus = CLIInstaller.Status.unavailable
     @State private var cliError: String?
+    /// The known-update What's New sheet, presented HERE — the banner's
+    /// sheet lives on the main window, and Settings must not point at it.
+    @State private var showAvailableNotes = false
 
     var body: some View {
         Form {
-            Section("Appearance") {
-            Picker("Appearance:", selection: $appearanceRaw) {
-                ForEach(Appearance.allCases) { appearance in
-                    Text(appearance.label).tag(appearance.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-            }
-
-            Section("Reviewing") {
-            Picker("Default diff layout:", selection: $diffLayoutRaw) {
-                ForEach(PRFileView.DiffLayout.allCases) { layout in
-                    Text(layout.rawValue).tag(layout.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            Picker("Quick Look previews:", selection: $qlRendered) {
-                Text("Rendered").tag(true)
-                Text("Raw Source").tag(false)
-            }
-            .pickerStyle(.segmented)
-            .help("What pressing space in Finder shows for Markdown files")
-
-            Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
-                .help("Open pull requests where your review is requested")
-            Toggle("Only requests that change Markdown", isOn: $inboxMarkdownOnly)
-                .disabled(!inboxEnabled)
-                .padding(.leading, 20)
-                .help("Hide review requests with no Markdown files — PullMark has nothing to show for them")
-            }
-
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
@@ -103,25 +73,99 @@ struct GeneralSettingsTab: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Experimental") {
-            Toggle("Margin notes", isOn: $marginNotesEnabled)
-                .help("Comment on local Markdown documents the way you'd comment on a PR")
-            Text("Notes save into the file itself as <!-- note @you: … --> "
-                + "comments — invisible to every other tool, rendered by "
-                + "PullMark as bubbles, and written so agents can read and "
-                + "act on them. Turning this on adds the authoring tools "
-                + "(hover a block, ⌥⌘M); documents that already contain "
-                + "notes always show them either way. Details: "
-                + "pullmark.app/docs/beta/margin-notes")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            TextField("Sign notes as:", text: $marginNoteAuthor,
-                      prompt: Text(NSUserName()))
-                .disabled(!marginNotesEnabled)
+            Section("Reviewing") {
+            Picker("Default diff layout:", selection: $diffLayoutRaw) {
+                ForEach(PRFileView.DiffLayout.allCases) { layout in
+                    Text(layout.rawValue).tag(layout.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
+                .help("Open pull requests where your review is requested")
+            Toggle("Only requests that change Markdown", isOn: $inboxMarkdownOnly)
+                .disabled(!inboxEnabled)
                 .padding(.leading, 20)
-                .help("The @name your notes carry — empty uses your GitHub "
-                    + "login, or this Mac's account name when signed out")
+                .help("Hide review requests with no Markdown files — PullMark has nothing to show for them")
+            }
+
+            Section("Updates") {
+            Picker("Update channel:", selection: $updateChannelRaw) {
+                ForEach(UpdateChannel.allCases) { channel in
+                    Text(channel.label).tag(channel.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .help("Beta offers pre-release versions with features still being tested")
+            if updateChannelRaw == UpdateChannel.beta.rawValue {
+                Text("Beta versions are signed and notarized like any release, but "
+                    + "their features are still settling — see pullmark.app/docs/beta.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            LabeledContent("Updates:") {
+                // Trailing-aligned: the status line appearing must not widen
+                // the column and shove the buttons away from the right edge.
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let version = updates.availableVersion {
+                        // An update is already known: offer it right here —
+                        // never send anyone to another window to act on it.
+                        HStack(spacing: 8) {
+                            if checking {
+                                ProgressView().controlSize(.small)
+                            }
+                            Button("What's New") { showAvailableNotes = true }
+                            Button("Update Now") { updates.updateNow() }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(updates.isUpdating)
+                            Button {
+                                check()
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            .disabled(checking || updates.isUpdating)
+                            .help("See if something even newer is available")
+                            .accessibilityLabel("Check again for updates")
+                        }
+                        Text("PullMark \(version) is available.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        switch updates.updateRun {
+                        case .updating(let phase):
+                            HStack(spacing: 6) {
+                                ProgressView().controlSize(.small)
+                                Text(phase)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                        case .failed(let message):
+                            Text("Update failed: \(message)")
+                                .font(.callout)
+                                .foregroundStyle(.red)
+                                .fixedSize(horizontal: false, vertical: true)
+                        case .idle:
+                            EmptyView()
+                        }
+                    } else {
+                        HStack(spacing: 8) {
+                            if checking {
+                                ProgressView().controlSize(.small)
+                            }
+                            Button("Check for Updates…") { check() }
+                                .disabled(checking)
+                        }
+                    }
+                    if let updateStatus {
+                        Text(updateStatus)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
             }
 
             Section("System") {
@@ -189,43 +233,33 @@ struct GeneralSettingsTab: View {
                 }
             }
 
-            Picker("Update channel:", selection: $updateChannelRaw) {
-                ForEach(UpdateChannel.allCases) { channel in
-                    Text(channel.label).tag(channel.rawValue)
-                }
+            Picker("Quick Look previews:", selection: $qlRendered) {
+                Text("Rendered").tag(true)
+                Text("Raw Source").tag(false)
             }
             .pickerStyle(.segmented)
-            .help("Beta offers pre-release versions with features still being tested")
-            if updateChannelRaw == UpdateChannel.beta.rawValue {
-                Text("Beta versions are signed and notarized like any release, but "
-                    + "their features are still settling — see pullmark.app/docs/beta. "
-                    + "Homebrew installs can switch with: brew uninstall --cask pullmark "
-                    + "&& brew install --cask jedijashwa/tap/pullmark@beta")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            .help("What pressing space in Finder shows for Markdown files")
             }
 
-            LabeledContent("Updates:") {
-                // Trailing-aligned: the status line appearing must not widen
-                // the column and shove the button away from the right edge.
-                VStack(alignment: .trailing, spacing: 6) {
-                    HStack(spacing: 8) {
-                        if checking {
-                            ProgressView().controlSize(.small)
-                        }
-                        Button("Check for Updates…") { check() }
-                            .disabled(checking)
-                    }
-                    if let updateStatus {
-                        Text(updateStatus)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.trailing)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
+            Section("Experimental") {
+            Toggle("Margin notes", isOn: $marginNotesEnabled)
+                .help("Comment on local Markdown documents the way you'd comment on a PR")
+            Text("Notes save into the file itself as <!-- note @you: … --> "
+                + "comments — invisible to every other tool, rendered by "
+                + "PullMark as bubbles, and written so agents can read and "
+                + "act on them. Turning this on adds the authoring tools "
+                + "(hover a block, ⌥⌘M); documents that already contain "
+                + "notes always show them either way. Details: "
+                + "pullmark.app/docs/beta/margin-notes")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            TextField("Sign notes as:", text: $marginNoteAuthor,
+                      prompt: Text(NSUserName()))
+                .disabled(!marginNotesEnabled)
+                .padding(.leading, 20)
+                .help("The @name your notes carry — empty uses your GitHub "
+                    + "login, or this Mac's account name when signed out")
             }
         }
         .formStyle(.grouped)
@@ -235,15 +269,29 @@ struct GeneralSettingsTab: View {
         .onAppear {
             defaultApp.refresh()
             cliStatus = CLIInstaller.status
+            // The Updates row can offer Update Now directly — resolve how
+            // this copy updates (brew cask vs in-place) before it's needed.
+            updates.detectUpdateMethodIfNeeded()
+        }
+        .sheet(isPresented: $showAvailableNotes) {
+            ReleaseNotesSheet(
+                title: "What's New in PullMark \(updates.availableVersion ?? "")",
+                markdown: updates.availableNotes
+            )
         }
     }
 
     private func check() {
         checking = true
         updateStatus = nil
+        let before = updates.availableVersion
         Task {
             let message = await updates.checkManually()
-            updateStatus = message ?? "Update available — see the banner in the main window."
+            if let message {
+                updateStatus = message
+            } else if let after = updates.availableVersion, after == before {
+                updateStatus = "PullMark \(after) is still the newest available."
+            }
             checking = false
         }
     }
@@ -252,6 +300,7 @@ struct GeneralSettingsTab: View {
 // MARK: - Themes
 
 struct ThemeSettingsTab: View {
+    @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
     @AppStorage(LineNumbers.defaultsKey, store: UserDefaults.pullmark) private var lineNumbersOn = false
@@ -264,8 +313,23 @@ struct ThemeSettingsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                Text("Appearance")
+                    .font(.headline)
+                Picker("Appearance", selection: $appearanceRaw) {
+                    ForEach(Appearance.allCases) { appearance in
+                        Text(appearance.label).tag(appearance.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(maxWidth: 340)
+                Text("Light, Dark, or match the system — the window and every rendered page follow, and each theme brings its own light and dark looks.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("Theme")
                     .font(.headline)
+                    .padding(.top, 10)
                 HStack(alignment: .top, spacing: 16) {
                     ForEach(Theme.allCases) { theme in
                         ThemePreviewCard(
