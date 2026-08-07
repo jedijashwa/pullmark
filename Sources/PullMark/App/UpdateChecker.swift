@@ -230,9 +230,41 @@ enum BrewUpdate {
         return process.terminationStatus == 0
     }
 
+    /// The tap's git checkout. `brew upgrade` trusts whatever this clone
+    /// says, so it must be refreshed first — a stale tap made Update Now
+    /// "reinstall" the old version in a loop, exit 0, and relaunch.
+    static func tapPath(brewPath: String) -> String {
+        let brewPrefix = ((brewPath as NSString).deletingLastPathComponent
+            as NSString).deletingLastPathComponent
+        return "\(brewPrefix)/Library/Taps/jedijashwa/homebrew-tap"
+    }
+
+    /// Fast-forwards the tap clone. Failures are ignored: offline, the
+    /// upgrade attempt itself will say what it can. Blocks — call off
+    /// the main thread.
+    static func refreshTap(brewPath: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.arguments = ["-C", tapPath(brewPath: brewPath),
+                             "pull", "--ff-only", "--quiet"]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
+        process.waitUntilExit()
+    }
+
+    /// The version actually on disk at `appPath` — read straight from
+    /// the plist file, never through Bundle (Bundle caches per path, so
+    /// it would report the pre-upgrade version forever).
+    static func installedVersion(at appPath: String) -> String? {
+        NSDictionary(contentsOfFile: appPath + "/Contents/Info.plist")?
+            .object(forKey: "CFBundleShortVersionString") as? String
+    }
+
     /// Runs `brew upgrade --cask <cask>`; nil on success, a short
     /// user-facing error otherwise. Blocks — call off the main thread.
     static func runUpgrade(brewPath: String, cask: String = caskName) -> String? {
+        refreshTap(brewPath: brewPath)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: brewPath)
         process.arguments = upgradeArguments(cask: cask)
@@ -499,8 +531,19 @@ final class UpdateChecker: ObservableObject {
     private func runBrewUpgrade(brewPath: String, cask: String) {
         guard !isUpdating else { return }
         updateRun = .updating("Updating…")
+        let expected = availableVersion
+        let appPath = BrewUpdate.relaunchAppPath(bundlePath: Bundle.main.bundlePath)
         Task.detached(priority: .userInitiated) { [weak self] in
-            let failure = BrewUpdate.runUpgrade(brewPath: brewPath, cask: cask)
+            var failure = BrewUpdate.runUpgrade(brewPath: brewPath, cask: cask)
+            // brew exits 0 on "nothing to upgrade" — verify the bits on
+            // disk actually became the offered version, or the relaunch
+            // would loop the user right back to this banner.
+            if failure == nil, let expected,
+               let installed = BrewUpdate.installedVersion(at: appPath),
+               SemVer.compare(installed, expected) != .orderedSame {
+                failure = "Homebrew delivered \(installed), not \(expected) — "
+                    + "run brew update && brew upgrade --cask \(cask), or use the release page."
+            }
             guard let self else { return }
             await MainActor.run {
                 if let failure {
