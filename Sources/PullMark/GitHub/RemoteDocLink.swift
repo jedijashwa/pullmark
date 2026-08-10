@@ -55,4 +55,26 @@ struct RemoteDocLink: Equatable, Hashable {
             CharacterSet.alphanumerics.contains($0) || $0 == "-" || $0 == "_" || $0 == "."
         }
     }
+
+    /// The canonical github.com page for a file at a ref — the inverse of
+    /// `parse` for the plain-blob form, and the link a person actually
+    /// wants shared. Never a raw URL: raw.githubusercontent.com is
+    /// cookieless and renders nothing in private repos.
+    static func blobURL(owner: String, repo: String, ref: String, path: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "github.com"
+        components.path = "/\(owner)/\(repo)/blob/\(ref)/\(path)"
+        return components.url
+    }
+
+    /// Whether a ref (as the user's link spelled it) names a commit — an
+    /// abbreviated or full hex object name. A branch or tag can move
+    /// underneath a session, so reload re-resolves it; a commit is
+    /// immutable and reload has nothing to do. Heuristic by necessity:
+    /// git itself can't tell a 7-hex-char branch name from a short SHA
+    /// without asking the repo.
+    static func isCommitSHA(_ ref: String) -> Bool {
+        (7...40).contains(ref.count) && ref.allSatisfy(\.isHexDigit)
+    }
 }

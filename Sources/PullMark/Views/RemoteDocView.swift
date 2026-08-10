@@ -34,8 +34,9 @@ struct RemoteDocView: View {
     @State private var compareText: String?
     @State private var compareGeneration = 0
     @State private var branches: [String] = []
-    @State private var compareAnchor = MenuAnchorBox()
     @State private var comparePresenter = MenuActionPresenter()
+    /// This incarnation's registration token (see SurfaceToolbar.generation).
+    @State private var toolbarGeneration = UUID()
 
     private var session: RemoteRepoSession? { state.remoteSession(sessionID) }
 
@@ -156,23 +157,23 @@ struct RemoteDocView: View {
             }
         }
         .navigationTitle(path)
-        .toolbar {
-            ToolbarItem {
-                compareMenu
-            }
-            ToolbarItem {
-                BlameToggle(visible: $blameVisible)
-            }
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-        }
         .task(id: sessionID + "|" + path) {
             await load()
         }
+        .onAppear { updateSurfaceToolbar() }
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
+            state.unregisterSurfaceToolbar(id: activeDocumentID,
+                                           generation: toolbarGeneration)
         }
+        // The window toolbar renders from the registered snapshot — every
+        // value that drives an item's enabled state re-registers.
+        .onChange(of: loading) { _ in updateSurfaceToolbar() }
+        .onChange(of: loadError) { _ in updateSurfaceToolbar() }
+        // Toolbar Reload (View → Reload Document stays local-only).
+        .modifier(DocumentCommandHandler(state: state) { _ in
+            if state.take(.reload) { reloadFromOrigin() }
+        })
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .onChange(of: state.remoteAnchor) { anchor in
             // A link to a different heading of the doc already on screen —
@@ -197,26 +198,39 @@ struct RemoteDocView: View {
         }
     }
 
-    /// Hand-built NSMenu (never a SwiftUI toolbar Menu — it caches rows
-    /// bridged for earlier state; same rule as the local compare menu).
-    private var compareMenu: some View {
-        Button {
-            popCompareMenu()
-        } label: {
-            HStack(spacing: 3) {
-                Image(systemName: "clock.arrow.circlepath")
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .bold))
-                    .opacity(0.8)
+    /// What the window-level toolbar (AppToolbar) shows for this surface.
+    private func updateSurfaceToolbar() {
+        var surface = SurfaceToolbar(id: activeDocumentID,
+                                     generation: toolbarGeneration,
+                                     kind: .remoteDoc)
+        if let session {
+            surface.shareURL = RemoteDocLink.blobURL(owner: session.ref.owner,
+                                                     repo: session.ref.repo,
+                                                     ref: session.displayRef,
+                                                     path: path)
+            if RemoteDocLink.isCommitSHA(session.displayRef) {
+                surface.reloadDisabledReason = "This document was opened at a "
+                    + "specific commit — its content can't change"
             }
         }
-        .accessibilityLabel("Compare")
-        .background(MenuAnchorReader(box: compareAnchor))
-        .disabled(loading || loadError != nil)
-        .help("Compare with another branch")
+        surface.compareAvailable = !loading && loadError == nil
+        surface.compareUnavailableReason = "The document hasn't finished loading"
+        surface.popCompare = { popCompareMenu(from: $0) }
+        surface.blameAvailable = true
+        state.registerSurfaceToolbar(surface)
     }
 
-    private func popCompareMenu() {
+    /// Toolbar Reload: forget the resolved commit so the branch re-resolves
+    /// to its current tip, then refetch. Never offered for sessions opened
+    /// at a specific commit (see updateSurfaceToolbar).
+    private func reloadFromOrigin() {
+        guard let session, !RemoteDocLink.isCommitSHA(session.displayRef),
+              !loading else { return }
+        state.unpinRemoteSession(sessionID: sessionID)
+        Task { await load() }
+    }
+
+    private func popCompareMenu(from view: NSView) {
         // Branches load on the first click (never on appear — opening a doc
         // shouldn't cost a branches call nobody asked for).
         if branches.isEmpty {
@@ -224,19 +238,18 @@ struct RemoteDocView: View {
             Task {
                 do {
                     branches = try await state.client.branchNames(session.ref)
-                    presentCompareMenu()
+                    presentCompareMenu(from: view)
                 } catch {
                     state.lastError = AppState.remoteFailureMessage(
                         error, what: "branches of \(session.ref.owner)/\(session.ref.repo)")
                 }
             }
         } else {
-            presentCompareMenu()
+            presentCompareMenu(from: view)
         }
     }
 
-    private func presentCompareMenu() {
-        guard let view = compareAnchor.view else { return }
+    private func presentCompareMenu(from view: NSView) {
         let menu = NSMenu()
         menu.autoenablesItems = false
         var actions: [() -> Void] = []

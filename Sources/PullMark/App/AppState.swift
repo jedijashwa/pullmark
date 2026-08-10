@@ -148,6 +148,85 @@ struct ActiveDocument {
     var remoteContext: RemoteResourceContext?
 }
 
+/// What the window-level customizable toolbar needs from the active detail
+/// surface. Toolbar items live on the window (ContentView) because SwiftUI
+/// only persists customization for window-level `.toolbar(id:)` items —
+/// detail-hosted ones are re-merged fresh at every launch, resurrecting
+/// anything the user removed (verified live). Views register this the way
+/// they register ActiveDocument; value fields drive the items' on/off and
+/// enabled states, closures reach back into the registering view's own
+/// state. Closures capture the view struct, so they read live @State —
+/// re-registration is only needed when a *value* field changes.
+struct SurfaceToolbar {
+    enum Kind {
+        case localFile
+        case remoteDoc
+        case prFile
+        case prDoc
+        case prOverview
+    }
+
+    /// Registration identity, so a disappearing view only unregisters
+    /// itself (same rule as ActiveDocument).
+    let id: String
+    /// Incarnation identity. SwiftUI can remount a surface under the SAME
+    /// document id (preview→pin re-creates the view) and fire the dead
+    /// incarnation's onDisappear AFTER the new one registered — an id-only
+    /// guard then clears a live registration (caught in the wild: the PR
+    /// file toolbar vanished). Unregistration must match id AND generation.
+    let generation: UUID
+    let kind: Kind
+
+    init(id: String, generation: UUID, kind: Kind) {
+        self.id = id
+        self.generation = generation
+        self.kind = kind
+    }
+
+    /// Share target: the local file URL, the PR's html page, or the
+    /// document's canonical github.com blob page — never a raw URL.
+    var shareURL: URL?
+
+    // Local file: edit mode.
+    var editMode = false
+    var editDisabled = false
+    var setEditMode: ((Bool) -> Void)?
+
+    // Compare (local + remote): the view builds its NSMenu from live git
+    // state at click time and pops it on the toolbar button's anchor.
+    var compareAvailable = false
+    var compareUnavailableReason: String?
+    var popCompare: ((NSView) -> Void)?
+
+    // Blame: visibility itself is the global AppStorage toggle; the
+    // surface only says whether blame exists here at all, and whether the
+    // toggle is momentarily disabled (a local file mid-comparison).
+    var blameAvailable = false
+    var blameDisabled = false
+
+    // Margin notes (local files): the button is pointless while the page
+    // shows something that isn't the document (comparison, source view).
+    var marginNoteDisabled = false
+
+    // Remote docs: reload re-resolves the branch; a session opened at a
+    // specific commit has nothing to re-resolve.
+    var reloadDisabledReason: String?
+
+    // PR file: the Rendered Diff / Source Diff / Result mode picker, by
+    // raw value so the view keeps its Mode enum private.
+    var modeOptions: [String] = []
+    var mode: String?
+    var setMode: ((String) -> Void)?
+
+    // PR file: the Inline / Side by Side layout picker (the value is the
+    // global AppStorage; the surface controls presence and disabling).
+    var showsLayout = false
+    var layoutDisabledReason: String?
+
+    // PR file: whole-file comment button.
+    var showsFileComment = false
+}
+
 /// A recently opened file, folder, or pull request. Persisted (metadata only)
 /// in UserDefaults.
 struct RecentItem: Codable, Identifiable, Equatable {
@@ -197,6 +276,8 @@ enum DocumentCommand: Equatable {
     /// and the file-level variant at the top of the document.
     case addMarginNote
     case addFileMarginNote
+    /// Opens the whole-file comment sheet on the active PR file.
+    case commentOnFile
 }
 
 struct DocumentCommandRequest: Equatable {
@@ -334,6 +415,9 @@ final class AppState: ObservableObject {
     /// See ActiveDocument; nil while a diff, the PR overview, or the empty
     /// placeholder is frontmost (export/copy menu items disable themselves).
     @Published var activeDocument: ActiveDocument?
+    /// See SurfaceToolbar; nil while a placeholder is frontmost — the
+    /// window toolbar then shows only the window-level items.
+    @Published var surfaceToolbar: SurfaceToolbar?
     /// A menu command aimed at whichever detail view is on screen. Menus
     /// live at app level but these act on per-view state, so the command
     /// is posted here and the view that owns the state performs it.
@@ -705,6 +789,20 @@ final class AppState: ObservableObject {
     /// clobbering the new registration.
     func unregisterActiveDocument(id: String) {
         if activeDocument?.id == id { activeDocument = nil }
+    }
+
+    func registerSurfaceToolbar(_ surface: SurfaceToolbar) {
+        surfaceToolbar = surface
+    }
+
+    /// The stale-onDisappear guard, incarnation-precise: a dead view's
+    /// late onDisappear may share the DOCUMENT id with the live view that
+    /// already re-registered (same-id remount), so only the exact
+    /// incarnation that registered may clear the slot.
+    func unregisterSurfaceToolbar(id: String, generation: UUID) {
+        if surfaceToolbar?.id == id, surfaceToolbar?.generation == generation {
+            surfaceToolbar = nil
+        }
     }
 
     // MARK: - Local files
@@ -1466,6 +1564,18 @@ final class AppState: ObservableObject {
             remoteSessions[index].commitSHA = sha
         }
         return sha
+    }
+
+    /// Reload for a branch-tracking remote session: forget the resolved
+    /// commit so the next fetch re-resolves the ref, and drop the tree —
+    /// it was fetched at the old commit. The reloading document triggers
+    /// re-resolution itself; the tree refetches on demand.
+    func unpinRemoteSession(sessionID: String) {
+        guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        remoteSessions[index].commitSHA = nil
+        remoteSessions[index].treePaths = nil
+        remoteSessions[index].treeTruncated = false
+        dropPRContentCache(sessionID: sessionID)
     }
 
     /// Fetches the repo's Markdown tree for the sidebar (explicit user

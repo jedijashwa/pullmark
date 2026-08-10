@@ -31,18 +31,6 @@ struct LocalFileView: View {
         let ref: String
         let label: String
     }
-    private final class CompareAnchorBox {
-        weak var view: NSView?
-    }
-    private struct CompareAnchorReader: NSViewRepresentable {
-        let box: CompareAnchorBox
-        func makeNSView(context: Context) -> NSView {
-            let view = NSView()
-            box.view = view
-            return view
-        }
-        func updateNSView(_ nsView: NSView, context: Context) {}
-    }
     final class CompareMenuPresenter: NSObject {
         var actions: [() -> Void] = []
         @objc func fire(_ sender: NSMenuItem) {
@@ -50,8 +38,9 @@ struct LocalFileView: View {
             actions[sender.tag]()
         }
     }
-    @State private var compareAnchor = CompareAnchorBox()
     @State private var comparePresenter = CompareMenuPresenter()
+    /// This incarnation's registration token (see SurfaceToolbar.generation).
+    @State private var toolbarGeneration = UUID()
     @State private var inGitRepo = false
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
@@ -177,17 +166,25 @@ struct LocalFileView: View {
         .navigationTitle(file.url.lastPathComponent)
         .navigationSubtitle(subtitle)
         .onDisappear { saveReadingPosition() }
-        .toolbar { toolbarItems }
         .onAppear {
             load()
             loadGitInfo()
             watcher = FileWatcher(url: file.url) { load() }
             updateActiveDocument()
+            updateSurfaceToolbar()
         }
         .onDisappear {
             watcher = nil
             state.unregisterActiveDocument(id: activeDocumentID)
+            state.unregisterSurfaceToolbar(id: activeDocumentID,
+                                           generation: toolbarGeneration)
         }
+        // The window toolbar renders from the registered snapshot — every
+        // value that drives an item's on/off or enabled state re-registers.
+        .onChange(of: editMode) { _ in updateSurfaceToolbar() }
+        .onChange(of: inGitRepo) { _ in updateSurfaceToolbar() }
+        .onChange(of: compare == nil) { _ in updateSurfaceToolbar() }
+        .onChange(of: state.sourceViewVisible) { _ in updateSurfaceToolbar() }
         .onChange(of: blameVisible) { _ in loadBlame() }
         .onChange(of: currentText) { _ in
             loadBlame()
@@ -216,35 +213,23 @@ struct LocalFileView: View {
         }
     }
 
-    @ToolbarContentBuilder
-    private var toolbarItems: some ToolbarContent {
-            ToolbarItem {
-                ShareLink(item: file.url)
-                    .help("Share this document")
-            }
-            ToolbarItem { editToggle }
-            ToolbarItem {
-                compareMenu
-            }
-            // No git context, no Blame button: the toggle only appears for
-            // files inside a repository.
-            if inGitRepo {
-                ToolbarItem {
-                    BlameToggle(visible: $blameVisible)
-                        .disabled(compare != nil)
-                }
-            }
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-            ToolbarItem {
-                Button {
-                    load()
-                } label: {
-                    Label("Reload", systemImage: "arrow.clockwise")
-                }
-                .help("Reload from disk")
-            }
+    /// The window-level toolbar (AppToolbar) renders this surface's items
+    /// from here; the closures reach back into this view's live state.
+    private func updateSurfaceToolbar() {
+        var surface = SurfaceToolbar(id: activeDocumentID,
+                                     generation: toolbarGeneration,
+                                     kind: .localFile)
+        surface.shareURL = file.url
+        surface.editMode = editMode
+        surface.editDisabled = compare != nil || state.sourceViewVisible
+        surface.setEditMode = { setEditMode($0) }
+        surface.compareAvailable = inGitRepo
+        surface.compareUnavailableReason = "Not inside a git repository"
+        surface.popCompare = { popCompareMenu(from: $0) }
+        surface.blameAvailable = inGitRepo
+        surface.blameDisabled = compare != nil
+        surface.marginNoteDisabled = compare != nil || state.sourceViewVisible
+        state.registerSurfaceToolbar(surface)
     }
 
     /// Menu commands that act on this view's own state (View → Reload
@@ -274,41 +259,10 @@ struct LocalFileView: View {
         proxy.openNoteComposer(fileLevel: fileLevel)
     }
 
-    private var editToggle: some View {
-        Toggle(isOn: Binding(get: { editMode }, set: { setEditMode($0) })) {
-            Label("Edit", systemImage: "pencil")
-        }
-        // The key equivalent lives on Edit → Edit Mode; binding it here too
-        // would give one combo two owners.
-        .help(editMode ? "Done editing\(shortcuts.hint(.editMode))"
-                       : "Edit this document\(shortcuts.hint(.editMode)) — then click any block")
-        .disabled(compare != nil || state.sourceViewVisible)
-    }
-
-    /// A real button popping a native NSMenu built from live state at click
-    /// time. SwiftUI's toolbar Menu caches the menu it bridged for earlier
-    /// content: the first open after the lists refresh (a commit made in a
-    /// terminal, a new branch) showed stale rows or a stale width.
-    private var compareMenu: some View {
-        Button {
-            popCompareMenu()
-        } label: {
-            HStack(spacing: 3) {
-                Image(systemName: "clock.arrow.circlepath")
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .bold))
-                    .opacity(0.8)
-            }
-        }
-        .accessibilityLabel("Compare")
-        .background(CompareAnchorReader(box: compareAnchor))
-        .disabled(!inGitRepo)
-        .help(inGitRepo ? "Compare with a previous revision or branch"
-                        : "Not inside a git repository")
-    }
-
-    private func popCompareMenu() {
-        guard let view = compareAnchor.view else { return }
+    /// Builds the compare NSMenu from live git state at click time and
+    /// pops it on the window toolbar button's anchor (the button lives in
+    /// AppToolbar; SwiftUI's toolbar Menu would cache stale rows).
+    private func popCompareMenu(from view: NSView) {
         let menu = NSMenu()
         menu.autoenablesItems = false
         var actions: [() -> Void] = []
