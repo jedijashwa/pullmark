@@ -82,4 +82,55 @@ import Foundation
             == .remoteDoc(RemoteDocLink(owner: "o", repo: "r", ref: "main",
                                         path: "a.md", fragment: nil)))
     }
+
+    // MARK: - blobURL builder (the remote-doc toolbar Share target)
+
+    @Test func buildsCanonicalBlobURL() {
+        let url = RemoteDocLink.blobURL(owner: "obra", repo: "superpowers",
+                                        ref: "main", path: "skills/brainstorming/SKILL.md")
+        #expect(url?.absoluteString
+            == "https://github.com/obra/superpowers/blob/main/skills/brainstorming/SKILL.md")
+    }
+
+    @Test func builtBlobURLPercentEncodes() {
+        let url = RemoteDocLink.blobURL(owner: "o", repo: "r",
+                                        ref: "main", path: "docs/release notes.md")
+        #expect(url?.absoluteString
+            == "https://github.com/o/r/blob/main/docs/release%20notes.md")
+    }
+
+    @Test func builtBlobURLRoundTripsThroughParse() {
+        let url = RemoteDocLink.blobURL(owner: "o", repo: "r",
+                                        ref: "feature/wide-tables", path: "docs/a.md")!
+        // A ref containing "/" is ambiguous by nature — parse takes the
+        // first segment as the ref. Plain refs must round-trip exactly.
+        let plain = RemoteDocLink.blobURL(owner: "o", repo: "r",
+                                          ref: "main", path: "docs/release notes.md")!
+        #expect(RemoteDocLink.parse(plain)
+            == RemoteDocLink(owner: "o", repo: "r", ref: "main",
+                             path: "docs/release notes.md", fragment: nil))
+        #expect(url.absoluteString.contains("/blob/feature/wide-tables/"))
+    }
+
+    // MARK: - isCommitSHA (the remote-doc toolbar Reload gate)
+
+    @Test func commitSHAsAreDetected() {
+        #expect(RemoteDocLink.isCommitSHA("0a1b2c3"))
+        #expect(RemoteDocLink.isCommitSHA("0a1b2c3d4e"))
+        #expect(RemoteDocLink.isCommitSHA("aa76b61cea0fe2f22caa93b1c9f9a0b2c3d4e5f6"))
+        #expect(RemoteDocLink.isCommitSHA("DEADBEEF0123"))
+    }
+
+    @Test func branchAndTagNamesAreNot() {
+        #expect(!RemoteDocLink.isCommitSHA("main"))
+        #expect(!RemoteDocLink.isCommitSHA("master"))
+        #expect(!RemoteDocLink.isCommitSHA("v1.0.2"))
+        #expect(!RemoteDocLink.isCommitSHA("feature/wide-tables"))
+        #expect(!RemoteDocLink.isCommitSHA("release-2026"))
+        // Too short to be an abbreviated object name even when all-hex.
+        #expect(!RemoteDocLink.isCommitSHA("cafe"))
+        #expect(!RemoteDocLink.isCommitSHA(""))
+        // Over full-SHA length.
+        #expect(!RemoteDocLink.isCommitSHA(String(repeating: "a", count: 41)))
+    }
 }

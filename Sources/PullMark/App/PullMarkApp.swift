@@ -391,6 +391,15 @@ struct PullMarkApp: App {
                     .disabled(state == nil || zoom <= DocumentZoom.minimum)
                     .help("Make the document smaller")
                 Divider()
+                // The same palette as right-clicking the toolbar — in the
+                // menu too, as Mail and Finder have it, so the feature
+                // doesn't hide behind a gesture.
+                Button("Customize Toolbar…") {
+                    NSApp.sendAction(#selector(NSWindow.runToolbarCustomizationPalette(_:)),
+                                     to: nil, from: nil)
+                }
+                .help("Choose which items the toolbar shows, and their order")
+                Divider()
                 prViewCommands
             }
         }

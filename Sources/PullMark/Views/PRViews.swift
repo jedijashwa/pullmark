@@ -11,6 +11,8 @@ struct PROverviewView: View {
     @State private var reviewPopoverVisible = false
     @State private var postingComment = false
     @State private var findSeed: String?
+    /// This incarnation's registration token (see SurfaceToolbar.generation).
+    @State private var toolbarGeneration = UUID()
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
 
@@ -74,13 +76,18 @@ struct PROverviewView: View {
                 }
             }
             .navigationTitle(String("\(session.ref.owner)/\(session.ref.repo) #\(session.ref.number)"))
-            .toolbar {
-                // The review control itself is window-level (ContentView's
-                // toolbar) so it survives toolbar overflow on every surface.
-                ToolbarItem {
-                    ShareLink(item: session.details.htmlUrl)
-                        .help("Share a link to this pull request")
-                }
+            // The share item renders from this registration in the window
+            // toolbar (AppToolbar); the review control is window-level too.
+            .onAppear {
+                var surface = SurfaceToolbar(id: "prOverview:" + sessionID,
+                                             generation: toolbarGeneration,
+                                             kind: .prOverview)
+                surface.shareURL = session.details.htmlUrl
+                state.registerSurfaceToolbar(surface)
+            }
+            .onDisappear {
+                state.unregisterSurfaceToolbar(id: "prOverview:" + sessionID,
+                                               generation: toolbarGeneration)
             }
             // Review Changes… (menu or shortcut) opens the popover on
             // whichever PR surface is active — here, the overview.
@@ -212,6 +219,8 @@ struct PRFileView: View {
     }
 
     @State private var mode: Mode = .renderedDiff
+    /// This incarnation's registration token (see SurfaceToolbar.generation).
+    @State private var toolbarGeneration = UUID()
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
     /// View-menu commands that act on this view's own state: the toolbar
@@ -225,6 +234,7 @@ struct PRFileView: View {
             layoutRaw = (layout == .inline ? DiffLayout.split : DiffLayout.inline).rawValue
         }
         if state.take(.reviewChanges) { reviewPopoverVisible = true }
+        if state.take(.commentOnFile) { fileCommentVisible = true }
     }
     @State private var reviewPopoverVisible = false
     /// Comment id awaiting the native delete confirmation (destructive
@@ -273,6 +283,30 @@ struct PRFileView: View {
     private func modeChanged(_ newMode: Mode) {
         loadBlameIfNeeded()
         updateActiveDocument()
+        updateSurfaceToolbar()
+    }
+
+    /// What the window-level toolbar (AppToolbar) shows for this surface.
+    /// The mode picker round-trips through here; layout and blame presence
+    /// follow the mode, so every mode change re-registers.
+    private func updateSurfaceToolbar() {
+        var surface = SurfaceToolbar(id: activeDocumentID,
+                                     generation: toolbarGeneration,
+                                     kind: .prFile)
+        surface.modeOptions = Mode.allCases.map(\.rawValue)
+        surface.mode = mode.rawValue
+        surface.setMode = { raw in
+            if let newMode = Mode(rawValue: raw) { mode = newMode }
+        }
+        surface.showsLayout = mode == .renderedDiff
+        // A brand-new file renders inline regardless: split mode would show
+        // an all-hatched old column against the untinted document.
+        surface.layoutDisabledReason = file?.status == "added"
+            ? "New files always render inline — there is no old side to compare"
+            : nil
+        surface.blameAvailable = mode == .result
+        surface.showsFileComment = true
+        state.registerSurfaceToolbar(surface)
     }
 
     @ViewBuilder
@@ -305,9 +339,13 @@ struct PRFileView: View {
     var body: some View {
         VStack(spacing: 0) { stackedContent }
             .navigationTitle(path)
-            .toolbar { fileToolbar }
             .task(id: loadTaskID) { await load() }
-            .onDisappear { state.unregisterActiveDocument(id: activeDocumentID) }
+            .onAppear { updateSurfaceToolbar() }
+            .onDisappear {
+                state.unregisterActiveDocument(id: activeDocumentID)
+                state.unregisterSurfaceToolbar(id: activeDocumentID,
+                                               generation: toolbarGeneration)
+            }
             .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
             .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
             .onChange(of: mode, perform: modeChanged)
@@ -733,69 +771,6 @@ struct PRFileView: View {
         proxy.setComposerDrafts([key: text])
     }
 
-    /// Extracted from body so the modifier chain stays inside the
-    /// type-checker's budget.
-    ///
-    /// Declaration order is also collapse priority: when the window
-    /// narrows, SwiftUI moves LATER-declared items into the "»" overflow
-    /// menu first (verified empirically). Navigation (Back/step/jump) is
-    /// wayfinding and must survive the squeeze, so it comes first; the
-    /// outline toggle, layout picker, blame toggle, and comment shortcut
-    /// are the sacrificial tail — the same order Xcode and Safari shed
-    /// secondary items. (The review control outranks them all: it is
-    /// window-level, see ContentView.)
-    @ToolbarContentBuilder
-    private var fileToolbar: some ToolbarContent {
-        // The sidebar shouldn't be the only way around a PR: back to
-        // the overview, and step or jump between its Markdown files.
-        ToolbarItemGroup(placement: .navigation) {
-            if let session {
-                PRFileNavigation(sessionID: sessionID, path: path, session: session)
-            }
-        }
-        ToolbarItem(placement: .principal) {
-            Picker("View", selection: $mode) {
-                ForEach(Mode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-        ToolbarItem {
-            OutlineToggle(visible: $outlineVisible)
-        }
-        ToolbarItem {
-            if mode == .renderedDiff {
-                Picker("Layout", selection: $layoutRaw) {
-                    ForEach(DiffLayout.allCases) { layout in
-                        Text(layout.rawValue).tag(layout.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-                // A brand-new file renders inline regardless: split
-                // mode would show an all-hatched old column against
-                // the untinted document — half the pane saying nothing.
-                .disabled(file?.status == "added")
-                .help(file?.status == "added"
-                    ? "New files always render inline — there is no old side to compare"
-                    : "Inline or side-by-side rendered diff")
-            }
-        }
-        ToolbarItem {
-            if mode == .result {
-                BlameToggle(visible: $blameVisible)
-            }
-        }
-        ToolbarItem {
-            Button {
-                fileCommentVisible = true
-            } label: {
-                Label("Comment on File", systemImage: "plus.bubble")
-            }
-            .help("Comment on this file as a whole, not a specific line")
-        }
-    }
-
     /// Fetches blame once per loaded head content; failures degrade to a
     /// one-line note in the annotation area.
     private func loadBlameIfNeeded() {
@@ -937,7 +912,7 @@ private struct PRFileSheets: ViewModifier {
 /// Toolbar navigation for a PR file: back to the overview, previous/next
 /// Markdown file, and a jump menu — the sidebar stays optional. Extracted
 /// from PRFileView's toolbar to keep the type-checker solvent.
-private struct PRFileNavigation: View {
+struct PRFileNavigation: View {
     @EnvironmentObject private var state: AppState
     let sessionID: String
     let path: String
@@ -1022,6 +997,8 @@ struct PRDocView: View {
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
     @State private var findSeed: String?
+    /// This incarnation's registration token (see SurfaceToolbar.generation).
+    @State private var toolbarGeneration = UUID()
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
@@ -1114,19 +1091,20 @@ struct PRDocView: View {
             }
         }
         .navigationTitle(path)
-        .toolbar {
-            ToolbarItem {
-                BlameToggle(visible: $blameVisible)
-            }
-            ToolbarItem {
-                OutlineToggle(visible: $outlineVisible)
-            }
-        }
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
         }
+        .onAppear {
+            var surface = SurfaceToolbar(id: activeDocumentID,
+                                         generation: toolbarGeneration,
+                                         kind: .prDoc)
+            surface.blameAvailable = true
+            state.registerSurfaceToolbar(surface)
+        }
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
+            state.unregisterSurfaceToolbar(id: activeDocumentID,
+                                           generation: toolbarGeneration)
         }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .modifier(PendingSearchConsumer(target: .prDoc(sessionID, path),

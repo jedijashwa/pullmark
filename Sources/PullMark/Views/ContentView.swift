@@ -10,6 +10,9 @@ struct ContentView: View {
     @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
+    /// The toolbar builder needs it: the margin-note item leaves the
+    /// customization pool entirely while the feature is off.
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
     @Environment(\.controlActiveState) private var controlActiveState
 
     var body: some View {
@@ -35,52 +38,27 @@ struct ContentView: View {
         // macOS 14 gets the real API (navigationDocument); 13 the fallback.
         .modifier(DocumentProxyModifier(url: selectedLocalURL))
         .frame(minWidth: 940, minHeight: 620)
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    state.openFileOrFolder()
-                } label: {
-                    Label("Open File or Folder", systemImage: "folder")
-                }
-                .help("Open local Markdown files or a folder"
-                    + shortcuts.hint(.openFile))
-
-                Button {
-                    state.showAddPR = true
-                } label: {
-                    Label("Open Pull Request", systemImage: "arrow.triangle.pull")
-                }
-                .help("Open a GitHub pull request"
-                    + shortcuts.hint(.openPullRequest))
-
-                Menu {
-                    Picker("Appearance", selection: $appearanceRaw) {
-                        ForEach(Appearance.allCases) { appearance in
-                            Text(appearance.label).tag(appearance.rawValue)
-                        }
-                    }
-                    .pickerStyle(.inline)
-                } label: {
-                    Label("Appearance", systemImage: "circle.lefthalf.filled")
-                }
-                .help("Switch between light, dark, and system appearance")
-
-                // The morphing review control — window-level, trailing-most,
-                // on every PR surface (spec §3). Hosted here rather than in
-                // the surfaces' own toolbars because SwiftUI overflows
-                // detail-level toolbar items before window-level ones at
-                // every width: review status must survive the squeeze that
-                // rightly claims the layout picker and comment shortcut
-                // first (see ReviewToolbarButton). The click rides the same
-                // command path as the View menu and ⇧⌘R; the active surface
-                // presents the popover.
-                if let sessionID = reviewSessionID {
-                    ReviewToolbarButton(sessionID: sessionID,
-                                        tracker: state.reviewAnchor) {
-                        state.send(.reviewChanges)
-                    }
-                }
-            }
+        // The whole toolbar — window items AND the active surface's items —
+        // lives in this single customizable block: SwiftUI only persists
+        // customization for window-level `.toolbar(id:)` content, and one
+        // unnamed toolbar item anywhere in the window would disable
+        // customization outright (see AppToolbar). Surface views feed it
+        // through SurfaceToolbar registration.
+        //
+        // The identity is PER SURFACE KIND, not a constant: saved
+        // arrangements only restore for items present when the toolbar is
+        // created — items merging in on a later surface switch rejoin from
+        // their defaults, resurrecting anything the user removed (verified
+        // live). A per-surface identity gives every surface its own
+        // NSToolbar, created with its full item set, so every arrangement
+        // saves and restores under its own key — which is also what makes
+        // customizations per-surface rather than shared.
+        .toolbar(id: toolbarIdentity) {
+            AppToolbar(state: state,
+                       surface: state.surfaceToolbar,
+                       reviewSessionID: reviewSessionID,
+                       marginNotesEnabled: marginNotesEnabled,
+                       appearanceRaw: $appearanceRaw)
         }
         .sheet(isPresented: $state.showAddPR) {
             AddPRSheet()
@@ -190,6 +168,21 @@ struct ContentView: View {
         case .prOverview(let id): return id
         case .prFile(let id, _): return id
         default: return nil
+        }
+    }
+
+    /// One NSToolbar identity per surface KIND (not per document): the
+    /// autosaved arrangement is keyed by this, so each surface remembers
+    /// its own customization — and restores it correctly regardless of
+    /// which surface the app launched on (see the toolbar comment above).
+    private var toolbarIdentity: String {
+        switch state.surfaceToolbar?.kind {
+        case .localFile: return "main-local"
+        case .remoteDoc: return "main-remote"
+        case .prFile: return "main-pr-file"
+        case .prDoc: return "main-pr-doc"
+        case .prOverview: return "main-pr-overview"
+        case nil: return "main"
         }
     }
 
