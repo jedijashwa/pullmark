@@ -34,6 +34,9 @@ struct ContentView: View {
         }
         // Physical "⌘+" (⇧⌘=) zooms in like the menu's ⌘= — see the catcher.
         .background(ZoomKeyCatcher())
+        // Moves app toolbar items back out of the sidebar section when a
+        // customize-palette drop lands them there (see AppToolbar).
+        .background(ToolbarSectionEnforcer())
         // Titlebar proxy icon + ⌘-click path menu for the open local file.
         // macOS 14 gets the real API (navigationDocument); 13 the fallback.
         .modifier(DocumentProxyModifier(url: selectedLocalURL))
@@ -55,7 +58,8 @@ struct ContentView: View {
         // customizations per-surface rather than shared.
         .toolbar(id: toolbarIdentity) {
             AppToolbar(state: state,
-                       surface: state.surfaceToolbar,
+                       kind: state.surfaceExpectation?.kind,
+                       surface: state.expectedSurfaceToolbar,
                        reviewSessionID: reviewSessionID,
                        marginNotesEnabled: marginNotesEnabled,
                        appearanceRaw: $appearanceRaw)
@@ -175,8 +179,9 @@ struct ContentView: View {
     /// autosaved arrangement is keyed by this, so each surface remembers
     /// its own customization — and restores it correctly regardless of
     /// which surface the app launched on (see the toolbar comment above).
+    /// Derived, never registered — see AppState.surfaceExpectation.
     private var toolbarIdentity: String {
-        switch state.surfaceToolbar?.kind {
+        switch state.surfaceExpectation?.kind {
         case .localFile: return "main-local"
         case .remoteDoc: return "main-remote"
         case .prFile: return "main-pr-file"

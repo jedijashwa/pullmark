@@ -461,6 +461,13 @@ enum LaunchArguments {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Before any window (and so any toolbar) exists: scrub saved
+        // toolbar arrangements that a sidebar-section drop corrupted, so
+        // SwiftUI only ever restores a clean one. See ToolbarArrangement.
+        ToolbarArrangement.repairSavedConfigurations(in: .standard)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Needed when launched via `swift run` (no bundle): become a regular,
         // focusable app with a menu bar.

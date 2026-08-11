@@ -35,8 +35,6 @@ struct RemoteDocView: View {
     @State private var compareGeneration = 0
     @State private var branches: [String] = []
     @State private var comparePresenter = MenuActionPresenter()
-    /// This incarnation's registration token (see SurfaceToolbar.generation).
-    @State private var toolbarGeneration = UUID()
 
     private var session: RemoteRepoSession? { state.remoteSession(sessionID) }
 
@@ -163,8 +161,6 @@ struct RemoteDocView: View {
         .onAppear { updateSurfaceToolbar() }
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
-            state.unregisterSurfaceToolbar(id: activeDocumentID,
-                                           generation: toolbarGeneration)
         }
         // The window toolbar renders from the registered snapshot — every
         // value that drives an item's enabled state re-registers.
@@ -200,9 +196,7 @@ struct RemoteDocView: View {
 
     /// What the window-level toolbar (AppToolbar) shows for this surface.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID,
-                                     generation: toolbarGeneration,
-                                     kind: .remoteDoc)
+        var surface = SurfaceToolbar(id: activeDocumentID, kind: .remoteDoc)
         if let session {
             surface.shareURL = RemoteDocLink.blobURL(owner: session.ref.owner,
                                                      repo: session.ref.repo,
