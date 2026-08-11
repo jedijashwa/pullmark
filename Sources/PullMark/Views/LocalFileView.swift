@@ -39,8 +39,6 @@ struct LocalFileView: View {
         }
     }
     @State private var comparePresenter = CompareMenuPresenter()
-    /// This incarnation's registration token (see SurfaceToolbar.generation).
-    @State private var toolbarGeneration = UUID()
     @State private var inGitRepo = false
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
@@ -176,8 +174,6 @@ struct LocalFileView: View {
         .onDisappear {
             watcher = nil
             state.unregisterActiveDocument(id: activeDocumentID)
-            state.unregisterSurfaceToolbar(id: activeDocumentID,
-                                           generation: toolbarGeneration)
         }
         // The window toolbar renders from the registered snapshot — every
         // value that drives an item's on/off or enabled state re-registers.
@@ -216,9 +212,7 @@ struct LocalFileView: View {
     /// The window-level toolbar (AppToolbar) renders this surface's items
     /// from here; the closures reach back into this view's live state.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID,
-                                     generation: toolbarGeneration,
-                                     kind: .localFile)
+        var surface = SurfaceToolbar(id: activeDocumentID, kind: .localFile)
         surface.shareURL = file.url
         surface.editMode = editMode
         surface.editDisabled = compare != nil || state.sourceViewVisible

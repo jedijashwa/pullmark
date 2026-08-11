@@ -8,8 +8,14 @@ import AppKit
 /// content: detail-hosted customizable items are re-merged fresh at every
 /// launch, resurrecting whatever the user removed, and a single unnamed
 /// `.toolbar {}` item anywhere in the window disables customization for
-/// the whole toolbar (both verified live on this OS). Surface views feed
-/// their values and callbacks through SurfaceToolbar registration.
+/// the whole toolbar (both verified live on this OS).
+///
+/// STRUCTURE (which items exist) follows `kind`, derived from the model
+/// (AppState.surfaceExpectation) — never from view-lifecycle
+/// registration, which SwiftUI's remounting makes unreliable. The
+/// registered `surface` supplies only VALUES and callbacks, may briefly
+/// be nil while a fresh surface's registration lands, and every item
+/// renders a safe disabled default in that gap.
 ///
 /// Item IDs carry a surface prefix ("local-blame", "pr-blame") so each
 /// surface keeps its own arrangement and the palette only ever offers the
@@ -24,14 +30,15 @@ import AppKit
 /// the same order Xcode and Safari shed secondary items.
 struct AppToolbar: CustomizableToolbarContent {
     let state: AppState
+    let kind: SurfaceToolbar.Kind?
     let surface: SurfaceToolbar?
     let reviewSessionID: String?
     let marginNotesEnabled: Bool
     @Binding var appearanceRaw: String
 
     var body: some CustomizableToolbarContent {
-        if let surface {
-            switch surface.kind {
+        if let kind {
+            switch kind {
             case .localFile:
                 LocalFileToolbarItems(state: state, surface: surface,
                                       marginNotesEnabled: marginNotesEnabled)
@@ -40,7 +47,7 @@ struct AppToolbar: CustomizableToolbarContent {
             case .prFile:
                 PRFileToolbarItems(state: state, surface: surface)
             case .prDoc:
-                PRDocToolbarItems(state: state, surface: surface)
+                PRDocToolbarItems(state: state)
             case .prOverview:
                 PROverviewToolbarItems(surface: surface)
             }
@@ -88,6 +95,78 @@ struct AppToolbar: CustomizableToolbarContent {
     }
 }
 
+/// Live guard for sidebar-section drops (see ToolbarArrangement for the
+/// full story). Item-by-item NSToolbar surgery loses to SwiftUI's own
+/// model, so on detecting a misplaced item this scrubs the SAVED
+/// configuration and re-applies it wholesale through the same restore
+/// path SwiftUI handles at launch. Lives on the window content
+/// (ContentView), outside any toolbar item.
+struct ToolbarSectionEnforcer: NSViewRepresentable {
+    final class Coordinator {
+        var observers: [NSObjectProtocol] = []
+        var enforcementScheduled = false
+        var poll: Timer?
+        deinit {
+            observers.forEach(NotificationCenter.default.removeObserver(_:))
+            poll?.invalidate()
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        let coordinator = context.coordinator
+        // AppKit's pair is WILL-add / DID-remove; a palette drop fires both.
+        for name in [NSToolbar.willAddItemNotification,
+                     NSToolbar.didRemoveItemNotification] {
+            coordinator.observers.append(NotificationCenter.default.addObserver(
+                forName: name, object: nil, queue: .main
+            ) { [weak view, weak coordinator] note in
+                guard let view, let coordinator,
+                      let toolbar = view.window?.toolbar,
+                      (note.object as? NSToolbar) === toolbar,
+                      !coordinator.enforcementScheduled else { return }
+                coordinator.enforcementScheduled = true
+                // Coalesce the burst a drop produces, and never mutate
+                // from inside the notification.
+                DispatchQueue.main.async {
+                    coordinator.enforcementScheduled = false
+                    Self.repairIfNeeded(view.window?.toolbar)
+                }
+            })
+        }
+        // Bulk restores (surface-identity switches) emit no per-item
+        // notifications, and neither does a customize-palette MOVE within
+        // the toolbar (verified live) — a slow poll is the only reliable
+        // net. The clean-state fast path is one string-array compare.
+        coordinator.poll = Timer.scheduledTimer(withTimeInterval: 1.5,
+                                                repeats: true) { [weak view] _ in
+            Self.repairIfNeeded(view?.window?.toolbar)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { [weak nsView] in
+            Self.repairIfNeeded(nsView?.window?.toolbar)
+        }
+    }
+
+    static func repairIfNeeded(_ toolbar: NSToolbar?) {
+        guard let toolbar else { return }
+        let identifiers = toolbar.items.map { $0.itemIdentifier.rawValue }
+        guard ToolbarArrangement.repaired(identifiers) != identifiers else { return }
+        // Scrub what's on disk first, so a relaunch is clean even if the
+        // live re-application below doesn't take.
+        ToolbarArrangement.repairSavedConfigurations(in: .standard)
+        let key = ToolbarArrangement.configKeyPrefix + toolbar.identifier
+        if let config = UserDefaults.standard.dictionary(forKey: key) {
+            toolbar.setConfiguration(config)
+        }
+    }
+}
+
 // MARK: - Per-surface item sets
 
 /// The default-hidden tail every document surface offers: zoom controls
@@ -122,14 +201,14 @@ private struct HiddenExtraItems: CustomizableToolbarContent {
 
 private struct LocalFileToolbarItems: CustomizableToolbarContent {
     let state: AppState
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     let marginNotesEnabled: Bool
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "local-share") {
-            if let url = surface.shareURL {
+            if let url = surface?.shareURL {
                 ShareLink(item: url)
                     .help("Share this document")
             }
@@ -142,10 +221,10 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
         }
         // No git context, no Blame button: the toggle only appears for
         // files inside a repository.
-        if surface.blameAvailable {
+        if surface?.blameAvailable == true {
             ToolbarItem(id: "local-blame") {
                 BlameToggle(visible: $blameVisible)
-                    .disabled(surface.blameDisabled)
+                    .disabled(surface?.blameDisabled ?? true)
             }
         }
         ToolbarItem(id: "local-outline") {
@@ -167,7 +246,7 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
 
 private struct RemoteDocToolbarItems: CustomizableToolbarContent {
     let state: AppState
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
 
@@ -182,14 +261,14 @@ private struct RemoteDocToolbarItems: CustomizableToolbarContent {
             OutlineToggle(visible: $outlineVisible)
         }
         ToolbarItem(id: "remote-share", showsByDefault: false) {
-            if let url = surface.shareURL {
+            if let url = surface?.shareURL {
                 ShareLink(item: url)
                     .help("Share a link to this document on GitHub")
             }
         }
         ToolbarItem(id: "remote-reload", showsByDefault: false) {
             ReloadToolbarButton(state: state,
-                                disabledReason: surface.reloadDisabledReason)
+                                disabledReason: surface?.reloadDisabledReason)
         }
         HiddenExtraItems(state: state, idPrefix: "remote", includeSource: true)
     }
@@ -197,7 +276,7 @@ private struct RemoteDocToolbarItems: CustomizableToolbarContent {
 
 private struct PRFileToolbarItems: CustomizableToolbarContent {
     let state: AppState
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var layoutRaw = PRFileView.DiffLayout.inline.rawValue
@@ -210,10 +289,10 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
         }
         ToolbarItem(id: "pr-mode", placement: .principal) {
             Picker("View", selection: Binding(
-                get: { surface.mode ?? "" },
-                set: { surface.setMode?($0) }
+                get: { surface?.mode ?? "" },
+                set: { surface?.setMode?($0) }
             )) {
-                ForEach(surface.modeOptions, id: \.self) { option in
+                ForEach(surface?.modeOptions ?? [], id: \.self) { option in
                     Text(option).tag(option)
                 }
             }
@@ -222,7 +301,7 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
         ToolbarItem(id: "pr-outline") {
             OutlineToggle(visible: $outlineVisible)
         }
-        if surface.showsLayout {
+        if surface?.showsLayout == true {
             ToolbarItem(id: "pr-layout") {
                 Picker("Layout", selection: $layoutRaw) {
                     ForEach(PRFileView.DiffLayout.allCases) { layout in
@@ -233,25 +312,23 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
                 // A brand-new file renders inline regardless: split mode
                 // would show an all-hatched old column against the
                 // untinted document — half the pane saying nothing.
-                .disabled(surface.layoutDisabledReason != nil)
-                .help(surface.layoutDisabledReason
+                .disabled(surface?.layoutDisabledReason != nil)
+                .help(surface?.layoutDisabledReason
                     ?? "Inline or side-by-side rendered diff")
             }
         }
-        if surface.blameAvailable {
+        if surface?.blameAvailable == true {
             ToolbarItem(id: "pr-blame") {
                 BlameToggle(visible: $blameVisible)
             }
         }
-        if surface.showsFileComment {
-            ToolbarItem(id: "pr-comment") {
-                Button {
-                    state.send(.commentOnFile)
-                } label: {
-                    Label("Comment on File", systemImage: "plus.bubble")
-                }
-                .help("Comment on this file as a whole, not a specific line")
+        ToolbarItem(id: "pr-comment") {
+            Button {
+                state.send(.commentOnFile)
+            } label: {
+                Label("Comment on File", systemImage: "plus.bubble")
             }
+            .help("Comment on this file as a whole, not a specific line")
         }
         HiddenExtraItems(state: state, idPrefix: "pr")
     }
@@ -259,7 +336,6 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
 
 private struct PRDocToolbarItems: CustomizableToolbarContent {
     let state: AppState
-    let surface: SurfaceToolbar
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
 
@@ -275,11 +351,11 @@ private struct PRDocToolbarItems: CustomizableToolbarContent {
 }
 
 private struct PROverviewToolbarItems: CustomizableToolbarContent {
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "overview-share") {
-            if let url = surface.shareURL {
+            if let url = surface?.shareURL {
                 ShareLink(item: url)
                     .help("Share a link to this pull request")
             }
@@ -320,22 +396,22 @@ private struct OpenPRToolbarButton: View {
 }
 
 private struct EditToolbarToggle: View {
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
     var body: some View {
         Toggle(isOn: Binding(
-            get: { surface.editMode },
-            set: { surface.setEditMode?($0) }
+            get: { surface?.editMode ?? false },
+            set: { surface?.setEditMode?($0) }
         )) {
             Label("Edit", systemImage: "pencil")
         }
         // The key equivalent lives on Edit → Edit Mode; binding it here too
         // would give one combo two owners.
-        .help(surface.editMode
+        .help(surface?.editMode == true
             ? "Done editing\(shortcuts.hint(.editMode))"
             : "Edit this document\(shortcuts.hint(.editMode)) — then click any block")
-        .disabled(surface.editDisabled)
+        .disabled(surface?.editDisabled ?? true)
     }
 }
 
@@ -343,12 +419,12 @@ private struct EditToolbarToggle: View {
 /// time (see MenuAnchorBox — SwiftUI's toolbar Menu caches stale rows).
 /// The button owns the anchor; the surface view owns the menu content.
 private struct CompareToolbarButton: View {
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     @State private var anchor = MenuAnchorBox()
 
     var body: some View {
         Button {
-            if let view = anchor.view { surface.popCompare?(view) }
+            if let view = anchor.view { surface?.popCompare?(view) }
         } label: {
             HStack(spacing: 3) {
                 Image(systemName: "clock.arrow.circlepath")
@@ -359,10 +435,10 @@ private struct CompareToolbarButton: View {
         }
         .accessibilityLabel("Compare")
         .background(MenuAnchorReader(box: anchor))
-        .disabled(!surface.compareAvailable)
-        .help(surface.compareAvailable
+        .disabled(surface?.compareAvailable != true)
+        .help(surface?.compareAvailable == true
             ? "Compare with a previous revision or branch"
-            : (surface.compareUnavailableReason ?? "Comparing is unavailable here"))
+            : (surface?.compareUnavailableReason ?? "Comparing is unavailable here"))
     }
 }
 
@@ -456,7 +532,7 @@ private struct ContentWidthToolbarPicker: View {
 
 private struct MarginNoteToolbarButton: View {
     let state: AppState
-    let surface: SurfaceToolbar
+    let surface: SurfaceToolbar?
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
     var body: some View {
@@ -465,7 +541,7 @@ private struct MarginNoteToolbarButton: View {
         } label: {
             Label("Add Margin Note", systemImage: "note.text.badge.plus")
         }
-        .disabled(surface.marginNoteDisabled)
+        .disabled(surface?.marginNoteDisabled ?? true)
         .help("Add a margin note on the block you're reading"
             + shortcuts.hint(.addMarginNote))
     }

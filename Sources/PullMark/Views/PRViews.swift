@@ -11,8 +11,6 @@ struct PROverviewView: View {
     @State private var reviewPopoverVisible = false
     @State private var postingComment = false
     @State private var findSeed: String?
-    /// This incarnation's registration token (see SurfaceToolbar.generation).
-    @State private var toolbarGeneration = UUID()
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
 
@@ -80,14 +78,9 @@ struct PROverviewView: View {
             // toolbar (AppToolbar); the review control is window-level too.
             .onAppear {
                 var surface = SurfaceToolbar(id: "prOverview:" + sessionID,
-                                             generation: toolbarGeneration,
                                              kind: .prOverview)
                 surface.shareURL = session.details.htmlUrl
                 state.registerSurfaceToolbar(surface)
-            }
-            .onDisappear {
-                state.unregisterSurfaceToolbar(id: "prOverview:" + sessionID,
-                                               generation: toolbarGeneration)
             }
             // Review Changes… (menu or shortcut) opens the popover on
             // whichever PR surface is active — here, the overview.
@@ -219,8 +212,6 @@ struct PRFileView: View {
     }
 
     @State private var mode: Mode = .renderedDiff
-    /// This incarnation's registration token (see SurfaceToolbar.generation).
-    @State private var toolbarGeneration = UUID()
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
     /// View-menu commands that act on this view's own state: the toolbar
@@ -290,9 +281,7 @@ struct PRFileView: View {
     /// The mode picker round-trips through here; layout and blame presence
     /// follow the mode, so every mode change re-registers.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID,
-                                     generation: toolbarGeneration,
-                                     kind: .prFile)
+        var surface = SurfaceToolbar(id: activeDocumentID, kind: .prFile)
         surface.modeOptions = Mode.allCases.map(\.rawValue)
         surface.mode = mode.rawValue
         surface.setMode = { raw in
@@ -305,7 +294,6 @@ struct PRFileView: View {
             ? "New files always render inline — there is no old side to compare"
             : nil
         surface.blameAvailable = mode == .result
-        surface.showsFileComment = true
         state.registerSurfaceToolbar(surface)
     }
 
@@ -343,8 +331,6 @@ struct PRFileView: View {
             .onAppear { updateSurfaceToolbar() }
             .onDisappear {
                 state.unregisterActiveDocument(id: activeDocumentID)
-                state.unregisterSurfaceToolbar(id: activeDocumentID,
-                                               generation: toolbarGeneration)
             }
             .modifier(DocumentCommandHandler(state: state, handle: handleDocumentCommand))
             .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
@@ -997,8 +983,6 @@ struct PRDocView: View {
     @State private var activeSection: String?
     @State private var stats: DocumentStats?
     @State private var findSeed: String?
-    /// This incarnation's registration token (see SurfaceToolbar.generation).
-    @State private var toolbarGeneration = UUID()
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
@@ -1095,16 +1079,12 @@ struct PRDocView: View {
             await load()
         }
         .onAppear {
-            var surface = SurfaceToolbar(id: activeDocumentID,
-                                         generation: toolbarGeneration,
-                                         kind: .prDoc)
+            var surface = SurfaceToolbar(id: activeDocumentID, kind: .prDoc)
             surface.blameAvailable = true
             state.registerSurfaceToolbar(surface)
         }
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
-            state.unregisterSurfaceToolbar(id: activeDocumentID,
-                                           generation: toolbarGeneration)
         }
         .onChange(of: blameVisible) { _ in loadBlameIfNeeded() }
         .modifier(PendingSearchConsumer(target: .prDoc(sessionID, path),

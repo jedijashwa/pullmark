@@ -166,22 +166,11 @@ struct SurfaceToolbar {
         case prOverview
     }
 
-    /// Registration identity, so a disappearing view only unregisters
-    /// itself (same rule as ActiveDocument).
+    /// Which surface these values belong to — must equal the id
+    /// AppState.surfaceExpectation derives for the same document, or the
+    /// registration is ignored as stale.
     let id: String
-    /// Incarnation identity. SwiftUI can remount a surface under the SAME
-    /// document id (preview→pin re-creates the view) and fire the dead
-    /// incarnation's onDisappear AFTER the new one registered — an id-only
-    /// guard then clears a live registration (caught in the wild: the PR
-    /// file toolbar vanished). Unregistration must match id AND generation.
-    let generation: UUID
     let kind: Kind
-
-    init(id: String, generation: UUID, kind: Kind) {
-        self.id = id
-        self.generation = generation
-        self.kind = kind
-    }
 
     /// Share target: the local file URL, the PR's html page, or the
     /// document's canonical github.com blob page — never a raw URL.
@@ -223,8 +212,6 @@ struct SurfaceToolbar {
     var showsLayout = false
     var layoutDisabledReason: String?
 
-    // PR file: whole-file comment button.
-    var showsFileComment = false
 }
 
 /// A recently opened file, folder, or pull request. Persisted (metadata only)
@@ -791,18 +778,76 @@ final class AppState: ObservableObject {
         if activeDocument?.id == id { activeDocument = nil }
     }
 
+    /// Overwrite-only, and deliberately WITHOUT an unregister: SwiftUI can
+    /// spawn two incarnations of a surface where the SURVIVOR registers
+    /// first and a doomed clone registers (and disappears) after — no
+    /// lifecycle-based guard can tell who survives, so any clearing path
+    /// eventually clears a live registration (caught in the wild three
+    /// different ways). Stale registrations are inert instead: the toolbar
+    /// derives its STRUCTURE from `surfaceExpectation` and only reads
+    /// these values when the registered id matches the expected one.
+    ///
+    /// The publish is deferred a tick because onAppear/onChange run inside
+    /// SwiftUI's render transaction, where a @Published write updates the
+    /// value but can silently drop the re-render.
     func registerSurfaceToolbar(_ surface: SurfaceToolbar) {
-        surfaceToolbar = surface
+        DispatchQueue.main.async { [weak self] in
+            self?.surfaceToolbar = surface
+        }
     }
 
-    /// The stale-onDisappear guard, incarnation-precise: a dead view's
-    /// late onDisappear may share the DOCUMENT id with the live view that
-    /// already re-registered (same-id remount), so only the exact
-    /// incarnation that registered may clear the slot.
-    func unregisterSurfaceToolbar(id: String, generation: UUID) {
-        if surfaceToolbar?.id == id, surfaceToolbar?.generation == generation {
-            surfaceToolbar = nil
+    /// What surface the detail area is showing, derived from the same
+    /// model state DetailView dispatches on — its switch and this one must
+    /// agree branch for branch. This drives the window toolbar's
+    /// structure (which items exist, which arrangement identity applies):
+    /// pure derivation is transactionally consistent with the selection,
+    /// where view-lifecycle registration provably is not.
+    var surfaceExpectation: (kind: SurfaceToolbar.Kind, id: String)? {
+        switch selection {
+        case nil, .inboxItem, .recentItem:
+            return nil
+        case .local(let url):
+            guard localFile(for: url) != nil else { return nil }
+            return (.localFile, "local:" + url.path)
+        case .folder(let root):
+            guard let folder = folder(for: root), !folder.missing,
+                  let readme = PathTree.readmePath(in: folder.filePaths),
+                  localFile(for: folder.fileURL(for: readme)) != nil else { return nil }
+            return (.localFile, "local:" + folder.fileURL(for: readme).path)
+        case .folderNode(let root, let path):
+            guard let folder = folder(for: root),
+                  let readme = PathTree.readmePath(in: folder.filePaths, directory: path),
+                  localFile(for: folder.fileURL(for: readme)) != nil else { return nil }
+            return (.localFile, "local:" + folder.fileURL(for: readme).path)
+        case .prOverview(let id):
+            guard session(id) != nil else { return nil }
+            return (.prOverview, "prOverview:" + id)
+        case .prFile(let id, let path):
+            guard session(id) != nil else { return nil }
+            return (.prFile, "prFile:" + id + "|" + path)
+        case .prDoc(let id, let path):
+            guard session(id) != nil else { return nil }
+            return (.prDoc, "prDoc:" + id + "|" + path)
+        case .remoteRepo(let id):
+            guard let session = remoteSession(id),
+                  let readme = session.treePaths.flatMap({ PathTree.readmePath(in: $0) })
+                      ?? PathTree.readmePath(in: session.docs) else { return nil }
+            return (.remoteDoc, "remoteDoc:" + id + "|" + readme)
+        case .remoteDoc(let id, let path):
+            guard remoteSession(id) != nil else { return nil }
+            return (.remoteDoc, "remoteDoc:" + id + "|" + path)
         }
+    }
+
+    /// The registered values, but only when they belong to the surface the
+    /// detail area is actually showing — a stale registration for anything
+    /// else reads as nil and items fall back to safe defaults until the
+    /// live view's next update lands.
+    var expectedSurfaceToolbar: SurfaceToolbar? {
+        guard let surfaceToolbar, surfaceToolbar.id == surfaceExpectation?.id else {
+            return nil
+        }
+        return surfaceToolbar
     }
 
     // MARK: - Local files
