@@ -4,6 +4,12 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.29.1 - 2026-08-11
+
+- The pull-request file toolbar's Previous/Next arrows and the n-of-m
+  jump menu are back — 0.29.0's customizable toolbar rendered only the
+  Back button of the navigation cluster.
+
 ## 0.29.0 - 2026-08-11
 
 - **Customize the toolbar** — right-click the toolbar (or View →

@@ -646,10 +646,18 @@ private struct PRFileNavigationItem: View {
     var body: some View {
         if case .prFile(let sessionID, let path) = state.selection,
            let session = state.session(sessionID) {
-            // Toolbar content doesn't reliably inherit the hierarchy's
-            // environment — inject explicitly.
-            PRFileNavigation(sessionID: sessionID, path: path, session: session)
-                .environmentObject(state)
+            // HStack, deliberately: PRFileNavigation's body emits several
+            // sibling views (back, previous/next, the n-of-m jump menu),
+            // and a ToolbarItem renders only the FIRST view of a bare
+            // tuple — the old code spread them across a ToolbarItemGroup,
+            // which has no customizable form. The stack keeps the whole
+            // wayfinding cluster one draggable unit.
+            // (Toolbar content also doesn't reliably inherit the
+            // hierarchy's environment — inject explicitly.)
+            HStack(spacing: 2) {
+                PRFileNavigation(sessionID: sessionID, path: path, session: session)
+            }
+            .environmentObject(state)
         }
     }
 }
