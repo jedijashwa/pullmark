@@ -168,9 +168,9 @@ struct SurfaceToolbar {
 
     /// Which surface these values belong to — must equal the id
     /// AppState.surfaceExpectation derives for the same document, or the
-    /// registration is ignored as stale.
+    /// registration is ignored as stale. (Structure — which items exist —
+    /// derives from surfaceExpectation's kind, never from here.)
     let id: String
-    let kind: Kind
 
     /// Share target: the local file URL, the PR's html page, or the
     /// document's canonical github.com blob page — never a raw URL.
@@ -211,7 +211,6 @@ struct SurfaceToolbar {
     // global AppStorage; the surface controls presence and disabling).
     var showsLayout = false
     var layoutDisabledReason: String?
-
 }
 
 /// A recently opened file, folder, or pull request. Persisted (metadata only)
@@ -402,8 +401,9 @@ final class AppState: ObservableObject {
     /// See ActiveDocument; nil while a diff, the PR overview, or the empty
     /// placeholder is frontmost (export/copy menu items disable themselves).
     @Published var activeDocument: ActiveDocument?
-    /// See SurfaceToolbar; nil while a placeholder is frontmost — the
-    /// window toolbar then shows only the window-level items.
+    /// The most recent SurfaceToolbar registration. Never cleared (see
+    /// registerSurfaceToolbar) — read through expectedSurfaceToolbar,
+    /// which id-gates it against the surface actually on screen.
     @Published var surfaceToolbar: SurfaceToolbar?
     /// A menu command aimed at whichever detail view is on screen. Menus
     /// live at app level but these act on per-view state, so the command
@@ -842,7 +842,12 @@ final class AppState: ObservableObject {
     /// The registered values, but only when they belong to the surface the
     /// detail area is actually showing — a stale registration for anything
     /// else reads as nil and items fall back to safe defaults until the
-    /// live view's next update lands.
+    /// live view's next update lands. One known soft spot: ids are
+    /// per-document, not per-incarnation, so returning to a document whose
+    /// dead view registered last serves that incarnation's closures for a
+    /// tick until the fresh onAppear registration overwrites them — a
+    /// toolbar click in that window no-ops against discarded state, then
+    /// self-heals.
     var expectedSurfaceToolbar: SurfaceToolbar? {
         guard let surfaceToolbar, surfaceToolbar.id == surfaceExpectation?.id else {
             return nil
@@ -1612,14 +1617,14 @@ final class AppState: ObservableObject {
     }
 
     /// Reload for a branch-tracking remote session: forget the resolved
-    /// commit so the next fetch re-resolves the ref, and drop the tree —
-    /// it was fetched at the old commit. The reloading document triggers
-    /// re-resolution itself; the tree refetches on demand.
+    /// commit so the next fetch re-resolves the ref. The browsed tree is
+    /// deliberately KEPT — nilling it would unmount any document shown
+    /// via the repo-root readme (both DetailView and surfaceExpectation
+    /// derive that readme from treePaths) and collapse the sidebar tree;
+    /// the caller refreshes it at the new commit instead.
     func unpinRemoteSession(sessionID: String) {
         guard let index = remoteSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         remoteSessions[index].commitSHA = nil
-        remoteSessions[index].treePaths = nil
-        remoteSessions[index].treeTruncated = false
         dropPRContentCache(sessionID: sessionID)
     }
 

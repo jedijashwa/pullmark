@@ -31,14 +31,7 @@ struct LocalFileView: View {
         let ref: String
         let label: String
     }
-    final class CompareMenuPresenter: NSObject {
-        var actions: [() -> Void] = []
-        @objc func fire(_ sender: NSMenuItem) {
-            guard actions.indices.contains(sender.tag) else { return }
-            actions[sender.tag]()
-        }
-    }
-    @State private var comparePresenter = CompareMenuPresenter()
+    @State private var comparePresenter = MenuActionPresenter()
     @State private var inGitRepo = false
     @State private var commits: [LocalGit.Commit] = []
     @State private var branches: [String] = []
@@ -212,7 +205,7 @@ struct LocalFileView: View {
     /// The window-level toolbar (AppToolbar) renders this surface's items
     /// from here; the closures reach back into this view's live state.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID, kind: .localFile)
+        var surface = SurfaceToolbar(id: activeDocumentID)
         surface.shareURL = file.url
         surface.editMode = editMode
         surface.editDisabled = compare != nil || state.sourceViewVisible
@@ -272,7 +265,7 @@ struct LocalFileView: View {
         }
         func addAction(_ title: String, _ run: @escaping () -> Void) {
             let item = NSMenuItem(title: title,
-                                  action: #selector(CompareMenuPresenter.fire(_:)),
+                                  action: #selector(MenuActionPresenter.fire(_:)),
                                   keyEquivalent: "")
             item.target = comparePresenter
             item.tag = actions.count

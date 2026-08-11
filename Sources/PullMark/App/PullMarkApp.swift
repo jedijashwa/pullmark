@@ -398,6 +398,7 @@ struct PullMarkApp: App {
                     NSApp.sendAction(#selector(NSWindow.runToolbarCustomizationPalette(_:)),
                                      to: nil, from: nil)
                 }
+                .disabled(state == nil)
                 .help("Choose which items the toolbar shows, and their order")
                 Divider()
                 prViewCommands

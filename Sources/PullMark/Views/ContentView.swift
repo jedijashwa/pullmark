@@ -6,8 +6,6 @@ struct ContentView: View {
     /// which is what makes ⌘N windows and native tabs independent.
     @StateObject private var state = AppState()
     @EnvironmentObject private var updates: UpdateChecker
-    /// Observed so the toolbar's shortcut hints follow a rebind.
-    @ObservedObject private var shortcuts = ShortcutStore.shared
     @AppStorage(Appearance.defaultsKey, store: UserDefaults.pullmark) private var appearanceRaw = Appearance.system.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
     /// The toolbar builder needs it: the margin-note item leaves the

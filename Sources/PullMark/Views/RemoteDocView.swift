@@ -196,7 +196,7 @@ struct RemoteDocView: View {
 
     /// What the window-level toolbar (AppToolbar) shows for this surface.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID, kind: .remoteDoc)
+        var surface = SurfaceToolbar(id: activeDocumentID)
         if let session {
             surface.shareURL = RemoteDocLink.blobURL(owner: session.ref.owner,
                                                      repo: session.ref.repo,
@@ -210,18 +210,22 @@ struct RemoteDocView: View {
         surface.compareAvailable = !loading && loadError == nil
         surface.compareUnavailableReason = "The document hasn't finished loading"
         surface.popCompare = { popCompareMenu(from: $0) }
-        surface.blameAvailable = true
         state.registerSurfaceToolbar(surface)
     }
 
     /// Toolbar Reload: forget the resolved commit so the branch re-resolves
-    /// to its current tip, then refetch. Never offered for sessions opened
-    /// at a specific commit (see updateSurfaceToolbar).
+    /// to its current tip, refetch the document, then refresh the browsed
+    /// sidebar tree at the new commit if one was loaded. Never offered for
+    /// sessions opened at a specific commit (see updateSurfaceToolbar).
     private func reloadFromOrigin() {
         guard let session, !RemoteDocLink.isCommitSHA(session.displayRef),
               !loading else { return }
+        let hadTree = session.treePaths != nil
         state.unpinRemoteSession(sessionID: sessionID)
-        Task { await load() }
+        Task {
+            await load()
+            if hadTree { await state.loadRemoteTree(sessionID: sessionID) }
+        }
     }
 
     private func popCompareMenu(from view: NSView) {

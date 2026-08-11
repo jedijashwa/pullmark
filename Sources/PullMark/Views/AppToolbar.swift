@@ -37,6 +37,18 @@ struct AppToolbar: CustomizableToolbarContent {
     @Binding var appearanceRaw: String
 
     var body: some CustomizableToolbarContent {
+        // Declared before everything: declaration order is collapse
+        // priority (later dies first), and review status must survive the
+        // squeeze that rightly claims surface items and the open buttons
+        // (spec §3). Placement still renders it in the trailing cluster.
+        if let reviewSessionID {
+            ToolbarItem(id: "review", placement: .primaryAction) {
+                ReviewToolbarButton(sessionID: reviewSessionID,
+                                    tracker: state.reviewAnchor) {
+                    state.send(.reviewChanges)
+                }
+            }
+        }
         if let kind {
             switch kind {
             case .localFile:
@@ -55,24 +67,13 @@ struct AppToolbar: CustomizableToolbarContent {
         windowItems
     }
 
-    /// The window-level cluster, present on every surface. Declaration
-    /// order is collapse priority (later dies first), and SwiftUI ignores
-    /// NSToolbarItem.visibilityPriority for its own "»" overflow (verified
-    /// live) — so Review is declared FIRST here: review status must
-    /// survive the squeeze that rightly claims the open buttons and
-    /// appearance menu before it (spec §3). The cost is position — Review
-    /// sits left of the open/appearance cluster now instead of
-    /// trailing-most.
+    /// The window-level cluster, present on every surface — the
+    /// sacrificial tail of the collapse order (SwiftUI ignores
+    /// NSToolbarItem.visibilityPriority for its own "»" overflow,
+    /// verified live; declaration order is the only knob, and the review
+    /// control is declared first in `body` for the same reason).
     @ToolbarContentBuilder
     private var windowItems: some CustomizableToolbarContent {
-        if let reviewSessionID {
-            ToolbarItem(id: "review", placement: .primaryAction) {
-                ReviewToolbarButton(sessionID: reviewSessionID,
-                                    tracker: state.reviewAnchor) {
-                    state.send(.reviewChanges)
-                }
-            }
-        }
         ToolbarItem(id: "open-file", placement: .primaryAction) {
             OpenFileToolbarButton(state: state)
         }
@@ -155,7 +156,10 @@ struct ToolbarSectionEnforcer: NSViewRepresentable {
         var observers: [NSObjectProtocol] = []
         var enforcementScheduled = false
         var poll: Timer?
-        var veto: ToolbarDropVeto?
+        /// Every veto ever installed — NSToolbar.delegate is weak, and a
+        /// surface switch may reattach a previously-seen toolbar whose
+        /// proxy must still be alive.
+        var vetoes: [ToolbarDropVeto] = []
         deinit {
             observers.forEach(NotificationCenter.default.removeObserver(_:))
             poll?.invalidate()
@@ -213,7 +217,7 @@ struct ToolbarSectionEnforcer: NSViewRepresentable {
         guard let toolbar, let coordinator,
               let delegate = toolbar.delegate, !(delegate is ToolbarDropVeto) else { return }
         let veto = ToolbarDropVeto(wrapping: delegate)
-        coordinator.veto = veto
+        coordinator.vetoes.append(veto)
         toolbar.delegate = veto
     }
 
@@ -272,10 +276,8 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "local-share") {
-            if let url = surface?.shareURL {
-                ShareLink(item: url)
-                    .help("Share this document")
-            }
+            ShareToolbarLink(url: surface?.shareURL,
+                             help: "Share this document")
         }
         ToolbarItem(id: "local-edit") {
             EditToolbarToggle(surface: surface)
@@ -283,13 +285,14 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
         ToolbarItem(id: "local-compare") {
             CompareToolbarButton(surface: surface)
         }
-        // No git context, no Blame button: the toggle only appears for
-        // files inside a repository.
-        if surface?.blameAvailable == true {
-            ToolbarItem(id: "local-blame") {
-                BlameToggle(visible: $blameVisible)
-                    .disabled(surface?.blameDisabled ?? true)
-            }
+        // Present whether or not the file sits in a git repository —
+        // STRUCTURE never follows the registration (it arrives after the
+        // toolbar is created, and conditional items resurrect removed
+        // ones; see the header). No git context just disables the toggle.
+        ToolbarItem(id: "local-blame") {
+            BlameToggle(visible: $blameVisible)
+                .disabled(surface?.blameAvailable != true
+                    || surface?.blameDisabled == true)
         }
         ToolbarItem(id: "local-outline") {
             OutlineToggle(visible: $outlineVisible)
@@ -325,10 +328,8 @@ private struct RemoteDocToolbarItems: CustomizableToolbarContent {
             OutlineToggle(visible: $outlineVisible)
         }
         ToolbarItem(id: "remote-share", showsByDefault: false) {
-            if let url = surface?.shareURL {
-                ShareLink(item: url)
-                    .help("Share a link to this document on GitHub")
-            }
+            ShareToolbarLink(url: surface?.shareURL,
+                             help: "Share a link to this document on GitHub")
         }
         ToolbarItem(id: "remote-reload", showsByDefault: false) {
             ReloadToolbarButton(state: state,
@@ -365,26 +366,29 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
         ToolbarItem(id: "pr-outline") {
             OutlineToggle(visible: $outlineVisible)
         }
-        if surface?.showsLayout == true {
-            ToolbarItem(id: "pr-layout") {
-                Picker("Layout", selection: $layoutRaw) {
-                    ForEach(PRFileView.DiffLayout.allCases) { layout in
-                        Text(layout.rawValue).tag(layout.rawValue)
-                    }
+        // Unconditional for the same reason as local-blame: only the
+        // rendered diff has a layout to pick, but the ITEM must exist at
+        // toolbar creation. Other modes disable it.
+        ToolbarItem(id: "pr-layout") {
+            Picker("Layout", selection: $layoutRaw) {
+                ForEach(PRFileView.DiffLayout.allCases) { layout in
+                    Text(layout.rawValue).tag(layout.rawValue)
                 }
-                .pickerStyle(.menu)
-                // A brand-new file renders inline regardless: split mode
-                // would show an all-hatched old column against the
-                // untinted document — half the pane saying nothing.
-                .disabled(surface?.layoutDisabledReason != nil)
-                .help(surface?.layoutDisabledReason
-                    ?? "Inline or side-by-side rendered diff")
             }
+            .pickerStyle(.menu)
+            // A brand-new file renders inline regardless: split mode
+            // would show an all-hatched old column against the untinted
+            // document — half the pane saying nothing.
+            .disabled(surface?.showsLayout != true
+                || surface?.layoutDisabledReason != nil)
+            .help(surface?.layoutDisabledReason
+                ?? "Inline or side-by-side rendered diff — for the Rendered Diff view")
         }
-        if surface?.blameAvailable == true {
-            ToolbarItem(id: "pr-blame") {
-                BlameToggle(visible: $blameVisible)
-            }
+        // Unconditional (structure never follows the registration);
+        // blame annotates the Result view only, other modes disable it.
+        ToolbarItem(id: "pr-blame") {
+            BlameToggle(visible: $blameVisible)
+                .disabled(surface?.blameAvailable != true)
         }
         ToolbarItem(id: "pr-comment") {
             Button {
@@ -419,15 +423,34 @@ private struct PROverviewToolbarItems: CustomizableToolbarContent {
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "overview-share") {
-            if let url = surface?.shareURL {
-                ShareLink(item: url)
-                    .help("Share a link to this pull request")
-            }
+            ShareToolbarLink(url: surface?.shareURL,
+                             help: "Share a link to this pull request")
         }
     }
 }
 
 // MARK: - Item content views
+
+/// ShareLink needs a concrete URL, but the registered surface may not
+/// have arrived yet — render a disabled stand-in in that gap instead of
+/// an empty toolbar slot (the header's safe-default rule).
+private struct ShareToolbarLink: View {
+    let url: URL?
+    let help: String
+
+    var body: some View {
+        if let url {
+            ShareLink(item: url)
+                .help(help)
+        } else {
+            Button {} label: {
+                Label("Share", systemImage: "square.and.arrow.up")
+            }
+            .disabled(true)
+            .help(help)
+        }
+    }
+}
 
 private struct OpenFileToolbarButton: View {
     let state: AppState
