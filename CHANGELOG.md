@@ -4,6 +4,25 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.29.0 - 2026-08-11
+
+- **Customize the toolbar** — right-click the toolbar (or View →
+  Customize Toolbar…) for the native palette: drag items out you never
+  use, rearrange the rest, add Flexible Space. Every kind of view — a
+  local file, a GitHub doc, a pull request file, the PR overview —
+  keeps its own arrangement, remembered across launches; customize each
+  one while you're in it, the way Mail's compose window works.
+- **New optional toolbar items**, all hidden until you add them: a
+  raw-**Source** toggle for local files and GitHub docs, **Zoom
+  In / Actual Size / Zoom Out**, the **Content Width** picker, **Add
+  Margin Note** (when the feature is on), and for GitHub docs
+  **Share** — the document's github.com page, never a raw link — and
+  **Reload**, which re-resolves a branch to its current tip (and stays
+  disabled, with the reason, for documents opened at a specific
+  commit).
+- Out of the box nothing changes: every toolbar looks exactly as it
+  did, and the palette holds the rest.
+
 ## 0.28.4 - 2026-08-07
 
 - **Update Now actually updates now** — the in-app Homebrew upgrade
