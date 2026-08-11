@@ -95,17 +95,67 @@ struct AppToolbar: CustomizableToolbarContent {
     }
 }
 
-/// Live guard for sidebar-section drops (see ToolbarArrangement for the
-/// full story). Item-by-item NSToolbar surgery loses to SwiftUI's own
-/// model, so on detecting a misplaced item this scrubs the SAVED
-/// configuration and re-applies it wholesale through the same restore
-/// path SwiftUI handles at launch. Lives on the window content
-/// (ContentView), outside any toolbar item.
+/// Refuses customize-palette drops into the toolbar's SIDEBAR section —
+/// left of the split-view tracking separator, territory SwiftUI manages
+/// for the sidebar toggle and mangles when a foreign item lands there
+/// (see ToolbarArrangement). AppKit consults the toolbar DELEGATE for
+/// every candidate drop index (`toolbar(_:itemIdentifier:canBeInsertedAt:)`,
+/// macOS 13+) and animates the native refusal itself, so the fix is a
+/// forwarding proxy wrapped around SwiftUI's own delegate: every message
+/// passes through untouched except the drop question, which additionally
+/// applies our section rule. AppKit then places refused drops at the
+/// nearest allowed index — "the drop worked, adjusted", never a mangle.
+final class ToolbarDropVeto: NSObject, NSToolbarDelegate {
+    let original: AnyObject
+
+    init(wrapping original: AnyObject) {
+        self.original = original
+    }
+
+    override func responds(to aSelector: Selector!) -> Bool {
+        super.responds(to: aSelector) || original.responds(to: aSelector)
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        original.responds(to: aSelector) ? original : super.forwardingTarget(for: aSelector)
+    }
+
+    func toolbar(_ toolbar: NSToolbar, itemIdentifier: NSToolbarItem.Identifier,
+                 canBeInsertedAt index: Int) -> Bool {
+        if !ToolbarArrangement.isSystemItem(itemIdentifier.rawValue),
+           let separator = toolbar.items.firstIndex(where: {
+               ToolbarArrangement.isSeparator($0.itemIdentifier.rawValue)
+           }),
+           index <= separator {
+            return false
+        }
+        // Defer to SwiftUI's own answer when it cares too.
+        if let originalDelegate = original as? NSToolbarDelegate,
+           originalDelegate.responds(to: #selector(NSToolbarDelegate.toolbar(_:itemIdentifier:canBeInsertedAt:))) {
+            return originalDelegate.toolbar?(toolbar, itemIdentifier: itemIdentifier,
+                                             canBeInsertedAt: index) ?? true
+        }
+        return true
+    }
+}
+
+/// Backstop for sidebar-section corruption (see ToolbarArrangement for
+/// the full story): installs the drop veto on every toolbar the window
+/// gets (surface switches swap NSToolbar identities), and — should a bad
+/// arrangement exist anyway (saved by an older build, or any path the
+/// veto misses) — scrubs the SAVED configuration and re-applies it
+/// wholesale through the same restore path SwiftUI handles at launch.
+/// Item-by-item NSToolbar surgery loses to SwiftUI's own model; the
+/// config layer is where repairs stick. Polling is deliberate: a palette
+/// MOVE emits no NSToolbar notifications (verified live), and the
+/// clean-state fast path is one string-array compare. Lives on the
+/// window content (ContentView), outside any toolbar item.
 struct ToolbarSectionEnforcer: NSViewRepresentable {
     final class Coordinator {
         var observers: [NSObjectProtocol] = []
         var enforcementScheduled = false
         var poll: Timer?
+        var veto: ToolbarDropVeto?
         deinit {
             observers.forEach(NotificationCenter.default.removeObserver(_:))
             poll?.invalidate()
@@ -141,16 +191,30 @@ struct ToolbarSectionEnforcer: NSViewRepresentable {
         // the toolbar (verified live) — a slow poll is the only reliable
         // net. The clean-state fast path is one string-array compare.
         coordinator.poll = Timer.scheduledTimer(withTimeInterval: 1.5,
-                                                repeats: true) { [weak view] _ in
+                                                repeats: true) { [weak view, weak coordinator] _ in
+            Self.installVeto(on: view?.window?.toolbar, coordinator: coordinator)
             Self.repairIfNeeded(view?.window?.toolbar)
         }
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async { [weak nsView] in
+        let coordinator = context.coordinator
+        DispatchQueue.main.async { [weak nsView, weak coordinator] in
+            Self.installVeto(on: nsView?.window?.toolbar, coordinator: coordinator)
             Self.repairIfNeeded(nsView?.window?.toolbar)
         }
+    }
+
+    /// Wraps the toolbar's delegate in the drop veto. Re-checked on every
+    /// sweep: each surface switch creates a fresh NSToolbar with SwiftUI's
+    /// own delegate, and the proxy must be re-applied to the new one.
+    static func installVeto(on toolbar: NSToolbar?, coordinator: Coordinator?) {
+        guard let toolbar, let coordinator,
+              let delegate = toolbar.delegate, !(delegate is ToolbarDropVeto) else { return }
+        let veto = ToolbarDropVeto(wrapping: delegate)
+        coordinator.veto = veto
+        toolbar.delegate = veto
     }
 
     static func repairIfNeeded(_ toolbar: NSToolbar?) {
