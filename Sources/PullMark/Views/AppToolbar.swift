@@ -381,8 +381,12 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
             // document — half the pane saying nothing.
             .disabled(surface?.showsLayout != true
                 || surface?.layoutDisabledReason != nil)
-            .help(surface?.layoutDisabledReason
-                ?? "Inline or side-by-side rendered diff — for the Rendered Diff view")
+            // Mode first: on an added file in Result mode both reasons are
+            // true, but the mode is why the picker does nothing HERE.
+            .help(surface?.showsLayout != true
+                ? "Inline or side-by-side rendered diff — for the Rendered Diff view"
+                : (surface?.layoutDisabledReason
+                    ?? "Inline or side-by-side rendered diff"))
         }
         // Unconditional (structure never follows the registration);
         // blame annotates the Result view only, other modes disable it.
