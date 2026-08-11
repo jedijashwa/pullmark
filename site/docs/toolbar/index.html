@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Toolbar — PullMark Docs</title>
+<meta name="description" content="PullMark's toolbar explained: each kind of view keeps its own customizable toolbar — what's in each by default, and what the palette holds.">
+<link rel="icon" href="../../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../../"><img src="../../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../" aria-current="true">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="../">Overview</a></li>
+        <li><a href="../features/">Features</a></li>
+        <li><a href="../sidebar/">The Sidebar</a></li>
+        <li><a href="./" aria-current="page">The Toolbar</a></li>
+        <li><a href="../settings/">Settings</a></li>
+        <li><a href="../shortcuts/">Keyboard Shortcuts</a></li>
+        <li><a href="../cli/">Command Line</a></li>
+        <li><a href="../troubleshooting/">Troubleshooting</a></li>
+        <li><a href="../experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>The toolbar</h1>
+      <p class="article-lede">One toolbar per kind of view, each fully
+      customizable: right-click it (or View → Customize Toolbar…) and
+      drag items out, rearrange them, add what starts hidden. Each view
+      remembers its own arrangement across launches.</p>
+
+      <h2 id="customizing">How customization works</h2>
+      <p>PullMark doesn't have one toolbar — it has one per kind of view,
+      the way Mail's compose window keeps a different toolbar than its
+      main window. You customize the toolbar you're looking at: open a
+      pull request file to customize the PR-file toolbar, a local
+      document to customize the local-file toolbar. The palette only
+      ever offers the items that exist where you opened it.</p>
+      <p>Everything in the palette is fair game — remove it, reorder it,
+      drop in Flexible Space to push clusters apart. Items marked
+      <em>hidden</em> below start in the palette rather than the bar.
+      The one place items won't go is the sidebar's own strip next to
+      the sidebar toggle: that section belongs to the system, and a
+      drop there settles at the front of the main section instead.
+      Restore any toolbar by dragging the default set back in from the
+      bottom of the palette.</p>
+
+      <h2 id="every-view">On every view</h2>
+      <table>
+        <tr><th>Item</th><th>Default</th><th>What it does</th></tr>
+        <tr><td>Review</td><td>shown</td>
+          <td>The morphing review control, on PR views only — pending
+          comment count, verdict, submit. Survives a narrow window
+          longest: review status stays visible when other items collapse
+          into the overflow.</td></tr>
+        <tr><td>Open File or Folder</td><td>shown</td>
+          <td>Open local Markdown or a folder Location.</td></tr>
+        <tr><td>Open Pull Request</td><td>shown</td>
+          <td>Open a GitHub pull request by URL.</td></tr>
+        <tr><td>Appearance</td><td>shown</td>
+          <td>Light · Dark · System, app-wide.</td></tr>
+      </table>
+
+      <h2 id="local-files">Local files</h2>
+      <table>
+        <tr><th>Item</th><th>Default</th><th>What it does</th></tr>
+        <tr><td>Share</td><td>shown</td><td>The standard share sheet for the file.</td></tr>
+        <tr><td>Edit</td><td>shown</td><td>Edit mode — click any block to edit in place.</td></tr>
+        <tr><td>Compare</td><td>shown</td>
+          <td>Compare with a commit or branch (needs a git repository).</td></tr>
+        <tr><td>Blame</td><td>shown</td>
+          <td>Who last changed each block; disabled outside a repository.</td></tr>
+        <tr><td>Outline</td><td>shown</td><td>The headings sidebar.</td></tr>
+        <tr><td>Reload</td><td>shown</td><td>Re-read the file from disk.</td></tr>
+        <tr><td>Source</td><td>hidden</td><td>The raw Markdown behind the rendered page.</td></tr>
+        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>hidden</td>
+          <td>Separate items — add just the pair you use.</td></tr>
+        <tr><td>Content Width</td><td>hidden</td><td>Standard · Wide · Full Width.</td></tr>
+        <tr><td>Add Margin Note</td><td>hidden</td>
+          <td>Only in the palette while
+          <a href="../experimental/margin-notes/">margin notes</a> are
+          turned on.</td></tr>
+      </table>
+
+      <h2 id="github-docs">GitHub documents</h2>
+      <p>Documents read straight from a repo — opened from links, ⌘K, or
+      a browsed repo Location.</p>
+      <table>
+        <tr><th>Item</th><th>Default</th><th>What it does</th></tr>
+        <tr><td>Compare</td><td>shown</td><td>The same document on another branch, as a rendered diff.</td></tr>
+        <tr><td>Blame</td><td>shown</td><td>Per-block blame from the GitHub API.</td></tr>
+        <tr><td>Outline</td><td>shown</td><td>The headings sidebar.</td></tr>
+        <tr><td>Share</td><td>hidden</td>
+          <td>The document's github.com page — the link a person actually
+          wants, never a raw URL.</td></tr>
+        <tr><td>Reload</td><td>hidden</td>
+          <td>Re-resolves the branch to its current tip and refetches.
+          Disabled — with the reason — for documents opened at a
+          specific commit, which can't change.</td></tr>
+        <tr><td>Source</td><td>hidden</td><td>The raw Markdown.</td></tr>
+        <tr><td>Zoom items · Content Width</td><td>hidden</td><td>As on local files.</td></tr>
+      </table>
+
+      <h2 id="pr-files">Pull request files</h2>
+      <table>
+        <tr><th>Item</th><th>Default</th><th>What it does</th></tr>
+        <tr><td>Navigation</td><td>shown</td>
+          <td>Back to the overview, previous/next Markdown file, and the
+          n-of-m jump menu — one cluster, one draggable unit.</td></tr>
+        <tr><td>View picker</td><td>shown</td>
+          <td>Rendered Diff · Source Diff · Result, centered.</td></tr>
+        <tr><td>Outline</td><td>shown</td><td>The headings sidebar.</td></tr>
+        <tr><td>Layout</td><td>shown</td>
+          <td>Inline or side-by-side — enabled in the Rendered Diff
+          view (new files always render inline).</td></tr>
+        <tr><td>Blame</td><td>shown</td>
+          <td>Enabled in the Result view, where there's a finished
+          document to annotate.</td></tr>
+        <tr><td>Comment on File</td><td>shown</td>
+          <td>A comment on the file as a whole, not a specific
+          line.</td></tr>
+        <tr><td>Zoom items · Content Width</td><td>hidden</td><td>As on local files.</td></tr>
+      </table>
+
+      <h2 id="other-views">The PR overview, and repo docs browsed from a PR</h2>
+      <p>The overview keeps it minimal: <strong>Share</strong> (the pull
+      request's GitHub page) plus the every-view items. A repo document
+      browsed from PR content carries <strong>Blame</strong> and
+      <strong>Outline</strong>, with the zoom items and Content Width in
+      its palette.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>
