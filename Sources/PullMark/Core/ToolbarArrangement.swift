@@ -14,13 +14,13 @@ enum ToolbarArrangement {
     static let configKeyPrefix = "NSToolbar Configuration "
     static let itemsKey = "TB Item Identifiers"
 
-    private static func isSeparator(_ identifier: String) -> Bool {
+    static func isSeparator(_ identifier: String) -> Bool {
         identifier.hasPrefix("com.apple.SwiftUI.splitViewSeparator")
     }
 
     /// System items are allowed anywhere; only the app's own items must
     /// stay right of the tracking separator.
-    private static func isSystemItem(_ identifier: String) -> Bool {
+    static func isSystemItem(_ identifier: String) -> Bool {
         identifier.hasPrefix("com.apple.SwiftUI.")
             || identifier.hasPrefix("NSToolbar")
     }
