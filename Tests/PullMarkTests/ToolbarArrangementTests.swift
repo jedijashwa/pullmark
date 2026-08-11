@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import PullMark
 
@@ -45,5 +46,36 @@ import Testing
 
     @Test func emptyArrangement() {
         #expect(ToolbarArrangement.repaired([]) == [])
+    }
+
+    @Test func savedConfigurationsAreScrubbedInPlace() throws {
+        let suiteName = "app.pullmark.tests.toolbar-arrangement"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let broken: [String: Any] = [
+            "TB Display Mode": 2,
+            ToolbarArrangement.itemsKey: ["open-file", flex, toggle, separator, "local-share"],
+        ]
+        let clean: [String: Any] = [
+            ToolbarArrangement.itemsKey: [flex, toggle, separator, "local-share"],
+        ]
+        defaults.set(broken, forKey: ToolbarArrangement.configKeyPrefix + "main-local")
+        defaults.set(clean, forKey: ToolbarArrangement.configKeyPrefix + "main-remote")
+        defaults.set("unrelated", forKey: "pm.somethingElse")
+
+        ToolbarArrangement.repairSavedConfigurations(in: defaults)
+
+        let repaired = try #require(defaults.dictionary(
+            forKey: ToolbarArrangement.configKeyPrefix + "main-local"))
+        #expect(repaired[ToolbarArrangement.itemsKey] as? [String]
+            == [flex, toggle, separator, "open-file", "local-share"])
+        // Untouched keys survive alongside the repaired arrangement.
+        #expect(repaired["TB Display Mode"] as? Int == 2)
+        let untouched = try #require(defaults.dictionary(
+            forKey: ToolbarArrangement.configKeyPrefix + "main-remote"))
+        #expect(untouched[ToolbarArrangement.itemsKey] as? [String]
+            == [flex, toggle, separator, "local-share"])
+        #expect(defaults.string(forKey: "pm.somethingElse") == "unrelated")
     }
 }

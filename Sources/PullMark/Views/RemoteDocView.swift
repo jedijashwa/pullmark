@@ -656,7 +656,7 @@ struct RemoteProvenanceBar: View {
                 Text(String(sha.prefix(7)))
                     .font(.caption.monospaced())
                     .foregroundStyle(.tertiary)
-                    .help("Pinned to commit \(sha) — the ref was resolved when this session opened.")
+                    .help("Pinned to commit \(sha) — the ref's tip as of this session's last fetch.")
             }
             Spacer()
             if let blobURL {

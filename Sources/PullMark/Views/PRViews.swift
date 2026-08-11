@@ -810,6 +810,10 @@ struct PRFileView: View {
         loading = false
         loadBlameIfNeeded()
         updateActiveDocument()
+        // A PR update can change the file's status (added → modified),
+        // which drives the layout picker's disabled reason — re-register
+        // like the other surfaces do on load-state changes.
+        updateSurfaceToolbar()
     }
 
     private func handlePageLoaded() {
