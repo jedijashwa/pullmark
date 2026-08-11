@@ -77,8 +77,7 @@ struct PROverviewView: View {
             // The share item renders from this registration in the window
             // toolbar (AppToolbar); the review control is window-level too.
             .onAppear {
-                var surface = SurfaceToolbar(id: "prOverview:" + sessionID,
-                                             kind: .prOverview)
+                var surface = SurfaceToolbar(id: "prOverview:" + sessionID)
                 surface.shareURL = session.details.htmlUrl
                 state.registerSurfaceToolbar(surface)
             }
@@ -281,7 +280,7 @@ struct PRFileView: View {
     /// The mode picker round-trips through here; layout and blame presence
     /// follow the mode, so every mode change re-registers.
     private func updateSurfaceToolbar() {
-        var surface = SurfaceToolbar(id: activeDocumentID, kind: .prFile)
+        var surface = SurfaceToolbar(id: activeDocumentID)
         surface.modeOptions = Mode.allCases.map(\.rawValue)
         surface.mode = mode.rawValue
         surface.setMode = { raw in
@@ -1077,11 +1076,6 @@ struct PRDocView: View {
         .navigationTitle(path)
         .task(id: sessionID + "|" + path + "|" + (session?.details.head.sha ?? "")) {
             await load()
-        }
-        .onAppear {
-            var surface = SurfaceToolbar(id: activeDocumentID, kind: .prDoc)
-            surface.blameAvailable = true
-            state.registerSurfaceToolbar(surface)
         }
         .onDisappear {
             state.unregisterActiveDocument(id: activeDocumentID)
