@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.29.2 - 2026-08-12
+
+- **The margin-note button no longer flickers away while you reach for
+  it.** The hover affordance treated only a thin strip beside the rail
+  as alive, so the bubble vanished whenever your cursor crossed a gap
+  between blocks, the rows beside an existing note, or the wide
+  stretch beside a narrow table — exactly the paths a cursor takes on
+  its way to click. The whole page now reads as one continuous hover
+  surface: the bubble follows the block under your cursor's row and
+  stays put across every dead spot until you genuinely leave. The same
+  fix steadies the comment bubbles in pull-request views.
+
 ## 0.29.1 - 2026-08-11
 
 - The pull-request file toolbar's Previous/Next arrows and the n-of-m
