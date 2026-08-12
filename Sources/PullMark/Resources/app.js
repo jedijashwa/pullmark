@@ -2536,6 +2536,10 @@
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
       activeBlockBubble = hideNow;
+      // Keep the probe's claim on the block that actually showed last: a
+      // fast flick can real-enter a block between probe ticks, and a
+      // stale claim would steal its bubble back on the next dead row.
+      virtualHover = el;
       tools.style.display = "flex";
       position();
     }
@@ -2814,6 +2818,10 @@
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
       activeBlockBubble = hideNow;
+      // Keep the probe's claim on the block that actually showed last: a
+      // fast flick can real-enter a block between probe ticks, and a
+      // stale claim would steal its bubble back on the next dead row.
+      virtualHover = el;
       tools.style.display = "flex";
       position();
     }
@@ -3050,6 +3058,10 @@
       // must vanish the moment another block's bubble appears.
       if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
       activeBlockBubble = hideNow;
+      // Keep the probe's claim on the block that actually showed last: a
+      // fast flick can real-enter a block between probe ticks, and a
+      // stale claim would steal its bubble back on the next dead row.
+      virtualHover = wrap;
       place();
     }
     function hide() {
@@ -3063,37 +3075,92 @@
   }
   var activeBlockBubble = null;
 
-  // The margin rail is part of each block's hover zone. The bubble lives
-  // in the reserved right margin, but blocks' real hover boxes end at
-  // their bleed — a pointer parked in the margin (or scrolling with it
-  // parked there) hovered nothing and the rail went dead. This virtual
+  // The content surface is one continuous hover zone. Blocks' real hover
+  // boxes end at their bleed, but the affordance must survive everywhere
+  // a pointer travels en route to a bubble: the reserved right margin,
+  // the vertical gaps between blocks, the rows beside note and thread
+  // cards, and the wide dead stretch beside a narrow table. This virtual
   // hover probes which block sits at the pointer's height whenever the
-  // pointer is inside the margin band, re-evaluated on scroll, with
-  // explicit leave dispatch so a bubble can't outlive its block.
+  // pointer is over the content, re-evaluated on scroll; rows that
+  // resolve to no block keep the last live one, so only genuinely
+  // leaving the surface (or another block claiming the rail) retires a
+  // bubble.
   var pointerAt = null;
   var virtualHover = null;
   var probeQueued = false;
   function setVirtualHover(target) {
-    if (virtualHover === target) { return; }
+    if (virtualHover === target) {
+      // Refresh, don't no-op: the block's REAL mouseleave (fired when the
+      // pointer crossed its edge into the rail) starts a hide timer that
+      // only a fresh enter cancels. A probe that agrees "still this block"
+      // must say so, or the bubble dies mid-reach.
+      if (target) { target.dispatchEvent(new Event("mouseenter")); }
+      return;
+    }
     if (virtualHover) { virtualHover.dispatchEvent(new Event("mouseleave")); }
     virtualHover = target;
     if (target) { target.dispatchEvent(new Event("mouseenter")); }
   }
-  function marginHoverProbe() {
+  function surfaceHoverProbe() {
     probeQueued = false;
     if (!pointerAt) { return; }
     if (!document.documentElement.classList.contains("pm-comment-room")
         && !document.documentElement.classList.contains("pm-commenting-on")) { return; }
     var art = content.getBoundingClientRect();
-    var inBand = pointerAt.x >= art.right - 60 && pointerAt.x <= art.right + 4
+    // The whole content surface, not just a rail-side strip: the journey
+    // from a narrow block (a small table) to its rail bubble crosses a
+    // wide stretch that hovers nothing, and every such dead spot used to
+    // blink the bubble away mid-reach.
+    var overContent = pointerAt.x >= art.left && pointerAt.x <= art.right + 4
       && pointerAt.y >= art.top && pointerAt.y <= art.bottom;
-    if (!inBand) { setVirtualHover(null); return; }
-    // Probe at content altitude on the same row; the bubble itself may be
-    // under the pointer — the probe x dodges it so the block still wins.
-    var probe = document.elementFromPoint(
-      Math.max(art.left + 20, art.right - 90), pointerAt.y);
-    var target = probe && probe.closest
-      ? probe.closest(".pm-block, .pm-commentable") : null;
+    if (!overContent) {
+      // Off the surface. If the pointer sits inside the claimed block's
+      // own box (its bleed extends past the content edge), real hover
+      // owns it — quietly drop the claim, because a synthetic leave
+      // would un-hover a block the pointer is genuinely inside and
+      // nothing re-fires a real enter until it exits and returns.
+      // Anywhere else, retire the bubble properly.
+      if (virtualHover) {
+        var r = virtualHover.getBoundingClientRect();
+        if (pointerAt.x >= r.left && pointerAt.x <= r.right
+            && pointerAt.y >= r.top && pointerAt.y <= r.bottom) {
+          virtualHover = null;
+        } else {
+          setVirtualHover(null);
+        }
+      }
+      return;
+    }
+    // Resolve the block at the pointer's row. Away from the rail the
+    // pointer itself is the truth — probing anywhere else can resurrect
+    // a stale block and fight the real hover. In the rail zone the
+    // bubble may sit under the pointer, so probe at dodged x positions,
+    // several depths deep, because a shrink-to-fit table's box ends
+    // well left of the deepest one.
+    var candidates = pointerAt.x >= art.right - 60
+      ? [Math.max(art.left + 20, art.right - 90),
+         art.left + (art.right - art.left) * 0.5,
+         art.left + (art.right - art.left) * 0.15]
+      : [pointerAt.x];
+    var target = null;
+    for (var ci = 0; ci < candidates.length && !target; ci++) {
+      var probe = document.elementFromPoint(candidates[ci], pointerAt.y);
+      target = probe && probe.closest
+        ? probe.closest(".pm-block, .pm-commentable") : null;
+    }
+    // Dead rows — the margin gap between blocks, the rows beside a
+    // note/thread card, the stretch beside a narrow block — probe to
+    // nothing. While the pointer stays on the surface, keep the last
+    // live block: the page must read as one continuous hover surface,
+    // or every dead spot crossed en route to a bubble blinks it away
+    // (the reported flicker). A kept block must still be rendered — a
+    // zero-height rect means it was hidden (a block-edit reveal) or
+    // detached, and resurrecting it would pin a phantom bubble to its
+    // collapsed rect.
+    if (!target && virtualHover
+        && virtualHover.getBoundingClientRect().height > 0) {
+      target = virtualHover;
+    }
     setVirtualHover(target);
   }
   function queueProbe() {
@@ -3101,13 +3168,27 @@
     probeQueued = true;
     // A timeout, not requestAnimationFrame: rAF stalls in occluded or
     // headless webviews, and this must fire while scrolling regardless.
-    setTimeout(marginHoverProbe, 16);
+    setTimeout(surfaceHoverProbe, 16);
   }
   document.addEventListener("mousemove", function (event) {
     pointerAt = { x: event.clientX, y: event.clientY };
     queueProbe();
   }, { passive: true });
   window.addEventListener("scroll", queueProbe, { passive: true });
+  // The pointer leaving the page entirely must retire the claim: the
+  // trailing 16ms probe otherwise outlives the blocks' real mouseleave
+  // and keeps a bubble lit in an unhovered window — and the scroll
+  // re-probe would keep lighting fresh ones with the stranded position.
+  document.addEventListener("mouseout", function (event) {
+    if (event.relatedTarget === null) {
+      pointerAt = null;
+      setVirtualHover(null);
+    }
+  });
+  window.addEventListener("blur", function () {
+    pointerAt = null;
+    setVirtualHover(null);
+  });
 
   function renderInline(segments) {
     if (payload.commentable !== false) {
