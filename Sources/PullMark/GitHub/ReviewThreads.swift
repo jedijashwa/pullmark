@@ -127,6 +127,13 @@ struct ThreadMeta: Equatable {
     var comments: [Int: ReviewCommentMeta] = [:]
 }
 
+/// Who pressed a reaction (GraphQL `reactors`) — logins in GitHub's
+/// order plus the true total, since the fetch caps the names it carries.
+struct ReactorRoster: Equatable {
+    var logins: [String] = []
+    var totalCount: Int = 0
+}
+
 /// GraphQL-only per-comment state folded into the thread-meta query:
 /// REST has no viewerHasReacted, and lastEditedAt is the exact "edited"
 /// signal (updated_at also moves on non-edits).
@@ -135,6 +142,8 @@ struct ReviewCommentMeta: Equatable {
     /// REST content names ("+1", "heart", …) the viewer has pressed.
     var viewerReacted: Set<String> = []
     var edited: Bool = false
+    /// Reactor logins per REST content name — the chips' "who" tooltip.
+    var reactors: [String: ReactorRoster] = [:]
 }
 
 struct ThreadPayload: Encodable, Equatable {
@@ -187,6 +196,8 @@ struct CommentPayload: Encodable, Equatable {
         viewerOwned = CommentAuthorship.viewerOwns(author: comment.user?.login, viewer: viewer)
         canReact = viewer != nil && commentMeta != nil
         reactions = CommentReactions.chips(rollup: comment.reactions,
-                                           viewerReacted: commentMeta?.viewerReacted ?? [])
+                                           viewerReacted: commentMeta?.viewerReacted ?? [],
+                                           reactors: commentMeta?.reactors ?? [:],
+                                           viewer: viewer)
     }
 }

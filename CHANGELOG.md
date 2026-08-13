@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Reaction chips now say who reacted.** Hover any reaction on a
+  review comment — in file views and the Review discussion list — and
+  the tooltip names the people behind the count, with you listed
+  first: "You, sam-ortega, and 2 others reacted."
+- **Comment buttons stay with you on tall blocks.** Scrolling through
+  a block taller than the window used to leave its comment bubble
+  stranded above the scroll; the bubble now rides the visible part of
+  the block until you genuinely leave it.
+
 ## 0.31.0 - 2026-08-13
 
 - **New experimental feature: Review discussion on the PR overview.**

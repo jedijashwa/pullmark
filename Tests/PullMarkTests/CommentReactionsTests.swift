@@ -35,6 +35,47 @@ import Testing
         #expect(CommentReactions.chips(rollup: ReactionRollup(), viewerReacted: []).isEmpty)
     }
 
+    // MARK: - Who reacted
+
+    @Test func whoLabelNamesReactorsViewerFirst() {
+        let roster = ReactorRoster(logins: ["sam-ortega", "jedijashwa", "tobias-lund"],
+                                   totalCount: 3)
+        #expect(CommentReactions.whoLabel(roster: roster, viewer: "JediJashwa")
+            == "You, sam-ortega, and tobias-lund reacted")
+    }
+
+    @Test func whoLabelShapes() {
+        #expect(CommentReactions.whoLabel(
+            roster: ReactorRoster(logins: ["ana"], totalCount: 1), viewer: nil)
+            == "ana reacted")
+        #expect(CommentReactions.whoLabel(
+            roster: ReactorRoster(logins: ["ana", "bo"], totalCount: 2), viewer: nil)
+            == "ana and bo reacted")
+        // Beyond three, the tail counts against the TRUE total — the
+        // fetch caps the names it carries.
+        #expect(CommentReactions.whoLabel(
+            roster: ReactorRoster(logins: ["ana", "bo", "cy", "di"], totalCount: 12),
+            viewer: nil)
+            == "ana, bo, cy, and 9 others reacted")
+        #expect(CommentReactions.whoLabel(roster: nil, viewer: "x") == nil)
+        #expect(CommentReactions.whoLabel(
+            roster: ReactorRoster(logins: [], totalCount: 0), viewer: nil) == nil)
+    }
+
+    @Test func chipsCarryWhoTooltips() {
+        let rollup = ReactionRollup(plusOne: 2)
+        let chips = CommentReactions.chips(
+            rollup: rollup, viewerReacted: ["+1"],
+            reactors: ["+1": ReactorRoster(logins: ["jedijashwa", "sam-ortega"],
+                                           totalCount: 2)],
+            viewer: "jedijashwa")
+        #expect(chips.count == 1)
+        #expect(chips[0].who == "You and sam-ortega reacted")
+        // Missing roster → nil who → chips keep their action tooltip.
+        let bare = CommentReactions.chips(rollup: rollup, viewerReacted: [])
+        #expect(bare[0].who == nil)
+    }
+
     // MARK: - Toggle math
 
     @Test func addingAReactionIncrementsAndMarksMine() {
@@ -180,8 +221,12 @@ import Testing
               { "id": "T1", "isResolved": false, "comments": { "nodes": [
                 { "id": "C1", "databaseId": 100, "lastEditedAt": null,
                   "reactionGroups": [
-                    { "content": "THUMBS_UP", "viewerHasReacted": true },
-                    { "content": "HEART", "viewerHasReacted": false }
+                    { "content": "THUMBS_UP", "viewerHasReacted": true,
+                      "reactors": { "totalCount": 2,
+                                    "nodes": [ { "login": "jedijashwa" },
+                                               { "login": "sam-ortega" } ] } },
+                    { "content": "HEART", "viewerHasReacted": false,
+                      "reactors": { "totalCount": 0, "nodes": [] } }
                   ] },
                 { "id": "C2", "databaseId": 101, "lastEditedAt": "2026-07-30T12:00:00Z",
                   "reactionGroups": [] }
@@ -196,9 +241,13 @@ import Testing
         let thread = try #require(page.meta[100])
         #expect(thread.nodeID == "T1")
         #expect(!thread.isResolved)
-        #expect(thread.comments[100] == ReviewCommentMeta(nodeID: "C1",
-                                                          viewerReacted: ["+1"],
-                                                          edited: false))
+        // Reactors fold per REST content name; empty rosters are dropped
+        // (a zero-count group would only clutter tooltips). The fixture
+        // shape mirrors a live-API response, verified 2026-08-13.
+        #expect(thread.comments[100] == ReviewCommentMeta(
+            nodeID: "C1", viewerReacted: ["+1"], edited: false,
+            reactors: ["+1": ReactorRoster(logins: ["jedijashwa", "sam-ortega"],
+                                           totalCount: 2)]))
         #expect(thread.comments[101] == ReviewCommentMeta(nodeID: "C2",
                                                           viewerReacted: [],
                                                           edited: true))

@@ -463,10 +463,18 @@ enum DemoSession {
         threadReplyRootID: ThreadMeta(
             nodeID: "PMDEMO_THREAD_A", isResolved: false,
             comments: [
-                threadReplyRootID: ReviewCommentMeta(nodeID: "PMDEMO_C9001",
-                                                     viewerReacted: ["+1"],
-                                                     edited: true),
-                threadReplyID: ReviewCommentMeta(nodeID: "PMDEMO_C9002"),
+                threadReplyRootID: ReviewCommentMeta(
+                    nodeID: "PMDEMO_C9001",
+                    viewerReacted: ["+1"],
+                    edited: true,
+                    reactors: ["+1": ReactorRoster(logins: [viewerLogin, prAuthor],
+                                                   totalCount: 2),
+                               "eyes": ReactorRoster(logins: [reviewer],
+                                                     totalCount: 1)]),
+                threadReplyID: ReviewCommentMeta(
+                    nodeID: "PMDEMO_C9002",
+                    reactors: ["heart": ReactorRoster(logins: [reviewer],
+                                                      totalCount: 1)]),
             ]),
         threadResolvedRootID: ThreadMeta(
             nodeID: "PMDEMO_THREAD_B", isResolved: true,
