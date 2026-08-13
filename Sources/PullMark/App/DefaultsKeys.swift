@@ -105,6 +105,10 @@ enum DefaultsKeys {
     /// `<!-- note @josh: … -->`). Absent = GitHub login, then macOS
     /// username.
     static let marginNoteAuthor = "pm.marginNoteAuthor"
+    /// Experimental (beta): the PR overview's Review discussion section —
+    /// every review thread on the PR, including files PullMark doesn't
+    /// render, with code excerpts. Absent = off.
+    static let prDiscussionEnabled = "pm.prDiscussionEnabled"
     /// Whether margin-note bubbles render in documents (default on;
     /// View → Hide Margin Notes flips it app-wide).
     static let marginNotesVisible = "pm.marginNotesVisible"

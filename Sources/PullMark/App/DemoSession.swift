@@ -397,6 +397,10 @@ enum DemoSession {
                       user: ReviewComment.User(login: reviewer),
                       createdAt: "2026-07-27T09:24:00Z",
                       htmlUrl: nil,
+                      diffHunk: "@@ -38,5 +38,6 @@\n"
+                          + " | Salt | Expected RH | Acceptable |\n"
+                          + " | ---- | ----------- | ---------- |\n"
+                          + "+| Sodium chloride | 75% | 73–77% |",
                       reactions: ReactionRollup(plusOne: 2, eyes: 1)),
         ReviewComment(id: threadReplyID, path: calibrationPath,
                       body: "Good call — eight to twelve depending on jar volume. "
@@ -428,9 +432,14 @@ enum DemoSession {
                       user: ReviewComment.User(login: prAuthor),
                       createdAt: "2026-07-25T11:12:00Z",
                       htmlUrl: nil,
+                      diffHunk: "@@ -8,4 +8,5 @@\n"
+                          + " sensor once a season.\n"
+                          + "+Calibrating on a balcony overstates drift on gusty\n"
+                          + "+days, so the intro walks through an indoor first pass.",
                       reactions: ReactionRollup()),
         // A comment on a file PullMark doesn't render — feeds the
-        // overview's "review comments on files not shown" line.
+        // overview's "review comments on files not shown" line, and the
+        // review discussion list when that experiment is on.
         ReviewComment(id: hiddenFileCommentID, path: firmwarePath,
                       body: "Debounce interval seems aggressive for gusty sites.",
                       line: 42, side: "RIGHT", startLine: nil, originalLine: 42,
@@ -438,6 +447,12 @@ enum DemoSession {
                       user: ReviewComment.User(login: reviewer),
                       createdAt: "2026-07-27T08:05:00Z",
                       htmlUrl: nil,
+                      diffHunk: "@@ -36,9 +36,9 @@ void anemometer_isr() {\n"
+                          + "     const uint32_t now = micros();\n"
+                          + "-    if (now - last_edge < 2000) {\n"
+                          + "+    if (now - last_edge < DEBOUNCE_US) {\n"
+                          + "         return;\n"
+                          + "     }",
                       reactions: ReactionRollup()),
     ]
 

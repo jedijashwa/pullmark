@@ -49,6 +49,9 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Margin note composed under a block: (1-based line to insert after —
     /// 0 = top of file — and the note's Markdown body).
     var onNoteAdd: ((Int, String, String?) -> Void)?
+    /// The overview's View in File jump: open this PR file and reveal
+    /// the thread rooted at the comment id.
+    var onOpenPRComment: ((String, Int) -> Void)?
     /// Margin note body rewritten from its bubble: (note ordinal, body).
     var onNoteEdit: ((Int, String) -> Void)?
     /// Margin note deleted from its bubble: note ordinal.
@@ -408,6 +411,20 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let index = dict["index"] as? Int,
                    let body = dict["body"] as? String {
                     parent.onNoteEdit?(index, body)
+                }
+            case "openPRComment":
+                if let path = dict["path"] as? String,
+                   let rootID = dict["rootID"] as? Int {
+                    parent.onOpenPRComment?(path, rootID)
+                }
+            case "openExternal":
+                // GitHub permalinks only (the discussion list's Show on
+                // GitHub) — routed here because the page's normal link
+                // handling would parse a PR discussion URL and re-open
+                // the PR in-app instead of the browser.
+                if let raw = dict["url"] as? String, let url = URL(string: raw),
+                   url.scheme == "https", url.host == "github.com" {
+                    NSWorkspace.shared.open(url)
                 }
             case "noteDelete":
                 if let index = dict["index"] as? Int {

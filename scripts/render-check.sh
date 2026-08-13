@@ -153,6 +153,61 @@ else
   echo "  ok: no stamp on blank or fenced lines"
 fi
 
+# ---- Review discussion (spec: pr-review-discussion): the overview's
+# thread list renders grouped by file with hunk excerpts and routing
+# actions; resolved threads arrive collapsed.
+DISCUSSION_PAYLOAD=',"discussion":[
+ {"path":"docs/guide.md","isMarkdown":true,"unresolvedCount":2,"threads":[
+  {"lineLabel":"Line 9 (new)","rootID":41,"resolved":false,"outdated":false,
+   "language":"markdown","htmlUrl":null,
+   "excerpt":[{"text":"- second point","kind":"add"}],
+   "comments":[{"author":"reviewer","dateLabel":"Aug 13, 2026","body":"Tighten this?"}]},
+  {"lineLabel":"Line 14 (new)","rootID":44,"resolved":false,"outdated":false,
+   "language":"markdown","htmlUrl":null,
+   "excerpt":[{"text":"| old row | 1 |","kind":"ctx"},{"text":"| new row | 2 |","kind":"add"}],
+   "comments":[{"author":"reviewer","dateLabel":"Aug 13, 2026","body":"Row check?"}]}]},
+ {"path":"src/main.cpp","isMarkdown":false,"unresolvedCount":1,"threads":[
+  {"lineLabel":"Line 42 (new)","rootID":42,"resolved":false,"outdated":false,
+   "language":"cpp","htmlUrl":"https://github.com/o/r/pull/1#discussion_r42",
+   "excerpt":[{"text":"if (now - last < DEBOUNCE_US) {","kind":"add"},{"text":"    return;","kind":"ctx"}],
+   "comments":[{"author":"reviewer","dateLabel":"Aug 13, 2026","body":"Too aggressive?"}]},
+  {"lineLabel":"Line 7 (new)","rootID":43,"resolved":true,"outdated":false,
+   "language":"cpp","htmlUrl":"https://github.com/o/r/pull/1#discussion_r43",
+   "excerpt":[{"text":"int x = 1;","kind":"ctx"}],
+   "comments":[{"author":"author","dateLabel":"Aug 12, 2026","body":"Done."}]}]}]'
+emit_page "$(jq -Rs . <<< 'The PR description body.')" "$WORK/discussion.html" "$DISCUSSION_PAYLOAD"
+DISCUSSION_DOM="$WORK/discussion-dom.html"
+"$CHROME" --headless --disable-gpu --virtual-time-budget=8000 \
+  --dump-dom "file://$WORK/discussion.html" > "$DISCUSSION_DOM" 2>/dev/null
+discussion_check() {
+  local label="$1" pattern="$2"
+  if grep -qE "$pattern" "$DISCUSSION_DOM"; then
+    echo "  ok: $label"
+  else
+    echo "FAIL: $label (pattern: $pattern)"
+    failures=$((failures + 1))
+  fi
+}
+discussion_check "discussion section"      '<section class="pm-discussion'
+discussion_check "unresolved headline"     '3 unresolved conversations'
+discussion_check "file group path"         '<span class="pm-discussion-path">src/main.cpp</span>'
+discussion_check "markdown rich preview"   '<div class="pm-discussion-preview"><div class="pm-preview-add"><ul>'
+discussion_check "table preview joins rows" '<tr class="pm-preview-row-add">'
+discussion_check "table preview renders cells" '<td>new row</td>'
+discussion_check "table preview hides synthesized header" 'pm-discussion-preview pm-preview-headless'
+discussion_check "markdown jump action"    '>View in File</button>'
+discussion_check "github routing action"   '>Show on GitHub</button>'
+discussion_check "hunk add line"           'pm-hunk-line pm-hunk-add'
+discussion_check "hunk highlighted code"   'pm-hunk-line[^>]*><span class="pm-hunk-marker">[^<]*</span><code class="language-cpp hljs'
+discussion_check "resolved arrives collapsed" 'pm-thread-resolved pm-thread-collapsed'
+discussion_check "thread card root id"     'data-pm-root="42"'
+if grep -qE 'pm-discussion' "$DOM"; then
+  echo "FAIL: discussion section leaked into the plain document page"
+  failures=$((failures + 1))
+else
+  echo "  ok: discussion absent by default"
+fi
+
 # ---- Line numbers: gutter labels build only when the payload carries the
 # preference; the default page above must stay label-free.
 emit_page "$(jq -Rs . < docs/kitchen-sink.md)" "$WORK/linenum.html" ',"lineNumbers":true'
