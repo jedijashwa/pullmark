@@ -478,14 +478,19 @@ struct LocalFileView: View {
 
     /// Adding a note under a block (afterLine = the block's last source
     /// line; 0 = file-level, which lands after any front matter).
-    private func handleNoteAdd(_ afterLine: Int, body: String) {
+    /// A non-nil itemIndent means the note lives inside a list item —
+    /// indented to the item's content, packed tight (spec:
+    /// nested-comment-targets).
+    private func handleNoteAdd(_ afterLine: Int, body: String, itemIndent: String?) {
         // Annotating is commitment beyond reading: it pins a preview.
         state.pinPreviewIfNeeded(url: file.url)
         let author = MarginNoteAuthor.current(viewerLogin: state.viewerLogin)
         applyNoteChange { text in
             let at = afterLine > 0 ? afterLine
                 : (MarkdownBlocks.frontMatterEndLine(text.components(separatedBy: "\n")) ?? 0)
-            return MarginNotes.inserting(author: author, body: body, afterLine: at, in: text)
+            return MarginNotes.inserting(author: author, body: body, afterLine: at,
+                                         itemIndent: afterLine > 0 ? itemIndent : nil,
+                                         in: text)
         }
     }
 

@@ -64,9 +64,12 @@
         silently empty.</li>
         <li><strong>Add a note</strong> — hover any block in a local
         document and click the bubble in the margin (the same gesture as
-        commenting on a PR). Select text first and the note opens with the
-        selection quoted — how you point at a sentence instead of a
-        paragraph. <kbd>⌥⌘M</kbd> notes the block you're reading;
+        commenting on a PR). Inside a list the bubble targets the item
+        you're pointing at, and inside a table the row — a subtle tint
+        shows exactly what the note will attach to. Select text first
+        and the note opens with the selection quoted — how you point at
+        a sentence instead of a paragraph. <kbd>⌥⌘M</kbd> notes the
+        block you're reading;
         <strong>Edit&nbsp;→&nbsp;File Margin Note…</strong> leaves a note
         about the whole document, at the top.</li>
         <li><strong>Write Markdown</strong> — bold, code spans, fenced
@@ -95,6 +98,11 @@
       <pre><code>Requests retry three times with exponential backoff.
 
 &lt;!-- note @josh: Section 2 says five times. Which is it? --&gt;</code></pre>
+      <p>A note about one list item lives inside the item — indented to
+      the item's content, packed tight, so the list stays whole:</p>
+      <pre><code>- First point
+  &lt;!-- note @josh: too vague — name the metric --&gt;
+- Second point</code></pre>
       <p>Longer notes put the closing marker on its own line; the body is
       full Markdown, blank lines and fenced code included:</p>
       <pre><code>&lt;!-- note @josh:
@@ -120,6 +128,11 @@ Requests retry five times with exponential backoff.
         <tr><td>Placement</td><td>On its own line, blank lines around it,
           directly after the block it annotates. Above the first heading =
           a note about the whole document.</td></tr>
+        <tr><td>List items</td><td>A note about one list item sits
+          <em>inside</em> the item: directly after the item's last line,
+          indented to the item's content (at most 3 spaces — deeper reads
+          as code), with <em>no</em> blank lines around it. The
+          indentation is what ties it to the item.</td></tr>
         <tr><td>Threads</td><td>Adjacent notes under the same block read as a
           conversation — reply by adding another note below.</td></tr>
         <tr><td>Reserved</td><td><code>@name (attrs):</code> — the
@@ -151,7 +164,12 @@ When asked to address notes: work through each one, apply or
 answer it, and DELETE the note (with its surrounding blank line)
 once addressed. To reply or ask instead, leave your own note in
 the same format below the original, signed with your own @name.
-Don't add notes to code examples inside fenced blocks.</code></pre>
+Don't add notes to code examples inside fenced blocks.
+
+A note about one list item sits inside that item — directly after
+the item's last line, indented to the item's content, with no
+blank lines around it. Keep (or delete) the whole indented
+comment; its indentation is what ties it to the item.</code></pre>
       <p>The convergence loop follows from the format: remaining bubbles
       are remaining work, and an empty file is a finished review. If notes
       must never reach a pull request, a CI check is one line —

@@ -202,6 +202,78 @@ import Testing
         #expect(MarginNotes.removing(note, from: changed) == nil)
     }
 
+    // MARK: In-item (indented) notes
+
+    @Test func indentedNoteParsesWithIndent() {
+        let source = "- one\n  <!-- note @josh: too vague -->\n- two"
+        let notes = MarginNotes.parse(source)
+        #expect(notes.count == 1)
+        #expect(notes[0].indent == "  ")
+        #expect(notes[0].body == "too vague")
+        #expect(notes[0].startLine == 2)
+    }
+
+    @Test func indentedBlockBodyDedents() {
+        let source = """
+        - item
+          <!-- note @josh:
+          First line.
+
+          Second, with `code`.
+          -->
+        - next
+        """
+        let notes = MarginNotes.parse(source)
+        #expect(notes.count == 1)
+        #expect(notes[0].body == "First line.\n\nSecond, with `code`.")
+        #expect(notes[0].indent == "  ")
+        #expect(notes[0].endLine == 6)
+    }
+
+    @Test func noteTextIndentsEveryLine() {
+        #expect(MarginNotes.noteText(author: "josh", body: "short", indent: "  ")
+            == "  <!-- note @josh: short -->")
+        #expect(MarginNotes.noteText(author: "josh", body: "one\n\ntwo", indent: "  ")
+            == "  <!-- note @josh:\n  one\n\n  two\n  -->")
+    }
+
+    @Test func insertInItemIsTightAndIndented() {
+        let source = "- one\n- two\n- three"
+        let out = MarginNotes.inserting(author: "josh", body: "which?",
+                                        afterLine: 1, itemIndent: "  ", in: source)
+        #expect(out == "- one\n  <!-- note @josh: which? -->\n- two\n- three")
+        let notes = MarginNotes.parse(out)
+        #expect(notes.count == 1)
+        #expect(notes[0].startLine == 2)
+        #expect(notes[0].indent == "  ")
+    }
+
+    @Test func indentedNoteRoundTripsThroughEdit() {
+        let source = "- one\n  <!-- note @josh: old -->\n- two"
+        let note = MarginNotes.parse(source)[0]
+        let out = MarginNotes.replacingBody(of: note, with: "new\nlonger", in: source)
+        #expect(out == "- one\n  <!-- note @josh:\n  new\n  longer\n  -->\n- two")
+        #expect(MarginNotes.parse(out ?? "").first?.body == "new\nlonger")
+    }
+
+    @Test func removingTightNoteLeavesListIntact() {
+        let source = "- one\n  <!-- note @josh: gone -->\n- two"
+        let note = MarginNotes.parse(source)[0]
+        #expect(MarginNotes.removing(note, from: source) == "- one\n- two")
+    }
+
+    @Test func invalidItemIndentDegradesToSpacedNote() {
+        // A 4-space indent would make the note read as an indented code
+        // block — invisible to the parser. Garbage from the bridge must
+        // fall back to the between-blocks form, never write a lost note.
+        for bad in ["    ", "\t", "x ", ""] {
+            let out = MarginNotes.inserting(author: "josh", body: "x",
+                                            afterLine: 1, itemIndent: bad,
+                                            in: "- one\n- two")
+            #expect(out == "- one\n\n<!-- note @josh: x -->\n\n- two")
+        }
+    }
+
     // MARK: Block splitter integration
 
     @Test func multiLineCommentIsOneBlock() {
