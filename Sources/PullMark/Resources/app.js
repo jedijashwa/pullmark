@@ -1858,11 +1858,15 @@
       btn.textContent = reactionEmoji(chip.content) + " " + chip.count;
       var label = (chip.mine ? "Remove your " : "React with ") + reactionEmoji(chip.content);
       btn.setAttribute("aria-pressed", chip.mine ? "true" : "false");
+      // The tooltip names the reactors ("You and sam-ortega reacted");
+      // the accessible label stays the action. Chips without roster
+      // data (optimistic toggles, missing meta) fall back to the action.
       if (c.canReact) {
-        btn.title = label;
+        btn.title = chip.who || label;
         btn.setAttribute("aria-label", label);
         btn.addEventListener("click", function () { toggleReaction(c, chip.content); });
       } else {
+        if (chip.who) { btn.title = chip.who; }
         btn.disabled = true;
       }
       bar.append(btn);
@@ -2675,6 +2679,15 @@
                     window.innerWidth - cRect.left - tw - 18);
   }
 
+  // A target taller than the viewport must not strand its bubble above
+  // the scroll: pin the bubble's natural y into the target's visible
+  // slice (10px under the viewport top, held inside the target's
+  // bottom). The scroll re-probe re-runs every positioner, so this
+  // clamp alone keeps bubbles sticky while a long block scrolls by.
+  function stickyRailY(naturalTop, targetBottom) {
+    return Math.min(Math.max(naturalTop, 10), targetBottom - 34);
+  }
+
   // ---- Result-view comment affordances (spec §5) ----
   // Commenting is offered on blocks that map into the PR diff; on blocks
   // that don't, the affordance explains why not instead of vanishing.
@@ -2740,7 +2753,8 @@
       // clear of the viewport edge, where a narrow web view (sidebar +
       // outline open) would otherwise put it under the overlay scrollbar.
       tools.style.left = Math.round(railLeft(cRect, tw)) + "px";
-      tools.style.top = Math.round(rect.top - cRect.top + 2 + badges * 28) + "px";
+      tools.style.top = Math.round(
+        stickyRailY(rect.top + 2 + badges * 28, rect.bottom) - cRect.top) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3117,7 +3131,8 @@
       var rect = el.getBoundingClientRect();
       var tw = tools.getBoundingClientRect().width || 28;
       tools.style.left = Math.round(railLeft(cRect, tw)) + "px";
-      tools.style.top = Math.round(rect.top - cRect.top + 2) + "px";
+      tools.style.top = Math.round(
+        stickyRailY(rect.top + 2, rect.bottom) - cRect.top) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3599,7 +3614,8 @@
       var bw = btn.getBoundingClientRect().width || 28;
       btn.style.left = Math.round(art.right - art.left - bw - 6 - (wr.left - art.left)) + "px";
       btn.style.right = "auto";
-      btn.style.top = Math.round(unit.getBoundingClientRect().top - wr.top) + "px";
+      var ur = unit.getBoundingClientRect();
+      btn.style.top = Math.round(stickyRailY(ur.top, ur.bottom) - wr.top) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3683,7 +3699,7 @@
         }
       });
       if (top === null) { top = wr.top; }
-      btn.style.top = Math.round(top - wr.top) + "px";
+      btn.style.top = Math.round(stickyRailY(top, wr.bottom) - wr.top) + "px";
     }
     function show() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }

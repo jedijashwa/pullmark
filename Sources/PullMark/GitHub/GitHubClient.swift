@@ -185,7 +185,18 @@ final class GitHubClient {
                   comments(first: 100) {
                     nodes {
                       id databaseId lastEditedAt
-                      reactionGroups { content viewerHasReacted }
+                      reactionGroups {
+                        content viewerHasReacted
+                        reactors(first: 10) {
+                          totalCount
+                          nodes {
+                            ... on User { login }
+                            ... on Bot { login }
+                            ... on Organization { login }
+                            ... on Mannequin { login }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -235,8 +246,14 @@ final class GitHubClient {
             struct Comments: Decodable { let nodes: [Comment] }
             struct Comment: Decodable {
                 struct ReactionGroup: Decodable {
+                    struct Reactors: Decodable {
+                        struct Node: Decodable { let login: String? }
+                        let totalCount: Int
+                        let nodes: [Node]?
+                    }
                     let content: String
                     let viewerHasReacted: Bool
+                    let reactors: Reactors?
                 }
                 let id: String
                 let databaseId: Int?
@@ -258,9 +275,18 @@ final class GitHubClient {
                 let reacted = (comment.reactionGroups ?? [])
                     .filter(\.viewerHasReacted)
                     .compactMap { ReactionKind(graphQL: $0.content)?.rawValue }
+                var reactors: [String: ReactorRoster] = [:]
+                for group in comment.reactionGroups ?? [] {
+                    guard let kind = ReactionKind(graphQL: group.content),
+                          let who = group.reactors, who.totalCount > 0 else { continue }
+                    reactors[kind.rawValue] = ReactorRoster(
+                        logins: (who.nodes ?? []).compactMap(\.login),
+                        totalCount: who.totalCount)
+                }
                 comments[id] = ReviewCommentMeta(nodeID: comment.id,
                                                  viewerReacted: Set(reacted),
-                                                 edited: comment.lastEditedAt != nil)
+                                                 edited: comment.lastEditedAt != nil,
+                                                 reactors: reactors)
             }
             meta[rootID] = ThreadMeta(nodeID: node.id, isResolved: node.isResolved,
                                       comments: comments)

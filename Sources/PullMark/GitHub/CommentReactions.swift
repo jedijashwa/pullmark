@@ -51,11 +51,15 @@ enum ReactionKind: String, CaseIterable, Equatable {
 
 /// One reaction chip at a comment's foot: emoji + count, tinted when the
 /// viewer pressed it. The page owns the content→emoji table (it also draws
-/// the picker); the payload carries the REST content name.
+/// the picker); the payload carries the REST content name. `who` is the
+/// hover tooltip naming the reactors ("You and sam-ortega reacted") —
+/// nil when GraphQL meta is unavailable, and the chip keeps its
+/// action-only tooltip.
 struct ReactionChipPayload: Encodable, Equatable {
     let content: String
     let count: Int
     let mine: Bool
+    var who: String? = nil
 }
 
 /// Pure reaction state math — chips shown, optimistic toggles folded back
@@ -64,16 +68,46 @@ enum CommentReactions {
     /// Chips for the reactions present (count > 0), in canonical order.
     /// Counts come from the REST rollup; `viewerReacted` (REST content
     /// names, from GraphQL `reactionGroups.viewerHasReacted`) tints the
-    /// viewer's own.
+    /// viewer's own; `reactors` names them in the hover tooltip.
     static func chips(rollup: ReactionRollup?,
-                      viewerReacted: Set<String>) -> [ReactionChipPayload] {
+                      viewerReacted: Set<String>,
+                      reactors: [String: ReactorRoster] = [:],
+                      viewer: String? = nil) -> [ReactionChipPayload] {
         guard let rollup else { return [] }
         return ReactionKind.allCases.compactMap { kind in
             let count = kind.count(in: rollup)
             guard count > 0 else { return nil }
             return ReactionChipPayload(content: kind.rawValue, count: count,
-                                       mine: viewerReacted.contains(kind.rawValue))
+                                       mine: viewerReacted.contains(kind.rawValue),
+                                       who: whoLabel(roster: reactors[kind.rawValue],
+                                                     viewer: viewer))
         }
+    }
+
+    /// "You, sam-ortega, and 2 others reacted" — the viewer leads as
+    /// "You" when present; up to three people are named, the rest
+    /// counted against the roster's true total (the fetch caps names).
+    /// Nil when the roster is empty so chips keep their action tooltip.
+    static func whoLabel(roster: ReactorRoster?, viewer: String?) -> String? {
+        guard let roster, roster.totalCount > 0 else { return nil }
+        var names = roster.logins
+        if let viewer,
+           let index = names.firstIndex(where: { $0.lowercased() == viewer.lowercased() }) {
+            names.remove(at: index)
+            names.insert("You", at: 0)
+        }
+        let shown = Array(names.prefix(3))
+        let others = roster.totalCount - shown.count
+        var parts = shown
+        if others > 0 { parts.append("\(others) other\(others == 1 ? "" : "s")") }
+        let list: String
+        switch parts.count {
+        case 0: return nil
+        case 1: list = parts[0]
+        case 2: list = "\(parts[0]) and \(parts[1])"
+        default: list = parts.dropLast().joined(separator: ", ") + ", and " + parts[parts.count - 1]
+        }
+        return "\(list) reacted"
     }
 
     /// A confirmed toggle folded into the model: the rollup count and the
