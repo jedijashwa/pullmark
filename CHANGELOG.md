@@ -4,6 +4,26 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.30.0 - 2026-08-13
+
+- **Comments and margin notes now land on the item you point at, not
+  the whole list.** Inside a list the bubble targets the individual
+  item — nested lists resolve to the innermost item under your cursor —
+  and inside a table it targets the row. A subtle tint shows exactly
+  what the bubble will comment on before you click.
+- Pull-request comments anchor to precisely the item's lines: in a
+  partially changed list, the changed items offer commenting while
+  untouched ones explain they're outside the diff. Existing threads
+  badge and highlight just the item or row they're about. Selecting
+  text across several items still comments on everything the selection
+  covers.
+- A margin note about a list item is written inside the item itself —
+  indented to the item's content, no blank lines — and its bubble
+  renders right under the item. Agents reading the file see the note
+  directly attached to the line it's about. A note on a table row
+  quotes the row instead, since Markdown table syntax can't hold a
+  comment.
+
 ## 0.29.2 - 2026-08-12
 
 - **The margin-note button no longer flickers away while you reach for

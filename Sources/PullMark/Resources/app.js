@@ -867,6 +867,9 @@
       var endLine = startLine + countNewlines(raw.replace(/\n+$/, ""));
       for (var k = 0; k < count && ei < els.length; k++) {
         els[ei].setAttribute("data-pm-lines", startLine + "-" + endLine);
+        if (k === 0 && (tok.type === "list" || tok.type === "table")) {
+          stampSubUnits(els[ei], tok, startLine);
+        }
         ei += 1;
       }
       line = startLine + countNewlines(raw);
@@ -874,6 +877,116 @@
       i += 1;
     }
     return true;
+  }
+
+  // ---- Sub-unit stamping (spec: nested-comment-targets) ----
+  // Inside container blocks the meaningful comment target is the nested
+  // structural unit: each list item and each table row is stamped with
+  // data-pm-sublines="start-end". A separate attribute — never
+  // data-pm-lines — so the block annotation's other consumers (copy,
+  // blame, line numbers, editing) can't see the stamps; only the
+  // commenting surfaces read both.
+
+  function subUnitRange(el) {
+    var m = /^(\d+)-(\d+)$/.exec(
+      (el.getAttribute && el.getAttribute("data-pm-sublines")) || "");
+    return m ? [+m[1], +m[2]] : null;
+  }
+
+  // Item raws concatenate to their list's raw line-for-line, at every
+  // nesting depth — nested raws are de-indented but keep the exact line
+  // structure, loose blanks included (verified against the vendored
+  // marked; its intra-item TEXT tokens do not have this property, which
+  // is why the walk below never consults them).
+  function stampListItems(listEl, listTok, startLine) {
+    if (!listEl) { return; }
+    var lis = [];
+    for (var c = listEl.firstElementChild; c; c = c.nextElementSibling) {
+      if (c.tagName === "LI") { lis.push(c); }
+    }
+    var line = startLine;
+    (listTok.items || []).forEach(function (item, i) {
+      var raw = item.raw || "";
+      var itemStart = line;
+      line += (raw.match(/\n/g) || []).length;
+      if (i >= lis.length) { return; }
+      var trimmed = raw.replace(/\n+$/, "");
+      var itemEnd = itemStart + (trimmed.match(/\n/g) || []).length;
+      lis[i].setAttribute("data-pm-sublines", itemStart + "-" + itemEnd);
+      stampNestedLists(lis[i], item, raw, itemStart);
+    });
+  }
+
+  // A nested list's own raw is de-indented, so it can't be located by
+  // indexOf in the parent item's raw. Its first item's first line CAN:
+  // de-indenting only strips leading whitespace, so the parent line is
+  // whitespace + that line, matched with a moving cursor.
+  function stampNestedLists(itemEl, itemTok, itemRaw, itemStart) {
+    var nestedEls = [];
+    for (var c = itemEl.firstElementChild; c; c = c.nextElementSibling) {
+      if (c.tagName === "UL" || c.tagName === "OL") { nestedEls.push(c); }
+    }
+    if (!nestedEls.length) { return; }
+    var nestedToks = (itemTok.tokens || []).filter(function (t) {
+      return t.type === "list";
+    });
+    var itemLines = itemRaw.split("\n");
+    var cursor = 1; // a nested list never starts on the marker line
+    var fence = null; // a list-shaped line inside a fence is code
+    nestedToks.forEach(function (tok, i) {
+      if (i >= nestedEls.length) { return; }
+      var first = ((tok.items && tok.items[0] && tok.items[0].raw) || "")
+        .split("\n")[0];
+      if (!first) { return; }
+      for (var li = cursor; li < itemLines.length; li++) {
+        var lineText = itemLines[li];
+        var bare = lineText.trim().slice(0, 3);
+        if (fence) {
+          if (bare === fence) { fence = null; }
+          continue;
+        }
+        if (bare === "```" || bare === "~~~") { fence = bare; continue; }
+        if (lineText.length >= first.length
+            && lineText.slice(-first.length) === first
+            && lineText.slice(0, lineText.length - first.length).trim() === "") {
+          stampListItems(nestedEls[i], tok, itemStart + li);
+          // Past the matched list's LAST line, not onto it — marked
+          // trims the trailing newline from a nested list's raw, and a
+          // cursor left on the last line lets a sibling list whose
+          // first item repeats that text match the wrong region.
+          cursor = li + ((tok.raw || "").replace(/\n+$/, "").match(/\n/g) || []).length + 1;
+          break;
+        }
+      }
+    });
+  }
+
+  // GFM table geometry is fixed: header line, delimiter line, then one
+  // line per body row. The header pair is one target; each body row its
+  // own.
+  function stampTableRows(tableEl, tableTok, startLine) {
+    if (!tableEl) { return; }
+    var headRow = tableEl.querySelector(":scope > thead > tr");
+    if (headRow) {
+      headRow.setAttribute("data-pm-sublines", startLine + "-" + (startLine + 1));
+    }
+    var bodyRows = tableEl.querySelectorAll(":scope > tbody > tr");
+    var count = Math.min(bodyRows.length, (tableTok.rows || []).length);
+    for (var r = 0; r < count; r++) {
+      var lineNo = startLine + 2 + r;
+      bodyRows[r].setAttribute("data-pm-sublines", lineNo + "-" + lineNo);
+    }
+  }
+
+  function stampSubUnits(el, tok, startLine) {
+    if (!el) { return; }
+    if (tok.type === "list") {
+      if (el.tagName === "UL" || el.tagName === "OL") {
+        stampListItems(el, tok, startLine);
+      }
+    } else if (tok.type === "table" && el.tagName === "TABLE") {
+      stampTableRows(el, tok, startLine);
+    }
   }
 
   function setupBlameGutter(runs) {
@@ -1161,7 +1274,20 @@
       for (var el = content.firstElementChild; el; el = el.nextElementSibling) {
         var m = /^(\d+)-(\d+)$/.exec(
           (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
-        if (m && +m[1] <= line && line <= +m[2]) { return el; }
+        if (!(m && +m[1] <= line && line <= +m[2])) { continue; }
+        // The deepest unit containing the line anchors the thread — the
+        // item or row, not the whole list or table. `<=` so a nested
+        // item (later in document order, never wider) beats its parent.
+        var best = el;
+        var bestSpan = +m[2] - +m[1];
+        el.querySelectorAll("[data-pm-sublines]").forEach(function (unit) {
+          var r = subUnitRange(unit);
+          if (r && r[0] <= line && line <= r[1] && r[1] - r[0] <= bestSpan) {
+            best = unit;
+            bestSpan = r[1] - r[0];
+          }
+        });
+        return best;
       }
       return null;
     }
@@ -1175,10 +1301,39 @@
         if (clusters[i].el === el) { return clusters[i]; }
       }
       var cluster = { el: el, threads: [], pendings: [],
+                      threadTint: [], pendingTint: [],
                       openThreads: false, openPending: false,
                       card: null, badge: null, pendingBadge: null };
       clusters.push(cluster);
       return cluster;
+    }
+
+    // A thread anchored to one unit can still cover a range that spans
+    // its siblings (a multi-line comment across list items): those leaf
+    // units get the anchor tint too, so the highlight shows the true
+    // extent. The badge stays on the anchor unit — the range's end,
+    // matching where GitHub pins multi-line comments.
+    function tintExtras(anchor, startLine, endLine) {
+      var extras = [];
+      if (!anchor.hasAttribute || !anchor.hasAttribute("data-pm-sublines")) {
+        return extras;
+      }
+      var blockEl = anchor;
+      while (blockEl.parentElement && blockEl.parentElement !== content) {
+        blockEl = blockEl.parentElement;
+      }
+      blockEl.querySelectorAll("[data-pm-sublines]").forEach(function (unit) {
+        if (unit === anchor || unit.querySelector("[data-pm-sublines]")) { return; }
+        var r = subUnitRange(unit);
+        if (r && r[0] <= endLine && startLine <= r[1]) { extras.push(unit); }
+      });
+      return extras;
+    }
+
+    function mergeTint(into, extras) {
+      extras.forEach(function (el) {
+        if (into.indexOf(el) === -1) { into.push(el); }
+      });
     }
 
     function clusterOpen(cluster) {
@@ -1186,11 +1341,23 @@
     }
     (threads || []).forEach(function (thread) {
       var el = blockFor(thread.anchorEnd || thread.anchorStart);
-      if (el) { clusterFor(el).threads.push(thread); }
+      if (el) {
+        var cluster = clusterFor(el);
+        cluster.threads.push(thread);
+        mergeTint(cluster.threadTint,
+                  tintExtras(el, thread.anchorStart || thread.anchorEnd,
+                             thread.anchorEnd || thread.anchorStart));
+      }
     });
     (pendings || []).forEach(function (item) {
       var el = blockFor(item.lineEnd || item.lineStart);
-      if (el) { clusterFor(el).pendings.push(item); }
+      if (el) {
+        var cluster = clusterFor(el);
+        cluster.pendings.push(item);
+        mergeTint(cluster.pendingTint,
+                  tintExtras(el, item.lineStart || item.lineEnd,
+                             item.lineEnd || item.lineStart));
+      }
     });
 
     function visibleThreads(cluster) {
@@ -1217,7 +1384,14 @@
       if (cluster.openPending && cluster.pendings.length) {
         card.append(pendingEl(cluster.pendings));
       }
-      cluster.el.after(card);
+      // Cards always open at content level: a sub-unit anchor (list
+      // item, table row) hoists to its enclosing block — a full-width
+      // card doesn't belong inside a list or a scrolling table.
+      var host = cluster.el;
+      while (host.parentElement && host.parentElement !== content) {
+        host = host.parentElement;
+      }
+      host.after(card);
       cluster.card = card;
     }
 
@@ -1321,6 +1495,12 @@
         var hasPending = cluster.pendings.length > 0;
         cluster.el.classList.toggle("pm-commented", hasThreads);
         cluster.el.classList.toggle("pm-pending-anchor", hasPending);
+        cluster.threadTint.forEach(function (t) {
+          t.classList.toggle("pm-commented", hasThreads);
+        });
+        cluster.pendingTint.forEach(function (t) {
+          t.classList.toggle("pm-pending-anchor", hasPending);
+        });
         cluster.badge.style.display = hasThreads ? "" : "none";
         if (hasThreads) {
           var count = commentCount(visible);
@@ -1352,12 +1532,19 @@
     // Open-card state survives Swift-side re-renders (reaction fold-in,
     // reply/edit/delete reload): the proxy reads the open anchors before
     // the reload and re-applies them once the fresh page has built its
-    // clusters. Anchored by the block's data-pm-lines key.
+    // clusters. Anchored by the element's line-range key; a sub-unit
+    // anchor gets an "s:" prefix so a single-item list's item can never
+    // be confused with its block (their ranges coincide).
+    function clusterAnchorKey(el) {
+      var sub = el.getAttribute("data-pm-sublines");
+      if (sub) { return "s:" + sub; }
+      return el.getAttribute("data-pm-lines") || "";
+    }
     window.__pmOpenThreadAnchors = function () {
       var open = [];
       clusters.forEach(function (cluster) {
         if (!clusterOpen(cluster)) { return; }
-        open.push({ anchor: cluster.el.getAttribute("data-pm-lines") || "",
+        open.push({ anchor: clusterAnchorKey(cluster.el),
                     threads: cluster.openThreads, pending: cluster.openPending });
       });
       return open;
@@ -1365,7 +1552,7 @@
     window.__pmRestoreOpenThreadAnchors = function (list) {
       (list || []).forEach(function (item) {
         clusters.forEach(function (cluster) {
-          if ((cluster.el.getAttribute("data-pm-lines") || "") !== item.anchor) { return; }
+          if (clusterAnchorKey(cluster.el) !== item.anchor) { return; }
           cluster.openThreads = !!item.threads && visibleThreads(cluster).length > 0;
           cluster.openPending = !!item.pending && cluster.pendings.length > 0;
           syncCard(cluster);
@@ -2348,11 +2535,14 @@
   }
 
   // Opens the composer for a rendered-diff segment: default anchor is the
-  // whole block; a text selection inside the block narrows the range
-  // (spec §5 — narrowing is a gesture, not a widget).
-  function composerForSegment(seg, target, suggest) {
+  // whole block — or one sub-unit's lines when `unitRange` is given (a
+  // list item's or table row's bubble). A text selection inside the
+  // block narrows (or, from a unit, widens) the range (spec §5 —
+  // narrowing is a gesture, not a widget).
+  function composerForSegment(seg, target, suggest, unitRange) {
     var sourceLines = (seg.text || "").split("\n");
-    var range = [seg.lineStart, seg.lineEnd];
+    var range = unitRange ? unitRange.slice() : [seg.lineStart, seg.lineEnd];
+    var keyRange = range.slice();
     var narrowed = narrowRangeTo(target.block, sourceLines, seg.lineStart);
     if (narrowed) {
       range = narrowed;
@@ -2370,7 +2560,7 @@
       range: range,
       lineBase: seg.lineStart,
       sourceLines: seg.side === "RIGHT" ? sourceLines : null,
-      draftKey: seg.side + ":" + seg.lineStart + "-" + seg.lineEnd,
+      draftKey: seg.side + ":" + keyRange[0] + "-" + keyRange[1],
       prefillSuggestion: suggest,
       splitGrid: target.split
     });
@@ -2498,11 +2688,24 @@
       var m = /^(\d+)-(\d+)$/.exec(
         (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
       if (!m) { continue; }
-      attachResultAffordance(layer, el, +m[1], +m[2], docLines);
+      var block = { el: el, start: +m[1], end: +m[2] };
+      var subs = el.querySelectorAll("[data-pm-sublines]");
+      if (subs.length) {
+        // Container blocks delegate to their units (spec:
+        // nested-comment-targets): the comment range is the item's or
+        // row's own lines, so in a partially changed list the changed
+        // items comment and the untouched ones explain themselves.
+        subs.forEach(function (unit) {
+          var r = subUnitRange(unit);
+          if (r) { attachResultAffordance(layer, unit, r[0], r[1], docLines, block); }
+        });
+      } else {
+        attachResultAffordance(layer, el, block.start, block.end, docLines, block);
+      }
     }
   }
 
-  function attachResultAffordance(layer, el, blockStart, blockEnd, docLines) {
+  function attachResultAffordance(layer, el, blockStart, blockEnd, docLines, block) {
     el.classList.add("pm-commentable");
     var mapped = clampRangeToRuns("RIGHT", blockStart, blockEnd);
     // Both affordances share one hover container beside the block, in the
@@ -2517,6 +2720,7 @@
     function hideNow() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       tools.style.display = "none";
+      el.classList.remove("pm-hover-target");
     }
     function position() {
       var cRect = content.getBoundingClientRect();
@@ -2540,12 +2744,16 @@
       // fast flick can real-enter a block between probe ticks, and a
       // stale claim would steal its bubble back on the next dead row.
       virtualHover = el;
+      el.classList.add("pm-hover-target");
       tools.style.display = "flex";
       position();
     }
     function hide() {
       if (hideTimer) { clearTimeout(hideTimer); }
-      hideTimer = setTimeout(function () { tools.style.display = "none"; }, 120);
+      hideTimer = setTimeout(function () {
+        tools.style.display = "none";
+        el.classList.remove("pm-hover-target");
+      }, 120);
     }
     el.addEventListener("mouseenter", show);
     el.addEventListener("mouseleave", hide);
@@ -2565,23 +2773,27 @@
       layer.append(tools);
       return;
     }
-    var sourceLines = docLines.slice(blockStart - 1, blockEnd);
+    // Selection narrowing (and widening, for a sub-unit) works against
+    // the whole block: selecting across several list items and clicking
+    // any of their bubbles comments on the covered lines.
+    var sourceLines = docLines.slice(block.start - 1, block.end);
     function open(suggest) {
       var range = mapped;
-      var narrowed = narrowRangeTo(el, sourceLines, blockStart);
+      var narrowed = narrowRangeTo(block.el, sourceLines, block.start);
       if (narrowed) { range = narrowed; }
       // A sibling of the marker card when one is open, matching the
-      // diff views' card order.
-      var anchor = el;
-      if (el.nextElementSibling
-          && el.nextElementSibling.classList.contains("pm-result-card")) {
-        anchor = el.nextElementSibling;
+      // diff views' card order. Sub-unit composers open at content
+      // level too — under the enclosing block.
+      var anchor = block.el;
+      if (anchor.nextElementSibling
+          && anchor.nextElementSibling.classList.contains("pm-result-card")) {
+        anchor = anchor.nextElementSibling;
       }
       composerOpen({
         anchor: anchor,
         side: "RIGHT",
         range: range,
-        lineBase: blockStart,
+        lineBase: block.start,
         sourceLines: sourceLines,
         draftKey: "RIGHT:" + blockStart + "-" + blockEnd,
         prefillSuggestion: suggest
@@ -2704,7 +2916,11 @@
     document.addEventListener("mousedown", st.onAway, true);
 
     ta.value = opts.seed || "";
-    if (opts.anchor) {
+    if (opts.parent) {
+      // In-item note entry: the composer opens inside the list item,
+      // where the note itself will render.
+      opts.parent.append(root);
+    } else if (opts.anchor) {
       opts.anchor.after(root);
     } else {
       content.prepend(root);
@@ -2782,6 +2998,20 @@
       // Anchor at the nearest content-level position: the comment sits
       // between blocks normally, but an unspaced one can end up inside a
       // rendered element — the bubble then follows that element.
+      // A note living inside a list item renders its card right there,
+      // at the comment's own spot in the item (a div is valid flow
+      // content inside an li). Anything else keeps the content-level
+      // hoist.
+      var itemHost = null;
+      for (var p = node.parentNode; p && p !== content; p = p.parentNode) {
+        if (p.tagName === "LI") { itemHost = p; break; }
+      }
+      if (itemHost) {
+        var inItem = node;
+        while (inItem.parentNode !== itemHost) { inItem = inItem.parentNode; }
+        itemHost.insertBefore(card, inItem.nextSibling);
+        return;
+      }
       var host = node;
       while (host.parentNode && host.parentNode !== content) {
         host = host.parentNode;
@@ -2794,11 +3024,79 @@
     });
   }
 
+  // In-item placement plan for a sub-unit: the innermost ancestor item
+  // (the unit itself included) whose content indent the note grammar
+  // tolerates — at most 3 leading spaces, since 4 reads as an indented
+  // code block. Null when no item qualifies (table rows, items nested
+  // too deep, wide ordered markers like "10."): those fall back to an
+  // after-block note that quotes the unit.
+  function itemNotePlan(unitEl, blockEl) {
+    var lines = (payload.markdown || "").split("\n");
+    for (var a = unitEl; a && a !== blockEl; a = a.parentElement) {
+      if (a.tagName !== "LI") { continue; }
+      var r = subUnitRange(a);
+      if (!r) { continue; }
+      var m = /^(\s*)(?:[-*+]|\d{1,9}[.)])\s+/.exec(lines[r[0] - 1] || "");
+      if (!m || m[0].length > 3) { continue; }
+      return { anchorEl: a, afterLine: r[1],
+               itemIndent: Array(m[0].length + 1).join(" ") };
+    }
+    return null;
+  }
+
+  // Sub-unit note entry (spec: nested-comment-targets). A list item
+  // that can hold an indented note gets the composer inside the item
+  // and the note written there; anything else gets an after-block note
+  // seeded with a quote of the unit's first source line — the same
+  // convention selection-quoting uses to point at a sentence.
+  function openUnitNoteComposer(unitEl, blockEl, blockEnd) {
+    var plan = itemNotePlan(unitEl, blockEl);
+    var selected = selectionTextWithin(unitEl);
+    var seed = "";
+    if (selected) {
+      seed = selected.split("\n").map(function (line) {
+        return "> " + line;
+      }).join("\n") + "\n\n";
+    }
+    if (plan) {
+      noteComposerOpen({
+        parent: plan.anchorEl,
+        seed: seed,
+        onSubmit: function (body) {
+          post({ type: "noteAdd", afterLine: plan.afterLine, body: body,
+                 itemIndent: plan.itemIndent });
+        }
+      });
+      return;
+    }
+    if (!seed) {
+      var r = subUnitRange(unitEl);
+      var first = r
+        ? ((payload.markdown || "").split("\n")[r[0] - 1] || "").trim()
+        : "";
+      if (first) { seed = "> " + first + "\n\n"; }
+    }
+    var anchor = blockEl;
+    while (anchor.nextElementSibling
+           && anchor.nextElementSibling.classList.contains("pm-note")) {
+      anchor = anchor.nextElementSibling;
+    }
+    noteComposerOpen({
+      anchor: anchor,
+      seed: seed,
+      onSubmit: function (body) {
+        post({ type: "noteAdd", afterLine: blockEnd, body: body });
+      }
+    });
+  }
+
   // Hover affordance on blocks of a local document: the margin-rail
   // bubble opens the note composer under the block. A text selection
   // inside the block is quoted into the seed — how a note points at a
-  // sentence instead of a paragraph.
-  function attachNoteAffordance(layer, el, blockStart, blockEnd) {
+  // sentence instead of a paragraph. Container blocks pass their units
+  // here instead (el !== blockEl): the bubble then belongs to the item
+  // or row under the pointer.
+  function attachNoteAffordance(layer, el, blockEl, blockEnd) {
     el.classList.add("pm-commentable");
     var tools = document.createElement("div");
     tools.className = "pm-result-tools";
@@ -2806,6 +3104,7 @@
     function hideNow() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       tools.style.display = "none";
+      el.classList.remove("pm-hover-target");
     }
     function position() {
       var cRect = content.getBoundingClientRect();
@@ -2822,12 +3121,16 @@
       // fast flick can real-enter a block between probe ticks, and a
       // stale claim would steal its bubble back on the next dead row.
       virtualHover = el;
+      el.classList.add("pm-hover-target");
       tools.style.display = "flex";
       position();
     }
     function hide() {
       if (hideTimer) { clearTimeout(hideTimer); }
-      hideTimer = setTimeout(function () { tools.style.display = "none"; }, 120);
+      hideTimer = setTimeout(function () {
+        tools.style.display = "none";
+        el.classList.remove("pm-hover-target");
+      }, 120);
     }
     el.addEventListener("mouseenter", show);
     el.addEventListener("mouseleave", hide);
@@ -2841,7 +3144,8 @@
     bubble.setAttribute("aria-label", bubble.title);
     bubble.addEventListener("click", function (event) {
       event.stopPropagation();
-      openNoteComposerAt(el, blockEnd);
+      if (el === blockEl) { openNoteComposerAt(el, blockEnd); }
+      else { openUnitNoteComposer(el, blockEl, blockEnd); }
     });
     tools.append(bubble);
     layer.append(tools);
@@ -2880,7 +3184,19 @@
       var m = /^(\d+)-(\d+)$/.exec(
         (el.getAttribute && el.getAttribute("data-pm-lines")) || "");
       if (!m) { continue; }
-      attachNoteAffordance(layer, el, +m[1], +m[2]);
+      var subs = el.querySelectorAll("[data-pm-sublines]");
+      if (subs.length) {
+        // Container blocks delegate to their units: the item or row
+        // under the pointer is the target, never the whole list or
+        // table (spec: nested-comment-targets).
+        var blockEl = el;
+        var blockEnd = +m[2];
+        subs.forEach(function (unit) {
+          attachNoteAffordance(layer, unit, blockEl, blockEnd);
+        });
+      } else {
+        attachNoteAffordance(layer, el, el, +m[2]);
+      }
     }
   }
 
@@ -2935,10 +3251,11 @@
     clone.querySelectorAll(".pm-annotation, .pm-threads").forEach(function (el) {
       el.remove();
     });
-    clone.querySelectorAll(".pm-commented, .pm-pending-anchor, .pm-anchor-open, .pm-commentable")
+    clone.querySelectorAll(".pm-commented, .pm-pending-anchor, .pm-anchor-open, "
+        + ".pm-commentable, .pm-hover-target, .pm-delegates")
       .forEach(function (el) {
         el.classList.remove("pm-commented", "pm-pending-anchor", "pm-anchor-open",
-                            "pm-commentable");
+                            "pm-commentable", "pm-hover-target", "pm-delegates");
       });
     clone.classList.remove("pm-markers-on", "pm-commenting-on", "pm-exporting");
     return clone.outerHTML;
@@ -2981,13 +3298,101 @@
       if (seg.kind === "added" || seg.kind === "removed") { markEmptyBlock(div); }
       wrap.append(div);
       if (seg.kind === "moved") { wrap.append(movedChip(seg)); }
+      // Sub-unit targets exist only where the rendered structure IS the
+      // new side's source (spec: nested-comment-targets): added and
+      // unchanged segments. Modified merges old and new lines; removed
+      // is the old side.
+      if ((seg.kind === "added" || seg.kind === "unchanged") && !seg.fmText) {
+        stampSegmentSubUnits(div, seg.text, seg.lineStart);
+      }
     }
     if (payload.commentable !== false) {
-      wrap.append(commentButton(seg, target));
-      attachBlockHover(wrap);
+      var units = wrap.querySelectorAll("[data-pm-sublines]");
+      if (units.length) {
+        wrap.classList.add("pm-delegates");
+        units.forEach(function (unit) {
+          attachUnitHover(wrap, unit, seg, target);
+        });
+      } else {
+        wrap.append(commentButton(seg, target));
+        attachBlockHover(wrap);
+      }
     }
     stampSegmentNumber(wrap, seg);
     return wrap;
+  }
+
+  // A diff segment renders exactly one Markdown block; when that block
+  // is a list or table its units get their own line stamps, offset to
+  // the segment's new-file coordinates. "footnotes" is marked-footnote's
+  // synthetic container token, emitted first on every lex — same skip
+  // annotateBlockLines does.
+  function stampSegmentSubUnits(container, text, startLine) {
+    var el = container.firstElementChild;
+    if (!el) { return; }
+    var tokens;
+    try { tokens = marked.lexer(text || ""); } catch (e) { return; }
+    for (var i = 0; i < tokens.length; i++) {
+      if (tokens[i].type === "space" || tokens[i].type === "footnotes") { continue; }
+      stampSubUnits(el, tokens[i], startLine);
+      return;
+    }
+  }
+
+  // The diff-view sibling of attachBlockHover, for one unit of a
+  // delegated block: same rail placement, latch, and probe claim, but
+  // the button aligns to the item or row and comments on its own lines.
+  function attachUnitHover(wrap, unit, seg, target) {
+    var r = subUnitRange(unit);
+    if (!r) { return; }
+    unit.classList.add("pm-commentable");
+    var btn = document.createElement("button");
+    btn.className = "pm-comment-btn";
+    btn.type = "button";
+    btn.innerHTML = COMMENT_ICON;
+    btn.title = "Comment on new line" + (r[1] === r[0] ? " " + r[0]
+      : "s " + r[0] + "–" + r[1]);
+    btn.setAttribute("aria-label", btn.title);
+    btn.style.display = "none";
+    btn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      composerForSegment(seg, target, false, r);
+    });
+    wrap.append(btn);
+    var hideTimer = null;
+    function hideNow() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      btn.style.display = "none";
+      unit.classList.remove("pm-hover-target");
+    }
+    function place() {
+      btn.style.display = "flex";
+      var wr = wrap.getBoundingClientRect();
+      var art = content.getBoundingClientRect();
+      var bw = btn.getBoundingClientRect().width || 28;
+      btn.style.left = Math.round(art.right - art.left - bw - 6 - (wr.left - art.left)) + "px";
+      btn.style.right = "auto";
+      btn.style.top = Math.round(unit.getBoundingClientRect().top - wr.top) + "px";
+    }
+    function show() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      if (activeBlockBubble && activeBlockBubble !== hideNow) { activeBlockBubble(); }
+      activeBlockBubble = hideNow;
+      virtualHover = unit;
+      unit.classList.add("pm-hover-target");
+      place();
+    }
+    function hide() {
+      if (hideTimer) { clearTimeout(hideTimer); }
+      hideTimer = setTimeout(function () {
+        btn.style.display = "none";
+        unit.classList.remove("pm-hover-target");
+      }, 120);
+    }
+    unit.addEventListener("mouseenter", show);
+    unit.addEventListener("mouseleave", hide);
+    btn.addEventListener("mouseenter", show);
+    btn.addEventListener("mouseleave", hide);
   }
 
   // Line-number annotations for a diff block, resolved here where the
@@ -3024,6 +3429,7 @@
     function hideNow() {
       if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       btn.style.display = "none";
+      wrap.classList.remove("pm-hover-target");
     }
     function place() {
       btn.style.display = "flex";
@@ -3062,11 +3468,15 @@
       // fast flick can real-enter a block between probe ticks, and a
       // stale claim would steal its bubble back on the next dead row.
       virtualHover = wrap;
+      wrap.classList.add("pm-hover-target");
       place();
     }
     function hide() {
       if (hideTimer) { clearTimeout(hideTimer); }
-      hideTimer = setTimeout(function () { btn.style.display = "none"; }, 120);
+      hideTimer = setTimeout(function () {
+        btn.style.display = "none";
+        wrap.classList.remove("pm-hover-target");
+      }, 120);
     }
     wrap.addEventListener("mouseenter", show);
     wrap.addEventListener("mouseleave", hide);
@@ -3147,6 +3557,11 @@
       var probe = document.elementFromPoint(candidates[ci], pointerAt.y);
       target = probe && probe.closest
         ? probe.closest(".pm-block, .pm-commentable") : null;
+      // A container that delegated to its units (a diff block whose
+      // list comments per item) has no bubble of its own: claiming it
+      // would kill the item bubble on every between-items row. Treat
+      // it as a dead row so the sticky claim below keeps the item.
+      if (target && target.classList.contains("pm-delegates")) { target = null; }
     }
     // Dead rows — the margin gap between blocks, the rows beside a
     // note/thread card, the stretch beside a narrow block — probe to

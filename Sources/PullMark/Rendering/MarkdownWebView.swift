@@ -48,7 +48,7 @@ struct MarkdownWebView: NSViewRepresentable {
     var onEditingState: ((Bool) -> Void)?
     /// Margin note composed under a block: (1-based line to insert after —
     /// 0 = top of file — and the note's Markdown body).
-    var onNoteAdd: ((Int, String) -> Void)?
+    var onNoteAdd: ((Int, String, String?) -> Void)?
     /// Margin note body rewritten from its bubble: (note ordinal, body).
     var onNoteEdit: ((Int, String) -> Void)?
     /// Margin note deleted from its bubble: note ordinal.
@@ -402,7 +402,7 @@ struct MarkdownWebView: NSViewRepresentable {
             case "noteAdd":
                 if let afterLine = dict["afterLine"] as? Int,
                    let body = dict["body"] as? String {
-                    parent.onNoteAdd?(afterLine, body)
+                    parent.onNoteAdd?(afterLine, body, dict["itemIndent"] as? String)
                 }
             case "noteEdit":
                 if let index = dict["index"] as? Int,

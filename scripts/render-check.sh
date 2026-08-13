@@ -81,8 +81,10 @@ check "link"                 '<a href="https://example.com">link</a>'
 check "autolink"             '<a href="https://example.com/auto">'
 check "ordered list"         "<ol[ >]"
 check "ordered list start"   '<ol start="5"'
-check "nested list"          "<li>Nested ordered"
+check "nested list"          "<li[^>]*>Nested ordered"
 check "unordered list"       "<ul[ >]"
+check "item sub-unit stamp"  '<li data-pm-sublines="[0-9]+-[0-9]+"'
+check "row sub-unit stamp"   '<tr data-pm-sublines="[0-9]+-[0-9]+"'
 check "task checkbox"        'type="checkbox"'
 check "blockquote"           "<blockquote[ >]"
 check "table"                "<table[ >]"
@@ -108,6 +110,48 @@ check "tilde strikethrough"  '<del>strikethrough still works</del>'
 check "toc list"             '<nav class="pm-toc"[^>]*><ul class="pm-toc-list">'
 check "toc links headings"   '<a href="#math">Math</a>'
 check "block line annotations" 'data-pm-lines="[0-9]+-[0-9]+"'
+
+# ---- Sub-unit stamps: exact line math on the documents that broke the
+# nested-list scan in review — two sibling nested lists whose first item
+# text repeats, and a fenced fake list ahead of the real nested one.
+# Line numbers here are fixed by this fixture; if you edit it, re-derive.
+NESTED_FIXTURE='- wrapper
+  - alpha
+  - beta
+
+  interlude
+
+  - beta
+  - gamma
+- fency
+  ```
+  - fake
+  ```
+  - real'
+emit_page "$(printf '%s' "$NESTED_FIXTURE" | jq -Rs .)" "$WORK/nested.html"
+NESTED_DOM="$WORK/nested-dom.html"
+"$CHROME" --headless --disable-gpu --virtual-time-budget=8000 \
+  --dump-dom "file://$WORK/nested.html" > "$NESTED_DOM" 2>/dev/null
+nested_check() {
+  local label="$1" pattern="$2"
+  if grep -qE "$pattern" "$NESTED_DOM"; then
+    echo "  ok: $label"
+  else
+    echo "FAIL: $label (pattern: $pattern)"
+    failures=$((failures + 1))
+  fi
+}
+nested_check "wrapper item spans its subtree"   'data-pm-sublines="1-8"'
+nested_check "first beta stamps line 3"         'data-pm-sublines="3-3"'
+nested_check "second beta stamps line 7"        'data-pm-sublines="7-7"'
+nested_check "gamma stamps line 8"              'data-pm-sublines="8-8"'
+nested_check "real nested item skips the fence" 'data-pm-sublines="13-13"'
+if grep -qE 'data-pm-sublines="(4-4|10-|11-|12-)' "$NESTED_DOM"; then
+  echo "FAIL: a sub-unit stamped a blank or fenced line"
+  failures=$((failures + 1))
+else
+  echo "  ok: no stamp on blank or fenced lines"
+fi
 
 # ---- Line numbers: gutter labels build only when the payload carries the
 # preference; the default page above must stay label-free.

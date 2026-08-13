@@ -340,6 +340,12 @@ body {
 .pm-note-composer {
   margin: 10px 0 14px;
 }
+/* In-item notes (spec: nested-comment-targets) render inside their list
+   item — tighter vertical rhythm than the between-blocks cards. */
+li > .pm-note,
+li > .pm-composer {
+  margin: 6px 0 8px;
+}
 @media (prefers-color-scheme: dark) {
   .pm-note {
     border-color: rgba(163, 113, 247, 0.4);
@@ -826,6 +832,26 @@ body {
     background: rgba(88, 166, 255, 0.15);
     box-shadow: 0 0 0 6px rgba(88, 166, 255, 0.15);
   }
+}
+
+/* Hover-target tint (spec: nested-comment-targets): while a rail bubble
+   is showing, its target is tinted. With items and rows as targets,
+   bubble position alone can't say "this item, not the whole list".
+   Neutral gray — accent blue means "has comments", yellow "pending". */
+.pm-hover-target {
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.055);
+  box-shadow: 0 0 0 6px rgba(128, 128, 128, 0.055);
+}
+@media (prefers-color-scheme: dark) {
+  .pm-hover-target {
+    background: rgba(160, 160, 160, 0.08);
+    box-shadow: 0 0 0 6px rgba(160, 160, 160, 0.08);
+  }
+}
+:root.pm-exporting .pm-hover-target {
+  background: none !important;
+  box-shadow: none !important;
 }
 
 .pm-result-card {
