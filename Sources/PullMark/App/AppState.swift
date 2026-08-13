@@ -346,9 +346,26 @@ final class AppState: ObservableObject {
         if case .local(let file) = preview { return file }
         return nil
     }
+    /// A review thread to reveal once its file's rendered-diff page
+    /// loads — set by the overview's View in File jump (spec:
+    /// pr-review-discussion), consumed by PRFileView.
+    struct ThreadReveal: Equatable {
+        let sessionID: String
+        let path: String
+        let rootID: Int
+    }
+    @Published var pendingThreadReveal: ThreadReveal?
+
     @Published var selection: SidebarSelection? {
         didSet {
             guard selection != oldValue else { return }
+            // A pending View-in-File reveal is only valid on the way to
+            // its file; navigating anywhere else retires it — a stale
+            // reveal would scroll-jump an unrelated visit minutes later.
+            if let reveal = pendingThreadReveal,
+               selection != .prFile(reveal.sessionID, reveal.path) {
+                pendingThreadReveal = nil
+            }
             let current = selection
             // Deferred: the binding writes during event handling, and this
             // may publish localFiles/previewFile changes in response.
@@ -1824,6 +1841,43 @@ final class AppState: ObservableObject {
             prSessions[current].reviewComments = comments
             prSessions[current].threadMeta = meta
         }
+    }
+
+    /// Folds a just-posted reply into the loaded model without a refetch:
+    /// GitHub's comment-list endpoint can lag a fresh write, so an
+    /// immediate refetch may come back WITHOUT the comment the user just
+    /// watched post — the created comment GitHub returned is the truth.
+    func applyPostedReply(sessionID: String, comment: ReviewComment) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }),
+              !prSessions[index].reviewComments.contains(where: { $0.id == comment.id })
+        else { return }
+        prSessions[index].reviewComments.append(comment)
+    }
+
+    /// Folds a confirmed edit into the loaded model — same lag rationale
+    /// as applyPostedReply. (The "edited" byline arrives with the next
+    /// meta refresh; the text itself must not wait or revert.)
+    func applyCommentEdit(sessionID: String, commentID: Int, body: String) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }),
+              let comment = prSessions[index].reviewComments.firstIndex(where: { $0.id == commentID })
+        else { return }
+        prSessions[index].reviewComments[comment].body = body
+    }
+
+    /// Removes a deleted comment locally — a lagging refetch would
+    /// resurrect it. Thread grouping's deleted-root fallback keeps any
+    /// surviving replies together.
+    func applyCommentDelete(sessionID: String, commentID: Int) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        prSessions[index].reviewComments.removeAll { $0.id == commentID }
+    }
+
+    /// Folds a confirmed resolve/unresolve into the loaded model — the
+    /// GraphQL mutation succeeded; the meta flag is the only state that
+    /// changed.
+    func applyThreadResolved(sessionID: String, rootID: Int, resolved: Bool) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        prSessions[index].threadMeta[rootID]?.isResolved = resolved
     }
 
     /// Folds a confirmed reaction write into the loaded model without a

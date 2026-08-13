@@ -283,6 +283,201 @@ body {
   display: none;
 }
 
+/* ---- Review discussion (PR overview, spec: pr-review-discussion) ----
+   The thread-card family, grouped by file, each card carrying a small
+   diff excerpt whose last line is the commented line. */
+.pm-discussion {
+  margin-top: 40px;
+  border-top: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.3));
+  padding-top: 16px;
+}
+/* A step below the PR title's optical weight — a subordinate section
+   must not dominate its page, and the native title above is only 17pt,
+   so this is pinned in px (an em would track the theme's reading
+   scale right past it). Strong selector: the reading themes style
+   .markdown-body h2 at equal specificity later in the cascade. */
+.markdown-body .pm-discussion-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0 0 4px;
+}
+.pm-discussion-count {
+  font: 400 13px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+}
+.pm-discussion-file {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 20px 0 8px;
+}
+.pm-discussion-path {
+  font: 600 12px ui-monospace, SFMono-Regular, monospace;
+  color: var(--fgColor-default, #1f2328);
+}
+.pm-discussion-file-count {
+  font: 400 11px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+}
+.pm-discussion-action {
+  margin-left: auto;
+  font: 500 12px -apple-system, sans-serif;
+  color: var(--fgColor-accent, #0969da);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+}
+/* Discussion card headers: one stable layout whether or not a routing
+   action exists — label, then Reply/Resolve beside it, routing action
+   (if any) trailing. The default header's space-between would swing
+   Reply/Resolve to the trailing edge on cards with no action. All on
+   one text baseline. */
+.pm-discussion .pm-thread-header {
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 2px;
+}
+.pm-discussion .pm-thread-resolved > .pm-thread-header .pm-thread-actions {
+  margin-left: 0;
+}
+.pm-discussion-action:hover {
+  text-decoration: underline;
+}
+/* Room for the action even when the header already right-aligns its
+   own actions cluster. */
+.pm-thread-header .pm-discussion-action {
+  flex: none;
+}
+/* The excerpt is a full-bleed band between the card's header and its
+   comments — bleeding to the card edges kills the box-in-a-box look a
+   bordered block would have inside a bordered card. */
+.pm-discussion-hunk {
+  margin: 8px -14px;
+  padding: 3px 0;
+  border-top: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.22));
+  border-bottom: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.22));
+  overflow-x: auto;
+  font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.04));
+}
+.pm-hunk-line {
+  display: flex;
+  padding: 0 14px 0 0;
+  white-space: pre;
+}
+.pm-hunk-marker {
+  width: 26px;
+  flex: none;
+  text-align: center;
+  font: inherit;
+  color: var(--fgColor-muted, #6e7781);
+  user-select: none;
+}
+/* Out-specify the hljs theme's `pre code.hljs` block padding — each
+   excerpt line is its own code element and must sit flush. */
+.pm-discussion-hunk .pm-hunk-line code {
+  display: inline;
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  overflow-x: visible;
+}
+/* Markdown threads default to a rich preview of the commented passage
+   (rendered, not raw diff) — PullMark's whole point. */
+.pm-discussion-preview {
+  margin: 8px -14px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.22));
+  border-bottom: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.22));
+  background: var(--bgColor-muted, rgba(128, 128, 128, 0.04));
+  font-size: 14px;
+}
+.pm-discussion-preview > *:first-child { margin-top: 0; }
+.pm-discussion-preview > *:last-child { margin-bottom: 0; }
+/* Change highlighting inside the rich preview: the main rendered-diff
+   view's band treatment (green added / red removed, inset edge) at
+   run granularity within the passage. */
+.pm-preview-add,
+.pm-preview-del,
+.pm-preview-ctx {
+  padding: 2px 10px;
+  margin: 2px -10px;
+  border-radius: 3px;
+}
+.pm-preview-add {
+  background: rgba(46, 160, 67, 0.12);
+  box-shadow: inset 3px 0 0 #2ea043;
+}
+.pm-preview-del {
+  background: rgba(248, 81, 73, 0.10);
+  box-shadow: inset 3px 0 0 #f85149;
+  opacity: 0.75;
+}
+.pm-preview-add > *:first-child,
+.pm-preview-del > *:first-child,
+.pm-preview-ctx > *:first-child { margin-top: 0; }
+.pm-preview-add > *:last-child,
+.pm-preview-del > *:last-child,
+.pm-preview-ctx > *:last-child { margin-bottom: 0; }
+/* Table passages join into one table; changed rows tint in place. A
+   synthesized header (tail lost the real one) stays hidden. */
+.pm-preview-headless thead { display: none; }
+.pm-discussion-preview .pm-preview-row-add td {
+  background: rgba(46, 160, 67, 0.12);
+}
+.pm-discussion-preview .pm-preview-row-add td:first-child {
+  box-shadow: inset 3px 0 0 #2ea043;
+}
+.pm-discussion-preview .pm-preview-row-del td {
+  background: rgba(248, 81, 73, 0.10);
+}
+.pm-discussion-preview .pm-preview-row-del td:first-child {
+  box-shadow: inset 3px 0 0 #f85149;
+}
+/* Quoted passage headings must read as quoted content, never as page
+   structure: clamp them to body scale. Double-class selectors so the
+   reading themes' .markdown-body h2 rules can't out-cascade this. */
+.markdown-body .pm-discussion-preview h1,
+.markdown-body .pm-discussion-preview h2,
+.markdown-body .pm-discussion-preview h3,
+.markdown-body .pm-discussion-preview h4,
+.markdown-body .pm-discussion-preview h5,
+.markdown-body .pm-discussion-preview h6 {
+  font-size: 1.02em;
+  font-weight: 600;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0 0 4px;
+}
+.pm-hunk-add {
+  background: rgba(46, 160, 67, 0.14);
+}
+.pm-hunk-del {
+  background: rgba(248, 81, 73, 0.13);
+}
+/* Collapsed resolved cards show only their one-line summary — the
+   preview band and the routing action fold away with the rest. */
+.pm-thread-collapsed > .pm-discussion-hunk,
+.pm-thread-collapsed > .pm-discussion-preview,
+.pm-thread-collapsed > .pm-thread-header .pm-discussion-action {
+  display: none;
+}
+/* The View in File landing flash: ring on instantly, hold, then fade —
+   the transition lives on the BASE class so removing the flash class
+   animates the shadow away instead of snapping. */
+.pm-thread {
+  transition: box-shadow 0.9s ease 0.9s;
+}
+.pm-thread-flash {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fgColor-accent, #0969da) 45%, transparent);
+  transition: none;
+}
+
 /* ---- Margin notes (beta) ----
    The thread-card family, tinted its own way: notes live in the file,
    not on GitHub, and the violet edge keeps the two unconfusable. */
@@ -563,6 +758,15 @@ li > .pm-composer {
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s;
+}
+/* A chip-less bar must not reserve an empty row under the comment (the
+   hover-revealed smiley kept layout space and read as mystery padding):
+   dock it top-right on the byline, beside the ⋯ menu. */
+.pm-reactions:not(:has(.pm-reaction-chip)) {
+  position: absolute;
+  top: 3px;
+  right: 22px;
+  margin-top: 0;
 }
 .pm-thread-comment:hover .pm-react-add,
 .pm-react-add:focus-visible,

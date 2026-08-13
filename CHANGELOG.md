@@ -4,6 +4,26 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **New experimental feature: Review discussion on the PR overview.**
+  See every review conversation on a pull request — including comments
+  on code and other files PullMark doesn't render — grouped by file
+  under the PR description, so a mostly-Markdown PR with some code
+  changes reviews without bouncing to the browser. Each conversation
+  shows exactly what it's about: Markdown passages as a rich rendered
+  preview, code as a syntax-highlighted excerpt of the commented lines.
+  Markdown conversations jump to their spot in the file with **View in
+  File**; others open in context on GitHub. Replies, reactions, and
+  resolving work right from the list, resolved conversations arrive
+  collapsed, and outdated ones say so. Off by default:
+  [Settings → Experimental](pullmark://settings/experimental/pr-discussion)
+  → *Show review discussion on the PR overview* (beta).
+- pullmark.app gained a [privacy policy](https://pullmark.app/privacy/)
+  saying out loud what was always true: everything runs on your Mac,
+  the only network traffic is yours to GitHub, and nothing is
+  collected — no telemetry, no analytics, no accounts.
+
 ## 0.30.0 - 2026-08-13
 
 - **Comments and margin notes now land on the item you point at, not

@@ -300,10 +300,15 @@ final class GitHubClient {
     }
 
     /// Replies within an existing review thread.
-    func replyToReviewComment(_ ref: PullRequestRef, rootID: Int, body: String) async throws {
+    /// Returns the created comment: callers fold it into the loaded
+    /// model directly — the list endpoint can lag a fresh write, so an
+    /// immediate refetch may not contain the reply just posted.
+    @discardableResult
+    func replyToReviewComment(_ ref: PullRequestRef, rootID: Int, body: String) async throws -> ReviewComment {
         let payload = try JSONSerialization.data(withJSONObject: ["body": body, "in_reply_to": rootID])
-        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
-                              jsonBody: payload)
+        let data = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/comments",
+                                     jsonBody: payload)
+        return try Self.decoder.decode(ReviewComment.self, from: data)
     }
 
     /// Per-line blame ranges for a repo file at a commit (GraphQL; requires auth).

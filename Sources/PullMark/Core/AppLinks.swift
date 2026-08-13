@@ -18,6 +18,7 @@ enum AppLinks {
         "settings/keyboard",
         "settings/experimental",
         "settings/experimental/margin-notes",
+        "settings/experimental/pr-discussion",
         // General
         "settings/general/restore-session",
         "settings/general/show-hidden-files",

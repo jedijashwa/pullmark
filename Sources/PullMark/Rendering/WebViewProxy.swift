@@ -184,6 +184,15 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// Scrolls the loaded page to a review thread's card, expanding and
+    /// flashing it — the overview's View in File jump (spec:
+    /// pr-review-discussion).
+    func revealThread(rootID: Int) {
+        webView?.evaluateJavaScript(
+            "window.__pmRevealThread && __pmRevealThread(\(rootID));",
+            completionHandler: nil)
+    }
+
     func setRemoteLinkPolicy(_ policy: String) {
         // Rawvalue strings only ("ask"/"pullmark"/"browser") — safe to inline.
         webView?.evaluateJavaScript(

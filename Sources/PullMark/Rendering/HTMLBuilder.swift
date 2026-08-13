@@ -89,6 +89,10 @@ enum HTMLBuilder {
         /// Local documents: bubbles offer Edit/Delete and blocks grow the
         /// add-note affordance. Absent for read-only (remote) renders.
         var noteAuthoring: Bool?
+        /// PR overview: the review discussion list — every thread on the
+        /// PR grouped by file, rendered after the description (spec:
+        /// pr-review-discussion).
+        var discussion: [ReviewDiscussion.FileGroup]?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -141,7 +145,8 @@ enum HTMLBuilder {
                              reviewPending: Bool = false,
                              lineNumberEligible: Bool = true,
                              marginNotes: [MarginNotePayload]? = nil,
-                             noteAuthoring: Bool = false) -> String {
+                             noteAuthoring: Bool = false,
+                             discussion: [ReviewDiscussion.FileGroup]? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -157,7 +162,8 @@ enum HTMLBuilder {
                                     commentableLines: commentableLines,
                                     reviewPending: reviewPending ? true : nil,
                                     marginNotes: marginNotes?.isEmpty == false ? marginNotes : nil,
-                                    noteAuthoring: noteAuthoring ? true : nil),
+                                    noteAuthoring: noteAuthoring ? true : nil,
+                                    discussion: discussion?.isEmpty == false ? discussion : nil),
              title: title, customCSS: customCSS)
     }
 

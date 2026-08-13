@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — PullMark</title>
+<meta name="description" content="PullMark's privacy policy: everything runs on your Mac, the only network traffic is between you and GitHub with your own credentials, and nothing is collected — no telemetry, no analytics, no accounts.">
+<link rel="icon" href="../img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="../docs/docs.css">
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../"><img src="../img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="../docs/">Docs</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <article>
+      <p class="kicker">privacy</p>
+      <h1>Privacy</h1>
+      <p class="article-lede">The short version: PullMark runs on your
+      Mac, talks only to GitHub, and collects nothing. There is no
+      telemetry, no analytics, no account, and no server of ours in the
+      middle.</p>
+
+      <h2 id="app">The app</h2>
+      <ul>
+        <li><strong>No collection, period.</strong> PullMark contains no
+        telemetry, analytics, crash reporting, or usage tracking of any
+        kind. We can't see what you read, review, or write — by
+        design, there is nothing on our side to see it with.</li>
+        <li><strong>GitHub traffic goes straight to GitHub.</strong>
+        When you open a pull request or browse a repo, PullMark calls
+        <code>github.com</code> and <code>api.github.com</code>
+        directly from your Mac. Those requests are governed by
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement">GitHub's
+        privacy statement</a>; nothing passes through any other
+        server.</li>
+        <li><strong>Your credentials stay yours.</strong> PullMark
+        signs requests with the GitHub token it gets from your own
+        tooling — the GitHub CLI (<code>gh auth token</code>) or your
+        configured git credential helper. It never stores a copy,
+        never writes it anywhere, and never sends it to anything but
+        GitHub.</li>
+        <li><strong>Nothing fetched is kept.</strong> API responses
+        live in memory only (ephemeral sessions, no disk cache), and
+        remote content such as avatars and images renders in a
+        non-persistent web view that is discarded when you close the
+        document.</li>
+        <li><strong>Update checks.</strong> The app periodically asks
+        GitHub's releases API whether a newer version exists — a plain
+        HTTPS request with no identifiers beyond what any web request
+        carries. You can trigger or observe this under
+        Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;Updates.</li>
+        <li><strong>Your writing is yours.</strong> Review comments and
+        reviews go to GitHub only when you explicitly submit them.
+        Margin notes are saved into your own Markdown files. Drafts,
+        settings, and reading positions are stored locally on your Mac
+        and never leave it.</li>
+      </ul>
+
+      <h2 id="site">This website</h2>
+      <ul>
+        <li>pullmark.app is a static site with <strong>no analytics, no
+        tracking scripts, and no cookies</strong>.</li>
+        <li>It's served by Cloudflare Pages, which — like any host —
+        may keep standard, short-lived server logs of requests
+        (<a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's
+        privacy policy</a>).</li>
+      </ul>
+
+      <h2 id="changes">Changes and contact</h2>
+      <p>If PullMark's behavior ever changes in a way that matters
+      here, this page and the release notes will say so plainly.
+      Questions or concerns:
+      <a href="https://github.com/jedijashwa/pullmark/issues">open an
+      issue</a>.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="/privacy/">Privacy</a>
+    <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
+    <span class="note">PullMark is not affiliated with GitHub.</span>
+  </div>
+</footer>
+
+</body>
+</html>

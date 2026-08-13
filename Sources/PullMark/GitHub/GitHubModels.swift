@@ -101,7 +101,9 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     }
     let id: Int
     let path: String
-    let body: String
+    /// Mutable so a confirmed edit folds into the loaded model without
+    /// a refetch (same pattern as reactions).
+    var body: String
     let line: Int?
     let side: String?
     let startLine: Int?
@@ -113,6 +115,10 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     let user: User?
     let createdAt: String?
     let htmlUrl: URL?
+    /// The original-diff hunk from its header down to exactly the
+    /// commented line (REST shape) — the discussion list's excerpt
+    /// source. Reflects the diff as of when the comment was made.
+    var diffHunk: String? = nil
     /// Reaction counts (REST rollup). Mutable so a confirmed reaction
     /// toggle folds into the loaded model without a refetch.
     var reactions: ReactionRollup? = nil

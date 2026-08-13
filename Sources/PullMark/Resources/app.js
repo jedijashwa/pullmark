@@ -462,6 +462,9 @@
     });
     root.querySelectorAll("pre code").forEach(function (el) {
       if (el.classList.contains("language-suggestion")) { return; }
+      // Discussion hunk excerpts highlight per line at build time;
+      // auto-detection here would colorize the plain (no-language) ones.
+      if (el.closest(".pm-discussion-hunk")) { return; }
       try { hljs.highlightElement(el); } catch (e) { /* unknown language */ }
     });
   }
@@ -1652,6 +1655,9 @@
     threads.forEach(function (thread) {
       var box = document.createElement("div");
       box.className = "pm-thread";
+      // The root id names the card for __pmRevealThread (the overview's
+      // View in File jump) wherever cards render.
+      if (thread.rootID) { box.setAttribute("data-pm-root", thread.rootID); }
       var header = document.createElement("div");
       header.className = "pm-thread-header";
       if (thread.resolved === true) {
@@ -3230,6 +3236,227 @@
     if (target) { openNoteComposerAt(target, targetEnd); }
   };
 
+  // ---- Review discussion (PR overview, spec: pr-review-discussion) ----
+  // Every review thread on the PR, grouped by file — including files
+  // PullMark doesn't render. Cards are the standard thread cards
+  // (reply, reactions, resolve, collapsed-resolved) plus a clamped
+  // hunk-tail excerpt whose last line is the commented line, and one
+  // routing action: Markdown files jump in-app, others open the root
+  // comment's #discussion_r permalink on GitHub (the one link that
+  // still lands when a thread is outdated).
+
+  // Markdown threads default to a rich preview: the commented passage
+  // rendered as Markdown — showing it as it reads, which is the app's
+  // whole point. Change highlighting matches the main rendered-diff
+  // view's band treatment: contiguous added lines render as a
+  // green-banded fragment, deleted lines as a red-banded one, context
+  // plain. Code files keep the raw hunk tail.
+  function discussionPreviewEl(item) {
+    var runs = [];
+    (item.excerpt || []).forEach(function (line) {
+      var last = runs[runs.length - 1];
+      if (last && last.kind === line.kind) { last.lines.push(line.text); }
+      else { runs.push({ kind: line.kind, lines: [line.text] }); }
+    });
+    var div = document.createElement("div");
+    div.className = "pm-discussion-preview";
+    var any = false;
+    runs.forEach(function (run) {
+      var src = run.lines.join("\n");
+      if (!src.trim()) { return; }
+      var part = document.createElement("div");
+      part.className = "pm-preview-" + run.kind;
+      part.innerHTML = render(src);
+      div.append(part);
+      any = true;
+    });
+    return any ? div : null;
+  }
+
+  // A passage that is entirely table rows joins into ONE rendered
+  // table — separate per-run renders would orphan an added row into a
+  // pipe-text fragment. Rows tint by kind like the main view's bands;
+  // a tail that lost its header up the clamp renders under a hidden
+  // synthesized one. Null when the passage isn't all table rows.
+  function discussionTablePreviewEl(item) {
+    var lines = (item.excerpt || []).filter(function (line) {
+      return line.text.trim() !== "";
+    });
+    if (lines.length < 2) { return null; }
+    var allTable = lines.every(function (line) {
+      return line.text.trim().charAt(0) === "|";
+    });
+    if (!allTable) { return null; }
+    var delim = /^\|?[\s:|-]+\|?$/;
+    var hasHeader = delim.test(lines[1].text.trim())
+      && !delim.test(lines[0].text.trim());
+    var src = [];
+    var body;
+    if (hasHeader) {
+      src.push(lines[0].text, lines[1].text);
+      body = lines.slice(2);
+    } else {
+      var cols = Math.max(1, (lines[0].text.match(/\|/g) || []).length - 1);
+      src.push("|" + Array(cols + 1).join("   |"),
+               "|" + Array(cols + 1).join(" - |"));
+      body = lines.filter(function (line) { return !delim.test(line.text.trim()); });
+    }
+    body.forEach(function (line) { src.push(line.text); });
+    var host = document.createElement("div");
+    host.innerHTML = render(src.join("\n"));
+    var table = host.querySelector("table");
+    if (!table) { return null; }
+    var rows = table.querySelectorAll("tbody tr");
+    for (var i = 0; i < rows.length && i < body.length; i++) {
+      if (body[i].kind === "add") { rows[i].classList.add("pm-preview-row-add"); }
+      else if (body[i].kind === "del") { rows[i].classList.add("pm-preview-row-del"); }
+    }
+    var div = document.createElement("div");
+    div.className = "pm-discussion-preview"
+      + (hasHeader ? "" : " pm-preview-headless");
+    while (host.firstChild) { div.append(host.firstChild); }
+    return div;
+  }
+
+  function discussionExcerptEl(item) {
+    if (!(item.excerpt || []).length) { return null; }
+    var pre = document.createElement("pre");
+    pre.className = "pm-discussion-hunk";
+    item.excerpt.forEach(function (line) {
+      var row = document.createElement("div");
+      row.className = "pm-hunk-line pm-hunk-" + line.kind;
+      var marker = document.createElement("span");
+      marker.className = "pm-hunk-marker";
+      marker.textContent = line.kind === "add" ? "+"
+        : line.kind === "del" ? "-" : " ";
+      var code = document.createElement("code");
+      if (item.language) { code.className = "language-" + item.language; }
+      code.textContent = line.text;
+      if (item.language && window.hljs) {
+        try { hljs.highlightElement(code); } catch (e) { /* plain is fine */ }
+      }
+      row.append(marker, code);
+      pre.append(row);
+    });
+    return pre;
+  }
+
+  function discussionActionEl(group, item) {
+    // No permalink (demo data, deleted comments) → no dead button.
+    if (!group.isMarkdown && !item.htmlUrl) { return null; }
+    var action = document.createElement("button");
+    action.type = "button";
+    action.className = "pm-discussion-action";
+    if (group.isMarkdown) {
+      action.textContent = "View in File";
+      action.title = "Open " + group.path + " and jump to this conversation";
+      action.addEventListener("click", function () {
+        post({ type: "openPRComment", path: group.path, rootID: item.rootID });
+      });
+    } else {
+      action.textContent = "Show on GitHub";
+      action.title = "Open this conversation on GitHub — PullMark doesn't "
+        + "render this file";
+      action.addEventListener("click", function () {
+        if (item.htmlUrl) { post({ type: "openExternal", url: item.htmlUrl }); }
+      });
+    }
+    return action;
+  }
+
+  function setupDiscussion(groups) {
+    var section = document.createElement("section");
+    section.className = "pm-discussion pm-annotation";
+    var unresolved = groups.reduce(function (sum, g) {
+      return sum + g.unresolvedCount;
+    }, 0);
+    var heading = document.createElement("h2");
+    heading.className = "pm-discussion-heading";
+    heading.textContent = "Review discussion";
+    var count = document.createElement("span");
+    count.className = "pm-discussion-count";
+    count.textContent = unresolved === 0
+      ? "all conversations resolved"
+      : unresolved + " unresolved conversation" + (unresolved === 1 ? "" : "s");
+    heading.append(count);
+    section.append(heading);
+
+    groups.forEach(function (group) {
+      var header = document.createElement("div");
+      header.className = "pm-discussion-file";
+      var path = document.createElement("span");
+      path.className = "pm-discussion-path";
+      path.textContent = group.path;
+      header.append(path);
+      if (group.unresolvedCount > 0) {
+        var badge = document.createElement("span");
+        badge.className = "pm-discussion-file-count";
+        badge.textContent = group.unresolvedCount + " unresolved";
+        header.append(badge);
+      }
+      section.append(header);
+
+      group.threads.forEach(function (item) {
+        // The standard card (reply, reactions, resolve, collapsed
+        // resolved) — then the excerpt slots in above the comments and
+        // the routing action joins the header row.
+        var wrap = threadsEl([item]);
+        var box = wrap.querySelector(".pm-thread");
+        if (box) {
+          var boxHeader = box.querySelector(".pm-thread-header");
+          var action = discussionActionEl(group, item);
+          if (boxHeader && action) { boxHeader.append(action); }
+          // Markdown gets the rich preview unless the raw form is more
+          // honest: a thread anchored ON a deleted line (the discussed
+          // text isn't in the new side), or a clamped tail that crosses
+          // a fence boundary (fence-interior text would masquerade as
+          // Markdown). Empty previews also fall back.
+          var excerpt = null;
+          if (group.isMarkdown) {
+            var last = (item.excerpt || [])[item.excerpt.length - 1];
+            var crossesFence = (item.excerpt || []).some(function (line) {
+              var bare = line.text.trim().slice(0, 3);
+              return bare === "```" || bare === "~~~";
+            });
+            if (!(last && last.kind === "del") && !crossesFence) {
+              excerpt = discussionTablePreviewEl(item) || discussionPreviewEl(item);
+            }
+          }
+          if (!excerpt) { excerpt = discussionExcerptEl(item); }
+          if (excerpt) {
+            if (boxHeader) { boxHeader.after(excerpt); }
+            else { box.prepend(excerpt); }
+          }
+        }
+        section.append(wrap);
+      });
+    });
+    // The same enhancement pass file views give thread cards: suggestion
+    // blocks get their container, fenced code in comment bodies gets
+    // highlighting, remote images resolve. The excerpt lines are exempt
+    // inside enhance() — auto-detection would colorize plain hunks.
+    rewriteRemoteResources(section);
+    enhance(section);
+    content.append(section);
+  }
+
+  // The overview's View in File jump lands here after the file's page
+  // loads: find the thread's card, expand it if resolved-collapsed,
+  // scroll it to center, and flash it. False when the card isn't on
+  // this page (Swift falls back to plain navigation).
+  window.__pmRevealThread = function (rootID) {
+    var box = content.querySelector('.pm-thread[data-pm-root="' + rootID + '"]');
+    if (!box) { return false; }
+    if (box.classList.contains("pm-thread-collapsed")) {
+      var summary = box.querySelector(".pm-thread-summary");
+      if (summary) { summary.click(); }
+    }
+    box.scrollIntoView({ block: "center" });
+    box.classList.add("pm-thread-flash");
+    setTimeout(function () { box.classList.remove("pm-thread-flash"); }, 1800);
+    return true;
+  };
+
   // ---- Resolved-conversation visibility (Result view, spec §1) ----
   // Hidden by default; the in-page "N resolved conversations" control and
   // the native View menu item mirror each other through this hook.
@@ -4498,6 +4725,10 @@
     if (linesAnnotated && payload.noteAuthoring && !payload.preview
         && !payload.editable) {
       setupNoteAffordances();
+    }
+    // PR overview: the review discussion list (spec: pr-review-discussion).
+    if ((payload.discussion || []).length) {
+      setupDiscussion(payload.discussion);
     }
   } else if (payload.mode === "diff") {
     var segments = payload.segments || [];

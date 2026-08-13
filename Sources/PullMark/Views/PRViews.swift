@@ -11,8 +11,34 @@ struct PROverviewView: View {
     @State private var reviewPopoverVisible = false
     @State private var postingComment = false
     @State private var findSeed: String?
+    @State private var deleteCommentID: Int?
+    @State private var pendingScrollFraction: Double?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
+    @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = false
+
+    /// Click-away drafts for discussion-list composers persist under a
+    /// pseudo-path no repo file can have (repo paths never start with
+    /// "/"); the keys themselves carry thread ids.
+    private static let draftPath = "//overview"
+
+    /// Shared thread-card round trips — the discussion list's cards are
+    /// the same cards the file views render, wired to the same GitHub
+    /// mutations (spec: pr-review-discussion).
+    private var threadActions: ThreadCardActions {
+        ThreadCardActions(state: state, sessionID: sessionID, proxy: proxy,
+                          draftPath: Self.draftPath,
+                          mutatePreservingScroll: mutatePreservingScroll)
+    }
+
+    /// Reader-in-place re-render: capture the scroll fraction before the
+    /// mutation publishes, restore once the fresh page loads.
+    private func mutatePreservingScroll(_ mutate: @escaping () -> Void) {
+        proxy.scrollFraction { fraction in
+            pendingScrollFraction = fraction
+            mutate()
+        }
+    }
 
     var body: some View {
         if let session = state.session(sessionID) {
@@ -44,12 +70,49 @@ struct PROverviewView: View {
                         customCSS: style.customCSS,
                         // A PR description isn't a file — a source-line
                         // coordinate in its margin would mean nothing.
-                        lineNumberEligible: false
+                        lineNumberEligible: false,
+                        discussion: discussionGroups(session)
                     ),
+                    onComposerDraft: { key, text in
+                        threadActions.saveComposerDraft(key: key, text: text)
+                    },
+                    onOpenPRComment: { path, rootID in
+                        state.pendingThreadReveal = .init(
+                            sessionID: sessionID, path: path, rootID: rootID)
+                        state.selection = .prFile(sessionID, path)
+                    },
                     onOpenGitHubLink: { link, url, inverted in
                         state.handleGitHubLink(link, url: url, inverted: inverted)
                     },
+                    onThreadReplySubmit: { rootID, body, draftKey in
+                        threadActions.sendThreadReply(rootID: rootID, body: body,
+                                                      draftKey: draftKey)
+                    },
+                    onThreadResolve: { rootID, resolved in
+                        threadActions.setThreadResolved(rootID: rootID, resolved: resolved)
+                    },
+                    onReactionToggle: { commentID, content, reacted in
+                        threadActions.handleReactionToggle(commentID: commentID,
+                                                           content: content,
+                                                           reacted: reacted)
+                    },
+                    onCommentEdit: { commentID, body, draftKey in
+                        threadActions.handleCommentEdit(commentID: commentID, body: body,
+                                                        draftKey: draftKey)
+                    },
+                    onCommentDelete: { deleteCommentID = $0 },
                     onPageLoaded: {
+                        // A model mutation re-rendered the page under the
+                        // reader — put them back where they were.
+                        if let fraction = pendingScrollFraction {
+                            pendingScrollFraction = nil
+                            proxy.restoreScrollFraction(fraction)
+                        }
+                        // Persisted click-away drafts survive reloads and
+                        // relaunches, same as the file views.
+                        proxy.setComposerDrafts(ComposerDraftStore.load(
+                            ref: session.ref, headSHA: session.details.head.sha,
+                            path: Self.draftPath))
                         // Restore find highlights if the page re-renders
                         // beneath an active find (same as the file views).
                         if state.findBarVisible, let query = proxy.activeFindQuery {
@@ -91,6 +154,8 @@ struct PROverviewView: View {
             // control into the overflow menu (see ReviewPopoverPresenter).
             .modifier(ReviewPopoverPresenter(sessionID: sessionID,
                                              isPresented: $reviewPopoverVisible))
+            .modifier(DeleteCommentConfirmation(commentID: $deleteCommentID,
+                                                onConfirm: { threadActions.deleteComment($0) }))
         } else {
             EmptyView()
         }
@@ -121,7 +186,9 @@ struct PROverviewView: View {
             // Honesty about non-Markdown files: their threads have no
             // surface here, but they must not silently vanish (spec §2).
             // Unresolved only — the same rule as the sidebar badges.
-            if hiddenCommentCount(session) > 0 {
+            // With the review discussion list on, the list IS that
+            // surface and this line retires.
+            if !prDiscussionEnabled, hiddenCommentCount(session) > 0 {
                 let count = hiddenCommentCount(session)
                 Text("\(count) unresolved review comment\(count == 1 ? "" : "s") on files not shown in PullMark")
                     .font(.callout)
@@ -187,6 +254,25 @@ struct PROverviewView: View {
             comments: session.reviewComments,
             meta: session.threadMeta,
             visiblePaths: Set(session.markdownFiles.map(\.filename)))
+    }
+
+    /// The review discussion list (spec: pr-review-discussion) — nil
+    /// while the experimental toggle is off.
+    private func discussionGroups(_ session: PRSession) -> [ReviewDiscussion.FileGroup]? {
+        guard prDiscussionEnabled else { return nil }
+        // Threads written before a rename carry the old path; join them
+        // to the renamed file's group. Untrusted API data must not feed
+        // the trapping initializer — first claim wins on a duplicate.
+        let renames = Dictionary(session.files.compactMap { file in
+            file.previousFilename.map { ($0, file.filename) }
+        }, uniquingKeysWith: { first, _ in first })
+        return ReviewDiscussion.groups(
+            comments: session.reviewComments,
+            meta: session.threadMeta,
+            viewer: state.viewerLogin,
+            markdownPaths: Set(session.markdownFiles.map(\.filename)),
+            fileOrder: session.files.map(\.filename),
+            renames: renames)
     }
 }
 
@@ -358,7 +444,7 @@ struct PRFileView: View {
             fileCommentVisible: $fileCommentVisible,
             historyRequest: $historyRequest,
             deleteCommentID: $deleteCommentID,
-            onDeleteComment: { deleteComment($0) },
+            onDeleteComment: { threadActions.deleteComment($0) },
             sessionID: sessionID,
             path: path,
             history: { [weak state] in
@@ -392,19 +478,13 @@ struct PRFileView: View {
         ))
     }
 
-    private func setThreadResolved(rootID: Int, resolved: Bool) {
-        guard let session, let meta = session.threadMeta[rootID] else {
-            state.lastError = "Thread state unavailable — try refreshing the PR."
-            return
-        }
-        Task {
-            do {
-                try await state.client.setThreadResolved(nodeID: meta.nodeID, resolved: resolved)
-                await state.reloadComments(sessionID: sessionID)
-            } catch {
-                state.lastError = error.localizedDescription
-            }
-        }
+    /// Shared thread-card round trips (ThreadCardActions) — this view
+    /// contributes its mode-aware scroll preservation and drafts keyed
+    /// to its own path.
+    private var threadActions: ThreadCardActions {
+        ThreadCardActions(state: state, sessionID: sessionID, proxy: proxy,
+                          draftPath: path,
+                          mutatePreservingScroll: mutatePreservingScroll)
     }
 
     private var remoteContext: RemoteResourceContext? {
@@ -522,7 +602,9 @@ struct PRFileView: View {
             MarkdownWebView(
                 html: html,
                 onComposerSubmit: { handleComposerSubmit($0) },
-                onComposerDraft: { key, text in saveComposerDraft(key: key, text: text) },
+                onComposerDraft: { key, text in
+                    threadActions.saveComposerDraft(key: key, text: text)
+                },
                 remoteContext: remoteContext,
                 onOpenRemoteFile: { repoPath in
                     state.openRemoteDoc(sessionID: sessionID, path: repoPath)
@@ -533,17 +615,19 @@ struct PRFileView: View {
                 onOutline: { outline = $0 },
                 onActiveSection: { activeSection = $0.isEmpty ? nil : $0 },
                 onThreadReplySubmit: { rootID, body, draftKey in
-                    sendThreadReply(rootID: rootID, body: body, draftKey: draftKey)
+                    threadActions.sendThreadReply(rootID: rootID, body: body,
+                                                  draftKey: draftKey)
                 },
                 onThreadResolve: { rootID, resolved in
-                    setThreadResolved(rootID: rootID, resolved: resolved)
+                    threadActions.setThreadResolved(rootID: rootID, resolved: resolved)
                 },
                 onReactionToggle: { commentID, content, reacted in
-                    handleReactionToggle(commentID: commentID, content: content,
-                                         reacted: reacted)
+                    threadActions.handleReactionToggle(commentID: commentID,
+                                                       content: content, reacted: reacted)
                 },
                 onCommentEdit: { commentID, body, draftKey in
-                    handleCommentEdit(commentID: commentID, body: body, draftKey: draftKey)
+                    threadActions.handleCommentEdit(commentID: commentID, body: body,
+                                                    draftKey: draftKey)
                 },
                 onCommentDelete: { deleteCommentID = $0 },
                 onResolvedVisibility: { state.resolvedConversationsVisible = $0 },
@@ -578,6 +662,17 @@ struct PRFileView: View {
             }
         }
         .background(ThemePaper.color(for: themeRaw))
+        // The overview's View in File jump needs the mode that carries
+        // thread cards; the reveal itself runs in handlePageLoaded once
+        // the page (re)loads.
+        .onAppear { consumeRevealModeSwitch() }
+        .onChange(of: state.pendingThreadReveal) { _ in consumeRevealModeSwitch() }
+    }
+
+    private func consumeRevealModeSwitch() {
+        guard let reveal = state.pendingThreadReveal,
+              reveal.sessionID == sessionID, reveal.path == path else { return }
+        if mode != .renderedDiff { mode = .renderedDiff }
     }
 
     /// A submission from the in-page composer: "Start a review" / "Add
@@ -597,7 +692,8 @@ struct PRFileView: View {
         }
         guard let session else {
             // The page already cleared its composer — never drop the text.
-            restoreDraftAfterFailure(key: submission.draftKey, text: submission.body)
+            threadActions.restoreDraftAfterFailure(key: submission.draftKey,
+                                                   text: submission.body)
             state.lastError = "Could not post the comment — the PR session is "
                 + "no longer available. Your text was kept as a draft."
             return
@@ -615,7 +711,8 @@ struct PRFileView: View {
                 // where the comment actually landed.
                 await state.adoptPendingReview(sessionID: sessionID)
             } catch {
-                restoreDraftAfterFailure(key: submission.draftKey, text: submission.body)
+                threadActions.restoreDraftAfterFailure(key: submission.draftKey,
+                                                       text: submission.body)
                 state.lastError = "Could not post the comment: \(error.localizedDescription)"
             }
         }
@@ -638,122 +735,6 @@ struct PRFileView: View {
                 mutate()
             }
         }
-    }
-
-    /// A reaction toggle from the page (already flipped optimistically
-    /// there). Success folds the confirmed state into the model — the
-    /// re-rendered page then agrees with what the chip already shows;
-    /// failure reverts the chip and surfaces the error (the spec's
-    /// optimistic-toggle resolution).
-    private func handleReactionToggle(commentID: Int, content: String, reacted: Bool) {
-        guard let session, let kind = ReactionKind(rawValue: content) else { return }
-        guard let nodeID = CommentReactions.commentNodeID(of: commentID,
-                                                          in: session.threadMeta) else {
-            proxy.revertReaction(commentID: commentID, content: content, attempted: reacted)
-            state.lastError = "Reaction state unavailable — try refreshing the PR."
-            return
-        }
-        // Serialized per comment id: a rapid double-toggle's add/remove
-        // pair must reach GitHub in click order (see serializeReactionWrite).
-        state.serializeReactionWrite(commentID: commentID) {
-            do {
-                try await state.client.setReaction(subjectID: nodeID, content: kind,
-                                                   add: reacted)
-                mutatePreservingScroll {
-                    state.applyReaction(sessionID: sessionID, commentID: commentID,
-                                        content: content, reacted: reacted)
-                }
-            } catch {
-                proxy.revertReaction(commentID: commentID, content: content,
-                                     attempted: reacted)
-                state.lastError = "Could not update the reaction: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    /// Save from the in-card edit composer. Success reloads comments (the
-    /// re-render shows the new body and the "edited" byline); failure puts
-    /// the text back as the comment's edit draft so nothing typed is lost.
-    private func handleCommentEdit(commentID: Int, body: String, draftKey: String) {
-        guard let session else { return }
-        Task {
-            do {
-                try await state.client.updateReviewComment(session.ref,
-                                                           commentID: commentID, body: body)
-                mutatePreservingScroll {
-                    Task { await state.reloadComments(sessionID: sessionID) }
-                }
-            } catch {
-                restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not save the edit: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    /// Runs after the native confirmation. Thread grouping keeps any
-    /// surviving replies together (ReviewThreads.group's deleted-root
-    /// fallback), so the reloaded page never orphans them.
-    private func deleteComment(_ commentID: Int) {
-        guard let session else { return }
-        Task {
-            do {
-                try await state.client.deleteReviewComment(session.ref, commentID: commentID)
-                mutatePreservingScroll {
-                    Task { await state.reloadComments(sessionID: sessionID) }
-                }
-            } catch {
-                state.lastError = "Could not delete the comment: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    private func sendThreadReply(rootID: Int, body: String, draftKey: String) {
-        guard let session else {
-            // The page already cleared its composer — never drop the text.
-            restoreDraftAfterFailure(key: draftKey, text: body)
-            state.lastError = "Could not post the reply — the PR session is "
-                + "no longer available. Your text was kept as a draft."
-            return
-        }
-        Task {
-            do {
-                try await state.client.replyToReviewComment(session.ref, rootID: rootID,
-                                                            body: body)
-                // Same reader-in-place reload as reactions/edits/deletes —
-                // a posted reply must not jump the document to the top.
-                mutatePreservingScroll {
-                    Task { await state.reloadComments(sessionID: sessionID) }
-                }
-            } catch {
-                restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not post the reply: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    /// Click-away draft sync from the page; empty text discards.
-    private func saveComposerDraft(key: String, text: String) {
-        guard let session else {
-            // No session, no ref/head to key disk persistence to. The page
-            // still holds the text in its own draft map — say so instead
-            // of silently dropping the sync (empty text is a discard and
-            // needs no noise).
-            if !text.isEmpty {
-                state.lastError = "The PR session is no longer available — "
-                    + "the draft could not be saved to disk."
-            }
-            return
-        }
-        ComposerDraftStore.save(jsKey: key, text: text, ref: session.ref,
-                                headSHA: session.details.head.sha, path: path)
-    }
-
-    /// A post failed after the page already cleared its composer: put the
-    /// text back on disk AND into the live page so reopening restores it.
-    private func restoreDraftAfterFailure(key: String, text: String) {
-        guard !key.isEmpty else { return }
-        saveComposerDraft(key: key, text: text)
-        proxy.setComposerDrafts([key: text])
     }
 
     /// Fetches blame once per loaded head content; failures degrade to a
@@ -829,6 +810,17 @@ struct PRFileView: View {
                 proxy.restoreScrollFraction(restore.fraction)
             }
         }
+        // The overview's View in File jump: this page carries the thread
+        // cards (rendered diff), so land on the one asked for. A beat
+        // after load so the page's own layout settles first.
+        if let reveal = state.pendingThreadReveal,
+           reveal.sessionID == sessionID, reveal.path == path,
+           mode == .renderedDiff {
+            state.pendingThreadReveal = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                proxy.revealThread(rootID: reveal.rootID)
+            }
+        }
         // A fresh page starts with resolved conversations hidden; re-apply
         // the window's current choice.
         if state.resolvedConversationsVisible {
@@ -879,22 +871,8 @@ private struct PRFileSheets: ViewModifier {
             .sheet(item: $historyRequest) { _ in
                 BlameHistorySheet(load: history)
             }
-            // The page's Delete menu item lands here: destructive, so it
-            // confirms natively (same shape as Abandon review) before any
-            // API call — page JS never confirms with its own chrome.
-            .confirmationDialog("Delete this comment?",
-                                isPresented: Binding(
-                                    get: { deleteCommentID != nil },
-                                    set: { if !$0 { deleteCommentID = nil } })) {
-                Button("Delete comment", role: .destructive) {
-                    if let id = deleteCommentID {
-                        deleteCommentID = nil
-                        onDeleteComment(id)
-                    }
-                }
-            } message: {
-                Text("The comment will be removed from GitHub. Replies from others will stay.")
-            }
+            .modifier(DeleteCommentConfirmation(commentID: $deleteCommentID,
+                                                onConfirm: onDeleteComment))
     }
 }
 
