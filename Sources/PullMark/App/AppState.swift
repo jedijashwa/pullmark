@@ -1241,40 +1241,69 @@ final class AppState: ObservableObject {
 
     /// Rescans a root off the main thread and swaps the tree in. Also the
     /// manual Refresh Folder backstop and the watcher's coalesced target.
-    func rescanFolder(root: URL) {
-        Task.detached(priority: .userInitiated) { [weak self] in
+    /// One scan per root at a time: FSEvents bursts on a big repo used
+    /// to pile unbounded concurrent walks — each slower than the
+    /// stream's 0.5s latency — until disk and CPU drowned and the whole
+    /// app felt slow (the thousands-of-files-Location report). A burst
+    /// during a scan collapses to exactly one follow-up.
+    private var rescanInFlight: Set<URL> = []
+    private var rescanQueued: Set<URL> = []
+
+    func rescanFolder(root: URL, priority: TaskPriority = .userInitiated) {
+        if rescanInFlight.contains(root) {
+            rescanQueued.insert(root)
+            return
+        }
+        rescanInFlight.insert(root)
+        Task.detached(priority: priority) { [weak self] in
             var isDirectory: ObjCBool = false
             let exists = FileManager.default.fileExists(atPath: root.path, isDirectory: &isDirectory)
                 && isDirectory.boolValue
             let scan = exists ? Self.scanFolderTree(root: root) : (paths: [], truncated: false)
             let nodes = PathTree.build(scan.paths)
+            // Flattened here too — 20k leaves have no business on main.
+            let filePaths = nodes.flatMap(PathTree.leafPaths)
             let git = exists ? LocalGit.repoInfo(forDirectory: root) : nil
             guard let self else { return }
             await MainActor.run {
-                guard let index = self.folders.firstIndex(where: { $0.rootURL == root }) else { return }
-                // Only the initial add-time scan may speak up: watcher
-                // rescans repeat for every change in the folder, and a
-                // notice that re-fires per rescan is a nag, not a notice.
-                // Truncation never alerts at all — the tree's own footer
-                // row carries that fact quietly and persistently.
-                let initialScan = self.folders[index].scanning
-                self.folders[index].scanning = false
-                if exists {
-                    // A returned root revives with fresh contents.
-                    self.folders[index].missing = false
-                    self.folders[index].nodes = nodes
-                    self.folders[index].filePaths = nodes.flatMap(PathTree.leafPaths)
-                    self.folders[index].truncated = scan.truncated
-                    self.folders[index].git = git
-                    if initialScan, scan.paths.isEmpty {
-                        self.lastNotice = "No Markdown files found in \(root.lastPathComponent)."
-                    }
-                } else {
-                    // The root vanished (unmounted volume, deleted
-                    // checkout): dim it, keep the last tree, revive later.
-                    self.folders[index].missing = true
-                }
+                self.finishRescan(root: root, exists: exists, nodes: nodes,
+                                  filePaths: filePaths, truncated: scan.truncated,
+                                  git: git)
             }
+        }
+    }
+
+    private func finishRescan(root: URL, exists: Bool, nodes: [PathTree.Node],
+                              filePaths: [String], truncated: Bool,
+                              git: LocalGit.RepoInfo?) {
+        defer {
+            rescanInFlight.remove(root)
+            if rescanQueued.remove(root) != nil {
+                rescanFolder(root: root, priority: .utility)
+            }
+        }
+        guard let index = folders.firstIndex(where: { $0.rootURL == root }) else { return }
+        // Only the initial add-time scan may speak up: watcher
+        // rescans repeat for every change in the folder, and a
+        // notice that re-fires per rescan is a nag, not a notice.
+        // Truncation never alerts at all — the tree's own footer
+        // row carries that fact quietly and persistently.
+        let initialScan = folders[index].scanning
+        folders[index].scanning = false
+        if exists {
+            // A returned root revives with fresh contents.
+            folders[index].missing = false
+            folders[index].nodes = nodes
+            folders[index].filePaths = filePaths
+            folders[index].truncated = truncated
+            folders[index].git = git
+            if initialScan, filePaths.isEmpty {
+                lastNotice = "No Markdown files found in \(root.lastPathComponent)."
+            }
+        } else {
+            // The root vanished (unmounted volume, deleted
+            // checkout): dim it, keep the last tree, revive later.
+            folders[index].missing = true
         }
     }
 
@@ -1290,8 +1319,23 @@ final class AppState: ObservableObject {
     private var folderWatchers: [URL: FolderWatcher] = [:]
 
     private func watchFolder(_ root: URL) {
-        folderWatchers[root] = FolderWatcher(root: root) { [weak self] in
-            Task { @MainActor in self?.rescanFolder(root: root) }
+        // FSEvents reports realpath-form paths (/tmp roots arrive as
+        // /private/tmp) — canonicalize the SAME way for the relevance
+        // check. NOT resolvingSymlinksInPath(): Foundation strips
+        // /private from /tmp and /var paths, the exact opposite form,
+        // and the mismatch made every event look out-of-root (= rescan).
+        var buffer = [CChar](repeating: 0, count: Int(PATH_MAX))
+        let resolvedRoot = root.path.withCString { cString in
+            realpath(cString, &buffer).map { String(cString: $0) }
+        } ?? root.path
+        folderWatchers[root] = FolderWatcher(root: root) { [weak self] changed in
+            // Batches wholly inside skipped subtrees (.git churn is the
+            // big one) can't change the tree — no rescan.
+            let showHidden = UserDefaults.pullmark.bool(forKey: DefaultsKeys.showHiddenFiles)
+            guard FolderScanRules.rescanRelevant(changedPaths: changed,
+                                                 resolvedRootPath: resolvedRoot,
+                                                 showHidden: showHidden) else { return }
+            Task { @MainActor in self?.rescanFolder(root: root, priority: .utility) }
         }
     }
 
@@ -1345,8 +1389,9 @@ final class AppState: ObservableObject {
     nonisolated private static func scanFolderTree(root: URL) -> (paths: [String], truncated: Bool) {
         // .git is unconditional: invisible while hidden files are off,
         // but a raw object store the walker must never descend into
-        // once they're on.
-        let skippedDirectories: Set<String> = ["node_modules", "vendor", ".build", "dist", ".git"]
+        // once they're on. Shared with the watcher's relevance filter —
+        // whatever the scan skips, events inside it must not rescan.
+        let skippedDirectories = FolderScanRules.skippedDirectories
         let showHidden = UserDefaults.pullmark.bool(forKey: DefaultsKeys.showHiddenFiles)
         var options: FileManager.DirectoryEnumerationOptions = [.skipsPackageDescendants]
         if !showHidden { options.insert(.skipsHiddenFiles) }
