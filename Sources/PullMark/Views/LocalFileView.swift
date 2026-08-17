@@ -30,6 +30,9 @@ struct LocalFileView: View {
     struct CompareTarget: Equatable {
         let ref: String
         let label: String
+        /// Set when the NEW side is frozen too (two revisions, not
+        /// working-file-vs-revision) — the banner names both sides.
+        var newLabel: String? = nil
     }
     @State private var comparePresenter = MenuActionPresenter()
     @State private var inGitRepo = false
@@ -41,9 +44,17 @@ struct LocalFileView: View {
     /// (⌘E) makes the page writable — click any block to reveal its source.
     @State private var editMode = false
     @State private var remoteBranches: [String] = []
+    @State private var tags: [String] = []
+    /// Working file differs from HEAD — the Compare button's quiet dot.
+    @State private var hasHeadChanges = false
     @State private var compare: CompareTarget?
     @State private var compareText: String?
+    /// Frozen new-side contents (two-revision compares); nil means the
+    /// new side is the live working file.
+    @State private var compareNewText: String?
     @State private var compareGeneration = 0
+    /// The Compare menu's "Compare Revisions…" sheet.
+    @State private var revisionsSheetShown = false
     /// An in-place editor is open: re-renders are deferred (a reload would
     /// destroy the draft mid-typing).
     @State private var inlineEditing = false
@@ -125,7 +136,13 @@ struct LocalFileView: View {
         if let compare {
             HStack(spacing: 10) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("Comparing with \(compare.label)")
+                // Two frozen refs read as a range (raw refs, mono, an
+                // arrow for direction); one ref keeps the sentence form —
+                // "with" always names the baseline, never the new side.
+                (compare.newLabel.map {
+                    Text("Comparing ")
+                        + Text("\(compare.label) → \($0)").font(.body.monospaced())
+                } ?? Text("Comparing with \(compare.label)"))
                 Spacer()
                 Button("Done") { stopComparing() }
             }
@@ -160,9 +177,21 @@ struct LocalFileView: View {
         .onAppear {
             load()
             loadGitInfo()
-            watcher = FileWatcher(url: file.url) { load() }
+            watcher = FileWatcher(url: file.url) {
+                load()
+                refreshChangeDot()
+            }
             updateActiveDocument()
             updateSurfaceToolbar()
+            consumePendingCompare()
+        }
+        // A compare request can also land while this file is already
+        // showing (pullmark --diff on an open document) — no fresh
+        // onAppear happens, so watch the dictionary itself. And one
+        // deferred mid-edit applies once the editor closes.
+        .onChange(of: state.pendingCompares) { _ in consumePendingCompare() }
+        .onChange(of: inlineEditing) { editing in
+            if !editing { consumePendingCompare() }
         }
         .onDisappear {
             watcher = nil
@@ -173,6 +202,7 @@ struct LocalFileView: View {
         .onChange(of: editMode) { _ in updateSurfaceToolbar() }
         .onChange(of: inGitRepo) { _ in updateSurfaceToolbar() }
         .onChange(of: compare == nil) { _ in updateSurfaceToolbar() }
+        .onChange(of: hasHeadChanges) { _ in updateSurfaceToolbar() }
         .onChange(of: state.sourceViewVisible) { _ in updateSurfaceToolbar() }
         .onChange(of: blameVisible) { _ in loadBlame() }
         .onChange(of: currentText) { _ in
@@ -200,6 +230,16 @@ struct LocalFileView: View {
                                                 lineEnd: request.lineEnd)
             }
         }
+        .sheet(isPresented: $revisionsSheetShown) {
+            CompareRevisionsSheet(commits: commits, branches: branches,
+                                  remoteBranches: remoteBranches, tags: tags) { old, new in
+                if let new {
+                    startComparingRefs(oldRef: old, newRef: new)
+                } else {
+                    startComparing(ref: old, label: old == "HEAD" ? "the last commit" : old)
+                }
+            }
+        }
     }
 
     /// The window-level toolbar (AppToolbar) renders this surface's items
@@ -210,9 +250,13 @@ struct LocalFileView: View {
         surface.editMode = editMode
         surface.editDisabled = compare != nil || state.sourceViewVisible
         surface.setEditMode = { setEditMode($0) }
-        surface.compareAvailable = inGitRepo
-        surface.compareUnavailableReason = "Not inside a git repository"
+        // Always available for local files: even outside a git repo the
+        // menu offers Compare with File….
+        surface.compareAvailable = true
         surface.popCompare = { popCompareMenu(from: $0) }
+        surface.comparing = compare != nil
+        surface.compareGitAvailable = inGitRepo
+        surface.compareHasChanges = hasHeadChanges
         surface.blameAvailable = inGitRepo
         surface.blameDisabled = compare != nil
         surface.marginNoteDisabled = compare != nil || state.sourceViewVisible
@@ -225,6 +269,13 @@ struct LocalFileView: View {
         guard request != nil else { return }
         if state.take(.reload) { load() }
         if state.take(.toggleEditMode) { handleToggleEditMode() }
+        if state.take(.toggleCompare) {
+            if compare != nil {
+                stopComparing()
+            } else if inGitRepo {
+                startComparing(ref: "HEAD", label: "the last commit")
+            }
+        }
         if state.take(.addMarginNote) { openNoteComposer(fileLevel: false) }
         if state.take(.addFileMarginNote) { openNoteComposer(fileLevel: true) }
     }
@@ -263,12 +314,14 @@ struct LocalFileView: View {
                 menu.addItem(item)
             }
         }
-        func addAction(_ title: String, _ run: @escaping () -> Void) {
+        func addAction(_ title: String, checked: Bool = false,
+                       _ run: @escaping () -> Void) {
             let item = NSMenuItem(title: title,
                                   action: #selector(MenuActionPresenter.fire(_:)),
                                   keyEquivalent: "")
             item.target = comparePresenter
             item.tag = actions.count
+            item.state = checked ? .on : .off
             actions.append(run)
             menu.addItem(item)
         }
@@ -284,7 +337,16 @@ struct LocalFileView: View {
         if !branches.isEmpty {
             addHeader(branches.count >= 20 ? "Recent Branches" : "Branches")
             for branch in branches {
-                addAction(branch) { startComparing(ref: branch, label: branch) }
+                // The checkmark marks where the working file already is.
+                addAction(branch, checked: branch == currentBranch) {
+                    startComparing(ref: branch, label: branch)
+                }
+            }
+        }
+        if !tags.isEmpty {
+            addHeader(tags.count >= 20 ? "Recent Tags" : "Tags")
+            for tag in tags {
+                addAction(tag) { startComparing(ref: tag, label: tag) }
             }
         }
         if !remoteBranches.isEmpty {
@@ -294,12 +356,31 @@ struct LocalFileView: View {
                 addAction(branch) { startComparing(ref: branch, label: branch) }
             }
         }
+        // The quieter forms, tucked at the bottom: another file as the
+        // baseline (works without git), and a frozen two-revision pair.
+        if !menu.items.isEmpty { menu.addItem(.separator()) }
+        addAction("Compare with File…") { pickCompareFile() }
+        if inGitRepo, !commits.isEmpty {
+            addAction("Compare Revisions…") { revisionsSheetShown = true }
+        }
         if compare != nil {
-            if !menu.items.isEmpty { menu.addItem(.separator()) }
+            menu.addItem(.separator())
             addAction("Stop Comparing") { stopComparing() }
         }
         comparePresenter.actions = actions
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: view)
+    }
+
+    /// Compare with File… — any file on disk becomes the baseline (the
+    /// old side); the working file stays the live new side.
+    private func pickCompareFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose the file to compare with — it becomes the old side."
+        panel.prompt = "Compare"
+        guard panel.runModal() == .OK, let other = panel.url else { return }
+        startComparingFile(other)
     }
 
     /// "~/Code/pullmark · main · edited" — folder, branch, and unsaved-edit
@@ -392,7 +473,8 @@ struct LocalFileView: View {
     private var html: String {
         let style = ThemeSelection.pageStyle(from: themeRaw)
         if compare != nil, let compareText {
-            let segments = DiffPageBuilder.segments(old: compareText, new: currentText)
+            let segments = DiffPageBuilder.segments(old: compareText,
+                                                    new: compareNewText ?? currentText)
             return HTMLBuilder.diffPage(segments: segments, commentable: false,
                                         title: file.url.lastPathComponent,
                                         theme: style.theme,
@@ -565,6 +647,9 @@ struct LocalFileView: View {
     private func handlePageLoaded() {
         // Fresh page, fresh JS state: re-teach it the edit-mode toggle key.
         proxy.setEditToggleKey(shortcuts.combo(for: .editMode))
+        // Third consume point: on a cold launch the incarnation that
+        // reaches page-load is the one that survives restore settling.
+        consumePendingCompare()
         if let line = pendingRevealLine {
             pendingRevealLine = nil
             pendingAutoReveal = false
@@ -651,14 +736,31 @@ struct LocalFileView: View {
             let commits = LocalGit.history(of: url)
             let branches = LocalGit.branches(in: root, remote: false)
             let remotes = LocalGit.branches(in: root, remote: true)
+            let tags = LocalGit.tags(in: root)
             let current = LocalGit.currentBranch(in: root)
+            // No history yet (unborn HEAD, or a file never committed):
+            // "changed since HEAD" would be noise.
+            let changed = commits.isEmpty ? false : LocalGit.hasChanges(url)
             await MainActor.run {
                 self.inGitRepo = true
                 self.commits = commits
                 self.branches = branches
                 self.remoteBranches = remotes
+                self.tags = tags
                 self.currentBranch = current
+                self.hasHeadChanges = changed
             }
+        }
+    }
+
+    /// The dot alone, off-main — the watcher fires on every save and the
+    /// full git-info reload (four calls) would be waste.
+    private func refreshChangeDot() {
+        guard inGitRepo, !commits.isEmpty else { return }
+        let url = file.url
+        Task.detached(priority: .utility) {
+            let changed = LocalGit.hasChanges(url)
+            await MainActor.run { self.hasHeadChanges = changed }
         }
     }
 
@@ -677,7 +779,104 @@ struct LocalFileView: View {
         }
     }
 
-    private func startComparing(ref: String, label: String) {
+    /// A pullmark://compare deep link (the CLI's --diff/--diff-with
+    /// flags) targeting this file: a STANDING instruction, consumed
+    /// whenever this file shows with no comparison up. Entries are
+    /// retired by resolution errors, by Done/Stop, or by the user
+    /// starting a different compare — never by task callbacks, which
+    /// can belong to incarnations SwiftUI already discarded (session
+    /// restore and multi-file opens both recreate this view mid-flight;
+    /// both bit, live). Mid-edit the instruction waits: a compare
+    /// reload would destroy the open editor's draft.
+    private func consumePendingCompare() {
+        guard compare == nil, !inlineEditing else { return }
+        let key = file.url.standardizedFileURL.path
+        guard let request = state.pendingCompares[key] else { return }
+        if case .againstFile(let other) = request {
+            startComparingFile(other, userInitiated: false)
+            return
+        }
+        guard LocalGit.repoRoot(for: file.url) != nil else {
+            state.lastError = "\(file.url.lastPathComponent) isn't in a git "
+                + "repository, so there's nothing to compare against."
+            retirePendingCompare()
+            return
+        }
+        switch request {
+        case .workingAgainstRef(let ref):
+            startComparing(ref: ref, label: ref == "HEAD" ? "the last commit" : ref,
+                           userInitiated: false)
+        case .refAgainstRef(let old, let new):
+            startComparingRefs(oldRef: old, newRef: new, userInitiated: false)
+        case .againstFile:
+            break // handled above
+        }
+    }
+
+    private func retirePendingCompare() {
+        state.pendingCompares.removeValue(forKey: file.url.standardizedFileURL.path)
+    }
+
+    /// Both sides frozen: the file at two refs. The live file plays no
+    /// part, so later edits don't disturb the page. userInitiated marks
+    /// a human choice, which retires any standing deep-link request —
+    /// the deep-link consume path passes false so the instruction it's
+    /// applying survives view churn.
+    private func startComparingRefs(oldRef: String, newRef: String,
+                                    userInitiated: Bool = true) {
+        if userInitiated { retirePendingCompare() }
+        let url = file.url
+        compareGeneration += 1
+        let generation = compareGeneration
+        Task.detached(priority: .userInitiated) {
+            let old = LocalGit.content(of: url, at: oldRef)
+            let new = LocalGit.content(of: url, at: newRef)
+            await MainActor.run {
+                guard generation == compareGeneration else { return }
+                let name = url.lastPathComponent
+                guard let old else {
+                    state.lastError = "\(name) does not exist at \(oldRef)."
+                    stopComparing()
+                    return
+                }
+                guard let new else {
+                    state.lastError = "\(name) does not exist at \(newRef)."
+                    stopComparing()
+                    return
+                }
+                compareText = old
+                compareNewText = new
+                compare = CompareTarget(ref: oldRef, label: oldRef, newLabel: newRef)
+            }
+        }
+    }
+
+    /// Another file on disk as the baseline (old side); the working file
+    /// stays the live new side. Works without git.
+    private func startComparingFile(_ other: URL, userInitiated: Bool = true) {
+        if userInitiated { retirePendingCompare() }
+        compareGeneration += 1
+        let generation = compareGeneration
+        Task.detached(priority: .userInitiated) {
+            let old = try? String(contentsOf: other, encoding: .utf8)
+            await MainActor.run {
+                guard generation == compareGeneration else { return }
+                guard let old else {
+                    state.lastError = "Could not read \(other.lastPathComponent)."
+                    stopComparing()
+                    return
+                }
+                compareText = old
+                compareNewText = nil
+                compare = CompareTarget(ref: "file:\(other.path)",
+                                        label: other.lastPathComponent)
+            }
+        }
+    }
+
+    private func startComparing(ref: String, label: String,
+                                userInitiated: Bool = true) {
+        if userInitiated { retirePendingCompare() }
         let url = file.url
         compareGeneration += 1
         let generation = compareGeneration
@@ -693,6 +892,7 @@ struct LocalFileView: View {
                     return
                 }
                 compareText = old
+                compareNewText = nil
                 compare = CompareTarget(ref: ref, label: label)
             }
         }
@@ -701,5 +901,9 @@ struct LocalFileView: View {
     private func stopComparing() {
         compare = nil
         compareText = nil
+        compareNewText = nil
+        // Done/Stop (and error resolutions, which land here) retire any
+        // standing deep-link request — dismissed means dismissed.
+        retirePendingCompare()
     }
 }

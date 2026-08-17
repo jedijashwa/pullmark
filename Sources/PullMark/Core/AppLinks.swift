@@ -12,6 +12,7 @@ enum AppLinks {
     /// Tab targets, plus per-setting anchors the tabs can scroll to and
     /// highlight. Anchor ids mirror the docs pages' spellings.
     static let supported: Set<String> = [
+        "compare",
         "settings",
         "settings/general",
         "settings/themes",
@@ -50,6 +51,47 @@ enum AppLinks {
         let parts = url.path.split(separator: "/").map(String.init)
         guard let tab = parts.first else { return ("general", nil) }
         return (tab, parts.count > 1 ? parts[1] : nil)
+    }
+
+    /// What a compare deep link asks the file's view to diff.
+    enum CompareRequest: Equatable {
+        /// The working file against one ref (HEAD, a branch, tag, SHA).
+        case workingAgainstRef(String)
+        /// The file at two refs — both sides frozen, REF1..REF2 syntax
+        /// (refnames cannot contain "..", so the split is unambiguous).
+        case refAgainstRef(old: String, new: String)
+        /// The working file against another file on disk (the baseline).
+        case againstFile(URL)
+    }
+
+    /// Parses a compare deep link, the CLI's --diff/--diff-with channel:
+    ///   pullmark://compare?file=<abs>[&ref=<ref> | &ref=<r1>..<r2> | &with=<abs>]
+    /// Paths must be absolute (the CLI resolves relative paths against its
+    /// own working directory — the app has no idea what that was); `ref`
+    /// defaults to HEAD.
+    static func compareTarget(_ url: URL) -> (file: URL, request: CompareRequest)? {
+        guard url.scheme == "pullmark", url.host == "compare",
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let path = components.queryItems?.first(where: { $0.name == "file" })?.value,
+              path.hasPrefix("/")
+        else { return nil }
+        let file = URL(fileURLWithPath: path)
+        if let with = components.queryItems?.first(where: { $0.name == "with" })?.value {
+            guard with.hasPrefix("/") else { return nil }
+            return (file, .againstFile(URL(fileURLWithPath: with)))
+        }
+        let ref = components.queryItems?.first(where: { $0.name == "ref" })?.value
+            .flatMap { $0.isEmpty ? nil : $0 } ?? "HEAD"
+        if let dots = ref.range(of: "..") {
+            let old = String(ref[..<dots.lowerBound])
+            let new = String(ref[dots.upperBound...])
+            // Empty sides, three-dot ranges, and extra ".."s are
+            // rejected, not guessed.
+            guard !old.isEmpty, !new.isEmpty, !new.hasPrefix("."),
+                  !new.contains("..") else { return nil }
+            return (file, .refAgainstRef(old: old, new: new))
+        }
+        return (file, .workingAgainstRef(ref))
     }
 
     static func isSupported(_ url: URL) -> Bool {

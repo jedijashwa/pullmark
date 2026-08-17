@@ -125,12 +125,7 @@ struct PullMarkApp: App {
     /// No selection copies the whole document source.
     private func copyAsMarkdown() {
         guard let document = state?.activeDocument else { return }
-        document.proxy.selectionSourceLineRange { range in
-            let source = MarkdownCopy.source(of: document.markdown, lineRange: range)
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
-            pasteboard.setString(source, forType: .string)
-        }
+        DocumentShare.copyMarkdown(from: document)
     }
 
     var body: some Scene {
@@ -365,6 +360,15 @@ struct PullMarkApp: App {
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .reloadDocument))
                     .disabled(activeLocalFileURL == nil)
                     .help("Re-read this file from disk")
+                Button(state?.expectedSurfaceToolbar?.comparing == true
+                       ? "Stop Comparing" : "Compare with Last Commit") {
+                    state?.send(.toggleCompare)
+                }
+                .disabled(activeLocalFileURL == nil
+                    || state?.expectedSurfaceToolbar?.compareGitAvailable != true)
+                .help("What changed since the last commit, rendered like a PR "
+                    + "diff — the toolbar's Compare button offers older "
+                    + "revisions and branches")
                 Button(marginNotesVisible ? "Hide Margin Notes" : "Show Margin Notes") {
                     marginNotesVisible.toggle()
                 }

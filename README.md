@@ -19,6 +19,7 @@ PullMark shows Markdown changes as **rendered diffs** — formatted output with 
 - **Click to inspect** — images, Mermaid diagrams, and block formulas open in a focused overlay with pan and zoom (pinch, ⌘-scroll, double-tap, or the floating controls), so complex diagrams aren't stuck at reading-column width. Save As… and Share export exactly what you're inspecting — diagrams as real SVG files, images at original quality.
 - **Math and `[toc]`** — `$inline$` and `$$block$$` TeX render through bundled KaTeX, fully offline (prose like `$5 and $10` stays currency), and a paragraph containing just `[toc]` becomes a linked table of contents. `==highlight==`, `~sub~`, and `^sup^` marks render too.
 - **Rendered PR diffs** — added, removed, and changed blocks highlighted in place. Changed blocks show a **word-level diff** when the edit is small enough to make sense (falling back to old/new stacked when it isn't). Switch between **inline** and **side-by-side** layout, or drop to the raw *Source Diff*, or preview the final *Result*.
+- **Compare any local file with its history** — the toolbar's Compare button (the clock and chevron) diffs the working file against any of its last 25 commits or any branch, rendered with the same word-level highlights PRs get, and the diff keeps up as the file keeps changing — watch an agent's edits land highlighted as they save. **View → Compare with Last Commit** answers "what did I just change?" in one step, and a quiet dot on the button means the file has uncommitted changes. Tucked into the same menu: **Compare Revisions…** freezes both sides between any two refs, and **Compare with File…** diffs against any file on disk (no git required). All of it works from a terminal too: `pullmark --diff` (see the CLI below).
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
   - **Comment Now** posts a single review comment immediately.
   - **Add to Review** collects drafts locally; submit them together (Comment / Approve / Request Changes) or save them to GitHub as a **pending review** to finish later on github.com.
@@ -111,6 +112,8 @@ pullmark                                # launch (or focus) the app
 pullmark README.md                      # read a file
 pullmark ~/notes                        # browse a folder
 pullmark ~/wt/feature docs/plan.md      # open a worktree, show one doc
+pullmark --diff docs/plan.md            # rendered diff vs the last commit
+pullmark --diff=v1.0..main README.md    # the file between two revisions
 pullmark --help                         # the full reference
 ```
 

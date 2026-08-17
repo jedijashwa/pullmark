@@ -46,6 +46,65 @@ import Testing
         #expect(AppLinks.alphaFeatures.contains("margin-notes"))
     }
 
+    @Test func compareTargetParsesFileAndRef() throws {
+        let full = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/Users/me/docs/plan.md&ref=main")!))
+        #expect(full.file == URL(fileURLWithPath: "/Users/me/docs/plan.md"))
+        #expect(full.request == .workingAgainstRef("main"))
+        // ref is optional (and may arrive empty) — HEAD either way.
+        let bare = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md")!))
+        #expect(bare.request == .workingAgainstRef("HEAD"))
+        let empty = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=")!))
+        #expect(empty.request == .workingAgainstRef("HEAD"))
+    }
+
+    @Test func compareTargetParsesTwoRefRanges() throws {
+        let range = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=v1.0..main")!))
+        #expect(range.request == .refAgainstRef(old: "v1.0", new: "main"))
+        // Three-dot ranges and empty sides are rejected, not guessed.
+        #expect(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=v1.0...main")!) == nil)
+        #expect(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=..main")!) == nil)
+        #expect(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=main..")!) == nil)
+        #expect(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/b.md&ref=a..b..c")!) == nil)
+    }
+
+    @Test func compareTargetParsesBaselineFiles() throws {
+        let with = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/new.md&with=/b/old.md")!))
+        #expect(with.request == .againstFile(URL(fileURLWithPath: "/b/old.md")))
+        // A relative baseline is rejected (the CLI always absolutizes).
+        #expect(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/a/new.md&with=old.md")!) == nil)
+    }
+
+    @Test func compareTargetDecodesPercentEncodedPaths() throws {
+        // The CLI byte-encodes UTF-8 and spaces; URLComponents decodes.
+        let spaced = try #require(AppLinks.compareTarget(
+            URL(string: "pullmark://compare?file=/Users/me/My%20Notes/r%C3%A9sum%C3%A9.md&ref=feature%2Fx")!))
+        #expect(spaced.file == URL(fileURLWithPath: "/Users/me/My Notes/résumé.md"))
+        #expect(spaced.request == .workingAgainstRef("feature/x"))
+    }
+
+    @Test func compareTargetRejectsMalformedLinks() {
+        // No file, relative file, wrong host, wrong scheme.
+        #expect(AppLinks.compareTarget(URL(string: "pullmark://compare?ref=main")!) == nil)
+        #expect(AppLinks.compareTarget(URL(string: "pullmark://compare?file=docs/plan.md")!) == nil)
+        #expect(AppLinks.compareTarget(URL(string: "pullmark://settings?file=/a.md")!) == nil)
+        #expect(AppLinks.compareTarget(URL(string: "https://compare?file=/a.md")!) == nil)
+    }
+
+    @Test func compareIsARegisteredTarget() {
+        // Release notes may link the feature; sanitize must keep it.
+        #expect(AppLinks.isSupported(URL(string: "pullmark://compare")!))
+    }
+
     @Test func sanitizeHandlesMultipleLinksAndAdjacentText() {
         let md = "[a](pullmark://nope) mid [b](pullmark://settings) end [c](pullmark://also/nope)"
         #expect(AppLinks.sanitize(md) == "a mid [b](pullmark://settings) end c")

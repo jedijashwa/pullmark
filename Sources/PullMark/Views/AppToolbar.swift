@@ -61,7 +61,7 @@ struct AppToolbar: CustomizableToolbarContent {
             case .prDoc:
                 PRDocToolbarItems(state: state)
             case .prOverview:
-                PROverviewToolbarItems(surface: surface)
+                PROverviewToolbarItems(state: state, surface: surface)
             }
         }
         windowItems
@@ -276,7 +276,7 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "local-share") {
-            ShareToolbarLink(url: surface?.shareURL,
+            ShareSheetButton(mode: .document, state: state, surface: surface,
                              help: "Share this document")
         }
         ToolbarItem(id: "local-edit") {
@@ -328,7 +328,7 @@ private struct RemoteDocToolbarItems: CustomizableToolbarContent {
             OutlineToggle(visible: $outlineVisible)
         }
         ToolbarItem(id: "remote-share", showsByDefault: false) {
-            ShareToolbarLink(url: surface?.shareURL,
+            ShareSheetButton(mode: .link, state: state, surface: surface,
                              help: "Share a link to this document on GitHub")
         }
         ToolbarItem(id: "remote-reload", showsByDefault: false) {
@@ -423,11 +423,12 @@ private struct PRDocToolbarItems: CustomizableToolbarContent {
 }
 
 private struct PROverviewToolbarItems: CustomizableToolbarContent {
+    let state: AppState
     let surface: SurfaceToolbar?
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "overview-share") {
-            ShareToolbarLink(url: surface?.shareURL,
+            ShareSheetButton(mode: .link, state: state, surface: surface,
                              help: "Share a link to this pull request")
         }
     }
@@ -435,23 +436,54 @@ private struct PROverviewToolbarItems: CustomizableToolbarContent {
 
 // MARK: - Item content views
 
-/// ShareLink needs a concrete URL, but the registered surface may not
-/// have arrived yet — render a disabled stand-in in that gap instead of
-/// an empty toolbar slot (the header's safe-default rule).
-private struct ShareToolbarLink: View {
-    let url: URL?
+/// The share button: one click, the system sheet — but through AppKit's
+/// picker rather than ShareLink (whose macOS Copy row has a
+/// DTS-confirmed bug with custom payloads), and with the document
+/// carried as ONE multi-flavor pasteboard item (DocumentShareItem).
+/// That payload is the whole #72 fix: the sheet's Copy row writes the
+/// picker's items verbatim, so a bare file URL pasted as a file NAME in
+/// text fields; now Copy yields the file to Finder, rich text to chat
+/// composers and word processors, and the Markdown source to plain
+/// fields. Slack and Teams ship no macOS share extensions (verified),
+/// so sheet-Copy-then-paste — or dragging the title-bar proxy icon in —
+/// is the honest route to them.
+private struct ShareSheetButton: View {
+    enum Mode {
+        /// Local file: the file itself plus its rendered/plain flavors.
+        case document
+        /// Remote doc or PR overview: the canonical web link.
+        case link
+    }
+    let mode: Mode
+    let state: AppState
+    let surface: SurfaceToolbar?
     let help: String
+    @State private var anchor = MenuAnchorBox()
 
     var body: some View {
-        if let url {
-            ShareLink(item: url)
-                .help(help)
-        } else {
-            Button {} label: {
-                Label("Share", systemImage: "square.and.arrow.up")
+        Button {
+            if let view = anchor.view { present(from: view) }
+        } label: {
+            Label("Share", systemImage: "square.and.arrow.up")
+        }
+        .accessibilityLabel("Share")
+        .background(MenuAnchorReader(box: anchor))
+        .disabled(surface?.shareURL == nil)
+        .help(help)
+    }
+
+    private func present(from view: NSView) {
+        guard let shareURL = surface?.shareURL else { return }
+        // The registered document, when this surface owns one — comparing
+        // unregisters it, and the sheet degrades to sharing the file
+        // itself rather than a stale rendering. (The source view keeps
+        // the registration; its share carries the rendered flavors.)
+        if mode == .document, let document = state.activeDocument {
+            DocumentShare.buildItem(for: document, fileURL: shareURL) {
+                DocumentShare.presentSheet(item: $0, from: view)
             }
-            .disabled(true)
-            .help(help)
+        } else {
+            DocumentShare.presentSheet(url: shareURL, from: view)
         }
     }
 }
@@ -518,7 +550,27 @@ private struct CompareToolbarButton: View {
             if let view = anchor.view { surface?.popCompare?(view) }
         } label: {
             HStack(spacing: 3) {
+                // The quiet signal that there's something to compare:
+                // this file has uncommitted changes. Anchored to the
+                // clock glyph itself (the thing it badges) at its
+                // 1-o'clock, with a background-colored keyline so the
+                // overlap reads deliberate. Hidden mid-comparison — the
+                // page is already showing the changes.
                 Image(systemName: "clock.arrow.circlepath")
+                    .overlay(alignment: .topTrailing) {
+                        if surface?.compareHasChanges == true, surface?.comparing != true {
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 5, height: 5)
+                                .background(
+                                    Circle()
+                                        .fill(Color(nsColor: .windowBackgroundColor))
+                                        .frame(width: 7.5, height: 7.5)
+                                )
+                                .offset(x: 2, y: -1.5)
+                                .accessibilityLabel("Uncommitted changes")
+                        }
+                    }
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .bold))
                     .opacity(0.8)
@@ -527,9 +579,11 @@ private struct CompareToolbarButton: View {
         .accessibilityLabel("Compare")
         .background(MenuAnchorReader(box: anchor))
         .disabled(surface?.compareAvailable != true)
-        .help(surface?.compareAvailable == true
-            ? "Compare with a previous revision or branch"
-            : (surface?.compareUnavailableReason ?? "Comparing is unavailable here"))
+        .help(surface?.compareAvailable != true
+            ? (surface?.compareUnavailableReason ?? "Comparing is unavailable here")
+            : surface?.compareHasChanges == true
+                ? "This file has uncommitted changes — compare with a previous revision or branch"
+                : "Compare with a previous revision or branch")
     }
 }
 

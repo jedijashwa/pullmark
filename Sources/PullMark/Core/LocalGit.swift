@@ -126,6 +126,13 @@ enum LocalGit {
 
     /// The 20 most recently ACTIVE branches — with hundreds of branches,
     /// an alphabetical cap would almost never contain the one you want.
+    /// Newest-first tags, for the compare menus — the third ref family
+    /// alongside history and branches.
+    static func tags(in root: URL, limit: Int = 20) -> [String] {
+        guard let output = run(["tag", "--sort=-creatordate"], in: root.path) else { return [] }
+        return output.split(separator: "\n").prefix(limit).map(String.init)
+    }
+
     static func branches(in root: URL, remote: Bool) -> [String] {
         let ref = remote ? "refs/remotes" : "refs/heads"
         guard let out = run(["for-each-ref", "--sort=-committerdate",
@@ -134,6 +141,16 @@ enum LocalGit {
         return out.components(separatedBy: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty && !$0.hasSuffix("/HEAD") && $0 != "HEAD" }
+    }
+
+    /// True when the working file differs from its state at HEAD — the
+    /// quiet signal behind the Compare button's dot. Only meaningful for
+    /// files already known to sit in a repository with history: git
+    /// errors (outside a repo, unborn HEAD) also exit non-zero and would
+    /// read as "changed" — callers gate on that first.
+    static func hasChanges(_ url: URL) -> Bool {
+        let dir = url.deletingLastPathComponent().path
+        return run(["diff", "--quiet", "HEAD", "--", url.lastPathComponent], in: dir) == nil
     }
 
     /// File contents at a ref (commit sha or branch name); nil when the file
