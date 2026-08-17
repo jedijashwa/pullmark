@@ -179,6 +179,20 @@ if $diff_mode; then
     # Files become pullmark://compare deep links — the only channel that
     # reaches an already-running app (`open --args` only works on a cold
     # launch). Folders still open as Locations alongside.
+    #
+    # Cold start: launch the app plainly FIRST and let the window come up
+    # before any link arrives. A URL event driving scene creation brings
+    # the window up without the full-height-sidebar titlebar arrangement
+    # (toolbar collapses to the leading edge — verified live); a normal
+    # launch followed by warm links never does.
+    if ! pgrep -xq PullMark; then
+        open -a "PullMark"
+        for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+            pgrep -xq PullMark && break
+            sleep 0.1
+        done
+        sleep 1
+    fi
     links=()
     dirs=()
     for path in ${paths+"${paths[@]}"}; do
