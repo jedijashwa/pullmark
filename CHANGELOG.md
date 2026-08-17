@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.33.0 - 2026-08-17
 
 - **The share sheet's Copy finally copies the document.** Share now
   hands every destination the document as one item wearing all its
