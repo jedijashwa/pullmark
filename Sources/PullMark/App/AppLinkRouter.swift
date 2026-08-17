@@ -18,6 +18,8 @@ enum AppLinkRouter {
         lastAt = now
         if let target = AppLinks.settingsTarget(url) {
             SettingsOpener.open(tab: target.tab, anchor: target.anchor)
+        } else if let compare = AppLinks.compareTarget(url) {
+            AppState.deliverCompareOpen(file: compare.file, request: compare.request)
         } else {
             presentUnsupported(url)
         }

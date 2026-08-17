@@ -186,6 +186,14 @@ struct SurfaceToolbar {
     var compareAvailable = false
     var compareUnavailableReason: String?
     var popCompare: ((NSView) -> Void)?
+    /// A comparison is on screen — flips the View-menu item to Stop.
+    var comparing = false
+    /// Git-backed comparisons work here (repo with history) — gates the
+    /// View-menu item; the button itself stays enabled for local files
+    /// because Compare with File… works without git.
+    var compareGitAvailable = false
+    /// The working file differs from HEAD — the button's quiet dot.
+    var compareHasChanges = false
 
     // Blame: visibility itself is the global AppStorage toggle; the
     // surface only says whether blame exists here at all, and whether the
@@ -264,6 +272,8 @@ enum DocumentCommand: Equatable {
     case addFileMarginNote
     /// Opens the whole-file comment sheet on the active PR file.
     case commentOnFile
+    /// View → Compare with Last Commit / Stop Comparing (local files).
+    case toggleCompare
 }
 
 struct DocumentCommandRequest: Equatable {
@@ -355,6 +365,13 @@ final class AppState: ObservableObject {
         let rootID: Int
     }
     @Published var pendingThreadReveal: ThreadReveal?
+
+    /// Compare requests from pullmark://compare deep links (the CLI's
+    /// --diff/--diff-with flags), keyed by standardized file path and
+    /// consumed by the file's view when it shows. A dictionary, not a
+    /// slot: one invocation may ask for several files diffed, and each
+    /// entry belongs to its file however long the view takes to appear.
+    @Published var pendingCompares: [String: AppLinks.CompareRequest] = [:]
 
     @Published var selection: SidebarSelection? {
         didSet {
@@ -479,6 +496,26 @@ final class AppState: ObservableObject {
         } else if retries > 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 deliverExternalOpens(urls, retries: retries - 1)
+            }
+        }
+    }
+
+    /// A compare deep link: open the file and mark it for comparing.
+    /// Retries like document opens do, but with a 10-second budget — a
+    /// COLD launch (WebKit warmup plus session restore) takes well past
+    /// the 2 seconds documents need, and exhausting the budget dropped
+    /// the request silently (verified live). The pending entry is set
+    /// before add(url:) so the view can't appear ahead of its request,
+    /// and deliberately skips the open dedup gate: "open plain, then
+    /// open diffed" within two seconds is a real sequence, not a bounce.
+    static func deliverCompareOpen(file: URL, request: AppLinks.CompareRequest,
+                                   retries: Int = 100) {
+        if let instance = keyInstance {
+            instance.pendingCompares[file.standardizedFileURL.path] = request
+            instance.add(url: file)
+        } else if retries > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                deliverCompareOpen(file: file, request: request, retries: retries - 1)
             }
         }
     }

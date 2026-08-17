@@ -64,6 +64,13 @@
       <h2 id="usage">Usage</h2>
 <pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
 pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># open files as rendered diffs vs HEAD</span>
+pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
+                             <span class="c"># … vs a branch, tag, or commit</span>
+pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
+                             <span class="c"># the file at two refs, both frozen</span>
+pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
+                             <span class="c"># … vs another file on disk</span>
 pullmark -h, --help          <span class="c"># the built-in reference</span>
 pullmark --version           <span class="c"># print the app version</span></code></pre>
 
@@ -100,12 +107,33 @@ pullmark --version           <span class="c"># print the app version</span></cod
       <em>last file</em> passed is the one displayed, so put the document you
       want on screen last.</p>
 
+      <h2 id="diff">Rendered diffs from the shell</h2>
+      <p><code>--diff</code> opens each file <em>comparing</em> — its working
+      contents against the last commit, shown as the same rendered,
+      word-level diff pull requests get. <code>--diff=&lt;ref&gt;</code>
+      compares against a branch, tag, or commit SHA instead. It's the
+      shell door into the app's Compare feature (the toolbar's
+      clock-and-chevron button), and the fastest answer to "what did the
+      agent just do to this document":</p>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># current file vs main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># between two revisions, both frozen</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># two files, old.md the baseline</span>
+<span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
+                                          <span class="c"># a worktree, plan.md diffed</span></code></pre>
+      <p>Folders passed alongside still open as Locations, and every form
+      has an in-app twin in the toolbar's Compare menu (including
+      <strong>Compare Revisions…</strong> and <strong>Compare with
+      File…</strong>). Because <code>--diff</code> and
+      <code>--diff-with</code> are flags, never subcommands, a file that
+      happens to be named <code>diff</code> always just opens.</p>
+
       <h2 id="exit-codes">Exit codes</h2>
       <table>
         <tr><th>Code</th><th>Meaning</th></tr>
         <tr><td><code>0</code></td><td>Everything was handed to PullMark.</td></tr>
         <tr><td><code>1</code></td><td>A path didn't exist (each missing one is printed to stderr).</td></tr>
-        <tr><td><code>64</code></td><td>Unknown option.</td></tr>
+        <tr><td><code>64</code></td><td>Bad usage — an unknown option, <code>--diff</code> with no file, or <code>--diff=</code> with no ref.</td></tr>
       </table>
 
       <h2 id="examples">Examples</h2>
@@ -113,6 +141,7 @@ pullmark --version           <span class="c"># print the app version</span></cod
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
 <span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
 
       <h2 id="agents">Notes for agents</h2>
@@ -124,6 +153,9 @@ pullmark --version           <span class="c"># print the app version</span></cod
         selected, not duplicated.</li>
         <li>Everything lands in the frontmost window by design, so a human
         watching one window sees each open arrive there.</li>
+        <li>After editing a document, <code>pullmark --diff &lt;file&gt;</code>
+        is the one-line way to put <em>what you changed</em> in front of the
+        human — rendered, with the changed words highlighted.</li>
       </ul>
     </article>
   </div>

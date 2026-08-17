@@ -13,6 +13,13 @@ pullmark — open files and folders in PullMark
 USAGE
   pullmark                     launch (or focus) PullMark
   pullmark <path> ...          open files and/or folders
+  pullmark --diff <path> ...   open files as rendered diffs vs HEAD
+  pullmark --diff=<ref> <path> ...
+                               ... vs a branch, tag, or commit
+  pullmark --diff=<r1>..<r2> <path> ...
+                               the file at two refs, both sides frozen
+  pullmark --diff-with=<file> <path> ...
+                               ... vs another file on disk (the baseline)
   pullmark -h, --help          show this help
   pullmark --version           print the app version
 
@@ -28,10 +35,23 @@ WHAT OPENING DOES
   window; a second instance is never started. Relative paths resolve
   against the current directory.
 
+DIFFS
+  --diff opens each file comparing its current contents against the
+  last commit — the same rendered, word-level diff pull requests get —
+  or against any ref with --diff=<ref>. <r1>..<r2> compares the file
+  at two refs, both sides frozen; --diff-with compares against another
+  file on disk instead of git. Folders passed alongside still open as
+  Locations. These are flags, never subcommands, so a file that
+  happens to be named "diff" always just opens.
+
 EXAMPLES
   pullmark README.md                     read one file
   pullmark ~/notes                       browse a folder
   pullmark docs specs/design.md          a Location plus one document
+  pullmark --diff docs/plan.md           what the last edits changed
+  pullmark --diff=main README.md         current file vs main
+  pullmark --diff=v1.0..main README.md   between two revisions
+  pullmark --diff-with=old.md new.md     two files, old.md the baseline
 
 Docs: https://pullmark.app/docs/cli/
 EOF
@@ -62,13 +82,63 @@ version() {
     fi
 }
 
+# Percent-encodes a string for a pullmark:// query value, byte-wise so
+# UTF-8 paths survive. "/" stays literal — legal in a query, and it
+# keeps the links readable.
+urlencode() {
+    local LC_ALL=C
+    local s="$1" out="" c i
+    for (( i = 0; i < ${#s}; i++ )); do
+        c="${s:$i:1}"
+        case "$c" in
+            [a-zA-Z0-9./_~-]) out+="$c" ;;
+            *) # "'$c" sign-extends bytes past 0x7F on some bashes —
+               # mask back to the byte.
+               printf -v c '%%%02X' "$(( $(printf '%d' "'$c") & 255 ))"
+               out+="$c" ;;
+        esac
+    done
+    printf '%s' "$out"
+}
+
 paths=()
+diff_mode=false
+diff_ref="HEAD"
+diff_with=""
 parsing_flags=true
 for arg in "$@"; do
     if $parsing_flags; then
         case "$arg" in
             -h|--help) usage; exit 0 ;;
             --version) version; exit 0 ;;
+            --diff) diff_mode=true; continue ;;
+            --diff=*)
+                diff_mode=true
+                diff_ref="${arg#--diff=}"
+                if [ -z "$diff_ref" ]; then
+                    echo "pullmark: --diff= needs a ref (branch, tag, or commit)" >&2
+                    exit 64
+                fi
+                case "$diff_ref" in
+                    *...*)
+                        echo "pullmark: three-dot ranges aren't supported — use <ref1>..<ref2>" >&2
+                        exit 64 ;;
+                    ..*|*..)
+                        echo "pullmark: both sides of <ref1>..<ref2> are needed" >&2
+                        exit 64 ;;
+                esac
+                continue ;;
+            --diff-with=*)
+                diff_with="${arg#--diff-with=}"
+                if [ -z "$diff_with" ]; then
+                    echo "pullmark: --diff-with= needs a file path" >&2
+                    exit 64
+                fi
+                case "$diff_with" in
+                    /*) ;;
+                    *)  diff_with="$PWD/$diff_with" ;;
+                esac
+                continue ;;
             --) parsing_flags=false; continue ;;
             -*) echo "pullmark: unknown option '$arg' (try: pullmark --help)" >&2
                 exit 64 ;;
@@ -79,6 +149,18 @@ for arg in "$@"; do
         *)  paths+=("$PWD/$arg") ;;
     esac
 done
+
+if $diff_mode && [ -n "$diff_with" ]; then
+    echo "pullmark: choose --diff or --diff-with, not both" >&2
+    exit 64
+fi
+if [ -n "$diff_with" ]; then
+    if [ ! -f "$diff_with" ]; then
+        echo "pullmark: --diff-with baseline must be an existing file: $diff_with" >&2
+        exit 1
+    fi
+    diff_mode=true
+fi
 
 # All-or-nothing: a typo'd path aborts the whole open, so a script never
 # half-succeeds silently.
@@ -91,6 +173,34 @@ if [ "${#missing[@]}" -gt 0 ]; then
         echo "pullmark: no such file or folder: $path" >&2
     done
     exit 1
+fi
+
+if $diff_mode; then
+    # Files become pullmark://compare deep links — the only channel that
+    # reaches an already-running app (`open --args` only works on a cold
+    # launch). Folders still open as Locations alongside.
+    links=()
+    dirs=()
+    for path in ${paths+"${paths[@]}"}; do
+        if [ -d "$path" ]; then
+            dirs+=("$path")
+        elif [ -n "$diff_with" ]; then
+            links+=("pullmark://compare?file=$(urlencode "$path")&with=$(urlencode "$diff_with")")
+        else
+            links+=("pullmark://compare?file=$(urlencode "$path")&ref=$(urlencode "$diff_ref")")
+        fi
+    done
+    if [ "${#links[@]}" -eq 0 ]; then
+        echo "pullmark: --diff/--diff-with need at least one file (folders can't compare)" >&2
+        exit 64
+    fi
+    if [ "${#dirs[@]}" -gt 0 ]; then
+        open -a "PullMark" "${dirs[@]}"
+    fi
+    for link in "${links[@]}"; do
+        open "$link"
+    done
+    exit 0
 fi
 
 exec open -a "PullMark" ${paths+"${paths[@]}"}
