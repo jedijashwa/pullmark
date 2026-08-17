@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Big repos stopped dragging the app.** A Location holding a deeply
+  nested repo with thousands of files could slow the whole app even
+  collapsed: git's own bookkeeping under `.git` retriggered full
+  folder re-scans continuously, and bursts piled scans on top of each
+  other. Change events inside `.git` (and the other folders the tree
+  never shows) no longer cost anything, and rescans run one at a time
+  in the background — measured on a 12,000-file repo, constant git
+  churn went from a third-to-half of a CPU core to zero, while a real
+  Markdown change still updates the tree within about a second.
+
 ## 0.33.0 - 2026-08-17
 
 - **The share sheet's Copy finally copies the document.** Share now
