@@ -4,6 +4,34 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **The share sheet's Copy finally copies the document.** Share now
+  hands every destination the document as one item wearing all its
+  useful forms — the file itself, the rendered page, and the Markdown
+  source — so the sheet's Copy pastes formatted text into rich editors
+  and chat composers, the Markdown source into plain fields, and the
+  file into Finder, instead of pasting the file's *name*
+  ([#72](https://github.com/jedijashwa/pullmark/issues/72)). Slack and
+  Teams ship no macOS share extensions, so they can't appear in the
+  sheet — but Copy → paste lands formatted there, and dragging the
+  title-bar document icon into a conversation attaches the file.
+- **Compare, every way you'd want.** The Compare button diffs the
+  working file against its history and branches — and now also against
+  **tags**, against **two frozen revisions** (Compare Revisions…, tucked
+  into the same menu), and against **any file on disk** (Compare with
+  File…, no git required). The current branch wears a checkmark, a
+  quiet dot on the button means the file has uncommitted changes, and
+  **View → Compare with Last Commit** answers "what did I just change?"
+  in one step. The diff keeps up live as the file keeps changing.
+- **Rendered diffs from the terminal.** `pullmark --diff file.md`
+  opens a file comparing with the last commit; `--diff=main`,
+  `--diff=v1.0..main`, and `--diff-with=old.md` cover any ref, a
+  frozen pair, and a file baseline. Flags, never subcommands — a file
+  named `diff` still just opens. The fastest answer to "what did the
+  agent change in my doc": see the
+  [CLI docs](https://pullmark.app/docs/cli/).
+
 ## 0.32.0 - 2026-08-13
 
 - **Reaction chips now say who reacted.** Hover any reaction on a
