@@ -40,7 +40,7 @@
 
     <article>
       <p class="kicker">docs / beta</p>
-      <h1>Margin notes<span class="beta-badge alpha">alpha</span></h1>
+      <h1>Margin notes<span class="beta-badge">beta</span></h1>
       <p class="article-lede">Comment on any local Markdown document the way
       you'd comment on a pull request — except the comments live in the
       file itself, as plain HTML comments every other tool ignores. Built
@@ -54,14 +54,18 @@
       <a href="pullmark://settings/experimental/margin-notes">Jump
       straight to the margin-notes switch</a>.</p>
       <ul>
-        <li><strong>Turn them on</strong> — margin notes are an
-        <a href="../">alpha experimental feature</a>, off by default:
-        <strong>Settings&nbsp;→&nbsp;Experimental</strong>, turn on
-        <em>Show alpha features</em>, then <em>Enable margin notes</em>.
-        The switch adds the authoring tools; a document that already
-        contains notes shows its bubbles either way (read-only), so a
-        file annotated by a teammate or an agent never renders as
-        silently empty.</li>
+        <li><strong>They're on by default</strong> — margin notes are a
+        <a href="../">beta experimental feature</a> that ships enabled
+        (since 0.35). The first time you reach for one — the hover
+        bubble, <kbd>⌥⌘M</kbd>, or Edit / Delete on a note someone left
+        you — PullMark introduces the feature: what notes are, a copy
+        button for teaching your agent, and a Turn Off button if it's
+        not for you. The switch lives in
+        <strong>Settings&nbsp;→&nbsp;Experimental</strong> and gates
+        only the authoring tools; a document that already contains
+        notes shows its bubbles either way (read-only), so a file
+        annotated by a teammate or an agent never renders as silently
+        empty.</li>
         <li><strong>Add a note</strong> — hover any block in a local
         document and click the bubble in the margin (the same gesture as
         commenting on a PR). Inside a list the bubble targets the item
@@ -175,14 +179,16 @@ comment; its indentation is what ties it to the item.</code></pre>
       must never reach a pull request, a CI check is one line —
       <code>grep -rn '&lt;!-- note @' docs/ && exit 1</code>.</p>
 
-      <h2 id="why-alpha">Why it's alpha</h2>
-      <p>The mechanics work; everything else is still up for grabs. The
-      grammar becomes a small public format the moment agents learn it,
-      the workflow may not fit flows beyond the one it was designed in,
-      and — per the <a href="../">alpha contract</a> — it may change
-      incompatibly or be removed. If the syntax changes while in alpha,
-      we may support transitioning older files, or may not; release
-      notes will say exactly what happened either way.
+      <h2 id="why-beta">Why it's beta</h2>
+      <p>The mechanics have proven themselves — the format hasn't needed
+      an incompatible change since it shipped, which is why it
+      graduated out of alpha. Per the <a href="../">beta contract</a>,
+      we now make a real effort to keep the grammar and behavior
+      compatible between versions, and the feature is likely to
+      graduate fully. What's still settling is the surface around it:
+      names, affordances, and how far the workflow generalizes beyond
+      the agent-review loop it was designed in. Release notes will say
+      exactly what changed if anything does.
       <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Feedback
       welcome</a>.</p>
     </article>
