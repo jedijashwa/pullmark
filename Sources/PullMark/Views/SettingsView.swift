@@ -36,6 +36,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.qlRendered, store: UserDefaults.pullmark) private var qlRendered = true
     @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
+    @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
@@ -52,8 +53,8 @@ struct GeneralSettingsTab: View {
     /// Deep-link landing spots this tab owns (AppLinks anchor ids).
     private static let anchors: Set<String> = [
         "restore-session", "show-hidden-files", "github-links",
-        "clicking-files", "diff-layout", "review-requests", "whats-new",
-        "check-updates", "default-app", "command-line", "quick-look",
+        "clicking-files", "diff-layout", "review-requests", "pr-discussion",
+        "whats-new", "check-updates", "default-app", "command-line", "quick-look",
     ]
 
     var body: some View {
@@ -106,6 +107,13 @@ struct GeneralSettingsTab: View {
                 .disabled(!inboxEnabled)
                 .padding(.leading, 20)
                 .help("Hide review requests with no Markdown files — PullMark has nothing to show for them")
+
+            // Graduated from Experimental (beta) in the cockpit wave —
+            // on by default; stored choices from the beta days stand.
+            Toggle("Show review discussion on the PR overview", isOn: $prDiscussionEnabled)
+                .help("Adds a Review discussion section under the PR description "
+                    + "listing every thread, with code excerpts and links")
+                .settingAnchor("pr-discussion")
             }
 
             Section("Updates") {
@@ -338,14 +346,14 @@ struct ExperimentalSettingsTab: View {
     @AppStorage(DefaultsKeys.showAlphaFeatures, store: UserDefaults.pullmark) private var showAlphaFeatures = false
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
-    @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = false
     @State private var confirmingAlpha = false
     @State private var copiedSnippet = false
 
     /// The current roster, by level. The empty states below cover the
-    /// day either level empties out again.
+    /// day either level empties out again. (Review discussion
+    /// graduated to General ▸ Reviewing in the cockpit wave.)
     private static let alphaFeatureCount = 1
-    private static let betaFeatureCount = 1
+    private static let betaFeatureCount = 0
 
     var body: some View {
         ScrollViewReader { scroll in
@@ -370,8 +378,6 @@ struct ExperimentalSettingsTab: View {
                         : "There are no experimental features right now.")
             }
 
-            prDiscussionSection
-
             if showAlphaFeatures {
                 marginNotesSection
             }
@@ -382,9 +388,7 @@ struct ExperimentalSettingsTab: View {
         // the alpha section is visible — a link to it with alpha hidden
         // first runs the alpha-contract flow, and the scroll-and-flash
         // happens once the switch flips on.
-        .consumesSettingAnchors(showAlphaFeatures
-                                    ? ["margin-notes", "pr-discussion"]
-                                    : ["pr-discussion"],
+        .consumesSettingAnchors(showAlphaFeatures ? ["margin-notes"] : [],
                                 proxy: scroll)
         .onChange(of: showAlphaFeatures) { visible in
             if visible, SettingsAnchorFocus.shared.pending == "margin-notes" {
@@ -440,25 +444,6 @@ struct ExperimentalSettingsTab: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 28)
-        }
-    }
-
-    private var prDiscussionSection: some View {
-        Section {
-            Text("See every review conversation on a pull request — including comments on code and other files PullMark doesn't render — grouped by file on the PR overview, with the commented lines shown alongside. Markdown threads jump to their spot in the file; others open on GitHub.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .settingAnchor("pr-discussion")
-
-            Toggle("Show review discussion on the PR overview", isOn: $prDiscussionEnabled)
-                .help("Adds a Review discussion section under the PR description "
-                    + "listing every thread, with code excerpts and links")
-        } header: {
-            HStack(spacing: 8) {
-                Text("Review Discussion")
-                ExperimentalBadge(level: .beta)
-            }
         }
     }
 
