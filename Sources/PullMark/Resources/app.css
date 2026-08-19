@@ -455,13 +455,20 @@ body {
    (if any) trailing. The default header's space-between would swing
    Reply/Resolve to the trailing edge on cards with no action. All on
    one text baseline. */
-.pm-discussion .pm-thread-header {
+.pm-discussion .pm-thread-header,
+.pm-conversation-threads .pm-thread-header {
   align-items: baseline;
   justify-content: flex-start;
   gap: 2px;
 }
-.pm-discussion .pm-thread-resolved > .pm-thread-header .pm-thread-actions {
+.pm-discussion .pm-thread-resolved > .pm-thread-header .pm-thread-actions,
+.pm-conversation-threads .pm-thread-resolved > .pm-thread-header .pm-thread-actions {
   margin-left: 0;
+}
+/* The path is context, not part of the line label — breathing room
+   before it (they rendered fused: "docs/a.mdOutdated"). */
+.pm-thread-path {
+  margin-right: 8px;
 }
 .pm-discussion-action:hover {
   text-decoration: underline;
