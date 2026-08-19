@@ -37,6 +37,23 @@ struct PRSession: Identifiable {
     /// Review comments/threads failed to load — the diff must not
     /// silently masquerade as an uncommented PR.
     var commentsUnavailable = false
+    /// Where the PR stands (spec: pr-cockpit) — nil until the first
+    /// cockpit fetch lands; the header renders no capsules meanwhile.
+    /// Isolated from commentsUnavailable in both directions.
+    var cockpit: PRCockpitState?
+    /// The conversation timeline's raw inputs and GraphQL-only viewer
+    /// state (reaction tints, node ids, edit signals).
+    var issueComments: [IssueComment] = []
+    var reviews: [PullRequestReview] = []
+    var conversationMeta: [Int: ReviewCommentMeta] = [:]
+    var reviewMeta: [Int: ReviewCommentMeta] = [:]
+    var reviewReactions: [Int: ReactionRollup] = [:]
+    /// The conversation failed to load and nothing older is on hand —
+    /// the section shows one quiet retrying row.
+    var conversationUnavailable = false
+    /// ETag of the last single-page comments fetch: the quiet tick's
+    /// 304s are free. Nil once the list spills past one page.
+    var conversationETag: String?
 
     var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
     var markdownFiles: [PullRequestFile] { files.filter(\.isMarkdown) }
@@ -533,6 +550,7 @@ final class AppState: ObservableObject {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 await self?.checkForPRUpdates()
+                await self?.refreshCockpitIfDue()
                 await self?.refreshInboxIfDue()
             }
         }
@@ -1490,6 +1508,23 @@ final class AppState: ObservableObject {
             // A blip must not render as "no comments on this PR".
             session.commentsUnavailable = true
         }
+        // Cockpit and conversation load in their own failure domains: a
+        // blip here keeps the header quiet and never trips the comments
+        // banner (spec: pr-cockpit). The 60s tick retries both.
+        if let payload = try? await client.cockpit(ref) {
+            session.cockpit = payload.state
+            session.conversationMeta = payload.commentMeta
+            session.reviewMeta = payload.reviewMeta
+            session.reviewReactions = payload.reviewReactions
+        }
+        do {
+            let (comments, etag) = try await client.issueCommentsIfChanged(ref, etag: nil)
+            session.issueComments = comments ?? []
+            session.conversationETag = etag
+            session.reviews = try await client.reviews(ref)
+        } catch {
+            session.conversationUnavailable = true
+        }
         session.queuedComments = PendingReviewStore.loadQueue(ref: ref, headSHA: details.head.sha)
         // Concurrent opens of the same PR both pass the check at the top of
         // this function during the awaits above — re-check at the append
@@ -1775,6 +1810,58 @@ final class AppState: ObservableObject {
         return "Couldn't open \(what): \(error.localizedDescription)"
     }
 
+    /// The 60s quiet tick for the frontmost PR (spec: pr-cockpit):
+    /// check activity never bumps the PR's updatedAt, so cockpit state
+    /// cannot ride the head-SHA gate below — it refreshes directly,
+    /// applied in place with no banner. Key-window-only, like the inbox
+    /// poll: N windows share one rate limit.
+    func refreshCockpitIfDue() async {
+        guard !DemoMode.active, Self.keyInstance === self else { return }
+        guard let sessionID = frontmostPRSessionID() else { return }
+        await refreshCockpit(sessionID: sessionID)
+    }
+
+    /// The PR session the window is currently showing, if any.
+    private func frontmostPRSessionID() -> String? {
+        switch selection {
+        case .prOverview(let id), .prFile(let id, _), .prDoc(let id, _):
+            return id
+        default:
+            return nil
+        }
+    }
+
+    /// One cockpit + conversation round trip, folded in quietly.
+    /// Failures keep last-known state — a tick blip must not blank a
+    /// populated header; `conversationUnavailable` only flags when
+    /// there is nothing older to show.
+    func refreshCockpit(sessionID: String) async {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        let ref = session.ref
+        if let payload = try? await client.cockpit(ref),
+           let index = prSessions.firstIndex(where: { $0.id == sessionID }) {
+            prSessions[index].cockpit = payload.state
+            prSessions[index].conversationMeta = payload.commentMeta
+            prSessions[index].reviewMeta = payload.reviewMeta
+            prSessions[index].reviewReactions = payload.reviewReactions
+        }
+        do {
+            let etag = prSessions.first(where: { $0.id == sessionID })?.conversationETag
+            let (comments, freshTag) = try await client.issueCommentsIfChanged(ref, etag: etag)
+            let reviews = try await client.reviews(ref)
+            guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+            if let comments { prSessions[index].issueComments = comments }
+            prSessions[index].conversationETag = freshTag
+            prSessions[index].reviews = reviews
+            prSessions[index].conversationUnavailable = false
+        } catch {
+            guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+            if prSessions[index].issueComments.isEmpty && prSessions[index].reviews.isEmpty {
+                prSessions[index].conversationUnavailable = true
+            }
+        }
+    }
+
     /// Detects head movement on open PRs; sets a flag rather than reloading
     /// so an in-progress review is never yanked out from under the user.
     func checkForPRUpdates() async {
@@ -1825,6 +1912,7 @@ final class AppState: ObservableObject {
             }
             prSessions[index].commentsUnavailable = commentsUnavailable
             prSessions[index].updateAvailable = false
+            await refreshCockpit(sessionID: sessionID)
             if headMoved {
                 // Queued anchors are per-head; the old head's queue stays on
                 // disk under its own key rather than mis-anchoring here.
@@ -2289,6 +2377,67 @@ final class AppState: ObservableObject {
         }
         clearPendingState(sessionID: sessionID)
         await reloadComments(sessionID: sessionID)
+        // The viewer's own verdict must show in the header without
+        // waiting out the 60s tick.
+        await refreshCockpit(sessionID: sessionID)
+    }
+
+    // MARK: - Conversation mutations (spec: pr-cockpit)
+
+    /// All conversation writes fold the API's echo into the model
+    /// locally — the comments list lags fresh writes (0.31.0 lesson;
+    /// never refetch on mutation).
+    func postConversationComment(sessionID: String, body: String) async throws {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        let comment = try await client.createIssueComment(session.ref, body: body)
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        prSessions[index].issueComments.append(comment)
+        prSessions[index].conversationUnavailable = false
+    }
+
+    func editConversationComment(sessionID: String, commentID: Int, body: String) async throws {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        let updated = try await client.updateIssueComment(session.ref, commentID: commentID,
+                                                          body: body)
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        if let at = prSessions[index].issueComments.firstIndex(where: { $0.id == commentID }) {
+            prSessions[index].issueComments[at].body = updated.body
+            prSessions[index].conversationMeta[commentID]?.edited = true
+        }
+    }
+
+    func deleteConversationComment(sessionID: String, commentID: Int) async throws {
+        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
+        try await client.deleteIssueComment(session.ref, commentID: commentID)
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        prSessions[index].issueComments.removeAll { $0.id == commentID }
+    }
+
+    /// Conversation twin of applyReaction below: issue comments and
+    /// review verdict cards key their meta directly by their own id —
+    /// no thread-root indirection.
+    func applyConversationReaction(sessionID: String, commentID: Int, content: String,
+                                   reacted: Bool, isReview: Bool) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        var session = prSessions[index]
+        if isReview {
+            let updated = CommentReactions.applied(
+                rollup: session.reviewReactions[commentID] ?? ReactionRollup(),
+                viewerReacted: session.reviewMeta[commentID]?.viewerReacted ?? [],
+                content: content, reacted: reacted)
+            session.reviewReactions[commentID] = updated.rollup
+            session.reviewMeta[commentID]?.viewerReacted = updated.viewerReacted
+        } else {
+            guard let at = session.issueComments.firstIndex(where: { $0.id == commentID })
+            else { return }
+            let updated = CommentReactions.applied(
+                rollup: session.issueComments[at].reactions ?? ReactionRollup(),
+                viewerReacted: session.conversationMeta[commentID]?.viewerReacted ?? [],
+                content: content, reacted: reacted)
+            session.issueComments[at].reactions = updated.rollup
+            session.conversationMeta[commentID]?.viewerReacted = updated.viewerReacted
+        }
+        prSessions[index] = session
     }
 
     /// Discards the pending review server-side (GitHub's "Abandon review")
