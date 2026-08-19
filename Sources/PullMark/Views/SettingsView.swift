@@ -60,8 +60,6 @@ struct GeneralSettingsTab: View {
     var body: some View {
         ScrollViewReader { scroll in
         Form {
-            GitHubConnectionSection()
-
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
@@ -92,6 +90,11 @@ struct GeneralSettingsTab: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             }
+
+            // Directly above Reviewing: every row below depends on this
+            // connection, but it doesn't outrank Reading (Josh's call —
+            // GitHub is an integration, not what the app hangs off).
+            GitHubConnectionSection()
 
             Section("Reviewing") {
             Picker("Default diff layout:", selection: $diffLayoutRaw) {
