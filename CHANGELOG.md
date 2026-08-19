@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.35.0 - 2026-08-19
 
 - **The About panel grew up.** It now shows the copyright and license
   line (PullMark is MIT), a link to
