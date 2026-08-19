@@ -73,6 +73,47 @@
     '<path d="M2.75 3h10.5c.69 0 1.25.56 1.25 1.25v5.5c0 .69-.56 1.25-1.25 1.25H8.5L5.25 13.6V11H2.75c-.69 0-1.25-.56-1.25-1.25v-5.5C1.5 3.56 2.06 3 2.75 3z"/>' +
     "</svg>";
 
+  // Real vector icons for in-page chrome. Unicode glyphs (▸ ✓ ±) render
+  // at the text font's mercy — inconsistent weights, dead whitespace in
+  // the em box, no optical kinship with the native header's SF Symbols
+  // (Josh's catch). These are drawn to match the SF *.circle.fill
+  // family: filled circle in currentColor, white glyph.
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  function svgIcon(kind, cls) {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("aria-hidden", "true");
+    if (cls) { svg.setAttribute("class", cls); }
+    function stroke(d, color, width) {
+      var p = document.createElementNS(SVG_NS, "path");
+      p.setAttribute("d", d);
+      p.setAttribute("fill", "none");
+      p.setAttribute("stroke", color);
+      p.setAttribute("stroke-width", width);
+      p.setAttribute("stroke-linecap", "round");
+      p.setAttribute("stroke-linejoin", "round");
+      svg.append(p);
+    }
+    if (kind === "chevron") {
+      stroke("M5.5 3.5 L10.5 8 L5.5 12.5", "currentColor", 2);
+      return svg;
+    }
+    var circle = document.createElementNS(SVG_NS, "circle");
+    circle.setAttribute("cx", 8);
+    circle.setAttribute("cy", 8);
+    circle.setAttribute("r", 7);
+    circle.setAttribute("fill", "currentColor");
+    svg.append(circle);
+    if (kind === "check-circle") {
+      stroke("M4.7 8.4 L7 10.7 L11.4 5.7", "#fff", 1.8);
+    } else if (kind === "plusminus-circle") {
+      stroke("M8 3.4 V6.6", "#fff", 1.5);
+      stroke("M6.4 5 H9.6", "#fff", 1.5);
+      stroke("M5.6 10.8 H10.4", "#fff", 1.5);
+    }
+    return svg;
+  }
+
   function post(message) {
     if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge) {
       window.webkit.messageHandlers.bridge.postMessage(message);
@@ -1672,6 +1713,9 @@
         summary.className = "pm-thread-summary";
         var author = (thread.comments && thread.comments[0] && thread.comments[0].author) || "";
         summary.textContent = (author ? author + " · " : "") + "Resolved";
+        // A real disclosure chevron that rotates on expand — one icon,
+        // one width, no glyph-swap wobble.
+        summary.prepend(svgIcon("chevron", "pm-summary-chevron"));
         summary.setAttribute("aria-expanded", "false");
         summary.addEventListener("click", function () {
           var collapsed = box.classList.toggle("pm-thread-collapsed");
@@ -3481,10 +3525,8 @@
       // Only real verdicts get a glyph — a "reviewed" line with a dot
       // in front reads as an artifact, not an icon.
       if (entry.kind === "approved" || entry.kind === "changes_requested") {
-        var icon = document.createElement("span");
-        icon.className = "pm-verdict-icon";
-        icon.textContent = entry.kind === "approved" ? "✓" : "±";
-        verdict.append(icon);
+        verdict.append(svgIcon(entry.kind === "approved"
+          ? "check-circle" : "plusminus-circle", "pm-verdict-icon"));
       }
       var text = document.createElement("span");
       // The verdict line owns author + date — the card byline beneath
