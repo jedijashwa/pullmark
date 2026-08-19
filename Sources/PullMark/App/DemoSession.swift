@@ -40,6 +40,39 @@ enum DemoSession {
     static let exportFormatsPath = "docs/export-formats.md"
     static let firmwarePath = "firmware/anemometer.cpp"
 
+    /// A local-only draft carrying margin notes — the agent-review loop
+    /// the feature was built for, ready for screenshots. Deliberately
+    /// NOT in headTexts: it must never leak into the PR fixture, whose
+    /// diffs and cockpit are curated separately.
+    static let siteSurveyDraft = """
+    # Site Survey Guide (draft)
+
+    Where you mount the pod decides what your numbers mean. This guide
+    walks a new site from "looks fine" to measured, repeatable placement.
+
+    <!-- note @sam-ortega: Draft for the 1.3 docs — leaving placement notes inline, address and delete as you go. -->
+
+    ## Picking a spot
+
+    Radiation shields help, but nothing rescues a sensor mounted over
+    asphalt. Grass or gravel below, two meters of clearance around, and
+    morning sun exposure make a defensible default.
+
+    <!-- note @elena-fisk: "defensible default" reads like legal copy — say what the tradeoff actually is. -->
+
+    ## Height and clearance
+
+    Mount the pod at 1.5 m for garden sites and 2 m for rooftops. Keep
+    the anemometer arm above the roofline's turbulence layer — a rule of
+    thumb is 1.3× the height of the nearest obstruction.
+
+    ## Recording the survey
+
+    Photograph the site from all four compass points and log the mount
+    height in the station's site profile. Future you, comparing a
+    suspicious trend, will want to know exactly what changed and when.
+    """
+
     static let gettingStartedBase = """
     # Getting Started
 
@@ -674,8 +707,13 @@ enum DemoSession {
         try? FileManager.default.removeItem(at: root)
         try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         var docs: [LocalFile] = []
+        var texts = [(path: String, text: String)]()
         for path in [gettingStartedPath, calibrationPath, exportFormatsPath] {
             guard let text = headTexts[path] else { continue }
+            texts.append((path, text))
+        }
+        texts.append(("docs/site-survey-draft.md", siteSurveyDraft))
+        for (path, text) in texts {
             let name = (path as NSString).lastPathComponent
             let url = root.appendingPathComponent(name)
             guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil
