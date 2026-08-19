@@ -901,7 +901,7 @@ struct GitHubConnectionSection: View {
             }
             .settingAnchor("github")
 
-            Text("PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own and never stores a secret. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)")
+            Text("PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -932,11 +932,12 @@ struct GitHubConnectionSection: View {
                     .foregroundStyle(.secondary)
             }
         case .notConnected:
+            // Just the fact: the top-of-tab alert and the footer below
+            // both carry the consequence, and the row stays one line
+            // like every other LabeledContent (design-review catch).
             HStack(spacing: 6) {
                 Circle().fill(.orange).frame(width: 7, height: 7)
                 Text("Not connected")
-                Text("· private repos and reviewing unavailable")
-                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -948,9 +949,27 @@ struct GitHubConnectionSection: View {
 /// duplicating its controls. Invisible whenever connected or checking.
 struct GitHubNotConnectedAlert: View {
     @ObservedObject private var connection = GitHubClient.shared.connection
+    /// Sticky through rechecks: a failed Check Again passes through
+    /// .checking, and the alert vanishing-then-snapping-back would
+    /// shift every row under the cursor (design-review catch). Only a
+    /// real connect clears it.
+    @State private var showing = false
 
     var body: some View {
-        if connection.status == .notConnected {
+        content
+            .onAppear { showing = connection.status == .notConnected }
+            .onChange(of: connection.status) { status in
+                switch status {
+                case .connected: showing = false
+                case .notConnected: showing = true
+                case .checking: break
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if showing {
             Section {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")

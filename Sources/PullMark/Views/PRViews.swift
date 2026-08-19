@@ -24,6 +24,8 @@ struct PROverviewView: View {
         var unavailable = false
     }
     @State private var pendingScrollFraction: Double?
+    /// The signed-out cue's walkthrough (spec: github-connection).
+    @State private var showGitHubSetup = false
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
@@ -232,17 +234,21 @@ struct PROverviewView: View {
             if let cockpit = session.cockpit {
                 PRCockpitRow(cockpit: cockpit, prURL: session.details.htmlUrl)
             } else if !connection.isConnected {
+                // Same label, same outcome as everywhere else: Set Up…
+                // opens the walkthrough directly (design-review catch —
+                // a jump to Settings would strand the user in front of
+                // an identically labeled button).
                 HStack(spacing: 6) {
                     Image(systemName: "person.crop.circle.badge.xmark")
                         .foregroundStyle(.secondary)
-                    Text("Viewing signed out — commenting and reviewing are off")
+                    Text("Viewing signed out — commenting and reviewing are unavailable")
                         .foregroundStyle(.secondary)
-                    Button("Set Up…") {
-                        SettingsOpener.open(tab: "general", anchor: "github")
-                    }
-                    .buttonStyle(.link)
+                    Button("Set Up…") { showGitHubSetup = true }
+                        .buttonStyle(.link)
+                        .help("Walk through connecting PullMark to GitHub")
                 }
                 .font(.callout)
+                .sheet(isPresented: $showGitHubSetup) { GitHubSetupSheet() }
             }
             Text(filesSummary(session))
                 .font(.callout)
