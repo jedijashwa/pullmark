@@ -19,7 +19,7 @@ struct PRCockpitRow: View {
     let prURL: URL
 
     var body: some View {
-        let summary = ChecksSummary.classify(cockpit.checks)
+        let summary = cockpit.checksSummary
         HStack(spacing: 8) {
             if let decision = cockpit.reviewDecision {
                 ReviewDecisionCapsule(decision: decision)
@@ -383,25 +383,34 @@ private struct TeamChip: View {
 /// Avatar with the app's standard fallback: remote image when a URL is
 /// on hand (demo mode routes data-URIs through the same pipeline),
 /// else the deterministic initials circle (same hash → same hue as the
-/// page's blame initials).
+/// page's blame initials). Fetches ride an ephemeral session by
+/// standing policy — AsyncImage would write real reviewers' avatars
+/// into the shared on-disk URLCache (code-review catch).
 private struct CockpitAvatar: View {
     let name: String
     let url: URL?
 
+    @State private var image: NSImage?
+
+    private static let session = URLSession(configuration: .ephemeral)
+
     var body: some View {
         Group {
-            if let url {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    initials
-                }
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
             } else {
                 initials
             }
         }
         .frame(width: 22, height: 22)
         .clipShape(Circle())
+        .task(id: url) {
+            guard let url else { image = nil; return }
+            let data = try? await Self.session.data(from: url).0
+            image = data.flatMap(NSImage.init(data:))
+        }
     }
 
     private var initials: some View {

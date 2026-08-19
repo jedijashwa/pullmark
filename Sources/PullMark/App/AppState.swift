@@ -1850,7 +1850,20 @@ final class AppState: ObservableObject {
             let (comments, freshTag) = try await client.issueCommentsIfChanged(ref, etag: etag)
             let reviews = try await client.reviews(ref)
             guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-            if let comments { prSessions[index].issueComments = comments }
+            if let comments {
+                // The list endpoint lags fresh writes (0.31.0 lesson): a
+                // comment folded in during this fetch can be missing from
+                // the response, and replacing wholesale would make the
+                // user watch their own comment vanish. Ids ascend, so
+                // the lag window is identifiable — keep local comments
+                // newer than everything the server returned; genuine
+                // deletions (older ids) still drop.
+                let maxFetched = comments.map(\.id).max() ?? 0
+                let lagging = prSessions[index].issueComments.filter { local in
+                    local.id > maxFetched
+                }
+                prSessions[index].issueComments = comments + lagging
+            }
             prSessions[index].conversationETag = freshTag
             prSessions[index].reviews = reviews
             prSessions[index].conversationUnavailable = false
@@ -1912,7 +1925,6 @@ final class AppState: ObservableObject {
             }
             prSessions[index].commentsUnavailable = commentsUnavailable
             prSessions[index].updateAvailable = false
-            await refreshCockpit(sessionID: sessionID)
             if headMoved {
                 // Queued anchors are per-head; the old head's queue stays on
                 // disk under its own key rather than mis-anchoring here.
@@ -1927,6 +1939,11 @@ final class AppState: ObservableObject {
                 prSessions[current].commentsUnavailable = true
             }
             await syncPendingComments(sessionID: sessionID)
+            // Last: refreshCockpit suspends across several round trips,
+            // and `index` above must never be used past an await — a
+            // session closed mid-refresh would corrupt another session's
+            // queue through the stale index (code-review catch).
+            await refreshCockpit(sessionID: sessionID)
         } catch {
             lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
         }

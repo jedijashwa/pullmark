@@ -165,6 +165,32 @@ struct PRCockpitState: Equatable {
     /// True context count on the head commit; the query fetches 50 —
     /// the popover footer says "and N more on GitHub" past that.
     var checksTotal: Int = 0
+    /// GitHub's own rollup verdict (StatusState). Authoritative when
+    /// the context list is truncated — a failure past the 50-node
+    /// cutoff must never render a green capsule (code-review catch).
+    var rollupState: String?
+
+    /// The capsule's summary: classified from the fetched rows when
+    /// they are the whole story, from GitHub's rollup verdict when the
+    /// list is truncated.
+    var checksSummary: ChecksSummary {
+        guard checksTotal > checks.count, let rollupState else {
+            return ChecksSummary.classify(checks)
+        }
+        let failing = checks.filter { $0.state == .failed }.count
+        let skipped = checks.filter { $0.state == .skipped }.count
+        let moving = checks.filter { $0.state == .running || $0.state == .queued }.count
+        switch rollupState {
+        case "FAILURE", "ERROR":
+            return .failed(failing: max(failing, 1), total: checksTotal)
+        case "PENDING", "EXPECTED":
+            return .running(done: checksTotal - max(moving, 1), total: checksTotal)
+        case "SUCCESS":
+            return .passed(passed: checksTotal - skipped, skipped: skipped)
+        default:
+            return ChecksSummary.classify(checks)
+        }
+    }
 }
 
 // MARK: - Conversation timeline
