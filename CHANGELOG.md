@@ -4,6 +4,21 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Margin notes graduated from alpha to beta — and they're on by
+  default now.** Comment on any local Markdown document the way you'd
+  comment on a PR: hover a block for the bubble, ⌥⌘M, notes saved
+  into the file itself where agents can read and resolve them. The
+  first time you reach for the feature, PullMark introduces it — what
+  notes are, a one-click copy of the agent-instructions snippet, and
+  a Turn Off button right there if it's not for you. Anyone who
+  already made a choice during the alpha keeps it, uninterrupted.
+  The section now sits directly in Settings → Experimental (no more
+  "Show alpha features" detour) wearing its BETA badge, and the
+  [published deep link](pullmark://settings/experimental/margin-notes)
+  still lands on it.
+
 ## 0.34.0 - 2026-08-19
 
 - **The PR overview now shows where the pull request stands.** The
