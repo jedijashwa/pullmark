@@ -22,6 +22,9 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/PullMark "$APP/Contents/MacOS/PullMark"
 cp -R .build/release/PullMark_PullMark.bundle "$APP/Contents/Resources/"
 cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# License notices ship with every distribution (MIT/BSD terms).
+cp LICENSE "$APP/Contents/Resources/LICENSE"
+cp ACKNOWLEDGMENTS.md "$APP/Contents/Resources/ACKNOWLEDGMENTS.md"
 # The `pullmark` shell command: lives inside the bundle so it ships (and
 # is signed) with the app; the Homebrew cask's binary stanza symlinks it
 # into the brew prefix.
@@ -75,6 +78,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
     <string>13.0</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 PullMark contributors · MIT License</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>

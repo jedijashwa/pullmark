@@ -104,6 +104,40 @@ struct PullMarkApp: App {
         Divider()
     }
 
+    /// The standard About panel, with credits the default item lacks:
+    /// the website and the open-source acknowledgments (the vendored
+    /// renderers' license notices also ship in the bundle's Resources).
+    /// Copyright is passed explicitly so `swift run` (no Info.plist)
+    /// shows the same line the bundle does.
+    static func presentAboutPanel() {
+        let credits = NSMutableAttributedString()
+        let center = NSMutableParagraphStyle()
+        center.alignment = .center
+        func link(_ title: String, _ url: String) -> NSAttributedString {
+            NSAttributedString(string: title, attributes: [
+                .link: URL(string: url)!,
+                .font: NSFont.systemFont(ofSize: 11),
+                .paragraphStyle: center,
+            ])
+        }
+        func plain(_ text: String) -> NSAttributedString {
+            NSAttributedString(string: text, attributes: [
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.secondaryLabelColor,
+                .paragraphStyle: center,
+            ])
+        }
+        credits.append(link("pullmark.app", "https://pullmark.app"))
+        credits.append(plain("  ·  "))
+        credits.append(link("Open Source Licenses", "https://pullmark.app/licenses/"))
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: [
+            .credits: credits,
+            NSApplication.AboutPanelOptionKey(rawValue: "Copyright"):
+                "© 2026 PullMark contributors · MIT License",
+        ])
+    }
+
     private func open(_ urlString: String) {
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
@@ -147,6 +181,9 @@ struct PullMarkApp: App {
         // First-launch window size (returning windows restore their own).
         .defaultSize(width: 1317, height: 698)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About PullMark") { Self.presentAboutPanel() }
+            }
             CommandGroup(after: .appInfo) {
                 // An alert, not the focused window's error state: the
                 // result must land even when Settings is key or no window
