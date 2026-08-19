@@ -1,5 +1,24 @@
 import Foundation
 
+/// The pure rules behind auth healing (spec: github-connection),
+/// extracted so tests can pin them (adversarial-review catch).
+enum GitHubAuthRules {
+    /// One subprocess re-probe per burst: true when the debounce
+    /// window has passed since the last automatic re-resolution.
+    static func shouldReprobe(now: Date, last: Date,
+                              interval: TimeInterval = 30) -> Bool {
+        now.timeIntervalSince(last) > interval
+    }
+
+    /// Auth-shaped failures get setup affordances: 401 always; 404
+    /// only while signed out (GitHub answers 404 for private-without-
+    /// auth, and a signed-out 404 is far more likely "private" than
+    /// "typo"). Rate-limit 403s are never auth-shaped.
+    static func isAuthShaped(status: Int, signedOut: Bool) -> Bool {
+        status == 401 || (status == 404 && signedOut)
+    }
+}
+
 /// Observable GitHub connection state (spec: github-connection) — what
 /// the Settings status row, the setup sheet, and the PR overview's
 /// signed-out cue render. The client owns the truth and reports here;

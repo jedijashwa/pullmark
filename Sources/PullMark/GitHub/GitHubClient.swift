@@ -17,6 +17,14 @@ final class GitHubClient {
     /// failure: one subprocess round per 30s burst, not per failing
     /// call (spec: github-connection).
     private var lastAutoReresolve = Date.distantPast
+    /// Bumped whenever the token cache is invalidated or the token
+    /// changes: in-flight viewer fetches from an older identity check
+    /// it before writing, so account A's login can never land in a
+    /// cache that now belongs to account B (adversarial-review catch).
+    private var authGeneration = 0
+    /// Settings' onAppear and the sheet can both ask at once — one
+    /// subprocess round serves them all.
+    private var recheckInFlight = false
     /// Cached only on success — a transient resolution failure must retry
     /// on the next call, never latch into "no viewer" for the whole
     /// session (that silently disabled pending-review adoption).
@@ -51,32 +59,79 @@ final class GitHubClient {
             return nil
         }
         if !tokenResolved {
-            let resolved = await Task.detached(priority: .userInitiated) {
-                SystemGitCredentials.resolveToken()
-            }.value
-            cachedToken = resolved?.token
-            cachedSource = resolved?.source
-            tokenResolved = true
-            publishConnectionStatus()
+            await resolveNow()
+        } else if cachedToken == nil,
+                  GitHubAuthRules.shouldReprobe(now: Date(), last: lastAutoReresolve) {
+            // A latched signed-out state re-probes on the debounce
+            // cadence: unauthenticated GraphQL throws a synthesized 401
+            // BEFORE any HTTP happens, so the request-level retry can
+            // never heal it (adversarial-review MUST) — this branch is
+            // what makes "gh auth login, then it just works" true, at
+            // worst one 60s tick later.
+            lastAutoReresolve = Date()
+            await resolveNow()
         }
         return cachedToken
     }
 
+    private func resolveNow() async {
+        let resolved = await Task.detached(priority: .userInitiated) {
+            SystemGitCredentials.resolveToken()
+        }.value
+        if resolved?.token != cachedToken {
+            // The identity behind the token changed (or vanished) —
+            // a cached viewer from the old token must not survive it.
+            cachedViewer = nil
+            authGeneration += 1
+        }
+        cachedToken = resolved?.token
+        cachedSource = resolved?.source
+        tokenResolved = true
+        if resolved != nil {
+            // Success resets the debounce (spec) so a follow-up failure
+            // isn't stuck waiting out a window the success already used.
+            lastAutoReresolve = .distantPast
+        }
+        publishConnectionStatus()
+    }
+
     /// Settings' Check Again and the setup sheet: throw away the cached
-    /// token and viewer, resolve fresh, and report — the cure for the
-    /// old once-per-launch latch. Connecting mid-session (gh auth login,
-    /// then Check Again) works without a relaunch.
+    /// token and viewer, resolve fresh, VERIFY the token against the
+    /// API, and report — the cure for the old once-per-launch latch.
+    /// Verification matters: an expired keychain PAT still *resolves*,
+    /// and a green "Connected" over a dead token is a lie
+    /// (adversarial-review MUST).
     func recheck() async {
         if DemoMode.active {
             connection.reportDemoFiction()
             return
         }
+        if recheckInFlight { return }
+        recheckInFlight = true
+        defer { recheckInFlight = false }
         connection.beginChecking()
         invalidateAuth()
-        if await authToken() != nil {
-            // Enrich the row with the login (also re-primes the viewer
-            // cache that invalidation dropped).
-            _ = await viewerIdentity()
+        guard await authToken() != nil else { return }  // published notConnected
+        let generation = authGeneration
+        let probe = await probeViewer()
+        // The auth world may have moved during the probe (a concurrent
+        // 401-triggered re-resolve): stale verdicts must not overwrite it.
+        guard generation == authGeneration else { return }
+        switch probe {
+        case .identity(let viewer):
+            cachedViewer = viewer
+            publishConnectionStatus()
+        case .unauthorized:
+            // GitHub rejected the resolved token. Clear it so the row
+            // says Not connected and callers fall into the signed-out
+            // paths (which re-probe on the debounce cadence).
+            cachedToken = nil
+            cachedSource = nil
+            publishConnectionStatus()
+        case .transient:
+            // Network blip — stay connected(login: nil); the next
+            // successful viewer fetch fills the name in.
+            break
         }
     }
 
@@ -85,6 +140,7 @@ final class GitHubClient {
         cachedToken = nil
         cachedSource = nil
         cachedViewer = nil
+        authGeneration += 1
     }
 
     private func publishConnectionStatus() {
@@ -99,7 +155,9 @@ final class GitHubClient {
     /// and the caller should retry once.
     private func reresolveForAuthFailure() async -> Bool {
         guard !DemoMode.active else { return false }
-        guard Date().timeIntervalSince(lastAutoReresolve) > 30 else { return false }
+        guard GitHubAuthRules.shouldReprobe(now: Date(), last: lastAutoReresolve) else {
+            return false
+        }
         lastAutoReresolve = Date()
         let before = cachedToken
         invalidateAuth()
@@ -787,8 +845,16 @@ final class GitHubClient {
         }.count
     }
 
-    func viewerIdentity() async -> ViewerIdentity? {
-        if let cachedViewer { return cachedViewer }
+    /// What a viewer fetch actually told us — recheck() needs to tell
+    /// "GitHub rejected this token" (show Not connected) apart from
+    /// "the network blipped" (stay connected, nameless).
+    private enum ViewerProbe {
+        case identity(ViewerIdentity)
+        case unauthorized
+        case transient
+    }
+
+    private func probeViewer() async -> ViewerProbe {
         struct Response: Decodable {
             struct DataBox: Decodable { let viewer: Viewer? }
             struct Viewer: Decodable {
@@ -802,22 +868,39 @@ final class GitHubClient {
         // The email field needs the user:email/read:user scope, which gh
         // tokens frequently lack — fall back to a scope-free query (the
         // noreply-address match still identifies the viewer's commits).
-        var viewer: Response.Viewer?
+        // Scope errors arrive as status-200 envelope errors, so they
+        // fall through to the next query, never read as unauthorized.
         for query in ["query { viewer { login name email avatarUrl } }",
                       "query { viewer { login name avatarUrl } }"] {
-            if let data = try? await graphQL(query, variables: [:]),
-               let decoded = try? JSONDecoder().decode(Response.self, from: data).data?.viewer {
-                viewer = decoded
-                break
+            do {
+                let data = try await graphQL(query, variables: [:])
+                if let viewer = try? JSONDecoder().decode(Response.self, from: data).data?.viewer {
+                    return .identity(ViewerIdentity(
+                        login: viewer.login, name: viewer.name,
+                        email: viewer.email, avatarUrl: viewer.avatarUrl))
+                }
+            } catch let error as GitHubClient.APIError where error.status == 401 {
+                return .unauthorized
+            } catch {
+                // Envelope error or transport blip — try the next form.
             }
         }
-        guard let viewer else { return nil }
-        cachedViewer = ViewerIdentity(login: viewer.login, name: viewer.name,
-                                      email: viewer.email, avatarUrl: viewer.avatarUrl)
+        return .transient
+    }
+
+    func viewerIdentity() async -> ViewerIdentity? {
+        if let cachedViewer { return cachedViewer }
+        let generation = authGeneration
+        guard case .identity(let viewer) = await probeViewer() else { return nil }
+        // An invalidation happened while the fetch was in flight: this
+        // identity belongs to the OLD token — return it to the caller
+        // that asked, but never let it poison the cache or the row.
+        guard generation == authGeneration else { return viewer }
+        cachedViewer = viewer
         // The connection row upgrades from "Connected · <source>" to
         // "Connected as <login> · <source>" the moment identity lands.
         publishConnectionStatus()
-        return cachedViewer
+        return viewer
     }
 
     /// Latest commits that touched a repo file at a commit (GraphQL; the
@@ -1262,6 +1345,7 @@ final class GitHubClient {
                          query: [URLQueryItem] = [],
                          accept: String = "application/vnd.github+json",
                          jsonBody: Data? = nil) async throws -> Data {
+        let tokenUsed = await authToken()
         do {
             let (data, http) = try await perform(method, path, query: query,
                                                  accept: accept, jsonBody: jsonBody)
@@ -1269,10 +1353,20 @@ final class GitHubClient {
         } catch let error as APIError where error.status == 401 {
             // 401 only — a 403 is rate limiting, not auth, and must
             // never trigger subprocess re-resolution. GraphQL rides
-            // this same path (POST /graphql). The conditional-GET
-            // family doesn't retry; its callers re-tick within 60s and
-            // benefit from the refreshed token here.
-            guard await reresolveForAuthFailure() else { throw error }
+            // this same path (POST /graphql). Retrying a 401'd write is
+            // safe: GitHub rejected it at the auth door, so it never
+            // happened. The conditional-GET family doesn't retry; its
+            // callers re-tick within 60s and benefit from the
+            // refreshed token here.
+            //
+            // A parallel burst (a PR open fires ~6 requests) heals as a
+            // unit: one caller wins the debounced re-resolve, the rest
+            // notice the token already changed and retry without their
+            // own subprocess round (adversarial-review catch).
+            if await authToken() == tokenUsed {
+                guard await reresolveForAuthFailure() else { throw error }
+            }
+            guard await authToken() != tokenUsed else { throw error }
             let (data, http) = try await perform(method, path, query: query,
                                                  accept: accept, jsonBody: jsonBody)
             return try await validate(data, http)

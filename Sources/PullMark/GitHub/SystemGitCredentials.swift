@@ -25,13 +25,30 @@ enum SystemGitCredentials {
     /// env hook; spec: github-connection). "1" = signed out (gh
     /// detection stays real, so the sheet shows its sign-in step);
     /// "nogh" = also pretend gh isn't installed (the install step).
+    enum TestHookMode {
+        case none, signedOut, noCLI
+    }
+
+    /// Pure parse so tests can pin it: unknown values are OFF —
+    /// a typo'd hook must never silently sign a real user out.
+    static func testHookMode(_ raw: String?) -> TestHookMode {
+        switch raw {
+        case "1": return .signedOut
+        case "nogh": return .noCLI
+        default: return .none
+        }
+    }
+
+    private static var hookMode: TestHookMode {
+        testHookMode(ProcessInfo.processInfo.environment["PM_NO_CREDENTIALS"])
+    }
+
     static var credentialsDisabled: Bool {
-        let value = ProcessInfo.processInfo.environment["PM_NO_CREDENTIALS"]
-        return value == "1" || value == "nogh"
+        hookMode != .none
     }
 
     private static var pretendNoCLI: Bool {
-        ProcessInfo.processInfo.environment["PM_NO_CREDENTIALS"] == "nogh"
+        hookMode == .noCLI
     }
 
     static func resolveToken(host: String = "github.com") -> (token: String, source: Source)? {

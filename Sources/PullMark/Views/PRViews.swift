@@ -202,6 +202,12 @@ struct PROverviewView: View {
                                                 onConfirm: { threadActions.deleteComment($0) }))
             .modifier(DeleteCommentConfirmation(commentID: $deleteConversationID,
                                                 onConfirm: { threadActions.deleteConversationComment($0) }))
+            // On the stable root, NOT the cue row: connecting from
+            // inside the sheet removes the cue from the hierarchy, and
+            // a sheet attached there would be torn down at the exact
+            // moment it wants to show "Connected ✓"
+            // (adversarial-review catch).
+            .sheet(isPresented: $showGitHubSetup) { GitHubSetupSheet() }
         } else {
             EmptyView()
         }
@@ -233,11 +239,12 @@ struct PROverviewView: View {
             // demo reports the signed-in fiction, so never there).
             if let cockpit = session.cockpit {
                 PRCockpitRow(cockpit: cockpit, prURL: session.details.htmlUrl)
-            } else if !connection.isConnected {
-                // Same label, same outcome as everywhere else: Set Up…
-                // opens the walkthrough directly (design-review catch —
-                // a jump to Settings would strand the user in front of
-                // an identically labeled button).
+            } else if connection.status == .notConnected {
+                // .notConnected exactly — a connected user's cockpit
+                // blip during a .checking pass must not flash a false
+                // "signed out" (adversarial-review catch). Same label,
+                // same outcome as everywhere else: Set Up… opens the
+                // walkthrough directly (design-review catch).
                 HStack(spacing: 6) {
                     Image(systemName: "person.crop.circle.badge.xmark")
                         .foregroundStyle(.secondary)
@@ -248,7 +255,6 @@ struct PROverviewView: View {
                         .help("Walk through connecting PullMark to GitHub")
                 }
                 .font(.callout)
-                .sheet(isPresented: $showGitHubSetup) { GitHubSetupSheet() }
             }
             Text(filesSummary(session))
                 .font(.callout)
@@ -1278,7 +1284,12 @@ struct AddPRSheet: View {
     @State private var input = ""
     @State private var busy = false
     @State private var error: String?
+    /// HTTP status behind `error`, when the failure was an APIError —
+    /// gates the setup affordance to auth-shaped failures only (a URL
+    /// typo while signed out must not pitch GitHub setup).
+    @State private var errorStatus: Int?
     @State private var showSetup = false
+    @ObservedObject private var connection = GitHubClient.shared.connection
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1305,9 +1316,13 @@ struct AddPRSheet: View {
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
                     .frame(maxWidth: 420, alignment: .leading)
-                // Signed out explains most failures — offer the fix at
-                // the moment of the wall (spec: github-connection).
-                if !GitHubClient.shared.connection.isConnected {
+                // Auth-shaped failures only: 401 always, 404 while
+                // signed out (private-without-auth reads as 404) —
+                // offer the fix at the moment of the wall.
+                if let status = errorStatus,
+                   GitHubAuthRules.isAuthShaped(
+                       status: status,
+                       signedOut: connection.status == .notConnected) {
                     Button("Set Up GitHub Access…") { showSetup = true }
                 }
             }
@@ -1330,12 +1345,14 @@ struct AddPRSheet: View {
     private func add() {
         busy = true
         error = nil
+        errorStatus = nil
         Task {
             do {
                 try await state.addPR(input)
                 dismiss()
             } catch {
                 self.error = error.localizedDescription
+                self.errorStatus = (error as? GitHubClient.APIError)?.status
             }
             busy = false
         }

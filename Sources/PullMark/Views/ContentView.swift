@@ -12,6 +12,9 @@ struct ContentView: View {
     /// customization pool entirely while the feature is off.
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
     @Environment(\.controlActiveState) private var controlActiveState
+    /// The error alert's setup affordance (spec: github-connection).
+    @ObservedObject private var connection = GitHubClient.shared.connection
+    @State private var showGitHubSetup = false
 
     var body: some View {
         NavigationSplitView {
@@ -91,10 +94,19 @@ struct ContentView: View {
                               markdown: updates.historyMarkdown)
         }
         .alert("Something went wrong", isPresented: errorPresented) {
+            // Signed out, most failures ARE the missing connection —
+            // recents, inbox, restore, and deep-link opens all land
+            // here, and the fix should too (spec: github-connection).
+            // lastError carries no HTTP status, so signed-out is the
+            // whole gate; connected users never see the button.
+            if connection.status == .notConnected {
+                Button("Set Up GitHub Access…") { showGitHubSetup = true }
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(state.lastError ?? "")
         }
+        .sheet(isPresented: $showGitHubSetup) { GitHubSetupSheet() }
         .alert(state.lastNotice ?? "", isPresented: noticePresented) {
             Button("OK", role: .cancel) {}
         }
