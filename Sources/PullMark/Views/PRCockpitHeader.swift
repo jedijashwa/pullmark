@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// Capsule "attention" color: `Color.yellow` text on a light tint is
+/// ~1.5:1 contrast (design-review catch) — GitHub's attention palette
+/// pairs a pale yellow field with dark amber text, and so does this.
+private let capsuleAmber = Color(nsColor: NSColor(name: nil) { appearance in
+    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        ? NSColor(red: 0.83, green: 0.65, blue: 0.17, alpha: 1)   // #D4A72C
+        : NSColor(red: 0.60, green: 0.40, blue: 0.00, alpha: 1)   // #9A6700
+})
+
 /// The cockpit row in the PR overview header (spec: pr-cockpit):
 /// review-decision capsule, checks capsule with its per-check popover,
 /// and the reviewer strip. Renders nothing until the first cockpit
@@ -61,7 +70,7 @@ private struct ReviewDecisionCapsule: View {
         switch decision {
         case .approved: return .green
         case .changesRequested: return .red
-        case .reviewRequired: return .yellow
+        case .reviewRequired: return capsuleAmber
         }
     }
 }
@@ -88,11 +97,16 @@ private struct ChecksCapsule: View {
                     Image(systemName: symbol)
                 }
                 Text(label)
+                // The capsule opens a popover and its inert neighbor
+                // doesn't — the disclosure chevron earns the click
+                // (the compare button's own idiom).
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
             }
             .font(.caption.bold())
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(color.opacity(0.18), in: Capsule())
+            .background(tint.opacity(0.18), in: Capsule())
             .foregroundStyle(color)
         }
         .buttonStyle(.plain)
@@ -139,11 +153,18 @@ private struct ChecksCapsule: View {
     private var color: Color {
         switch summary {
         case .failed: return .red
-        case .running: return .yellow
+        case .running: return capsuleAmber
         case .awaitingApproval: return .gray
         case .passed: return .green
         case .none: return .secondary
         }
+    }
+
+    /// The capsule field keeps the familiar hue even where the text
+    /// needed the darker amber — amber at 18% reads muddy.
+    private var tint: Color {
+        if case .running = summary { return .yellow }
+        return color
     }
 }
 
@@ -276,11 +297,17 @@ private struct ReviewerStrip: View {
                         StateBadge(approved: reviewer.approved)
                     }
                     .help(reviewerHelp(reviewer))
+                    // The strip's whole point — who approved, who
+                    // blocked — must reach VoiceOver, not just color.
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(reviewer.login), \(reviewer.approved ? "approved" : "requested changes")")
             }
             ForEach(shownRequests) { request in
                 if request.isTeam {
                     TeamChip(name: request.name)
                         .help("Review requested from \(request.name)")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(request.name) team, review requested")
                 } else {
                     CockpitAvatar(name: request.name, url: request.avatarUrl)
                         .opacity(0.45)
@@ -288,12 +315,15 @@ private struct ReviewerStrip: View {
                             AwaitingBadge()
                         }
                         .help("Awaiting review from \(request.name)")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(request.name), awaiting review")
                 }
             }
             if overflow > 0 {
                 Text("+\(overflow)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel("\(overflow) more reviewer\(overflow == 1 ? "" : "s")")
             }
         }
     }
@@ -325,9 +355,11 @@ private struct StateBadge: View {
 
 private struct AwaitingBadge: View {
     var body: some View {
-        Image(systemName: "circle.dotted")
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(.secondary)
+        // A solid pending dot — GitHub's own marker; the dotted ring
+        // read as a broken image at badge size (design-review catch).
+        Image(systemName: "circle.fill")
+            .font(.system(size: 7, weight: .bold))
+            .foregroundStyle(capsuleAmber)
             .background(Circle().fill(Color(nsColor: .windowBackgroundColor))
                 .frame(width: 11, height: 11))
             .offset(x: 2, y: 2)

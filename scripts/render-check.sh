@@ -238,7 +238,7 @@ conversation_check() {
   fi
 }
 conversation_check "conversation section"    '<section class="pm-conversation pm-annotation">'
-conversation_check "entry count headline"    '4 entries'
+conversation_check "state count headline"    '2 reviews · 2 comments'
 conversation_check "comment card body"       'Ready for a look\.'
 conversation_check "verdict line with date"  'riley-chen requested changes · Aug 19, 2026'
 conversation_check "verdict summary body"    'The install section needs a pass\.'

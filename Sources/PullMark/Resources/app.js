@@ -1724,13 +1724,23 @@
     comment.className = "pm-thread-comment";
     var head = document.createElement("div");
     head.className = "pm-thread-head";
-    head.textContent = c.author + (c.dateLabel ? " · " + c.dateLabel : "");
     // Conversation cards carry avatars (spec: pr-cockpit); thread cards
     // stay text-only — their headers already carry line labels and
     // actions, and a face per excerpt would crowd them.
     if (c.source === "conversation") {
-      head.prepend(conversationAvatarEl(c.author, c.avatarUrl));
+      head.append(conversationAvatarEl(c.author, c.avatarUrl));
     }
+    var authorEl = document.createElement("span");
+    authorEl.textContent = c.author;
+    head.append(authorEl);
+    // The bot tag annotates the NAME, not the date — GitHub's order.
+    if (c.bot) {
+      var botTag = document.createElement("span");
+      botTag.className = "pm-bot-tag";
+      botTag.textContent = "bot";
+      head.append(botTag);
+    }
+    head.append(document.createTextNode(c.dateLabel ? " · " + c.dateLabel : ""));
     if (c.edited) {
       var edited = document.createElement("span");
       edited.className = "pm-edited";
@@ -1948,9 +1958,31 @@
     el.style.top = Math.round(top) + "px";
   }
 
+  // Popups must never run off the window's sides either — the overview's
+  // full-width cards put the smiley at the content's right edge, where
+  // the picker's natural position clips (design-review catch). Clamp
+  // into the viewport after the vertical fit decides the row.
+  function fitPopupHorizontally(el) {
+    var margin = 8;
+    var parent = el.offsetParent;
+    var parentLeft = parent ? parent.getBoundingClientRect().left : 0;
+    var rect = el.getBoundingClientRect();
+    var over = rect.right - (window.innerWidth - margin);
+    if (over > 0) {
+      el.style.right = "auto";
+      el.style.left = Math.round(rect.left - parentLeft - over) + "px";
+      rect = el.getBoundingClientRect();
+    }
+    if (rect.left < margin) {
+      el.style.right = "auto";
+      el.style.left = Math.round(margin - parentLeft) + "px";
+    }
+  }
+
   function showTransientPopup(el, anchor) {
     closeTransientPopup();
     fitPopupVertically(el, anchor);
+    fitPopupHorizontally(el);
     var p = { el: el, anchor: anchor };
     p.onAway = function (event) {
       if (el.contains(event.target) || event.target === anchor
@@ -3448,10 +3480,11 @@
         + (c.dateLabel ? " · " + c.dateLabel : "");
       verdict.append(text);
       box.append(verdict);
-      var hasChips = c.id && ((c.reactions && c.reactions.length) || c.canReact);
       // A verdict with no summary is complete as a headline — no empty
-      // body beneath it (APPROVED usually says nothing); the reaction
-      // bar still attaches when it can.
+      // body beneath it (APPROVED usually says nothing). Only REAL
+      // chips earn the comment shell; a canReact-only shell renders as
+      // a dead band under a rule, which reads as a failed load.
+      var hasChips = c.id && c.reactions && c.reactions.length;
       if (!(c.body || "").trim() && !hasChips) { return box; }
       var reviewComment = commentEl(c);
       if (!(c.body || "").trim()) {
@@ -3461,15 +3494,7 @@
       box.append(reviewComment);
       return box;
     }
-    var comment = commentEl(c);
-    if (c.bot) {
-      var tag = document.createElement("span");
-      tag.className = "pm-bot-tag";
-      tag.textContent = "bot";
-      var head = comment.querySelector(".pm-thread-head");
-      if (head) { head.append(tag); }
-    }
-    box.append(comment);
+    box.append(commentEl(c));
     return box;
   }
 
@@ -3543,10 +3568,17 @@
     heading.className = "pm-discussion-heading";
     heading.textContent = "Conversation";
     if (entries.length) {
+      // The count carries state, not arithmetic — "5 entries" counts
+      // what's already visible; reviews vs comments says what kind of
+      // conversation this is (design-review catch).
+      var reviews = entries.filter(function (e) { return e.kind !== "comment"; }).length;
+      var comments = entries.length - reviews;
+      var parts = [];
+      if (reviews) { parts.push(reviews + " review" + (reviews === 1 ? "" : "s")); }
+      if (comments) { parts.push(comments + " comment" + (comments === 1 ? "" : "s")); }
       var count = document.createElement("span");
       count.className = "pm-discussion-count";
-      count.textContent = entries.length + (entries.length === 1
-        ? " entry" : " entries");
+      count.textContent = parts.join(" · ");
       heading.append(count);
     }
     section.append(heading);
