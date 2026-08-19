@@ -29,9 +29,10 @@ notes; it needs the feature to be reachable out of the box.
   switch and is always visible in Settings ▸ Experimental, wearing the
   purple **BETA** badge. `alphaFeatureCount` 1→0,
   `betaFeatureCount` 0→1.
-- The "Show alpha features" switch stays; with the roster now empty at
-  that level, flipping it on shows a quiet "no alpha features right
-  now" note instead of a section.
+- The "Show alpha features" switch hides entirely while the alpha
+  roster is empty — a control that reveals nothing only confuses
+  (Josh's trial call, 2026-08-19). The stored flag survives, so the
+  switch returns with its old value when an alpha feature ships.
 - The `settings/experimental/margin-notes` deep link keeps working;
   its alpha-prompt detour (arming the alpha-contract dialog first) is
   no longer needed for this anchor and is removed.

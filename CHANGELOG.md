@@ -17,7 +17,9 @@ section current as features land.
   The section now sits directly in Settings → Experimental (no more
   "Show alpha features" detour) wearing its BETA badge, and the
   [published deep link](pullmark://settings/experimental/margin-notes)
-  still lands on it.
+  still lands on it. With nothing left at the alpha level, the "Show
+  alpha features" switch itself steps aside until an alpha feature
+  ships again.
 
 ## 0.34.0 - 2026-08-19
 
