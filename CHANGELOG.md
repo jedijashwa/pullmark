@@ -6,6 +6,13 @@ section current as features land.
 
 ## Unreleased
 
+- **The About panel grew up.** It now shows the copyright and license
+  line (PullMark is MIT), a link to
+  [pullmark.app](https://pullmark.app), and a link to the new
+  [Open Source Licenses](https://pullmark.app/licenses/) page
+  acknowledging the vendored renderers — marked, highlight.js,
+  Mermaid, KaTeX, and github-markdown-css. The same notices now ship
+  inside the app bundle as `ACKNOWLEDGMENTS.md`.
 - **Margin notes graduated from alpha to beta — and they're on by
   default now.** Comment on any local Markdown document the way you'd
   comment on a PR: hover a block for the bubble, ⌥⌘M, notes saved
