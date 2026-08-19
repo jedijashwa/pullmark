@@ -56,6 +56,10 @@ struct MarkdownWebView: NSViewRepresentable {
     var onNoteEdit: ((Int, String) -> Void)?
     /// Margin note deleted from its bubble: note ordinal.
     var onNoteDelete: ((Int) -> Void)?
+    /// A write affordance was clicked while the first-use intro is armed
+    /// (spec: margin-notes-graduation) — the page stashed the action and
+    /// waits for proxy.resolveNoteIntro.
+    var onNoteIntroRequested: (() -> Void)?
     /// Arrow navigation committed an edit: after the reload, re-open the
     /// reveal at this line (negative = caret at end).
     var onNextReveal: ((Int) -> Void)?
@@ -439,6 +443,8 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let index = dict["index"] as? Int {
                     parent.onNoteDelete?(index)
                 }
+            case "noteIntroRequested":
+                parent.onNoteIntroRequested?()
             case "toggleEditMode":
                 parent.onToggleEditMode?()
             case "lightboxRequest":

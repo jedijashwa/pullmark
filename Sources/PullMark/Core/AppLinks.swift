@@ -45,8 +45,9 @@ enum AppLinks {
 
     /// Experimental features currently at the ALPHA level — a deep link
     /// straight to one offers the "Show alpha features" switch when
-    /// alpha is hidden (a link to the tab alone never does).
-    static let alphaFeatures: Set<String> = ["margin-notes"]
+    /// alpha is hidden (a link to the tab alone never does). Empty
+    /// since margin notes graduated to beta (0.35.0).
+    static let alphaFeatures: Set<String> = []
 
     /// Parses a settings deep link: pullmark://settings/<tab>[/<anchor>].
     static func settingsTarget(_ url: URL) -> (tab: String, anchor: String?)? {

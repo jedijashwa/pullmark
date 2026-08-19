@@ -56,8 +56,15 @@ import Testing
         #expect(new?.anchor == "pr-discussion")
     }
 
-    @Test func marginNotesIsAlphaLeveled() {
-        #expect(AppLinks.alphaFeatures.contains("margin-notes"))
+    @Test func marginNotesGraduatedOutOfAlpha() {
+        // Graduated to beta in 0.35.0: no alpha-contract detour, and the
+        // published deep link still lands on its Experimental-tab anchor
+        // (the section stays on that tab, so no remap either).
+        #expect(!AppLinks.alphaFeatures.contains("margin-notes"))
+        let row = AppLinks.settingsTarget(
+            URL(string: "pullmark://settings/experimental/margin-notes")!)
+        #expect(row?.tab == "experimental")
+        #expect(row?.anchor == "margin-notes")
     }
 
     @Test func compareTargetParsesFileAndRef() throws {

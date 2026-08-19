@@ -95,19 +95,27 @@ enum DefaultsKeys {
     /// (absent = on). Off swaps in a quiet banner with a What's New
     /// button — the announcement itself can't be disabled.
     static let autoShowWhatsNew = "pm.autoShowWhatsNew"
-    /// Experimental: margin-note AUTHORING (hover affordance, ⌥⌘M, menu
-    /// items, bubble Edit/Delete). Absent = off. Files containing notes
-    /// always render them read-only regardless — notes are a
-    /// collaboration format, and silently showing nothing would be the
-    /// worst outcome for the receiving side.
+    /// Experimental (beta): margin-note AUTHORING (hover affordance,
+    /// ⌥⌘M, menu items, bubble Edit/Delete). Absent = on (graduated
+    /// from alpha in 0.35.0); an explicit false from the alpha era
+    /// keeps the feature off. Files containing notes always render
+    /// them read-only regardless — notes are a collaboration format,
+    /// and silently showing nothing would be the worst outcome for
+    /// the receiving side.
     static let marginNotesEnabled = "pm.marginNotesEnabled"
+    /// The first-use margin-notes intro was shown (or didn't need to
+    /// be: alpha-era users with an explicit enabled choice are seeded
+    /// seen at launch, and touching the Settings toggle counts too).
+    /// Absent = unseen — the next write action asks first.
+    static let marginNotesIntroSeen = "pm.marginNotesIntroSeen"
     /// Author handle written into margin notes ("josh" in
     /// `<!-- note @josh: … -->`). Absent = GitHub login, then macOS
     /// username.
     static let marginNoteAuthor = "pm.marginNoteAuthor"
-    /// Experimental (beta): the PR overview's Review discussion section —
+    /// The PR overview's review threads in the conversation timeline —
     /// every review thread on the PR, including files PullMark doesn't
-    /// render, with code excerpts. Absent = off.
+    /// render, with code excerpts. Absent = on (graduated to
+    /// General ▸ Reviewing in 0.34.0).
     static let prDiscussionEnabled = "pm.prDiscussionEnabled"
     /// Whether margin-note bubbles render in documents (default on;
     /// View → Hide Margin Notes flips it app-wide).

@@ -274,9 +274,6 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
-    /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
-    /// view thread markers). In-place — no reload, the reader's position
-    /// survives; pages without markers ignore it.
     /// Opens the margin-note composer: file-level at the top of the
     /// document, otherwise on the block nearest the top of the viewport.
     func openNoteComposer(fileLevel: Bool) {
@@ -285,6 +282,29 @@ final class WebViewProxy: ObservableObject {
             completionHandler: nil)
     }
 
+    /// Arms the first-use margin-notes intro on the loaded page: while
+    /// pending, the page's write affordances post noteIntroRequested
+    /// instead of acting (spec: margin-notes-graduation). Injected after
+    /// each page load rather than carried in the page payload, so the
+    /// seen-flip never re-renders the document.
+    func setNoteIntroPending(_ pending: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmSetNoteIntroPending && __pmSetNoteIntroPending(\(pending));",
+            completionHandler: nil)
+    }
+
+    /// Resolves a posted noteIntroRequested: true runs the action the
+    /// user originally clicked (and disarms the intro); false — Esc,
+    /// "not now" — drops it and leaves the intro armed for next time.
+    func resolveNoteIntro(proceed: Bool) {
+        webView?.evaluateJavaScript(
+            "window.__pmNoteIntroResolved && __pmNoteIntroResolved(\(proceed));",
+            completionHandler: nil)
+    }
+
+    /// Mirrors View ▸ Show Resolved Conversations into the page (Result-
+    /// view thread markers). In-place — no reload, the reader's position
+    /// survives; pages without markers ignore it.
     func setResolvedConversationsVisible(_ visible: Bool) {
         webView?.evaluateJavaScript(
             "window.__pmSetResolvedShown && __pmSetResolvedShown(\(visible));",

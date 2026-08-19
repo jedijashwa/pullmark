@@ -24,7 +24,7 @@ struct LocalFileView: View {
     @AppStorage(DefaultsKeys.outlinePanel, store: UserDefaults.pullmark) private var outlineVisible = false
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
-    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
 
     // Git history / branch comparison
     struct CompareTarget: Equatable {
@@ -70,6 +70,9 @@ struct LocalFileView: View {
     @State private var sessionSnapshotTaken = false
     /// ⌘E just enabled edit mode: auto-reveal once the editable page loads.
     @State private var pendingAutoReveal = false
+    /// The first-use margin-notes intro is up, holding this request
+    /// (spec: margin-notes-graduation). Keep Using resumes it exactly.
+    @State private var noteIntroRequest: MarginNoteIntroRequest?
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
@@ -85,6 +88,7 @@ struct LocalFileView: View {
             onNoteAdd: handleNoteAdd,
             onNoteEdit: handleNoteEdit,
             onNoteDelete: handleNoteDelete,
+            onNoteIntroRequested: handleNoteIntroRequested,
             onNextReveal: handleNextReveal,
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
@@ -230,6 +234,36 @@ struct LocalFileView: View {
                                                 lineEnd: request.lineEnd)
             }
         }
+        .sheet(item: $noteIntroRequest) { request in
+            MarginNotesIntroSheet(
+                onTurnOff: {
+                    MarginNotesIntro.markSeen()
+                    noteIntroRequest = nil
+                    // The @AppStorage flip re-renders every open document
+                    // without authoring chrome — existing notes still show.
+                    marginNotesEnabled = false
+                    state.lastNotice = "Margin notes are off — turn them "
+                        + "back on in Settings → Experimental."
+                },
+                onKeepUsing: {
+                    MarginNotesIntro.markSeen()
+                    noteIntroRequest = nil
+                    switch request.kind {
+                    case .native(let fileLevel):
+                        proxy.openNoteComposer(fileLevel: fileLevel)
+                    case .page:
+                        proxy.resolveNoteIntro(proceed: true)
+                    }
+                },
+                onNotNow: {
+                    noteIntroRequest = nil
+                    // Drop the page's stashed action; the intro stays
+                    // armed and asks again on the next write action.
+                    if case .page = request.kind {
+                        proxy.resolveNoteIntro(proceed: false)
+                    }
+                })
+        }
         .sheet(isPresented: $revisionsSheetShown) {
             CompareRevisionsSheet(commits: commits, branches: branches,
                                   remoteBranches: remoteBranches, tags: tags) { old, new in
@@ -294,7 +328,22 @@ struct LocalFileView: View {
             state.lastNotice = "Margin notes are hidden — choose View → Show Margin Notes first."
             return
         }
+        guard MarginNotesIntro.seen() else {
+            noteIntroRequest = MarginNoteIntroRequest(kind: .native(fileLevel: fileLevel))
+            return
+        }
         proxy.openNoteComposer(fileLevel: fileLevel)
+    }
+
+    /// The page clicked a write affordance with the intro armed. Another
+    /// window (or Settings) may have settled the intro since that page
+    /// loaded — resolve silently then, no dialog.
+    private func handleNoteIntroRequested() {
+        guard !MarginNotesIntro.seen() else {
+            proxy.resolveNoteIntro(proceed: true)
+            return
+        }
+        noteIntroRequest = MarginNoteIntroRequest(kind: .page)
     }
 
     /// Builds the compare NSMenu from live git state at click time and
@@ -647,6 +696,13 @@ struct LocalFileView: View {
     private func handlePageLoaded() {
         // Fresh page, fresh JS state: re-teach it the edit-mode toggle key.
         proxy.setEditToggleKey(shortcuts.combo(for: .editMode))
+        // Arm the first-use intro on pages that carry authoring chrome.
+        // Injected post-load, never in the payload — the seen-flip must
+        // not re-render the page it's resuming an action on.
+        if compare == nil, !state.sourceViewVisible,
+           marginNotesVisible, marginNotesEnabled, !MarginNotesIntro.seen() {
+            proxy.setNoteIntroPending(true)
+        }
         // Third consume point: on a cold launch the incarnation that
         // reaches page-load is the one that survives restore settling.
         consumePendingCompare()

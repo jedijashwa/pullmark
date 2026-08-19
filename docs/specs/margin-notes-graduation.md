@@ -77,17 +77,21 @@ alert; it carries a link and a copy control:
 **Wiring.** Native entries (⌥⌘M, menu items, toolbar) already funnel
 through `LocalFileView.openNoteComposer` — the gate lives there, and
 Keep Using proceeds into `proxy.openNoteComposer` with the requested
-file-level flag. Page entries get a `noteIntroPending` payload flag:
-while pending, the bubble / Edit / Delete handlers stash the requested
-action and post `noteIntroRequested` over the bridge instead of acting;
-Swift shows the sheet and resolves the page with
-`__pmNoteIntroResolved(proceed)` — `true` runs the stashed action and
-clears the pending flag, `false` (Esc) drops the stash and keeps
-pending. Turn Off needs no page-side resolution: the enabled flip
-re-renders the page without authoring chrome. A page still marked
-pending after the intro was seen elsewhere (another window) posts as
-usual and Swift resolves it `true` immediately — self-healing, no
-dialog.
+file-level flag. Page entries are armed after each page load via
+`__pmSetNoteIntroPending(true)` — deliberately NOT a payload field:
+the page reloads whenever its HTML changes, so carrying intro state in
+the payload would let the seen-flip re-render the very page holding
+the stashed action. While armed, the bubble / Edit / Delete handlers
+stash the requested action and post `noteIntroRequested` over the
+bridge instead of acting; Swift shows the sheet and resolves the page
+with `__pmNoteIntroResolved(proceed)` — `true` runs the stashed action
+and disarms, `false` (Esc) drops the stash and stays armed. Turn Off
+needs no page-side resolution: the enabled flip re-renders the page
+without authoring chrome. A page still armed after the intro was
+settled elsewhere (another window, Settings) posts as usual and Swift
+resolves it `true` immediately — self-healing, no dialog. A file
+change landing while the sheet is up reloads the page and drops the
+stash; the benign worst case is one extra click.
 
 ## Seen-state and migration
 

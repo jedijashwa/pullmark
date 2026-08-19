@@ -10,7 +10,7 @@ struct ContentView: View {
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
     /// The toolbar builder needs it: the margin-note item leaves the
     /// customization pool entirely while the feature is off.
-    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
     @Environment(\.controlActiveState) private var controlActiveState
 
     var body: some View {
