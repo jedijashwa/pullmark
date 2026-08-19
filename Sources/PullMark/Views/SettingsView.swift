@@ -368,7 +368,12 @@ struct ExperimentalSettingsTab: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle("Show alpha features", isOn: alphaBinding)
+                // No alpha features → no switch: a control that reveals
+                // nothing only confuses. The stored flag survives, so the
+                // switch returns with its old value when alpha refills.
+                if Self.alphaFeatureCount > 0 {
+                    Toggle("Show alpha features", isOn: alphaBinding)
+                }
             }
 
             if Self.betaFeatureCount == 0 && !showAlphaFeatures {
@@ -381,16 +386,6 @@ struct ExperimentalSettingsTab: View {
             }
 
             marginNotesSection
-
-            if showAlphaFeatures && Self.alphaFeatureCount == 0 {
-                Section {
-                    Text("Nothing at the alpha level right now — margin notes "
-                        + "graduated to beta.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
         }
         .formStyle(.grouped)
         .frame(height: 560)
