@@ -60,6 +60,8 @@ struct GeneralSettingsTab: View {
     var body: some View {
         ScrollViewReader { scroll in
         Form {
+            GitHubNotConnectedAlert()
+
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
@@ -91,11 +93,6 @@ struct GeneralSettingsTab: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            // Directly above Reviewing: every row below depends on this
-            // connection, but it doesn't outrank Reading (Josh's call —
-            // GitHub is an integration, not what the app hangs off).
-            GitHubConnectionSection()
-
             Section("Reviewing") {
             Picker("Default diff layout:", selection: $diffLayoutRaw) {
                 ForEach(PRFileView.DiffLayout.allCases) { layout in
@@ -120,6 +117,11 @@ struct GeneralSettingsTab: View {
                     + "listing every thread, with code excerpts and links")
                 .settingAnchor("pr-discussion")
             }
+
+            // After Reviewing (Josh's placement): the connection is
+            // infrastructure, not the app's headline — the top-of-tab
+            // alert carries the not-connected case up front instead.
+            GitHubConnectionSection()
 
             Section("Updates") {
             Toggle("Show What's New after an update", isOn: $autoShowWhatsNew)
@@ -935,6 +937,33 @@ struct GitHubConnectionSection: View {
                 Text("Not connected")
                 Text("· private repos and reviewing unavailable")
                     .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// The top-of-General alert (spec: github-connection, Josh's revision):
+/// signed out is worth one loud line at the top of the tab, and the fix
+/// is a jump away — it scrolls to the GitHub section rather than
+/// duplicating its controls. Invisible whenever connected or checking.
+struct GitHubNotConnectedAlert: View {
+    @ObservedObject private var connection = GitHubClient.shared.connection
+
+    var body: some View {
+        if connection.status == .notConnected {
+            Section {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Not connected to GitHub — private repositories "
+                        + "and reviewing are unavailable.")
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Show") {
+                        SettingsAnchorFocus.shared.pending = "github"
+                    }
+                    .help("Jump to the GitHub connection section")
+                }
             }
         }
     }
