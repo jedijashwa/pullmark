@@ -194,9 +194,11 @@ struct PendingComment: Identifiable, Equatable, Codable {
 /// unsubmitted review — the list includes the viewer's own; other users'
 /// pending reviews are never visible. `nodeId` feeds the GraphQL
 /// incremental-add mutation (see GitHubClient's API-mix note).
+/// `submittedAt` orders the conversation timeline (null while PENDING).
 struct PullRequestReview: Decodable, Equatable {
     struct User: Decodable, Equatable {
         let login: String
+        var avatarUrl: URL? = nil
     }
     let id: Int
     let nodeId: String
@@ -204,4 +206,25 @@ struct PullRequestReview: Decodable, Equatable {
     let body: String?
     let state: String
     let commitId: String?
+    var submittedAt: String? = nil
+    var htmlUrl: URL? = nil
+}
+
+/// A PR-conversation comment from GET /issues/{n}/comments (every pull
+/// request is an issue; these are the timeline comments, tied to no
+/// file or line). Mutable body/reactions fold confirmed edits and
+/// toggles into the loaded model without a refetch.
+struct IssueComment: Decodable, Identifiable, Equatable {
+    struct User: Decodable, Equatable {
+        let login: String
+        var avatarUrl: URL? = nil
+        /// "User" / "Bot" / "Organization" — the timeline's bot tag.
+        var type: String? = nil
+    }
+    let id: Int
+    var body: String?
+    let user: User?
+    let createdAt: String?
+    let htmlUrl: URL?
+    var reactions: ReactionRollup? = nil
 }
