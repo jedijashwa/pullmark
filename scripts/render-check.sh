@@ -208,6 +208,63 @@ else
   echo "  ok: discussion absent by default"
 fi
 
+# ---- Conversation timeline (spec: pr-cockpit): comments interleaved
+# with review verdicts, verdict line owning author+date, bot tags, and
+# the always-present section-foot composer.
+CONVERSATION_PAYLOAD=',"conversationComposer":true,"conversation":[
+ {"kind":"comment","card":{"author":"sam-ortega","dateLabel":"Aug 18, 2026",
+   "body":"Ready for a look.","id":314,"edited":false,"viewerOwned":true,
+   "canReact":true,"bot":false,"reactions":[{"content":"+1","count":2,"mine":true}]}},
+ {"kind":"changes_requested","card":{"author":"riley-chen","dateLabel":"Aug 19, 2026",
+   "body":"The install section needs a pass.","id":9,"edited":false,
+   "viewerOwned":false,"canReact":true,"bot":false,"reactions":[]}},
+ {"kind":"approved","card":{"author":"riley-chen","dateLabel":"Aug 19, 2026",
+   "body":"","id":10,"edited":false,"viewerOwned":false,"canReact":false,
+   "bot":false,"reactions":[]}},
+ {"kind":"comment","card":{"author":"docs-ci","dateLabel":"Aug 19, 2026",
+   "body":"Link check passed.","id":315,"edited":false,"viewerOwned":false,
+   "canReact":false,"bot":true,"reactions":[]}}]'
+emit_page "$(jq -Rs . <<< 'The PR description body.')" "$WORK/conversation.html" "$CONVERSATION_PAYLOAD"
+CONVERSATION_DOM="$WORK/conversation-dom.html"
+"$CHROME" --headless --disable-gpu --virtual-time-budget=8000 \
+  --dump-dom "file://$WORK/conversation.html" > "$CONVERSATION_DOM" 2>/dev/null
+conversation_check() {
+  local label="$1" pattern="$2"
+  if grep -qE "$pattern" "$CONVERSATION_DOM"; then
+    echo "  ok: $label"
+  else
+    echo "FAIL: $label (pattern: $pattern)"
+    failures=$((failures + 1))
+  fi
+}
+conversation_check "conversation section"    '<section class="pm-conversation pm-annotation">'
+conversation_check "entry count headline"    '4 entries'
+conversation_check "comment card body"       'Ready for a look\.'
+conversation_check "verdict line with date"  'riley-chen requested changes · Aug 19, 2026'
+conversation_check "verdict summary body"    'The install section needs a pass\.'
+conversation_check "approved headline"       'riley-chen approved these changes'
+conversation_check "bot tag"                 '<span class="pm-bot-tag">bot</span>'
+conversation_check "reaction chip"           'data-pm-comment="314"'
+conversation_check "foot composer"           'pm-conversation-composer'
+conversation_check "composer placeholder"    'Comment on the pull request conversation'
+# Bounded to the card: the DOM is one long line, so the window is cut
+# at the next card's opening class before asserting — an unanchored .*
+# (or a fixed-width window) spans into the following card's body and
+# false-positives.
+if grep -oE 'pm-verdict-approved.{0,400}' "$CONVERSATION_DOM" \
+    | sed 's/pm-conversation-card.*//' | grep -q 'pm-thread-comment'; then
+  echo "FAIL: empty approved verdict rendered a comment card"
+  failures=$((failures + 1))
+else
+  echo "  ok: empty verdict renders headline only"
+fi
+if grep -qE 'pm-conversation' "$DOM"; then
+  echo "FAIL: conversation section leaked into the plain document page"
+  failures=$((failures + 1))
+else
+  echo "  ok: conversation absent by default"
+fi
+
 # ---- Line numbers: gutter labels build only when the payload carries the
 # preference; the default page above must stay label-free.
 emit_page "$(jq -Rs . < docs/kitchen-sink.md)" "$WORK/linenum.html" ',"lineNumbers":true'

@@ -99,6 +99,15 @@ struct MarkdownWebView: NSViewRepresentable {
     /// Delete chosen from a comment's ⋯ menu. The native destructive
     /// confirm happens app-side before any API call.
     var onCommentDelete: ((Int) -> Void)?
+    /// Conversation timeline (spec: pr-cockpit): comment submitted from
+    /// the section-foot composer (body, draft key).
+    var onConversationSubmit: ((String, String) -> Void)?
+    /// Conversation-card reaction toggle: (id, content, desired state,
+    /// card is a review verdict). Cards stamp `source` so these route
+    /// to the issue-comment/review endpoints, not /pulls/comments.
+    var onConversationReaction: ((Int, String, Bool, Bool) -> Void)?
+    var onConversationEdit: ((Int, String, String) -> Void)?
+    var onConversationDelete: ((Int) -> Void)?
     /// The in-page "N resolved conversations" control was toggled — keeps
     /// the View menu's Show Resolved Conversations item in sync.
     var onResolvedVisibility: ((Bool) -> Void)?
@@ -489,17 +498,38 @@ struct MarkdownWebView: NSViewRepresentable {
                 if let commentID = dict["commentID"] as? Int,
                    let content = dict["content"] as? String,
                    let reacted = dict["reacted"] as? Bool {
-                    parent.onReactionToggle?(commentID, content, reacted)
+                    // Conversation cards stamp their source; thread cards
+                    // don't — id spaces differ per endpoint family, so
+                    // routing must never guess from the id alone.
+                    if let source = conversationSource(dict) {
+                        parent.onConversationReaction?(commentID, content, reacted,
+                                                       source == "review")
+                    } else {
+                        parent.onReactionToggle?(commentID, content, reacted)
+                    }
                 }
             case "commentEdit":
                 if let commentID = dict["commentID"] as? Int,
                    let body = dict["body"] as? String {
-                    parent.onCommentEdit?(commentID, body,
-                                          dict["draftKey"] as? String ?? "edit:\(commentID)")
+                    let draftKey = dict["draftKey"] as? String ?? "edit:\(commentID)"
+                    if conversationSource(dict) != nil {
+                        parent.onConversationEdit?(commentID, body, draftKey)
+                    } else {
+                        parent.onCommentEdit?(commentID, body, draftKey)
+                    }
                 }
             case "commentDelete":
                 if let commentID = dict["commentID"] as? Int {
-                    parent.onCommentDelete?(commentID)
+                    if conversationSource(dict) != nil {
+                        parent.onConversationDelete?(commentID)
+                    } else {
+                        parent.onCommentDelete?(commentID)
+                    }
+                }
+            case "conversationSubmit":
+                if let body = dict["body"] as? String {
+                    parent.onConversationSubmit?(body,
+                                                 dict["draftKey"] as? String ?? "conversation:new")
                 }
             case "resolvedVisibility":
                 if let visible = dict["visible"] as? Bool {
@@ -508,6 +538,14 @@ struct MarkdownWebView: NSViewRepresentable {
             default:
                 break
             }
+        }
+
+        /// "conversation" / "review" when the message came from a
+        /// conversation-timeline card; nil for thread cards.
+        private func conversationSource(_ dict: [String: Any]) -> String? {
+            guard let source = dict["source"] as? String,
+                  source == "conversation" || source == "review" else { return nil }
+            return source
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

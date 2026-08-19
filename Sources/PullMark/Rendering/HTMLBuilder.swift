@@ -93,6 +93,17 @@ enum HTMLBuilder {
         /// PR grouped by file, rendered after the description (spec:
         /// pr-review-discussion).
         var discussion: [ReviewDiscussion.FileGroup]?
+        /// PR overview: the conversation timeline — issue comments
+        /// interleaved with review verdicts, rendered between the
+        /// description and the discussion list (spec: pr-cockpit).
+        var conversation: [ConversationEntryPayload]?
+        /// The conversation failed to load with nothing older on hand —
+        /// the section shows one quiet retrying row.
+        var conversationUnavailable: Bool?
+        /// Renders the conversation section (with composer) even when
+        /// the timeline is empty — a PR overview always offers the
+        /// comment box; other pages never do.
+        var conversationComposer: Bool?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -146,7 +157,10 @@ enum HTMLBuilder {
                              lineNumberEligible: Bool = true,
                              marginNotes: [MarginNotePayload]? = nil,
                              noteAuthoring: Bool = false,
-                             discussion: [ReviewDiscussion.FileGroup]? = nil) -> String {
+                             discussion: [ReviewDiscussion.FileGroup]? = nil,
+                             conversation: [ConversationEntryPayload]? = nil,
+                             conversationUnavailable: Bool = false,
+                             conversationComposer: Bool = false) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -163,7 +177,10 @@ enum HTMLBuilder {
                                     reviewPending: reviewPending ? true : nil,
                                     marginNotes: marginNotes?.isEmpty == false ? marginNotes : nil,
                                     noteAuthoring: noteAuthoring ? true : nil,
-                                    discussion: discussion?.isEmpty == false ? discussion : nil),
+                                    discussion: discussion?.isEmpty == false ? discussion : nil,
+                                    conversation: conversation?.isEmpty == false ? conversation : nil,
+                                    conversationUnavailable: conversationUnavailable ? true : nil,
+                                    conversationComposer: conversationComposer ? true : nil),
              title: title, customCSS: customCSS)
     }
 

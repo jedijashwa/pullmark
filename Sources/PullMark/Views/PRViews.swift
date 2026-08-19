@@ -6,12 +6,12 @@ struct PROverviewView: View {
     @EnvironmentObject private var state: AppState
     let sessionID: String
 
-    @State private var confirmation: String?
-    @State private var conversationText = ""
     @State private var reviewPopoverVisible = false
-    @State private var postingComment = false
     @State private var findSeed: String?
     @State private var deleteCommentID: Int?
+    /// Conversation-card deletes confirm separately — they route to the
+    /// issue-comment endpoint family, not /pulls/comments.
+    @State private var deleteConversationID: Int?
     @State private var pendingScrollFraction: Double?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
@@ -55,9 +55,6 @@ struct PROverviewView: View {
                 header(session)
                     .padding([.horizontal, .top], 20)
                     .padding(.bottom, 12)
-                conversationSection(session)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
                 Divider()
                 let style = ThemeSelection.pageStyle(from: themeRaw)
                 MarkdownWebView(
@@ -71,7 +68,12 @@ struct PROverviewView: View {
                         // A PR description isn't a file — a source-line
                         // coordinate in its margin would mean nothing.
                         lineNumberEligible: false,
-                        discussion: discussionGroups(session)
+                        discussion: discussionGroups(session),
+                        conversation: conversationEntries(session),
+                        conversationUnavailable: session.conversationUnavailable,
+                        // The overview always offers the comment box,
+                        // even on a silent PR.
+                        conversationComposer: true
                     ),
                     onComposerDraft: { key, text in
                         threadActions.saveComposerDraft(key: key, text: text)
@@ -101,6 +103,20 @@ struct PROverviewView: View {
                                                         draftKey: draftKey)
                     },
                     onCommentDelete: { deleteCommentID = $0 },
+                    onConversationSubmit: { body, draftKey in
+                        threadActions.sendConversationComment(body: body,
+                                                              draftKey: draftKey)
+                    },
+                    onConversationReaction: { commentID, content, reacted, isReview in
+                        threadActions.handleConversationReaction(
+                            commentID: commentID, content: content,
+                            reacted: reacted, isReview: isReview)
+                    },
+                    onConversationEdit: { commentID, body, draftKey in
+                        threadActions.handleConversationEdit(commentID: commentID,
+                                                             body: body, draftKey: draftKey)
+                    },
+                    onConversationDelete: { deleteConversationID = $0 },
                     onPageLoaded: {
                         // A model mutation re-rendered the page under the
                         // reader — put them back where they were.
@@ -156,6 +172,8 @@ struct PROverviewView: View {
                                              isPresented: $reviewPopoverVisible))
             .modifier(DeleteCommentConfirmation(commentID: $deleteCommentID,
                                                 onConfirm: { threadActions.deleteComment($0) }))
+            .modifier(DeleteCommentConfirmation(commentID: $deleteConversationID,
+                                                onConfirm: { threadActions.deleteConversationComment($0) }))
         } else {
             EmptyView()
         }
@@ -199,50 +217,19 @@ struct PROverviewView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
-            if let confirmation {
-                Label(confirmation, systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.callout)
-            }
         }
     }
 
-    /// Conversation comments post immediately to the PR's timeline —
-    /// separate from any review verdict. The review itself (pending
-    /// comments, summary, verdict) lives in the toolbar's review popover.
-    private func conversationSection(_ session: PRSession) -> some View {
-        HStack(spacing: 10) {
-            TextField("Comment on the pull request conversation…",
-                      text: $conversationText, axis: .vertical)
-                .lineLimit(1...4)
-                .textFieldStyle(.roundedBorder)
-            ProgressView()
-                .controlSize(.small)
-                .opacity(postingComment ? 1 : 0)
-            Button("Post") { postConversationComment() }
-                .fixedSize()
-                .disabled(conversationText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    || postingComment)
-                .help("Post to the PR conversation right away (not part of a review)")
-        }
-    }
-
-    private func postConversationComment() {
-        guard let session = state.session(sessionID) else { return }
-        let body = conversationText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !body.isEmpty else { return }
-        postingComment = true
-        confirmation = nil
-        Task {
-            do {
-                try await state.client.createIssueComment(session.ref, body: body)
-                conversationText = ""
-                confirmation = "Comment posted to the conversation."
-            } catch {
-                state.lastError = error.localizedDescription
-            }
-            postingComment = false
-        }
+    /// The conversation timeline payload (spec: pr-cockpit) — issue
+    /// comments interleaved with review verdicts, viewer-enriched.
+    /// The composer lives in-page at the section's foot.
+    private func conversationEntries(_ session: PRSession) -> [ConversationEntryPayload] {
+        PRConversation.payload(comments: session.issueComments,
+                               reviews: session.reviews,
+                               commentMeta: session.conversationMeta,
+                               reviewMeta: session.reviewMeta,
+                               reviewReactions: session.reviewReactions,
+                               viewer: state.viewerLogin)
     }
 
     private func filesSummary(_ session: PRSession) -> String {

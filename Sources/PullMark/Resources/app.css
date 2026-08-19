@@ -283,6 +283,54 @@ body {
   display: none;
 }
 
+/* ---- Conversation timeline (PR overview, spec: pr-cockpit) ----
+   Issue comments interleaved with review verdicts, chronological.
+   Cards reuse the thread-card chrome; verdict cards open with a state
+   line that owns author + date (the byline beneath would repeat both,
+   so it hides here). */
+.pm-conversation {
+  margin-top: 40px;
+  border-top: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.3));
+  padding-top: 16px;
+}
+.pm-conversation-card {
+  margin: 12px 0;
+}
+.pm-verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font: 600 13px -apple-system, sans-serif;
+  color: var(--fgColor-default, #1f2328);
+  padding: 8px 12px 0;
+}
+.pm-verdict-icon {
+  font: 700 12px ui-monospace, SFMono-Regular, monospace;
+}
+.pm-verdict-approved .pm-verdict-icon { color: #1a7f37; }
+.pm-verdict-changes_requested .pm-verdict-icon { color: #cf222e; }
+.pm-verdict-dismissed { color: var(--fgColor-muted, #6e7781); }
+.pm-verdict-dismissed .pm-verdict-icon { color: var(--fgColor-muted, #6e7781); }
+.pm-verdict + .pm-thread-comment .pm-thread-head { display: none; }
+.pm-bot-tag {
+  font: 500 10px -apple-system, sans-serif;
+  color: var(--fgColor-muted, #6e7781);
+  border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.4));
+  border-radius: 8px;
+  padding: 0 5px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+/* The section-foot composer never closes — it reads as the section's
+   own input, not a transient popover. */
+.pm-conversation-composer {
+  margin-top: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  .pm-verdict-approved .pm-verdict-icon { color: #3fb950; }
+  .pm-verdict-changes_requested .pm-verdict-icon { color: #f85149; }
+}
+
 /* ---- Review discussion (PR overview, spec: pr-review-discussion) ----
    The thread-card family, grouped by file, each card carrying a small
    diff excerpt whose last line is the commented line. */

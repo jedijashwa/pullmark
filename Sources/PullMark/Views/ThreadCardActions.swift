@@ -138,6 +138,92 @@ struct ThreadCardActions {
         }
     }
 
+    // MARK: - Conversation timeline (spec: pr-cockpit)
+    // The same four round trips, aimed at the issue-comment endpoint
+    // family (/issues/comments, not /pulls/comments) and the
+    // conversation's flat meta maps (no thread-root indirection).
+
+    func sendConversationComment(body: String, draftKey: String) {
+        guard let session else {
+            restoreDraftAfterFailure(key: draftKey, text: body)
+            state.lastError = "Could not post the comment — the PR session is "
+                + "no longer available. Your text was kept as a draft."
+            return
+        }
+        Task {
+            do {
+                let posted = try await state.client.createIssueComment(session.ref, body: body)
+                mutatePreservingScroll {
+                    state.applyPostedConversationComment(sessionID: sessionID, comment: posted)
+                }
+            } catch {
+                restoreDraftAfterFailure(key: draftKey, text: body)
+                state.lastError = "Could not post the comment: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// `isReview` picks the meta map: review verdict cards react through
+    /// their PullRequestReview node, comments through theirs.
+    func handleConversationReaction(commentID: Int, content: String, reacted: Bool,
+                                    isReview: Bool) {
+        guard let session, let kind = ReactionKind(rawValue: content) else { return }
+        let meta = isReview ? session.reviewMeta[commentID]
+                            : session.conversationMeta[commentID]
+        guard let nodeID = meta?.nodeID else {
+            proxy.revertReaction(commentID: commentID, content: content, attempted: reacted)
+            state.lastError = "Reaction state unavailable — try refreshing the PR."
+            return
+        }
+        state.serializeReactionWrite(commentID: commentID) {
+            do {
+                try await state.client.setReaction(subjectID: nodeID, content: kind,
+                                                   add: reacted)
+                mutatePreservingScroll {
+                    state.applyConversationReaction(sessionID: sessionID, commentID: commentID,
+                                                    content: content, reacted: reacted,
+                                                    isReview: isReview)
+                }
+            } catch {
+                proxy.revertReaction(commentID: commentID, content: content,
+                                     attempted: reacted)
+                state.lastError = "Could not update the reaction: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func handleConversationEdit(commentID: Int, body: String, draftKey: String) {
+        guard let session else { return }
+        Task {
+            do {
+                _ = try await state.client.updateIssueComment(session.ref,
+                                                              commentID: commentID, body: body)
+                mutatePreservingScroll {
+                    state.applyConversationCommentEdit(sessionID: sessionID,
+                                                       commentID: commentID, body: body)
+                }
+            } catch {
+                restoreDraftAfterFailure(key: draftKey, text: body)
+                state.lastError = "Could not save the edit: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func deleteConversationComment(_ commentID: Int) {
+        guard let session else { return }
+        Task {
+            do {
+                try await state.client.deleteIssueComment(session.ref, commentID: commentID)
+                mutatePreservingScroll {
+                    state.applyConversationCommentDelete(sessionID: sessionID,
+                                                         commentID: commentID)
+                }
+            } catch {
+                state.lastError = "Could not delete the comment: \(error.localizedDescription)"
+            }
+        }
+    }
+
     /// Click-away draft sync from the page; empty text discards.
     func saveComposerDraft(key: String, text: String) {
         guard let session else {
