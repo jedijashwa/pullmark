@@ -180,6 +180,11 @@ struct PROverviewView: View {
                 Link("View on GitHub", destination: session.details.htmlUrl)
             }
             .font(.callout)
+            // Where the PR stands (spec: pr-cockpit) — absent until the
+            // first cockpit fetch lands; absence is honest.
+            if let cockpit = session.cockpit {
+                PRCockpitRow(cockpit: cockpit, prURL: session.details.htmlUrl)
+            }
             Text(filesSummary(session))
                 .font(.callout)
                 .foregroundStyle(.secondary)
