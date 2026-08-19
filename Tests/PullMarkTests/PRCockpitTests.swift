@@ -397,3 +397,75 @@ import Testing
         #expect(cockpit.checksSummary == .failed(failing: 1, total: 2))
     }
 }
+
+@Suite struct ConversationNestingTests {
+    private func reviewComment(_ id: Int, reviewID: Int?, path: String = "docs/a.md",
+                               at: String = "2026-08-19T10:30:00Z") -> ReviewComment {
+        ReviewComment(id: id, path: path, body: "inline note", line: 4, side: "RIGHT",
+                      startLine: nil, originalLine: 4, subjectType: nil,
+                      inReplyToId: nil, pullRequestReviewId: reviewID,
+                      user: .init(login: "riley-chen"), createdAt: at, htmlUrl: nil)
+    }
+
+    private func review(_ id: Int, state: String, body: String?, at: String) -> PullRequestReview {
+        PullRequestReview(id: id, nodeId: "R_\(id)", user: .init(login: "riley-chen"),
+                          body: body, state: state, commitId: nil,
+                          submittedAt: at, htmlUrl: nil)
+    }
+
+    @Test func threadsNestUnderTheirReview() {
+        let entries = PRConversation.payload(
+            comments: [], reviews: [
+                review(7, state: "CHANGES_REQUESTED", body: "Needs work.",
+                       at: "2026-08-19T10:30:00Z"),
+                review(8, state: "APPROVED", body: nil, at: "2026-08-19T11:00:00Z"),
+            ],
+            reviewComments: [reviewComment(41, reviewID: 7)],
+            commentMeta: [:], viewer: nil,
+            markdownPaths: ["docs/a.md"], includeThreads: true)
+        #expect(entries.count == 2)
+        #expect(entries[0].threads.count == 1)
+        #expect(entries[0].threads[0].path == "docs/a.md")
+        #expect(entries[0].threads[0].isMarkdown)
+        #expect(entries[0].threads[0].item.rootID == 41)
+        #expect(entries[1].threads.isEmpty)
+    }
+
+    @Test func emptyCommentedReviewWithThreadsBecomesTheAnchor() {
+        // The rows filtered as noise are exactly the anchors inline
+        // submissions need — they earn their card back with threads.
+        let entries = PRConversation.payload(
+            comments: [], reviews: [review(9, state: "COMMENTED", body: "",
+                                           at: "2026-08-19T10:30:00Z")],
+            reviewComments: [reviewComment(42, reviewID: 9)],
+            commentMeta: [:], viewer: nil, includeThreads: true)
+        #expect(entries.count == 1)
+        #expect(entries[0].kind == "commented")
+        #expect(entries[0].threads.count == 1)
+    }
+
+    @Test func toggleOffKeepsTheOldFilter() {
+        let entries = PRConversation.payload(
+            comments: [], reviews: [review(9, state: "COMMENTED", body: "",
+                                           at: "2026-08-19T10:30:00Z")],
+            reviewComments: [reviewComment(42, reviewID: 9)],
+            commentMeta: [:], viewer: nil, includeThreads: false)
+        #expect(entries.isEmpty)
+    }
+
+    @Test func orphanThreadsRideSyntheticAnchorsInChronologicalOrder() {
+        let comment = IssueComment(id: 300, body: "hello",
+                                   user: .init(login: "sam-ortega"),
+                                   createdAt: "2026-08-19T12:00:00Z", htmlUrl: nil)
+        let entries = PRConversation.payload(
+            comments: [comment], reviews: [],
+            reviewComments: [reviewComment(43, reviewID: 999,
+                                           at: "2026-08-19T09:00:00Z")],
+            commentMeta: [:], viewer: nil, includeThreads: true)
+        // The orphan (9am) precedes the noon comment.
+        #expect(entries.count == 2)
+        #expect(entries[0].kind == "commented")
+        #expect(entries[0].threads.first?.item.rootID == 43)
+        #expect(entries[1].kind == "comment")
+    }
+}

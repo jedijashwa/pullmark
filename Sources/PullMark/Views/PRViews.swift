@@ -79,7 +79,6 @@ struct PROverviewView: View {
                         // A PR description isn't a file — a source-line
                         // coordinate in its margin would mean nothing.
                         lineNumberEligible: false,
-                        discussion: discussionGroups(session),
                         conversation: conversationPage.entries,
                         conversationUnavailable: conversationPage.unavailable,
                         // The overview always offers the comment box,
@@ -243,16 +242,30 @@ struct PROverviewView: View {
         }
     }
 
-    /// The conversation timeline payload (spec: pr-cockpit) — issue
-    /// comments interleaved with review verdicts, viewer-enriched.
-    /// The composer lives in-page at the section's foot.
+    /// The conversation timeline payload (spec: pr-cockpit, revised) —
+    /// issue comments and review verdicts chronological, each review
+    /// carrying its inline threads nested beneath it. The graduated
+    /// discussion toggle gates the threads; the composer lives in-page
+    /// at the section's foot.
     private func conversationEntries(_ session: PRSession) -> [ConversationEntryPayload] {
-        PRConversation.payload(comments: session.issueComments,
-                               reviews: session.reviews,
-                               commentMeta: session.conversationMeta,
-                               reviewMeta: session.reviewMeta,
-                               reviewReactions: session.reviewReactions,
-                               viewer: state.viewerLogin)
+        // Threads written before a rename carry the old path; join them
+        // to the renamed file. Untrusted API data must not feed the
+        // trapping initializer — first claim wins on a duplicate.
+        let renames = Dictionary(session.files.compactMap { file in
+            file.previousFilename.map { ($0, file.filename) }
+        }, uniquingKeysWith: { first, _ in first })
+        return PRConversation.payload(
+            comments: session.issueComments,
+            reviews: session.reviews,
+            reviewComments: session.reviewComments,
+            threadMeta: session.threadMeta,
+            commentMeta: session.conversationMeta,
+            reviewMeta: session.reviewMeta,
+            reviewReactions: session.reviewReactions,
+            viewer: state.viewerLogin,
+            markdownPaths: Set(session.markdownFiles.map(\.filename)),
+            renames: renames,
+            includeThreads: prDiscussionEnabled)
     }
 
     private func filesSummary(_ session: PRSession) -> String {
@@ -271,24 +284,6 @@ struct PROverviewView: View {
             visiblePaths: Set(session.markdownFiles.map(\.filename)))
     }
 
-    /// The review discussion list (spec: pr-review-discussion) — nil
-    /// while the experimental toggle is off.
-    private func discussionGroups(_ session: PRSession) -> [ReviewDiscussion.FileGroup]? {
-        guard prDiscussionEnabled else { return nil }
-        // Threads written before a rename carry the old path; join them
-        // to the renamed file's group. Untrusted API data must not feed
-        // the trapping initializer — first claim wins on a duplicate.
-        let renames = Dictionary(session.files.compactMap { file in
-            file.previousFilename.map { ($0, file.filename) }
-        }, uniquingKeysWith: { first, _ in first })
-        return ReviewDiscussion.groups(
-            comments: session.reviewComments,
-            meta: session.threadMeta,
-            viewer: state.viewerLogin,
-            markdownPaths: Set(session.markdownFiles.map(\.filename)),
-            fileOrder: session.files.map(\.filename),
-            renames: renames)
-    }
 }
 
 // MARK: - PR file (rendered diff)

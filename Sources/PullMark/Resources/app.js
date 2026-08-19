@@ -3456,6 +3456,19 @@
     }
   }
 
+  // A review's inline threads render nested and indented under its
+  // verdict card — GitHub's conversation-tab shape: the summary and
+  // the line comments it came with stay connected.
+  function conversationThreadsEl(threads) {
+    var nest = document.createElement("div");
+    nest.className = "pm-conversation-threads";
+    threads.forEach(function (t) {
+      nest.append(discussionThreadCardEl(
+        { path: t.path, isMarkdown: t.isMarkdown }, t.item, true));
+    });
+    return nest;
+  }
+
   function conversationCardEl(entry) {
     var c = entry.card;
     c.source = entry.kind === "comment" ? "conversation" : "review";
@@ -3485,13 +3498,17 @@
       // chips earn the comment shell; a canReact-only shell renders as
       // a dead band under a rule, which reads as a failed load.
       var hasChips = c.id && c.reactions && c.reactions.length;
-      if (!(c.body || "").trim() && !hasChips) { return box; }
-      var reviewComment = commentEl(c);
-      if (!(c.body || "").trim()) {
-        var emptyBody = reviewComment.querySelector(".pm-thread-body");
-        if (emptyBody) { emptyBody.remove(); }
+      if ((c.body || "").trim() || hasChips) {
+        var reviewComment = commentEl(c);
+        if (!(c.body || "").trim()) {
+          var emptyBody = reviewComment.querySelector(".pm-thread-body");
+          if (emptyBody) { emptyBody.remove(); }
+        }
+        box.append(reviewComment);
       }
-      box.append(reviewComment);
+      if ((entry.threads || []).length) {
+        box.append(conversationThreadsEl(entry.threads));
+      }
       return box;
     }
     box.append(commentEl(c));
@@ -3599,6 +3616,50 @@
     content.append(section);
   }
 
+  // One review thread as a card: the standard thread card (reply,
+  // reactions, resolve, collapsed resolved) with the excerpt slotted
+  // above the comments and the routing action in the header row.
+  // `group` carries {path, isMarkdown}; `withPath` prepends the file
+  // path into the header — nested timeline cards have no per-file
+  // group header to inherit it from.
+  function discussionThreadCardEl(group, item, withPath) {
+    var wrap = threadsEl([item]);
+    var box = wrap.querySelector(".pm-thread");
+    if (box) {
+      var boxHeader = box.querySelector(".pm-thread-header");
+      if (withPath && boxHeader) {
+        var pathEl = document.createElement("span");
+        pathEl.className = "pm-thread-path";
+        pathEl.textContent = group.path;
+        boxHeader.prepend(pathEl);
+      }
+      var action = discussionActionEl(group, item);
+      if (boxHeader && action) { boxHeader.append(action); }
+      // Markdown gets the rich preview unless the raw form is more
+      // honest: a thread anchored ON a deleted line (the discussed
+      // text isn't in the new side), or a clamped tail that crosses
+      // a fence boundary (fence-interior text would masquerade as
+      // Markdown). Empty previews also fall back.
+      var excerpt = null;
+      if (group.isMarkdown) {
+        var last = (item.excerpt || [])[item.excerpt.length - 1];
+        var crossesFence = (item.excerpt || []).some(function (line) {
+          var bare = line.text.trim().slice(0, 3);
+          return bare === "```" || bare === "~~~";
+        });
+        if (!(last && last.kind === "del") && !crossesFence) {
+          excerpt = discussionTablePreviewEl(item) || discussionPreviewEl(item);
+        }
+      }
+      if (!excerpt) { excerpt = discussionExcerptEl(item); }
+      if (excerpt) {
+        if (boxHeader) { boxHeader.after(excerpt); }
+        else { box.prepend(excerpt); }
+      }
+    }
+    return wrap;
+  }
+
   function setupDiscussion(groups) {
     var section = document.createElement("section");
     section.className = "pm-discussion pm-annotation";
@@ -3632,38 +3693,7 @@
       section.append(header);
 
       group.threads.forEach(function (item) {
-        // The standard card (reply, reactions, resolve, collapsed
-        // resolved) — then the excerpt slots in above the comments and
-        // the routing action joins the header row.
-        var wrap = threadsEl([item]);
-        var box = wrap.querySelector(".pm-thread");
-        if (box) {
-          var boxHeader = box.querySelector(".pm-thread-header");
-          var action = discussionActionEl(group, item);
-          if (boxHeader && action) { boxHeader.append(action); }
-          // Markdown gets the rich preview unless the raw form is more
-          // honest: a thread anchored ON a deleted line (the discussed
-          // text isn't in the new side), or a clamped tail that crosses
-          // a fence boundary (fence-interior text would masquerade as
-          // Markdown). Empty previews also fall back.
-          var excerpt = null;
-          if (group.isMarkdown) {
-            var last = (item.excerpt || [])[item.excerpt.length - 1];
-            var crossesFence = (item.excerpt || []).some(function (line) {
-              var bare = line.text.trim().slice(0, 3);
-              return bare === "```" || bare === "~~~";
-            });
-            if (!(last && last.kind === "del") && !crossesFence) {
-              excerpt = discussionTablePreviewEl(item) || discussionPreviewEl(item);
-            }
-          }
-          if (!excerpt) { excerpt = discussionExcerptEl(item); }
-          if (excerpt) {
-            if (boxHeader) { boxHeader.after(excerpt); }
-            else { box.prepend(excerpt); }
-          }
-        }
-        section.append(wrap);
+        section.append(discussionThreadCardEl(group, item, false));
       });
     });
     // The same enhancement pass file views give thread cards: suggestion

@@ -234,15 +234,17 @@ enum PRConversation {
     }
 
     /// A review earns a timeline card when it says something: every
-    /// APPROVED / CHANGES_REQUESTED / DISMISSED, but COMMENTED only
-    /// with a non-empty body — inline-only submissions generate one
-    /// empty COMMENTED row each (3–5 per PR observed live), and an
-    /// unfiltered timeline is mostly blank cards. PENDING is the
-    /// viewer's own unsubmitted review; the popover owns it.
-    static func includesReview(state: String, body: String?) -> Bool {
+    /// APPROVED / CHANGES_REQUESTED / DISMISSED, COMMENTED with a
+    /// non-empty body — or any review whose inline threads nest under
+    /// it (the empty COMMENTED rows inline-only submissions generate
+    /// are exactly those anchors). PENDING is the viewer's own
+    /// unsubmitted review; the popover owns it.
+    static func includesReview(state: String, body: String?,
+                               hasThreads: Bool = false) -> Bool {
         switch state {
         case "APPROVED", "CHANGES_REQUESTED", "DISMISSED": return true
         case "COMMENTED":
+            if hasThreads { return true }
             let trimmed = body?.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed?.isEmpty == false
         default: return false
@@ -251,13 +253,16 @@ enum PRConversation {
 
     /// GitHub's ISO stamps share one format, so the lexicographic sort
     /// is the chronological one; ids tie-break so same-second entries
-    /// keep a stable order across refreshes.
+    /// keep a stable order across refreshes. `reviewsWithThreads`
+    /// widens the review filter to thread anchors.
     static func timeline(comments: [IssueComment],
-                         reviews: [PullRequestReview]) -> [Entry] {
+                         reviews: [PullRequestReview],
+                         reviewsWithThreads: Set<Int> = []) -> [Entry] {
         var entries: [(Entry, String, Int)] =
             comments.map { (.comment($0), $0.createdAt ?? "", $0.id) }
         entries.append(contentsOf: reviews
-            .filter { includesReview(state: $0.state, body: $0.body) }
+            .filter { includesReview(state: $0.state, body: $0.body,
+                                     hasThreads: reviewsWithThreads.contains($0.id)) }
             .map { (.review($0), $0.submittedAt ?? "", $0.id) })
         return entries
             .sorted { ($0.1, $0.2) < ($1.1, $1.2) }
@@ -265,12 +270,26 @@ enum PRConversation {
     }
 }
 
+/// One inline thread nested under its review's timeline card — the
+/// thread-card payload plus the file context its old per-file group
+/// header used to carry.
+struct ConversationThreadPayload: Encodable, Equatable {
+    let path: String
+    let isMarkdown: Bool
+    let item: ReviewDiscussion.ThreadItem
+}
+
 /// One rendered timeline card. `kind` is "comment" or the review
 /// verdict lowercased ("approved" / "changes_requested" / "dismissed"
 /// / "commented") — the page builds the verdict headline from it.
+/// Review entries carry their inline threads, rendered nested and
+/// indented beneath the verdict (spec: pr-cockpit, revised — GitHub's
+/// conversation-tab shape; the separate file-grouped section read as
+/// disconnected from the summary comment it belonged with).
 struct ConversationEntryPayload: Encodable, Equatable {
     let kind: String
     let card: CommentPayload
+    var threads: [ConversationThreadPayload] = []
 }
 
 extension PRConversation {
@@ -279,38 +298,106 @@ extension PRConversation {
     /// (REST has no reaction data for review bodies — both counts and
     /// viewer state come from GraphQL). Review cards render read-only
     /// bodies (editing a review summary stays on GitHub) but keep
-    /// reaction chips.
+    /// reaction chips. `includeThreads` is the graduated discussion
+    /// toggle: off renders verdicts and comments only.
     static func payload(comments: [IssueComment],
                         reviews: [PullRequestReview],
+                        reviewComments: [ReviewComment] = [],
+                        threadMeta: [Int: ThreadMeta] = [:],
                         commentMeta: [Int: ReviewCommentMeta],
                         reviewMeta: [Int: ReviewCommentMeta] = [:],
                         reviewReactions: [Int: ReactionRollup] = [:],
-                        viewer: String?) -> [ConversationEntryPayload] {
-        timeline(comments: comments, reviews: reviews).map { entry in
-            switch entry {
-            case .comment(let comment):
-                return ConversationEntryPayload(
-                    kind: "comment",
-                    card: CommentPayload(comment, meta: commentMeta[comment.id],
-                                         viewer: viewer))
-            case .review(let review):
-                let meta = reviewMeta[review.id]
-                var card = CommentPayload(
-                    author: review.user?.login ?? "unknown",
-                    dateLabel: GitHubDate.dayLabel(review.submittedAt),
-                    body: review.body ?? "")
-                card.id = review.id
-                card.avatarUrl = review.user?.avatarUrl?.absoluteString
-                card.canReact = viewer != nil && meta != nil
-                card.reactions = CommentReactions.chips(
-                    rollup: reviewReactions[review.id],
-                    viewerReacted: meta?.viewerReacted ?? [],
-                    reactors: meta?.reactors ?? [:],
-                    viewer: viewer)
-                return ConversationEntryPayload(kind: review.state.lowercased(),
-                                                card: card)
+                        viewer: String?,
+                        markdownPaths: Set<String> = [],
+                        renames: [String: String] = [:],
+                        includeThreads: Bool = false) -> [ConversationEntryPayload] {
+        // Threads keyed by the review that submitted them. A root whose
+        // review is unknown (past the reviews cap, or a shape surprise)
+        // attaches to the LAST review chronologically before giving up —
+        // nothing may silently vanish, so truly unmatched threads ride
+        // with a synthetic "commented" entry at their own date.
+        var threadsByReview: [Int: [ReviewThread]] = [:]
+        var orphans: [ReviewThread] = []
+        if includeThreads {
+            let knownReviews = Set(reviews.map(\.id))
+            for thread in ReviewThreads.group(reviewComments) {
+                if let reviewID = thread.root.pullRequestReviewId,
+                   knownReviews.contains(reviewID) {
+                    threadsByReview[reviewID, default: []].append(thread)
+                } else {
+                    orphans.append(thread)
+                }
             }
         }
+
+        func threadPayloads(_ threads: [ReviewThread]) -> [ConversationThreadPayload] {
+            threads.sorted { $0.root.id < $1.root.id }.map { thread in
+                let path = renames[thread.path] ?? thread.path
+                return ConversationThreadPayload(
+                    path: path,
+                    isMarkdown: markdownPaths.contains(path),
+                    item: ReviewDiscussion.item(for: thread, path: path,
+                                                meta: threadMeta[thread.root.id],
+                                                viewer: viewer))
+            }
+        }
+
+        var entries = timeline(comments: comments, reviews: reviews,
+                               reviewsWithThreads: Set(threadsByReview.keys))
+            .map { entry -> ConversationEntryPayload in
+                switch entry {
+                case .comment(let comment):
+                    return ConversationEntryPayload(
+                        kind: "comment",
+                        card: CommentPayload(comment, meta: commentMeta[comment.id],
+                                             viewer: viewer))
+                case .review(let review):
+                    let meta = reviewMeta[review.id]
+                    var card = CommentPayload(
+                        author: review.user?.login ?? "unknown",
+                        dateLabel: GitHubDate.dayLabel(review.submittedAt),
+                        body: review.body ?? "")
+                    card.id = review.id
+                    card.avatarUrl = review.user?.avatarUrl?.absoluteString
+                    card.canReact = viewer != nil && meta != nil
+                    card.reactions = CommentReactions.chips(
+                        rollup: reviewReactions[review.id],
+                        viewerReacted: meta?.viewerReacted ?? [],
+                        reactors: meta?.reactors ?? [:],
+                        viewer: viewer)
+                    return ConversationEntryPayload(
+                        kind: review.state.lowercased(), card: card,
+                        threads: threadPayloads(threadsByReview[review.id] ?? []))
+                }
+            }
+        for orphan in orphans {
+            var card = CommentPayload(author: orphan.root.author,
+                                      dateLabel: orphan.root.dateLabel,
+                                      body: "")
+            card.avatarUrl = nil
+            let entry = ConversationEntryPayload(kind: "commented", card: card,
+                                                 threads: threadPayloads([orphan]))
+            // Chronological insert by the root's stamp keeps orphans in
+            // the flow instead of dangling at the foot.
+            let stamp = orphan.root.createdAt ?? ""
+            let at = entries.firstIndex { candidate in
+                candidateStamp(candidate, comments: comments, reviews: reviews) > stamp
+            } ?? entries.endIndex
+            entries.insert(entry, at: at)
+        }
+        return entries
+    }
+
+    /// The original ISO stamp behind an assembled entry (for orphan
+    /// insertion) — resolved from the sources by id.
+    private static func candidateStamp(_ entry: ConversationEntryPayload,
+                                       comments: [IssueComment],
+                                       reviews: [PullRequestReview]) -> String {
+        guard let id = entry.card.id else { return "" }
+        if entry.kind == "comment" {
+            return comments.first(where: { $0.id == id })?.createdAt ?? ""
+        }
+        return reviews.first(where: { $0.id == id })?.submittedAt ?? ""
     }
 }
 

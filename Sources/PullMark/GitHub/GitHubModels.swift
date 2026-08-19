@@ -112,6 +112,11 @@ struct ReviewComment: Decodable, Identifiable, Equatable {
     /// not outdated, they were never anchored).
     let subjectType: String?
     let inReplyToId: Int?
+    /// The review this comment was submitted with — every review
+    /// comment has one (GitHub wraps even standalone comments in a
+    /// review). Groups threads under their verdict card in the
+    /// conversation timeline (spec: pr-cockpit, revised).
+    var pullRequestReviewId: Int? = nil
     let user: User?
     let createdAt: String?
     let htmlUrl: URL?

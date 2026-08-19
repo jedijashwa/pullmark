@@ -16,17 +16,21 @@ section current as features land.
   logs. Everything refreshes quietly on the same one-minute cadence
   the app already used; the update banner still only appears when new
   commits actually change what you're reviewing.
-- **The conversation is readable now, not just writable.** The
-  overview renders the PR's conversation as a timeline — comments and
-  review verdicts interleaved in order, with reactions, edit and
-  delete on your own comments, and a quiet tag on bot comments. The
-  comment box moved to the timeline's foot, where conversations end.
-- **Review discussion is on for everyone.** The per-file review
-  discussion list ([introduced as a beta in
+- **The conversation is readable now, not just writable — and it's
+  one timeline.** The overview renders the PR's conversation the way
+  it happened: comments and review verdicts interleaved
+  chronologically, with each review's inline comments nested under
+  its summary — the context a reviewer gives alongside their line
+  comments stays attached to them. Cards carry avatars, reactions,
+  edit and delete on your own comments, a quiet tag on bot comments,
+  and each nested thread names its file. The comment box moved to the
+  timeline's foot, where conversations end.
+- **Review discussion is on for everyone.** The review threads
+  ([introduced as a beta list in
   0.31.0](https://github.com/jedijashwa/pullmark/releases/tag/v0.31.0))
-  graduates: on by default, with its toggle now in Settings ▸
-  General ▸ Reviewing. If you turned it off during the beta, your
-  choice stands.
+  graduate into the conversation: on by default, with the toggle now
+  in Settings ▸ General ▸ Reviewing. If you turned it off during the
+  beta, your choice stands.
 
 ## 0.33.1 - 2026-08-17
 
