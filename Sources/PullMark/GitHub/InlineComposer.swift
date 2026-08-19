@@ -125,12 +125,17 @@ enum ComposerDraftStore {
     }
 
     static let maxDrafts = 100
-    private static let replyPrefix = "reply:"
+    /// Drafts that aren't anchored to a diff position survive head
+    /// movement: replies live on their thread, and the conversation
+    /// composer lives on the PR itself — keying either to the head SHA
+    /// would orphan typed text behind a banner Refresh (code-review
+    /// catch for conversation:).
+    private static let headlessPrefixes = ["reply:", "conversation:"]
 
     static func storageKey(ref: PullRequestRef, headSHA: String,
                            path: String, jsKey: String) -> String {
         let pr = "\(ref.owner)/\(ref.repo)#\(ref.number)"
-        return jsKey.hasPrefix(replyPrefix)
+        return headlessPrefixes.contains(where: jsKey.hasPrefix)
             ? "\(pr)|\(path)|\(jsKey)"
             : "\(pr)@\(headSHA)|\(path)|\(jsKey)"
     }
@@ -174,13 +179,18 @@ enum ComposerDraftStore {
                        headSHA: String, path: String) -> [String: String] {
         let pr = "\(ref.owner)/\(ref.repo)#\(ref.number)"
         let linePrefix = "\(pr)@\(headSHA)|\(path)|"
-        let replyKeyPrefix = "\(pr)|\(path)|\(replyPrefix)"
+        let headlessKeyPrefix = "\(pr)|\(path)|"
         var result: [String: String] = [:]
         for (key, draft) in stored {
             if key.hasPrefix(linePrefix) {
                 result[String(key.dropFirst(linePrefix.count))] = draft.text
-            } else if key.hasPrefix(replyKeyPrefix) {
-                result[replyPrefix + String(key.dropFirst(replyKeyPrefix.count))] = draft.text
+            } else if key.hasPrefix(headlessKeyPrefix) {
+                // Head-independent drafts (reply:/conversation:) carry
+                // their js key verbatim after the prefix.
+                let jsKey = String(key.dropFirst(headlessKeyPrefix.count))
+                if headlessPrefixes.contains(where: jsKey.hasPrefix) {
+                    result[jsKey] = draft.text
+                }
             }
         }
         return result

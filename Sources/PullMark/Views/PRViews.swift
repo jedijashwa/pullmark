@@ -12,6 +12,17 @@ struct PROverviewView: View {
     /// Conversation-card deletes confirm separately — they route to the
     /// issue-comment endpoint family, not /pulls/comments.
     @State private var deleteConversationID: Int?
+    /// What the page's Conversation section renders. Snapshotted from
+    /// the session and updated ONLY through mutatePreservingScroll: the
+    /// quiet tick mutates the session directly, and rebuilding the page
+    /// straight from it would yank the reader to the top whenever new
+    /// conversation content lands (code-review catch).
+    @State private var conversationPage = ConversationPageState()
+
+    struct ConversationPageState: Equatable {
+        var entries: [ConversationEntryPayload] = []
+        var unavailable = false
+    }
     @State private var pendingScrollFraction: Double?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
@@ -69,8 +80,8 @@ struct PROverviewView: View {
                         // coordinate in its margin would mean nothing.
                         lineNumberEligible: false,
                         discussion: discussionGroups(session),
-                        conversation: conversationEntries(session),
-                        conversationUnavailable: session.conversationUnavailable,
+                        conversation: conversationPage.entries,
+                        conversationUnavailable: conversationPage.unavailable,
                         // The overview always offers the comment box,
                         // even on a silent PR.
                         conversationComposer: true
@@ -159,6 +170,18 @@ struct PROverviewView: View {
                 var surface = SurfaceToolbar(id: "prOverview:" + sessionID)
                 surface.shareURL = session.details.htmlUrl
                 state.registerSurfaceToolbar(surface)
+                conversationPage = ConversationPageState(
+                    entries: conversationEntries(session),
+                    unavailable: session.conversationUnavailable)
+            }
+            // Every later change — a quiet tick delivering new comments,
+            // a fold-in from posting — reaches the page through the
+            // scroll-preserving wrapper, never as a bare reload.
+            .onChange(of: ConversationPageState(
+                entries: conversationEntries(session),
+                unavailable: session.conversationUnavailable)) { fresh in
+                guard fresh != conversationPage else { return }
+                mutatePreservingScroll { conversationPage = fresh }
             }
             // Review Changes… (menu or shortcut) opens the popover on
             // whichever PR surface is active — here, the overview.

@@ -361,3 +361,39 @@ import Testing
             ["unit-tests", "audit", "build", "deploy", "alpha-docs", "zeta-lint"])
     }
 }
+
+@Suite struct TruncatedChecksTests {
+    private func state(rollup: String?, total: Int,
+                       visible: [CheckItem.State]) -> PRCockpitState {
+        var state = PRCockpitState()
+        state.rollupState = rollup
+        state.checksTotal = total
+        state.checks = visible.map {
+            CheckItem(name: "c", group: nil, state: $0,
+                      detailsUrl: nil, isRequired: false, durationLabel: nil)
+        }
+        return state
+    }
+
+    @Test func truncatedFailurePastTheCutoffNeverReadsGreen() {
+        // 60 checks, the failing one is #55: the fetched 50 are all
+        // green, GitHub's rollup says FAILURE — the capsule must too.
+        let cockpit = state(rollup: "FAILURE", total: 60,
+                            visible: Array(repeating: .passed, count: 50))
+        #expect(cockpit.checksSummary == .failed(failing: 1, total: 60))
+    }
+
+    @Test func truncatedPendingReadsRunning() {
+        let cockpit = state(rollup: "PENDING", total: 60,
+                            visible: Array(repeating: .passed, count: 50))
+        #expect(cockpit.checksSummary == .running(done: 59, total: 60))
+    }
+
+    @Test func completeListsClassifyFromRows() {
+        // Untruncated: the rows are the whole story even when the
+        // rollup disagrees momentarily (it can lag a beat).
+        let cockpit = state(rollup: "SUCCESS", total: 2,
+                            visible: [.passed, .failed])
+        #expect(cockpit.checksSummary == .failed(failing: 1, total: 2))
+    }
+}

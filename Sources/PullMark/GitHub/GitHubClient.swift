@@ -336,6 +336,7 @@ final class GitHubClient {
                 }
               }
               statusCheckRollup {
+                state
                 contexts(first: 50) {
                   totalCount
                   nodes {
@@ -456,7 +457,10 @@ final class GitHubClient {
                 }
                 let requestedReviewer: Reviewer?
             }
-            struct Rollup: Decodable { let contexts: Contexts? }
+            struct Rollup: Decodable {
+                let state: String?
+                let contexts: Contexts?
+            }
             struct Contexts: Decodable {
                 let totalCount: Int?
                 let nodes: [Context]?
@@ -571,6 +575,7 @@ final class GitHubClient {
         }
         let contexts = pr.statusCheckRollup?.contexts
         state.checksTotal = contexts?.totalCount ?? 0
+        state.rollupState = pr.statusCheckRollup?.state
         state.checks = (contexts?.nodes ?? []).compactMap { node in
             if node.__typename == "StatusContext" {
                 guard let name = node.context else { return nil }
@@ -1031,22 +1036,6 @@ final class GitHubClient {
         // comments list lags fresh writes (0.31.0 lesson; never refetch
         // on mutation).
         return try Self.decoder.decode(IssueComment.self, from: data)
-    }
-
-    /// Every conversation comment on the PR (the issue-comment
-    /// timeline — every pull request is an issue), ascending by id.
-    /// 30 pages bounds a pathological PR.
-    func issueComments(_ ref: PullRequestRef) async throws -> [IssueComment] {
-        var all: [IssueComment] = []
-        for page in 1...30 {
-            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments",
-                                         query: [URLQueryItem(name: "per_page", value: "100"),
-                                                 URLQueryItem(name: "page", value: "\(page)")])
-            let batch = try Self.decoder.decode([IssueComment].self, from: data)
-            all.append(contentsOf: batch)
-            if batch.count < 100 { break }
-        }
-        return all
     }
 
     /// The quiet-tick variant: conditional on the previous ETag; nil
