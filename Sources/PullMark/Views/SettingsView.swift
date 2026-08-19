@@ -52,7 +52,7 @@ struct GeneralSettingsTab: View {
 
     /// Deep-link landing spots this tab owns (AppLinks anchor ids).
     private static let anchors: Set<String> = [
-        "restore-session", "show-hidden-files", "github-links",
+        "github", "restore-session", "show-hidden-files", "github-links",
         "clicking-files", "diff-layout", "review-requests", "pr-discussion",
         "whats-new", "check-updates", "default-app", "command-line", "quick-look",
     ]
@@ -60,6 +60,8 @@ struct GeneralSettingsTab: View {
     var body: some View {
         ScrollViewReader { scroll in
         Form {
+            GitHubConnectionSection()
+
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
                 .help("Reopen what was in the sidebar when PullMark last quit")
@@ -863,5 +865,74 @@ struct ThemePreviewCard: View {
         .accessibilityLabel("\(title) theme")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction(.default, select)
+    }
+}
+
+// MARK: - GitHub connection
+
+/// The General tab's top section (spec: github-connection): whether
+/// PullMark can talk to GitHub, as whom, and through which credential
+/// source — with the recheck and the setup walkthrough one click away.
+struct GitHubConnectionSection: View {
+    @ObservedObject private var connection = GitHubClient.shared.connection
+    @State private var showSetup = false
+
+    var body: some View {
+        Section("GitHub") {
+            LabeledContent("Connection:") {
+                HStack(spacing: 10) {
+                    statusLine
+                    Spacer()
+                    Button("Check Again") {
+                        Task { await GitHubClient.shared.recheck() }
+                    }
+                    .disabled(connection.status == .checking)
+                    .help("Re-read credentials from the GitHub CLI and git "
+                        + "credential helpers — after gh auth login, this "
+                        + "connects without relaunching")
+                    Button("Set Up…") { showSetup = true }
+                        .help("Walk through connecting PullMark to GitHub")
+                }
+            }
+            .settingAnchor("github")
+
+            Text("PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own and never stores a secret. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .sheet(isPresented: $showSetup) { GitHubSetupSheet() }
+        .onAppear {
+            // Settings can open before any API call has resolved the
+            // token — never leave the row stuck on "Checking…".
+            if connection.status == .checking {
+                Task { await GitHubClient.shared.recheck() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var statusLine: some View {
+        switch connection.status {
+        case .checking:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Checking…").foregroundStyle(.secondary)
+            }
+        case .connected(let login, let source):
+            HStack(spacing: 6) {
+                Circle().fill(.green).frame(width: 7, height: 7)
+                Text(login.map { "Connected as \($0)" } ?? "Connected")
+                Text("· \(source.label)")
+                    .foregroundStyle(.secondary)
+            }
+        case .notConnected:
+            HStack(spacing: 6) {
+                Circle().fill(.orange).frame(width: 7, height: 7)
+                Text("Not connected")
+                Text("· private repos and reviewing unavailable")
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }

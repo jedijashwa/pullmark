@@ -5,19 +5,59 @@ import Foundation
 /// Order: `gh auth token` (GitHub CLI), then `git credential fill` (keychain
 /// or any other configured credential helper).
 enum SystemGitCredentials {
-    static func resolveToken(host: String = "github.com") -> String? {
+    /// Where a resolved token came from — named in the Settings status
+    /// row ("Connected as X · GitHub CLI") and the setup sheet's ✓ state
+    /// (spec: github-connection).
+    enum Source: String {
+        case githubCLI
+        case credentialHelper
+
+        var label: String {
+            switch self {
+            case .githubCLI: return "GitHub CLI"
+            case .credentialHelper: return "git credential helper"
+            }
+        }
+    }
+
+    /// A signed-out machine on demand: dist trials on a fully-authed
+    /// Mac can't otherwise reach the signed-out surfaces (PM_DEMO-style
+    /// env hook; spec: github-connection). "1" = signed out (gh
+    /// detection stays real, so the sheet shows its sign-in step);
+    /// "nogh" = also pretend gh isn't installed (the install step).
+    static var credentialsDisabled: Bool {
+        let value = ProcessInfo.processInfo.environment["PM_NO_CREDENTIALS"]
+        return value == "1" || value == "nogh"
+    }
+
+    private static var pretendNoCLI: Bool {
+        ProcessInfo.processInfo.environment["PM_NO_CREDENTIALS"] == "nogh"
+    }
+
+    static func resolveToken(host: String = "github.com") -> (token: String, source: Source)? {
+        guard !credentialsDisabled else { return nil }
         if let out = runProcess(["gh", "auth", "token", "--hostname", host]) {
             let token = out.trimmingCharacters(in: .whitespacesAndNewlines)
             if !token.isEmpty, !token.contains(" ") {
-                return token
+                return (token, .githubCLI)
             }
         }
         let input = "protocol=https\nhost=\(host)\n\n"
         if let out = runProcess(["git", "credential", "fill"], stdin: input,
-                                extraEnv: ["GIT_TERMINAL_PROMPT": "0"]) {
-            return parseCredentialPassword(out)
+                                extraEnv: ["GIT_TERMINAL_PROMPT": "0"]),
+           let password = parseCredentialPassword(out) {
+            return (password, .credentialHelper)
         }
         return nil
+    }
+
+    /// Setup-sheet detection: is `gh` reachable on the (extended) PATH
+    /// at all? Distinguishes "install it" from "sign in" (the sheet's
+    /// two steps).
+    static func githubCLIInstalled() -> Bool {
+        guard !pretendNoCLI else { return false }
+        return runProcess(["which", "gh"])?
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
     /// Parses `git credential fill` key=value output.

@@ -27,6 +27,7 @@ enum AppLinks {
         "settings/general/pr-discussion",
         "settings/general/restore-session",
         "settings/general/show-hidden-files",
+        "settings/general/github",
         "settings/general/github-links",
         "settings/general/clicking-files",
         "settings/general/diff-layout",
