@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import PullMark
 
@@ -18,6 +19,48 @@ import Testing
         // GitHub CLI" (spec: github-connection).
         #expect(SystemGitCredentials.Source.githubCLI.label == "GitHub CLI")
         #expect(SystemGitCredentials.Source.credentialHelper.label == "git credential helper")
+    }
+
+    @Test func testHookParsesOnlyItsTwoValues() {
+        #expect(SystemGitCredentials.testHookMode("1") == .signedOut)
+        #expect(SystemGitCredentials.testHookMode("nogh") == .noCLI)
+        // Anything else is OFF — a typo'd hook must never silently
+        // sign a real user out.
+        #expect(SystemGitCredentials.testHookMode(nil) == .none)
+        #expect(SystemGitCredentials.testHookMode("") == .none)
+        #expect(SystemGitCredentials.testHookMode("0") == .none)
+        #expect(SystemGitCredentials.testHookMode("true") == .none)
+    }
+}
+
+/// The pure rules behind auth healing — the debounce window and the
+/// auth-shape classification that gates setup affordances and
+/// automatic re-resolution (spec: github-connection).
+@Suite struct GitHubAuthRulesTests {
+    @Test func debounceWindowBoundaries() {
+        let last = Date(timeIntervalSince1970: 1_000)
+        #expect(!GitHubAuthRules.shouldReprobe(
+            now: last.addingTimeInterval(29), last: last))
+        #expect(!GitHubAuthRules.shouldReprobe(
+            now: last.addingTimeInterval(30), last: last))
+        #expect(GitHubAuthRules.shouldReprobe(
+            now: last.addingTimeInterval(31), last: last))
+        // The reset value: distantPast always allows a probe.
+        #expect(GitHubAuthRules.shouldReprobe(now: last, last: .distantPast))
+    }
+
+    @Test func authShapeTruthTable() {
+        // 401 is auth-shaped regardless of connection state.
+        #expect(GitHubAuthRules.isAuthShaped(status: 401, signedOut: true))
+        #expect(GitHubAuthRules.isAuthShaped(status: 401, signedOut: false))
+        // 404 only while signed out — GitHub answers 404 for
+        // private-without-auth; connected 404s are typos/deletions.
+        #expect(GitHubAuthRules.isAuthShaped(status: 404, signedOut: true))
+        #expect(!GitHubAuthRules.isAuthShaped(status: 404, signedOut: false))
+        // Rate-limit 403s must NEVER trigger subprocess re-resolution.
+        #expect(!GitHubAuthRules.isAuthShaped(status: 403, signedOut: true))
+        #expect(!GitHubAuthRules.isAuthShaped(status: 403, signedOut: false))
+        #expect(!GitHubAuthRules.isAuthShaped(status: 500, signedOut: true))
     }
 }
 

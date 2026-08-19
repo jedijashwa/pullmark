@@ -1851,6 +1851,17 @@ final class AppState: ObservableObject {
             prSessions[index].reviewMeta = payload.reviewMeta
             prSessions[index].reviewReactions = payload.reviewReactions
         }
+        // Heal degraded thread meta (comments loaded, GraphQL meta
+        // didn't — the signed-out-then-connected case): only while
+        // degraded, so the tick never doubles its GraphQL cost for
+        // healthy sessions (adversarial-review catch — without this,
+        // "the tick retries it" was a comment, not a behavior).
+        if let session = prSessions.first(where: { $0.id == sessionID }),
+           session.threadMeta.isEmpty, !session.reviewComments.isEmpty,
+           let meta = try? await client.reviewThreadMeta(ref), !meta.isEmpty,
+           let index = prSessions.firstIndex(where: { $0.id == sessionID }) {
+            prSessions[index].threadMeta = meta
+        }
         do {
             let etag = prSessions.first(where: { $0.id == sessionID })?.conversationETag
             let (comments, freshTag) = try await client.issueCommentsIfChanged(ref, etag: etag)
