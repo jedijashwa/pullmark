@@ -218,20 +218,42 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
+  /* The row's expanded height, reserved while collapsed: expanding a
+     resolved thread adds buttons to this row, and without the reserve
+     the summary text dropped a few pixels to make room (Josh's catch,
+     twice — the buttons' vertical padding moved the shared baseline). */
+  min-height: 21px;
+}
+/* Every header item shares one 20px line box with no vertical padding
+   (set IN each item's own rule below — `font:` shorthands reset
+   line-height, so a separate normalization block loses the cascade):
+   the baseline stays put when expanding reveals the hidden items. The
+   actions wrapper needs it too — a bare div inherits the body's 24px
+   line-height and drags the whole baseline group down with it. */
+.pm-thread-header .pm-thread-actions {
+  /* Flex, not inline layout: as a bare div the wrapper's line box
+     (inherited 24px, then strut-plus-inline-block rounding) kept
+     outgrowing its 20px buttons and dragging the baseline group. */
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 20px;
 }
 .pm-thread-line {
   font-size: 12px;
   font-weight: 600;
+  line-height: 20px;
   color: #6e7781;
 }
 .pm-thread-actions button {
   font-size: 12px;
   font-weight: 600;
+  line-height: 20px;
   color: #0969da;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 0 6px;
 }
 @media (prefers-color-scheme: dark) {
   .pm-thread-actions button { color: #4493f8; }
@@ -248,20 +270,32 @@ body {
   flex: none;
   text-align: left;
   cursor: pointer;
-  font: 600 12px -apple-system, sans-serif;
+  font: 600 12px/20px -apple-system, sans-serif;
   color: var(--fgColor-muted, #6e7781);
   background: none;
   border: none;
   padding: 0;
 }
-.pm-thread-summary::before {
-  content: "▸ ";
-  /* Full text size: at 10px the disclosure read as debris, not a
-     control (Josh's catch). */
-  font-size: 12px;
+/* A real disclosure chevron (SVG, not a Unicode triangle — glyphs
+   carried dead whitespace and font-dependent weights): rotates in
+   place on expand, so nothing shifts and the motion says what
+   happened. */
+.pm-summary-chevron {
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  vertical-align: -1.5px;
+  transition: transform 0.12s ease;
 }
-.pm-thread:not(.pm-thread-collapsed) .pm-thread-summary::before {
-  content: "▾ ";
+/* Direct-child path: nested timeline cards sit inside the (never
+   collapsed) conversation card, which is also .pm-thread — a bare
+   descendant selector matched through the ancestor and rotated the
+   chevron while collapsed. */
+.pm-thread:not(.pm-thread-collapsed) > .pm-thread-header .pm-summary-chevron {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-summary-chevron { transition: none; }
 }
 .pm-thread-summary:hover {
   color: var(--fgColor-default, #1f2328);
@@ -322,7 +356,10 @@ body {
   border-top: none;
 }
 .pm-verdict-icon {
-  font: 700 12px ui-monospace, SFMono-Regular, monospace;
+  /* SVG twin of the header capsules' SF *.circle.fill symbols. */
+  width: 14px;
+  height: 14px;
+  flex: none;
 }
 .pm-verdict-approved .pm-verdict-icon { color: #1a7f37; }
 .pm-verdict-changes_requested .pm-verdict-icon { color: #cf222e; }
@@ -387,7 +424,7 @@ body {
 /* Nested cards carry their file context themselves — there's no
    per-file group header above them here. */
 .pm-thread-path {
-  font: 600 11px ui-monospace, SFMono-Regular, monospace;
+  font: 600 11px/20px ui-monospace, SFMono-Regular, monospace;
   color: var(--fgColor-muted, #6e7781);
 }
 
@@ -443,7 +480,7 @@ body {
 }
 .pm-discussion-action {
   margin-left: auto;
-  font: 500 12px -apple-system, sans-serif;
+  font: 500 12px/20px -apple-system, sans-serif;
   color: var(--fgColor-accent, #0969da);
   background: none;
   border: none;
