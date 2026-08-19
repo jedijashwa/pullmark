@@ -188,7 +188,7 @@ import Testing
 
     private func review(id: Int, state: String, login: String?) -> PullRequestReview {
         PullRequestReview(id: id, nodeId: "PRR_\(id)",
-                          user: login.map(PullRequestReview.User.init(login:)),
+                          user: login.map { PullRequestReview.User(login: $0) },
                           body: nil, state: state, commitId: nil)
     }
 

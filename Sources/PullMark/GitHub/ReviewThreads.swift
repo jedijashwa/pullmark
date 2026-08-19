@@ -170,6 +170,8 @@ struct CommentPayload: Encodable, Equatable {
     var edited: Bool = false
     /// The viewer authored this comment — gates the ⋯ (Edit/Delete) menu.
     var viewerOwned: Bool = false
+    /// A bot authored it (conversation timeline's quiet "bot" tag).
+    var bot: Bool = false
     /// Reaction toggles can work: the viewer is known and the comment's
     /// GraphQL node id is on hand. Chips still render read-only otherwise.
     var canReact: Bool = false
