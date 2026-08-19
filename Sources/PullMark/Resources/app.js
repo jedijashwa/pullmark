@@ -2940,6 +2940,35 @@
   var NOTE_MARKER = /^\s*note\s+@/;
   var openNoteEditor = null;
 
+  // First-use intro (spec: margin-notes-graduation). Armed by Swift
+  // after page load — never carried in the page payload, so the
+  // seen-flip can't force a re-render. While armed, every write
+  // affordance stashes its action and asks Swift instead of acting;
+  // __pmNoteIntroResolved(true) runs the stash (Keep Using resumes the
+  // exact click), false drops it and stays armed (Esc, "not now").
+  var noteIntroPending = false;
+  var noteIntroStash = null;
+
+  window.__pmSetNoteIntroPending = function (pending) {
+    noteIntroPending = !!pending;
+    if (!noteIntroPending) { noteIntroStash = null; }
+  };
+
+  window.__pmNoteIntroResolved = function (proceed) {
+    var stash = noteIntroStash;
+    noteIntroStash = null;
+    if (proceed) {
+      noteIntroPending = false;
+      if (stash) { stash(); }
+    }
+  };
+
+  function noteIntroGate(action) {
+    if (!noteIntroPending) { action(); return; }
+    noteIntroStash = action;
+    post({ type: "noteIntroRequested" });
+  }
+
   function noteCommentNodes() {
     var walker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT);
     var nodes = [];
@@ -3079,22 +3108,26 @@
       edit.type = "button";
       edit.textContent = "Edit";
       edit.addEventListener("click", function () {
-        card.style.display = "none";
-        noteComposerOpen({
-          anchor: card,
-          seed: note.body,
-          primaryLabel: "Save",
-          onSubmit: function (text) {
-            post({ type: "noteEdit", index: note.index, body: text });
-          },
-          onClose: function () { card.style.display = ""; }
+        noteIntroGate(function () {
+          card.style.display = "none";
+          noteComposerOpen({
+            anchor: card,
+            seed: note.body,
+            primaryLabel: "Save",
+            onSubmit: function (text) {
+              post({ type: "noteEdit", index: note.index, body: text });
+            },
+            onClose: function () { card.style.display = ""; }
+          });
         });
       });
       var del = document.createElement("button");
       del.type = "button";
       del.textContent = "Delete";
       del.addEventListener("click", function () {
-        post({ type: "noteDelete", index: note.index });
+        noteIntroGate(function () {
+          post({ type: "noteDelete", index: note.index });
+        });
       });
       actions.append(edit, del);
       head.append(actions);
@@ -3261,8 +3294,10 @@
     bubble.setAttribute("aria-label", bubble.title);
     bubble.addEventListener("click", function (event) {
       event.stopPropagation();
-      if (el === blockEl) { openNoteComposerAt(el, blockEnd); }
-      else { openUnitNoteComposer(el, blockEl, blockEnd); }
+      noteIntroGate(function () {
+        if (el === blockEl) { openNoteComposerAt(el, blockEnd); }
+        else { openUnitNoteComposer(el, blockEl, blockEnd); }
+      });
     });
     tools.append(bubble);
     layer.append(tools);

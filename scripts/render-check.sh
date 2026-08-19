@@ -28,7 +28,9 @@ CSP="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; im
 emit_page() {
   # "<" is <-escaped inside the JSON like HTMLBuilder.jsonLiteral, so
   # content can never close the payload tag or confuse the HTML parser.
-  local markdown_json="${1//</\\u003c}" out="$2" extra="${3:-}"
+  # An optional 4th arg names a probe script loaded after app.js — it can
+  # stub window.webkit (post() checks it at call time) and drive the page.
+  local markdown_json="${1//</\\u003c}" out="$2" extra="${3:-}" probe="${4:-}"
   cat > "$out" <<EOF
 <!DOCTYPE html>
 <html>
@@ -51,6 +53,7 @@ emit_page() {
 <script src="vendor/katex/katex.min.js"></script>
 <script src="pm-extensions.js"></script>
 <script src="app.js"></script>
+${probe:+<script src="${probe}"></script>}
 </body>
 </html>
 EOF
@@ -299,6 +302,93 @@ if grep -qE 'class="pm-linenum"' "$DOM"; then
   failures=$((failures + 1))
 else
   echo "  ok: line numbers absent by default"
+fi
+
+# ---- Margin-notes intro gate (spec: margin-notes-graduation): while the
+# intro is armed, every write affordance stashes its action and posts
+# noteIntroRequested instead of acting; resolve(true) runs the exact stash,
+# resolve(false) drops it and stays armed. The probe drives the sequence in
+# the real page and writes a verdict token per step into document.title.
+INTRO_FIXTURE='# Doc
+
+A paragraph to note.
+
+<!-- note @agent: existing note -->
+'
+cat > "$WORK/intro-probe.js" <<'EOF'
+// Stub the bridge so post() lands here instead of silently dropping —
+// post() checks window.webkit at call time, so loading after app.js is fine.
+window.__probePosted = [];
+window.webkit = { messageHandlers: { bridge: { postMessage: function (m) {
+  window.__probePosted.push(m);
+} } } };
+
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    var out = [];
+    var posted = window.__probePosted;
+    function intros() {
+      return posted.filter(function (m) {
+        return m.type === "noteIntroRequested";
+      }).length;
+    }
+    function composer() { return document.querySelector(".pm-note-composer"); }
+    function record(label, ok) { out.push((ok ? "ok" : "BAD") + "_" + label); }
+
+    window.__pmSetNoteIntroPending(true);
+    var bubble = document.querySelector(".pm-comment-btn");
+    record("bubble_present", !!bubble);
+    if (bubble) { bubble.click(); }
+    record("armed_click_posts", intros() === 1);
+    record("armed_click_opens_nothing", !composer());
+    // Esc ("not now"): stash dropped, still armed.
+    window.__pmNoteIntroResolved(false);
+    record("esc_opens_nothing", !composer());
+    // Edit on the existing bubble while still armed.
+    var edit = document.querySelector(".pm-note-actions button");
+    record("edit_present", !!edit && edit.textContent === "Edit");
+    if (edit) { edit.click(); }
+    record("armed_edit_posts", intros() === 2);
+    record("armed_edit_opens_nothing", !composer());
+    // Keep Using: the stashed EDIT runs — composer seeded with the body
+    // proves the exact clicked action resumed, not some default.
+    window.__pmNoteIntroResolved(true);
+    var box = composer();
+    var ta = box && box.querySelector("textarea");
+    record("resume_runs_stashed_edit", !!ta && ta.value === "existing note");
+    // Disarmed: the next click acts directly, no new ask.
+    if (bubble) { bubble.click(); }
+    record("disarmed_click_acts", intros() === 2 && !!composer());
+    document.title = out.join(" ");
+  }, 60);
+});
+EOF
+
+emit_page "$(printf '%s' "$INTRO_FIXTURE" | jq -Rs .)" "$WORK/intro.html" \
+  ',"noteAuthoring":true,"marginNotes":[{"index":0,"author":"agent","body":"existing note","fileLevel":false}]' \
+  "intro-probe.js"
+INTRO_DOM="$WORK/intro-dom.html"
+"$CHROME" --headless --disable-gpu --virtual-time-budget=8000 \
+  --dump-dom "file://$WORK/intro.html" > "$INTRO_DOM" 2>/dev/null
+
+intro_check() {
+  local label="$1"
+  if grep -qE "<title>[^<]*ok_${label}" "$INTRO_DOM"; then
+    echo "  ok: intro $label"
+  else
+    echo "FAIL: intro $label"
+    failures=$((failures + 1))
+  fi
+}
+for step in bubble_present armed_click_posts armed_click_opens_nothing \
+            esc_opens_nothing edit_present armed_edit_posts \
+            armed_edit_opens_nothing resume_runs_stashed_edit \
+            disarmed_click_acts; do
+  intro_check "$step"
+done
+if grep -qE "<title>[^<]*BAD_" "$INTRO_DOM"; then
+  echo "FAIL: intro probe recorded a BAD step: $(grep -oE '<title>[^<]*' "$INTRO_DOM")"
+  failures=$((failures + 1))
 fi
 
 # ---- Hostile markdown: script injection must be inert under the CSP (#5).

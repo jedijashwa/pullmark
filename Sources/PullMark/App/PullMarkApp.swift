@@ -48,7 +48,7 @@ struct PullMarkApp: App {
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     @AppStorage(ContentWidth.defaultsKey, store: UserDefaults.pullmark) private var contentWidthRaw = ContentWidth.standard.rawValue
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
-    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
 
     /// True when a pull request's file (not the overview) is on screen —
@@ -471,6 +471,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // toolbar arrangements that a sidebar-section drop corrupted, so
         // SwiftUI only ever restores a clean one. See ToolbarArrangement.
         ToolbarArrangement.repairSavedConfigurations(in: .standard)
+        // Before any view reads the margin-notes flags: alpha-era users
+        // who made an explicit enabled choice skip the first-use intro.
+        MarginNotesIntro.migrateAtLaunch()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

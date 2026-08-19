@@ -344,16 +344,18 @@ struct ExperimentalBadge: View {
 /// for "none right now" and "all alpha, alpha hidden".
 struct ExperimentalSettingsTab: View {
     @AppStorage(DefaultsKeys.showAlphaFeatures, store: UserDefaults.pullmark) private var showAlphaFeatures = false
-    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = false
+    @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
+    @AppStorage(DefaultsKeys.marginNotesIntroSeen, store: UserDefaults.pullmark) private var marginNotesIntroSeen = false
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
     @State private var confirmingAlpha = false
     @State private var copiedSnippet = false
 
     /// The current roster, by level. The empty states below cover the
     /// day either level empties out again. (Review discussion
-    /// graduated to General ▸ Reviewing in the cockpit wave.)
-    private static let alphaFeatureCount = 1
-    private static let betaFeatureCount = 0
+    /// graduated to General ▸ Reviewing in 0.34.0; margin notes
+    /// graduated alpha → beta in 0.35.0.)
+    private static let alphaFeatureCount = 0
+    private static let betaFeatureCount = 1
 
     var body: some View {
         ScrollViewReader { scroll in
@@ -378,25 +380,21 @@ struct ExperimentalSettingsTab: View {
                         : "There are no experimental features right now.")
             }
 
-            if showAlphaFeatures {
-                marginNotesSection
+            marginNotesSection
+
+            if showAlphaFeatures && Self.alphaFeatureCount == 0 {
+                Section {
+                    Text("Nothing at the alpha level right now — margin notes "
+                        + "graduated to beta.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .formStyle(.grouped)
         .frame(height: 560)
-        // Beta anchors are always consumable; margin-notes only while
-        // the alpha section is visible — a link to it with alpha hidden
-        // first runs the alpha-contract flow, and the scroll-and-flash
-        // happens once the switch flips on.
-        .consumesSettingAnchors(showAlphaFeatures ? ["margin-notes"] : [],
-                                proxy: scroll)
-        .onChange(of: showAlphaFeatures) { visible in
-            if visible, SettingsAnchorFocus.shared.pending == "margin-notes" {
-                // Re-publish so the now-armed consumer sees it.
-                let anchor = SettingsAnchorFocus.shared.pending
-                SettingsAnchorFocus.shared.pending = anchor
-            }
-        }
+        .consumesSettingAnchors(["margin-notes"], proxy: scroll)
         .onAppear {
             // A deep link that landed here wants something alpha —
             // don't let the tab look empty; offer the switch directly.
@@ -460,6 +458,12 @@ struct ExperimentalSettingsTab: View {
             Toggle("Enable margin notes", isOn: $marginNotesEnabled)
                 .help("Adds the authoring tools — hover a block, ⌥⌘M; documents "
                     + "that already contain notes always show them either way")
+                // Flipping the toggle in either direction is an informed
+                // choice — this section says everything the first-use
+                // intro would, so it never needs to interrupt later.
+                .onChange(of: marginNotesEnabled) { _ in
+                    marginNotesIntroSeen = true
+                }
 
             if marginNotesEnabled {
                 TextField("Sign notes as:", text: $marginNoteAuthor,
@@ -502,7 +506,7 @@ struct ExperimentalSettingsTab: View {
         } header: {
             HStack(spacing: 8) {
                 Text("Margin Notes")
-                ExperimentalBadge(level: .alpha)
+                ExperimentalBadge(level: .beta)
             }
         }
     }
