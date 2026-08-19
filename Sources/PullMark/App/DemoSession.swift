@@ -394,6 +394,7 @@ enum DemoSession {
                           + "the reading settled.",
                       line: 41, side: "RIGHT", startLine: nil, originalLine: 41,
                       subjectType: nil, inReplyToId: nil,
+                      pullRequestReviewId: inlineReviewID,
                       user: ReviewComment.User(login: reviewer),
                       createdAt: "2026-07-27T09:24:00Z",
                       htmlUrl: nil,
@@ -407,6 +408,7 @@ enum DemoSession {
                           + "I'll add a note under the table.",
                       line: 41, side: "RIGHT", startLine: nil, originalLine: 41,
                       subjectType: nil, inReplyToId: threadReplyRootID,
+                      pullRequestReviewId: inlineReviewID,
                       user: ReviewComment.User(login: viewerLogin),
                       createdAt: "2026-07-27T10:02:00Z",
                       htmlUrl: nil,
@@ -417,6 +419,7 @@ enum DemoSession {
                           + "worth saying the ring also turns solid green.",
                       line: 18, side: "RIGHT", startLine: nil, originalLine: 18,
                       subjectType: nil, inReplyToId: nil,
+                      pullRequestReviewId: inlineReviewID,
                       user: ReviewComment.User(login: reviewer),
                       createdAt: "2026-07-26T15:40:00Z",
                       htmlUrl: nil,
@@ -429,6 +432,7 @@ enum DemoSession {
                           + "on purpose.",
                       line: nil, side: "RIGHT", startLine: nil, originalLine: 10,
                       subjectType: nil, inReplyToId: nil,
+                      pullRequestReviewId: inlineReviewID,
                       user: ReviewComment.User(login: prAuthor),
                       createdAt: "2026-07-25T11:12:00Z",
                       htmlUrl: nil,
@@ -444,6 +448,7 @@ enum DemoSession {
                       body: "Debounce interval seems aggressive for gusty sites.",
                       line: 42, side: "RIGHT", startLine: nil, originalLine: 42,
                       subjectType: nil, inReplyToId: nil,
+                      pullRequestReviewId: inlineReviewID,
                       user: ReviewComment.User(login: reviewer),
                       createdAt: "2026-07-27T08:05:00Z",
                       htmlUrl: nil,
@@ -576,6 +581,9 @@ enum DemoSession {
     static let issueCommentBotID = 9503
     static let reviewChangesID = 9601
     static let reviewApprovedID = 9602
+    /// The empty-COMMENTED review that submitted the inline threads —
+    /// the timeline's "tobias-lund reviewed" anchor they nest under.
+    static let inlineReviewID = 9600
 
     static let issueComments: [IssueComment] = [
         IssueComment(id: issueCommentReadyID,
@@ -596,6 +604,10 @@ enum DemoSession {
     ]
 
     static let conversationReviews: [PullRequestReview] = [
+        PullRequestReview(id: inlineReviewID, nodeId: "PRR_demo9600",
+                          user: .init(login: reviewer, avatarUrl: demoAvatar(reviewer)),
+                          body: "", state: "COMMENTED", commitId: headSHA,
+                          submittedAt: "2026-07-27T09:30:00Z", htmlUrl: nil),
         PullRequestReview(id: reviewChangesID, nodeId: "PRR_demo9601",
                           user: .init(login: reviewer, avatarUrl: demoAvatar(reviewer)),
                           body: "The salt-test table lists two of the three "
@@ -619,6 +631,7 @@ enum DemoSession {
     ]
 
     static let reviewMeta: [Int: ReviewCommentMeta] = [
+        inlineReviewID: ReviewCommentMeta(nodeID: "PRR_demo9600"),
         reviewChangesID: ReviewCommentMeta(
             nodeID: "PRR_demo9601", viewerReacted: [], edited: false,
             reactors: ["+1": ReactorRoster(logins: [prAuthor], totalCount: 1)]),

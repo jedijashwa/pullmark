@@ -256,10 +256,15 @@ body {
 }
 .pm-thread-summary::before {
   content: "▸ ";
-  font-size: 10px;
+  /* Full text size: at 10px the disclosure read as debris, not a
+     control (Josh's catch). */
+  font-size: 12px;
 }
 .pm-thread:not(.pm-thread-collapsed) .pm-thread-summary::before {
   content: "▾ ";
+}
+.pm-thread-summary:hover {
+  color: var(--fgColor-default, #1f2328);
 }
 .pm-thread-resolved > .pm-thread-header {
   justify-content: flex-start;
@@ -272,7 +277,9 @@ body {
   margin-left: auto;
 }
 .pm-thread-collapsed {
-  padding: 7px 14px;
+  /* Same padding as expanded — a compact 7px saved three pixels and
+     made the summary line jump on every toggle (Josh's catch). */
+  padding: 10px 14px;
 }
 .pm-thread-collapsed > .pm-thread-header {
   margin-bottom: 0;
@@ -298,7 +305,9 @@ body {
 }
 .pm-verdict {
   display: flex;
-  align-items: baseline;
+  /* Center, not baseline: baseline hung the avatar high whenever the
+     verdict glyph's metrics joined the row (Josh's catch). */
+  align-items: center;
   gap: 7px;
   font: 600 13px -apple-system, sans-serif;
   color: var(--fgColor-default, #1f2328);
@@ -323,6 +332,9 @@ body {
 .pm-bot-tag {
   font: 500 10px -apple-system, sans-serif;
   color: var(--fgColor-muted, #6e7781);
+  /* A real fill: on the card's gray, a border-only tag disappeared
+     into the background (Josh's catch). */
+  background: var(--bgColor-default, #fff);
   border: 1px solid var(--borderColor-muted, rgba(128, 128, 128, 0.4));
   border-radius: 8px;
   padding: 0 5px;
@@ -363,6 +375,22 @@ body {
   -webkit-user-select: none;
   user-select: none;
 }
+/* A review's inline threads nest indented under its verdict card —
+   connected to the summary they were submitted with, GitHub's
+   conversation-tab shape. */
+.pm-conversation-threads {
+  margin: 6px 0 2px 26px;
+}
+.pm-conversation-threads > .pm-thread {
+  background: var(--bgColor-default, #fff);
+}
+/* Nested cards carry their file context themselves — there's no
+   per-file group header above them here. */
+.pm-thread-path {
+  font: 600 11px ui-monospace, SFMono-Regular, monospace;
+  color: var(--fgColor-muted, #6e7781);
+}
+
 /* The section-foot composer never closes — it reads as the section's
    own input, not a transient popover. */
 .pm-conversation-composer {
@@ -855,7 +883,9 @@ li > .pm-composer {
 .pm-reactions:not(:has(.pm-reaction-chip)) {
   position: absolute;
   top: 3px;
-  right: 22px;
+  /* Clear of the ⋯ button's full hover footprint — at 22px the two
+     hover pills touched (Josh's catch). */
+  right: 34px;
   margin-top: 0;
 }
 .pm-thread-comment:hover .pm-react-add,

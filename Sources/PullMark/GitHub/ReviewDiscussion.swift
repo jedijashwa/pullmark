@@ -66,19 +66,8 @@ enum ReviewDiscussion {
             let fileThreads = (byPath[path] ?? []).sorted {
                 (anchorSortKey($0), $0.root.id) < (anchorSortKey($1), $1.root.id)
             }
-            let items = fileThreads.map { thread -> ThreadItem in
-                let threadMeta = meta[thread.root.id]
-                return ThreadItem(
-                    lineLabel: thread.lineLabel,
-                    comments: thread.comments.map {
-                        CommentPayload($0, meta: threadMeta, viewer: viewer)
-                    },
-                    rootID: thread.root.id,
-                    resolved: threadMeta?.isResolved,
-                    outdated: thread.isOutdated,
-                    excerpt: thread.isFileLevel ? [] : excerpt(from: thread.root.diffHunk),
-                    language: CodeLanguages.hljsLanguage(forPath: path),
-                    htmlUrl: thread.root.htmlUrl)
+            let items = fileThreads.map { thread in
+                item(for: thread, path: path, meta: meta[thread.root.id], viewer: viewer)
             }
             let unresolved = items.filter { $0.resolved != true }.count
             return FileGroup(path: path,
@@ -86,6 +75,23 @@ enum ReviewDiscussion {
                              unresolvedCount: unresolved,
                              threads: items)
         }
+    }
+
+    /// One thread's card payload — shared by the file-grouped list and
+    /// the conversation timeline's nested threads.
+    static func item(for thread: ReviewThread, path: String,
+                     meta threadMeta: ThreadMeta?, viewer: String?) -> ThreadItem {
+        ThreadItem(
+            lineLabel: thread.lineLabel,
+            comments: thread.comments.map {
+                CommentPayload($0, meta: threadMeta, viewer: viewer)
+            },
+            rootID: thread.root.id,
+            resolved: threadMeta?.isResolved,
+            outdated: thread.isOutdated,
+            excerpt: thread.isFileLevel ? [] : excerpt(from: thread.root.diffHunk),
+            language: CodeLanguages.hljsLanguage(forPath: path),
+            htmlUrl: thread.root.htmlUrl)
     }
 
     /// Whole-file threads first, then by anchor line (outdated threads

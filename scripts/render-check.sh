@@ -217,7 +217,12 @@ CONVERSATION_PAYLOAD=',"conversationComposer":true,"conversation":[
    "canReact":true,"bot":false,"reactions":[{"content":"+1","count":2,"mine":true}]}},
  {"kind":"changes_requested","card":{"author":"riley-chen","dateLabel":"Aug 19, 2026",
    "body":"The install section needs a pass.","id":9,"edited":false,
-   "viewerOwned":false,"canReact":true,"bot":false,"reactions":[]}},
+   "viewerOwned":false,"canReact":true,"bot":false,"reactions":[]},
+  "threads":[{"path":"docs/install.md","isMarkdown":true,
+   "item":{"lineLabel":"Line 12 (new)","rootID":77,"resolved":false,"outdated":false,
+    "language":"markdown","htmlUrl":null,
+    "excerpt":[{"text":"- run the installer","kind":"add"}],
+    "comments":[{"author":"riley-chen","dateLabel":"Aug 19, 2026","body":"Name the flag here?"}]}}]},
  {"kind":"approved","card":{"author":"riley-chen","dateLabel":"Aug 19, 2026",
    "body":"","id":10,"edited":false,"viewerOwned":false,"canReact":false,
    "bot":false,"reactions":[]}},
@@ -247,6 +252,10 @@ conversation_check "bot tag"                 '<span class="pm-bot-tag">bot</span
 conversation_check "reaction chip"           'data-pm-comment="314"'
 conversation_check "foot composer"           'pm-conversation-composer'
 conversation_check "card avatars"            'pm-conv-avatar'
+conversation_check "nested thread wrapper"   'pm-conversation-threads'
+conversation_check "nested thread path"      '<span class="pm-thread-path">docs/install.md</span>'
+conversation_check "nested thread card"      'data-pm-root="77"'
+conversation_check "nested thread jump"      '>View in File</button>'
 conversation_check "composer placeholder"    'Comment on the pull request conversation'
 # Bounded to the card: the DOM is one long line, so the window is cut
 # at the next card's opening class before asserting — an unanchored .*

@@ -105,9 +105,21 @@ fixture's initials avatars.
 
 ### Conversation: the timeline
 
+> **Revised during the build (2026-08-19).** The original design kept
+> the conversation and the file-grouped review-discussion list as
+> separate sections. Trying it, the split read as disconnected: inline
+> comments and the summary comment giving them context belong
+> together, and GitHub's conversation tab is chronological for that
+> reason. The sections merged — each review's inline threads render
+> nested and indented under its verdict card (with their file path on
+> the card), the empty-body COMMENTED reviews the original design
+> filtered as noise become exactly the anchors those threads nest
+> under, and the standalone file-grouped section retired from the
+> overview. The graduated discussion toggle now gates the nested
+> threads within the timeline.
+
 A "Conversation" section in the overview's rendered page, after the
-description and before the review-discussion list. One chronological
-list merging:
+description. One chronological list merging:
 
 - **Issue comments** — the PR's timeline comments, as full cards.
 - **Submitted reviews** with state APPROVED, CHANGES_REQUESTED, or
