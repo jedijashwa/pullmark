@@ -530,6 +530,105 @@ enum DemoSession {
                            comments: uploadedPendingComments)
     }
 
+    // MARK: - Cockpit (spec: pr-cockpit)
+
+    static let approver = "elena-fisk"
+    static let botLogin = "docs-ci"
+
+    private static func demoAvatar(_ login: String) -> URL? {
+        avatarURIs[login].flatMap(URL.init(string:))
+    }
+
+    /// Where the demo PR stands: changes requested (Tobias), one
+    /// approval (Elena), the viewer's own review awaited plus a team —
+    /// every strip state on screen at once. Checks are settled green
+    /// with one skip; no detail links (demo mode is offline).
+    static let cockpit: PRCockpitState = {
+        var state = PRCockpitState()
+        state.reviewDecision = .changesRequested
+        state.reviewers = [
+            ReviewerState(login: reviewer, avatarUrl: demoAvatar(reviewer),
+                          approved: false, submittedAt: "2026-08-15T09:41:00Z"),
+            ReviewerState(login: approver, avatarUrl: demoAvatar(approver),
+                          approved: true, submittedAt: "2026-08-16T15:20:00Z"),
+        ]
+        state.reviewRequests = [
+            ReviewRequestEntry(name: viewerLogin, avatarUrl: demoAvatar(viewerLogin),
+                               isTeam: false),
+            ReviewRequestEntry(name: "docs-guild", avatarUrl: nil, isTeam: true),
+        ]
+        state.checks = [
+            CheckItem(name: "build", group: "CI", state: .passed,
+                      detailsUrl: nil, isRequired: true, durationLabel: "1m 32s"),
+            CheckItem(name: "docs-links", group: "CI", state: .passed,
+                      detailsUrl: nil, isRequired: false, durationLabel: "48s"),
+            CheckItem(name: "spellcheck", group: "CI", state: .skipped,
+                      detailsUrl: nil, isRequired: false, durationLabel: nil),
+            CheckItem(name: "license/cla", group: nil, state: .passed,
+                      detailsUrl: nil, isRequired: false, durationLabel: nil),
+        ]
+        state.checksTotal = state.checks.count
+        return state
+    }()
+
+    static let issueCommentReadyID = 9501
+    static let issueCommentViewerID = 9502
+    static let issueCommentBotID = 9503
+    static let reviewChangesID = 9601
+    static let reviewApprovedID = 9602
+
+    static let issueComments: [IssueComment] = [
+        IssueComment(id: issueCommentReadyID,
+                     body: "Ready for a first pass — the humidity table is the "
+                         + "part I'm least sure about.",
+                     user: .init(login: prAuthor, avatarUrl: demoAvatar(prAuthor)),
+                     createdAt: "2026-08-14T16:05:00Z", htmlUrl: nil,
+                     reactions: ReactionRollup(heart: 2)),
+        IssueComment(id: issueCommentViewerID,
+                     body: "Reading through this afternoon.",
+                     user: .init(login: viewerLogin, avatarUrl: demoAvatar(viewerLogin)),
+                     createdAt: "2026-08-15T11:12:00Z", htmlUrl: nil),
+        IssueComment(id: issueCommentBotID,
+                     body: "Link check passed: 42 links, 0 broken.",
+                     user: .init(login: botLogin, avatarUrl: demoAvatar(botLogin),
+                                 type: "Bot"),
+                     createdAt: "2026-08-16T15:24:00Z", htmlUrl: nil),
+    ]
+
+    static let conversationReviews: [PullRequestReview] = [
+        PullRequestReview(id: reviewChangesID, nodeId: "PRR_demo9601",
+                          user: .init(login: reviewer, avatarUrl: demoAvatar(reviewer)),
+                          body: "The salt-test table lists two of the three "
+                              + "reference solutions — add the 75% RH row and "
+                              + "this is good to go.",
+                          state: "CHANGES_REQUESTED", commitId: headSHA,
+                          submittedAt: "2026-08-15T09:41:00Z", htmlUrl: nil),
+        PullRequestReview(id: reviewApprovedID, nodeId: "PRR_demo9602",
+                          user: .init(login: approver, avatarUrl: demoAvatar(approver)),
+                          body: "", state: "APPROVED", commitId: headSHA,
+                          submittedAt: "2026-08-16T15:20:00Z", htmlUrl: nil),
+    ]
+
+    static let conversationMeta: [Int: ReviewCommentMeta] = [
+        issueCommentReadyID: ReviewCommentMeta(
+            nodeID: "IC_demo9501", viewerReacted: ["heart"], edited: false,
+            reactors: ["heart": ReactorRoster(logins: [viewerLogin, reviewer],
+                                              totalCount: 2)]),
+        issueCommentViewerID: ReviewCommentMeta(nodeID: "IC_demo9502"),
+        issueCommentBotID: ReviewCommentMeta(nodeID: "IC_demo9503"),
+    ]
+
+    static let reviewMeta: [Int: ReviewCommentMeta] = [
+        reviewChangesID: ReviewCommentMeta(
+            nodeID: "PRR_demo9601", viewerReacted: [], edited: false,
+            reactors: ["+1": ReactorRoster(logins: [prAuthor], totalCount: 1)]),
+        reviewApprovedID: ReviewCommentMeta(nodeID: "PRR_demo9602"),
+    ]
+
+    static let reviewReactions: [Int: ReactionRollup] = [
+        reviewChangesID: ReactionRollup(plusOne: 1),
+    ]
+
     // MARK: - Session assembly
 
     /// The fabricated PR session, exactly as `addPR` would have built it
@@ -541,6 +640,12 @@ enum DemoSession {
         session.threadMeta = threadMeta
         session.pendingReview = makePendingReview()
         session.queuedComments = queuedPendingComments
+        session.cockpit = cockpit
+        session.issueComments = issueComments
+        session.reviews = conversationReviews
+        session.conversationMeta = conversationMeta
+        session.reviewMeta = reviewMeta
+        session.reviewReactions = reviewReactions
         return session
     }
 
@@ -584,6 +689,10 @@ enum DemoSession {
                          color: (0.30, 0.38, 0.70)),
         viewerLogin: Author(login: viewerLogin, name: "Sam Ortega", initials: "SO",
                             color: (0.22, 0.56, 0.50)),
+        approver: Author(login: approver, name: "Elena Fisk", initials: "EF",
+                         color: (0.58, 0.44, 0.24)),
+        botLogin: Author(login: botLogin, name: "Docs CI", initials: "DC",
+                         color: (0.45, 0.45, 0.50)),
     ]
 
     /// login → data-URI avatar, generated once per process.
