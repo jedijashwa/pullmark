@@ -42,6 +42,20 @@ import Testing
         #expect(AppLinks.settingsTarget(URL(string: "https://pullmark.app")!) == nil)
     }
 
+    @Test func graduatedDiscussionLinkRemapsToGeneral() {
+        // The 0.31.0 docs and release notes published the experimental
+        // form — links are promises, so it lands on the toggle's new
+        // home instead of a tab that no longer has the row.
+        let old = AppLinks.settingsTarget(
+            URL(string: "pullmark://settings/experimental/pr-discussion")!)
+        #expect(old?.tab == "general")
+        #expect(old?.anchor == "pr-discussion")
+        let new = AppLinks.settingsTarget(
+            URL(string: "pullmark://settings/general/pr-discussion")!)
+        #expect(new?.tab == "general")
+        #expect(new?.anchor == "pr-discussion")
+    }
+
     @Test func marginNotesIsAlphaLeveled() {
         #expect(AppLinks.alphaFeatures.contains("margin-notes"))
     }

@@ -15,7 +15,7 @@ struct PROverviewView: View {
     @State private var pendingScrollFraction: Double?
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
-    @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = false
+    @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
 
     /// Click-away drafts for discussion-list composers persist under a
     /// pseudo-path no repo file can have (repo paths never start with

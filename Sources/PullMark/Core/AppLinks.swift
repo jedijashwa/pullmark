@@ -19,8 +19,12 @@ enum AppLinks {
         "settings/keyboard",
         "settings/experimental",
         "settings/experimental/margin-notes",
+        // Review discussion graduated to General in the cockpit wave;
+        // the old experimental link stays a promise — settingsTarget
+        // remaps it to the toggle's new home.
         "settings/experimental/pr-discussion",
         // General
+        "settings/general/pr-discussion",
         "settings/general/restore-session",
         "settings/general/show-hidden-files",
         "settings/general/github-links",
@@ -50,7 +54,13 @@ enum AppLinks {
         else { return nil }
         let parts = url.path.split(separator: "/").map(String.init)
         guard let tab = parts.first else { return ("general", nil) }
-        return (tab, parts.count > 1 ? parts[1] : nil)
+        let anchor = parts.count > 1 ? parts[1] : nil
+        // Graduated settings keep their old links working: docs and
+        // release notes already published the experimental form.
+        if tab == "experimental", anchor == "pr-discussion" {
+            return ("general", "pr-discussion")
+        }
+        return (tab, anchor)
     }
 
     /// What a compare deep link asks the file's view to diff.
