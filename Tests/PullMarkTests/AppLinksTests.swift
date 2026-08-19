@@ -56,6 +56,13 @@ import Testing
         #expect(new?.anchor == "pr-discussion")
     }
 
+    @Test func githubConnectionAnchorIsSupported() {
+        let row = AppLinks.settingsTarget(
+            URL(string: "pullmark://settings/general/github")!)
+        #expect(row?.tab == "general")
+        #expect(row?.anchor == "github")
+    }
+
     @Test func marginNotesGraduatedOutOfAlpha() {
         // Graduated to beta in 0.35.0: no alpha-contract detour, and the
         // published deep link still lands on its Experimental-tab anchor

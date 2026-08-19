@@ -27,6 +27,10 @@ struct PROverviewView: View {
     @StateObject private var proxy = WebViewProxy()
     @AppStorage(Theme.defaultsKey, store: UserDefaults.pullmark) private var themeRaw = Theme.standard.rawValue
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
+    /// Signed-out cue in the cockpit slot (spec: github-connection) —
+    /// observed so connecting mid-session swaps the cue for the cockpit
+    /// on the next tick without a reopen.
+    @ObservedObject private var connection = GitHubClient.shared.connection
 
     /// Click-away drafts for discussion-list composers persist under a
     /// pseudo-path no repo file can have (repo paths never start with
@@ -221,9 +225,24 @@ struct PROverviewView: View {
             }
             .font(.callout)
             // Where the PR stands (spec: pr-cockpit) — absent until the
-            // first cockpit fetch lands; absence is honest.
+            // first cockpit fetch lands; absence is honest. Signed out,
+            // the cockpit GraphQL can never land, so its empty slot
+            // carries the one quiet cue instead (spec: github-connection;
+            // demo reports the signed-in fiction, so never there).
             if let cockpit = session.cockpit {
                 PRCockpitRow(cockpit: cockpit, prURL: session.details.htmlUrl)
+            } else if !connection.isConnected {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.crop.circle.badge.xmark")
+                        .foregroundStyle(.secondary)
+                    Text("Viewing signed out — commenting and reviewing are off")
+                        .foregroundStyle(.secondary)
+                    Button("Set Up…") {
+                        SettingsOpener.open(tab: "general", anchor: "github")
+                    }
+                    .buttonStyle(.link)
+                }
+                .font(.callout)
             }
             Text(filesSummary(session))
                 .font(.callout)
@@ -1253,6 +1272,7 @@ struct AddPRSheet: View {
     @State private var input = ""
     @State private var busy = false
     @State private var error: String?
+    @State private var showSetup = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1262,15 +1282,28 @@ struct AddPRSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 420)
                 .onSubmit { add() }
-            Text("Works with private repos using your existing gh or git credentials.")
+            HStack(spacing: 4) {
+                Text("Works with private repos using your existing gh or git credentials.")
+                Button("Connection status…") {
+                    dismiss()
+                    SettingsOpener.open(tab: "general", anchor: "github")
+                }
+                .buttonStyle(.link)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
             if let error {
                 Text(error)
                     .font(.callout)
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
                     .frame(maxWidth: 420, alignment: .leading)
+                // Signed out explains most failures — offer the fix at
+                // the moment of the wall (spec: github-connection).
+                if !GitHubClient.shared.connection.isConnected {
+                    Button("Set Up GitHub Access…") { showSetup = true }
+                }
             }
             HStack {
                 Spacer()
@@ -1285,6 +1318,7 @@ struct AddPRSheet: View {
             }
         }
         .padding(20)
+        .sheet(isPresented: $showSetup) { GitHubSetupSheet() }
     }
 
     private func add() {

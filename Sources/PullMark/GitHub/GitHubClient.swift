@@ -11,11 +11,19 @@ final class GitHubClient {
     }
 
     private var cachedToken: String?
+    private var cachedSource: SystemGitCredentials.Source?
     private var tokenResolved = false
+    /// Debounce for automatic re-resolution after an auth-shaped
+    /// failure: one subprocess round per 30s burst, not per failing
+    /// call (spec: github-connection).
+    private var lastAutoReresolve = Date.distantPast
     /// Cached only on success — a transient resolution failure must retry
     /// on the next call, never latch into "no viewer" for the whole
     /// session (that silently disabled pending-review adoption).
     private var cachedViewer: ViewerIdentity?
+    /// Connection state for Settings, the setup sheet, and the PR
+    /// overview's signed-out cue. The client is the only writer.
+    let connection = GitHubConnection()
     /// Ephemeral so no repo content or API response is ever cached to disk —
     /// everything fetched lives in memory only.
     private let session = URLSession(configuration: .ephemeral)
@@ -36,15 +44,67 @@ final class GitHubClient {
 
     func authToken() async -> String? {
         // Demo mode never resolves credentials: no subprocess, no token,
-        // and every auth-gated path reads as cleanly unauthenticated.
-        if DemoMode.active { return nil }
+        // and every auth-gated path reads as cleanly unauthenticated —
+        // while the connection row shows the fixtures' signed-in fiction.
+        if DemoMode.active {
+            connection.reportDemoFiction()
+            return nil
+        }
         if !tokenResolved {
-            cachedToken = await Task.detached(priority: .userInitiated) {
+            let resolved = await Task.detached(priority: .userInitiated) {
                 SystemGitCredentials.resolveToken()
             }.value
+            cachedToken = resolved?.token
+            cachedSource = resolved?.source
             tokenResolved = true
+            publishConnectionStatus()
         }
         return cachedToken
+    }
+
+    /// Settings' Check Again and the setup sheet: throw away the cached
+    /// token and viewer, resolve fresh, and report — the cure for the
+    /// old once-per-launch latch. Connecting mid-session (gh auth login,
+    /// then Check Again) works without a relaunch.
+    func recheck() async {
+        if DemoMode.active {
+            connection.reportDemoFiction()
+            return
+        }
+        connection.beginChecking()
+        invalidateAuth()
+        if await authToken() != nil {
+            // Enrich the row with the login (also re-primes the viewer
+            // cache that invalidation dropped).
+            _ = await viewerIdentity()
+        }
+    }
+
+    private func invalidateAuth() {
+        tokenResolved = false
+        cachedToken = nil
+        cachedSource = nil
+        cachedViewer = nil
+    }
+
+    private func publishConnectionStatus() {
+        connection.report(hasToken: cachedToken != nil,
+                          login: cachedViewer?.login,
+                          source: cachedSource)
+    }
+
+    /// An auth-shaped failure (401) may mean the token went stale — or
+    /// that auth was just FIXED and the cache is the stale thing.
+    /// Re-resolve once per 30s burst; true = the token actually changed
+    /// and the caller should retry once.
+    private func reresolveForAuthFailure() async -> Bool {
+        guard !DemoMode.active else { return false }
+        guard Date().timeIntervalSince(lastAutoReresolve) > 30 else { return false }
+        lastAutoReresolve = Date()
+        let before = cachedToken
+        invalidateAuth()
+        let after = await authToken()
+        return after != nil && after != before
     }
 
     // MARK: - Endpoints
@@ -754,6 +814,9 @@ final class GitHubClient {
         guard let viewer else { return nil }
         cachedViewer = ViewerIdentity(login: viewer.login, name: viewer.name,
                                       email: viewer.email, avatarUrl: viewer.avatarUrl)
+        // The connection row upgrades from "Connected · <source>" to
+        // "Connected as <login> · <source>" the moment identity lands.
+        publishConnectionStatus()
         return cachedViewer
     }
 
@@ -1199,9 +1262,21 @@ final class GitHubClient {
                          query: [URLQueryItem] = [],
                          accept: String = "application/vnd.github+json",
                          jsonBody: Data? = nil) async throws -> Data {
-        let (data, http) = try await perform(method, path, query: query,
-                                             accept: accept, jsonBody: jsonBody)
-        return try await validate(data, http)
+        do {
+            let (data, http) = try await perform(method, path, query: query,
+                                                 accept: accept, jsonBody: jsonBody)
+            return try await validate(data, http)
+        } catch let error as APIError where error.status == 401 {
+            // 401 only — a 403 is rate limiting, not auth, and must
+            // never trigger subprocess re-resolution. GraphQL rides
+            // this same path (POST /graphql). The conditional-GET
+            // family doesn't retry; its callers re-tick within 60s and
+            // benefit from the refreshed token here.
+            guard await reresolveForAuthFailure() else { throw error }
+            let (data, http) = try await perform(method, path, query: query,
+                                                 accept: accept, jsonBody: jsonBody)
+            return try await validate(data, http)
+        }
     }
 
     /// Conditional GET on a previous ETag: a 304 returns nil data and

@@ -1503,7 +1503,13 @@ final class AppState: ObservableObject {
         var session = PRSession(ref: ref, details: details, mergeBaseSHA: mergeBase, files: files)
         do {
             session.reviewComments = try await client.reviewComments(ref)
-            session.threadMeta = try await client.reviewThreadMeta(ref)
+            // Separate failure domain: thread meta is GraphQL and 401s
+            // for signed-out viewers on PUBLIC PRs whose REST comments
+            // just loaded fine. Meta that didn't load degrades the
+            // render (no reactions/resolve state) — it must never
+            // banish comments that did (spec: github-connection). The
+            // 60s tick and any auth fix retry it.
+            session.threadMeta = (try? await client.reviewThreadMeta(ref)) ?? [:]
         } catch {
             // A blip must not render as "no comments on this PR".
             session.commentsUnavailable = true
@@ -1906,11 +1912,14 @@ final class AppState: ObservableObject {
             let mergeBase = (try? await client.mergeBaseSHA(ref, base: details.base.sha, head: details.head.sha))
                 ?? details.base.sha
             var comments: [ReviewComment] = []
-            var meta: [Int: ThreadMeta] = [:]
+            var meta: [Int: ThreadMeta]?
             var commentsUnavailable = false
             do {
                 comments = try await client.reviewComments(ref)
-                meta = try await client.reviewThreadMeta(ref)
+                // Same split as addPR: signed-out viewers on public PRs
+                // get REST comments but a GraphQL 401 — degraded meta,
+                // never a "comments unavailable" lie.
+                meta = try? await client.reviewThreadMeta(ref)
             } catch {
                 commentsUnavailable = true
             }
@@ -1921,7 +1930,9 @@ final class AppState: ObservableObject {
             prSessions[index].mergeBaseSHA = mergeBase
             if !commentsUnavailable {
                 prSessions[index].reviewComments = comments
-                prSessions[index].threadMeta = meta
+                // A meta blip keeps the previous meta rather than
+                // stripping reactions/resolve state off a working page.
+                if let meta { prSessions[index].threadMeta = meta }
             }
             prSessions[index].commentsUnavailable = commentsUnavailable
             prSessions[index].updateAvailable = false

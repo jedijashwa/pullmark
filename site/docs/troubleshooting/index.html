@@ -46,21 +46,47 @@
       most "errors" here are the app deliberately refusing to lose your
       work.</p>
 
+      <h2 id="github-access">GitHub access: how PullMark connects, and fixing it</h2>
+      <p>PullMark borrows the GitHub credentials your own tools already
+      have — it has no login of its own and never stores a secret.
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
+      shows whether it's connected, as whom, and through which source;
+      <em>Set&nbsp;Up…</em> walks a new machine through connecting, and
+      <em>Check&nbsp;Again</em> picks up a fix immediately — after
+      <code>gh auth login</code>, no relaunch needed.</p>
+      <p class="table-note">Reading this on the Mac where PullMark
+      (0.36+) is installed?
+      <a href="pullmark://settings/general/github">Open the connection
+      row now</a>.</p>
+      <p>The credential sources, in the order PullMark tries them:</p>
+      <ol>
+        <li>The <a href="https://cli.github.com">GitHub CLI</a>'s token:
+        <code>gh auth token</code> must print one. If not,
+        <code>brew install gh &amp;&amp; gh auth login</code> — the
+        recommended path: its token has known-good scopes, handles
+        SSO in the browser flow, and refreshes.</li>
+        <li>Otherwise <code>git credential fill</code> — whatever git
+        itself uses for github.com (macOS keychain, Git Credential
+        Manager, a token stored by an old HTTPS push).</li>
+      </ol>
+      <p>Token fine print, for tokens that half-work: classic tokens
+      need the <code>repo</code> scope (and <code>read:org</code> for
+      org team names); <strong>fine-grained tokens are bound to one
+      resource owner</strong> — public repos and that owner's private
+      repos work, everything else is denied; SSO-protected orgs need
+      the token authorized for each org; and manually created tokens
+      expire — the Settings row is where "worked yesterday" gets
+      diagnosed.</p>
+
       <h2 id="github-auth">GitHub: "may not exist… or may be a private repository"</h2>
       <p><em>"Couldn't open … It may not exist at that ref, or it may be a
       private repository your GitHub credentials can't access."</em>
       GitHub's API reports private-without-access and doesn't-exist
       identically, so PullMark can't tell you which. If the repo should
-      work, it's almost always authentication:</p>
-      <ol>
-        <li>PullMark uses the <a href="https://cli.github.com">GitHub
-        CLI</a>'s token first: <code>gh auth token</code> must print one.
-        If not, <code>brew install gh &amp;&amp; gh auth login</code>.</li>
-        <li>Otherwise it falls back to <code>git credential fill</code> —
-        whatever git itself uses for github.com.</li>
-        <li>Tokens scoped to select repositories won't see the others;
-        SSO-protected orgs need the token authorized for the org.</li>
-      </ol>
+      work, it's almost always authentication — see
+      <a href="#github-access">GitHub access</a> above, or open
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
+      and hit <em>Set&nbsp;Up…</em>.</p>
 
       <h2 id="gatekeeper">Gatekeeper won't open the app</h2>
       <p>Releases are signed with a Developer ID and notarized by Apple, so

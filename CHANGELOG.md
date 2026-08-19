@@ -4,6 +4,27 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **PullMark finally says whether it's connected to GitHub — and helps
+  you connect.** Settings → General grew a GitHub section: connection
+  status ("Connected as you · GitHub CLI"), a Check Again that picks
+  up credential fixes immediately, and a Set Up… walkthrough that
+  detects what your Mac is missing and hands you the exact commands
+  (copied, never run — PullMark still has no login of its own and
+  never sees a password). Auth-shaped failures now offer the setup
+  path right in the error, and the PR overview shows a quiet cue when
+  you're viewing signed out.
+- **Fixing your credentials no longer requires relaunching.** The
+  token used to resolve once per launch; now Check Again re-reads it,
+  and an authentication failure quietly re-checks on its own — run
+  `gh auth login` and the next action just works.
+- **Signed-out viewers of public PRs get their comments back.** A
+  GraphQL 401 on thread metadata used to hide review comments that
+  had loaded fine over REST; the two now fail independently, so
+  comments render (with reactions and resolve state degraded) instead
+  of vanishing behind a "comments unavailable" banner.
+
 ## 0.35.0 - 2026-08-19
 
 - **Margin notes graduated from alpha to beta — and they're on by
