@@ -136,6 +136,26 @@ enum ChecksSummary: Equatable {
     }
 }
 
+extension CheckItem {
+    /// Popover order: failures first, then whatever is still moving,
+    /// then the rest — alphabetical within each band (GitHub's own
+    /// grouping order, flattened).
+    static func displayOrder(_ items: [CheckItem]) -> [CheckItem] {
+        func rank(_ state: State) -> Int {
+            switch state {
+            case .failed: return 0
+            case .running, .queued: return 1
+            case .waiting: return 2
+            case .passed, .skipped, .neutral: return 3
+            }
+        }
+        return items.sorted {
+            (rank($0.state), $0.name.lowercased(), $0.name)
+                < (rank($1.state), $1.name.lowercased(), $1.name)
+        }
+    }
+}
+
 /// Everything the overview header shows about where the PR stands.
 struct PRCockpitState: Equatable {
     var reviewDecision: ReviewDecision?

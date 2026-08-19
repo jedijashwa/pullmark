@@ -341,3 +341,23 @@ import Testing
         #expect(page.nextCursor == nil)
     }
 }
+
+@Suite struct CheckDisplayOrderTests {
+    private func item(_ name: String, _ state: CheckItem.State) -> CheckItem {
+        CheckItem(name: name, group: nil, state: state,
+                  detailsUrl: nil, isRequired: false, durationLabel: nil)
+    }
+
+    @Test func failuresThenMovingThenAlphabetical() {
+        let ordered = CheckItem.displayOrder([
+            item("zeta-lint", .passed),
+            item("build", .running),
+            item("alpha-docs", .passed),
+            item("deploy", .waiting),
+            item("unit-tests", .failed),
+            item("audit", .queued),
+        ])
+        #expect(ordered.map(\.name) ==
+            ["unit-tests", "audit", "build", "deploy", "alpha-docs", "zeta-lint"])
+    }
+}
