@@ -946,30 +946,17 @@ struct GitHubConnectionSection: View {
 /// The top-of-General alert (spec: github-connection, Josh's revision):
 /// signed out is worth one loud line at the top of the tab, and the fix
 /// is a jump away — it scrolls to the GitHub section rather than
-/// duplicating its controls. Invisible whenever connected or checking.
+/// duplicating its controls. Invisible while connected; sticky through
+/// rechecks.
 struct GitHubNotConnectedAlert: View {
     @ObservedObject private var connection = GitHubClient.shared.connection
-    /// Sticky through rechecks: a failed Check Again passes through
-    /// .checking, and the alert vanishing-then-snapping-back would
-    /// shift every row under the cursor (design-review catch). Only a
-    /// real connect clears it.
-    @State private var showing = false
 
+    /// Sticky through rechecks via the model's settled verdict: a
+    /// failed Check Again passes through .checking, and the alert
+    /// vanishing-then-snapping-back would shift every row under the
+    /// cursor (design-review catch). Only a real connect clears it.
     var body: some View {
-        content
-            .onAppear { showing = connection.status == .notConnected }
-            .onChange(of: connection.status) { status in
-                switch status {
-                case .connected: showing = false
-                case .notConnected: showing = true
-                case .checking: break
-                }
-            }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if showing {
+        if connection.settledNotConnected {
             Section {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")

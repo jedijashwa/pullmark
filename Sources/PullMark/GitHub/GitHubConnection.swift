@@ -36,6 +36,13 @@ final class GitHubConnection: ObservableObject {
     }
 
     @Published private(set) var status: Status = .checking
+    /// The last SETTLED verdict was not-connected — held true through
+    /// .checking passes so sticky surfaces (the Settings alert) don't
+    /// blink out on every Check Again, and only a real connect clears
+    /// it. Model-level because view-local state on conditional content
+    /// never mounts its observers (a view whose body is empty gets no
+    /// onAppear/onChange).
+    @Published private(set) var settledNotConnected = false
 
     var isConnected: Bool {
         if case .connected = status { return true }
@@ -50,8 +57,10 @@ final class GitHubConnection: ObservableObject {
                 source: SystemGitCredentials.Source?) {
         if hasToken, let source {
             status = .connected(login: login, source: source)
+            settledNotConnected = false
         } else {
             status = .notConnected
+            settledNotConnected = true
         }
     }
 
@@ -59,5 +68,6 @@ final class GitHubConnection: ObservableObject {
     /// the fiction and signed-out surfaces never appear over it.
     func reportDemoFiction() {
         status = .connected(login: DemoSession.viewerLogin, source: .githubCLI)
+        settledNotConnected = false
     }
 }

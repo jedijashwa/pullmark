@@ -99,6 +99,21 @@ import Testing
         #expect(!connection.isConnected)
     }
 
+    /// The Settings alert renders from the settled verdict so a failed
+    /// Check Again (notConnected → checking → notConnected) never
+    /// blinks it out; only a real connect clears it.
+    @Test func settledVerdictIsStickyThroughChecking() {
+        let connection = GitHubConnection()
+        connection.report(hasToken: false, login: nil, source: nil)
+        #expect(connection.settledNotConnected)
+        connection.beginChecking()
+        #expect(connection.settledNotConnected)
+        connection.report(hasToken: false, login: nil, source: nil)
+        #expect(connection.settledNotConnected)
+        connection.report(hasToken: true, login: "octo", source: .githubCLI)
+        #expect(!connection.settledNotConnected)
+    }
+
     @Test func demoFictionReadsSignedIn() {
         // Fixtures are authored as a signed-in world: the cue must never
         // appear over demo content, and the row shows the demo viewer.
