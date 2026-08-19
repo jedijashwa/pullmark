@@ -1725,6 +1725,12 @@
     var head = document.createElement("div");
     head.className = "pm-thread-head";
     head.textContent = c.author + (c.dateLabel ? " · " + c.dateLabel : "");
+    // Conversation cards carry avatars (spec: pr-cockpit); thread cards
+    // stay text-only — their headers already carry line labels and
+    // actions, and a face per excerpt would crowd them.
+    if (c.source === "conversation") {
+      head.prepend(conversationAvatarEl(c.author, c.avatarUrl));
+    }
     if (c.edited) {
       var edited = document.createElement("span");
       edited.className = "pm-edited";
@@ -3399,6 +3405,16 @@
   // routes its bridge messages to the issue-comment/review endpoints
   // instead of /pulls/comments.
 
+  // Conversation cards show faces — a timeline of people talking wants
+  // avatars the way GitHub's does. The wrapper survives the img-error
+  // swap to initials (blameAvatarEl replaces its own node).
+  function conversationAvatarEl(author, avatarUrl) {
+    var wrap = document.createElement("span");
+    wrap.className = "pm-conv-avatar";
+    wrap.append(blameAvatarEl(author, avatarUrl));
+    return wrap;
+  }
+
   function verdictText(kind) {
     switch (kind) {
       case "approved": return "approved these changes";
@@ -3416,16 +3432,21 @@
     if (entry.kind !== "comment") {
       var verdict = document.createElement("div");
       verdict.className = "pm-verdict pm-verdict-" + entry.kind;
-      var icon = document.createElement("span");
-      icon.className = "pm-verdict-icon";
-      icon.textContent = entry.kind === "approved" ? "✓"
-        : entry.kind === "changes_requested" ? "±" : "·";
+      verdict.append(conversationAvatarEl(c.author, c.avatarUrl));
+      // Only real verdicts get a glyph — a "reviewed" line with a dot
+      // in front reads as an artifact, not an icon.
+      if (entry.kind === "approved" || entry.kind === "changes_requested") {
+        var icon = document.createElement("span");
+        icon.className = "pm-verdict-icon";
+        icon.textContent = entry.kind === "approved" ? "✓" : "±";
+        verdict.append(icon);
+      }
       var text = document.createElement("span");
       // The verdict line owns author + date — the card byline beneath
       // would repeat both, so review cards hide it (CSS).
       text.textContent = c.author + " " + verdictText(entry.kind)
         + (c.dateLabel ? " · " + c.dateLabel : "");
-      verdict.append(icon, text);
+      verdict.append(text);
       box.append(verdict);
       var hasChips = c.id && ((c.reactions && c.reactions.length) || c.canReact);
       // A verdict with no summary is complete as a headline — no empty

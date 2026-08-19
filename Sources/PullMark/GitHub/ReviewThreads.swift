@@ -172,6 +172,9 @@ struct CommentPayload: Encodable, Equatable {
     var viewerOwned: Bool = false
     /// A bot authored it (conversation timeline's quiet "bot" tag).
     var bot: Bool = false
+    /// Author avatar (conversation timeline cards only — thread cards
+    /// render text bylines; nil there and the page never asks).
+    var avatarUrl: String? = nil
     /// Reaction toggles can work: the viewer is known and the comment's
     /// GraphQL node id is on hand. Chips still render read-only otherwise.
     var canReact: Bool = false

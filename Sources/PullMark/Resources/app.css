@@ -321,6 +321,40 @@ body {
   margin-left: 6px;
   vertical-align: 1px;
 }
+/* Conversation cards show faces; the wrapper survives the img→initials
+   error swap. Initials inherit the blame-avatar circle but need the
+   inline size/typography restated (blame's rules assume its gutter). */
+.pm-conv-avatar {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: -7px;
+}
+.pm-conv-avatar .pm-blame-avatar {
+  width: 22px;
+  height: 22px;
+}
+.pm-conv-avatar .pm-blame-initials {
+  font: 600 9px -apple-system, sans-serif;
+  color: #fff;
+  line-height: 22px;
+  text-align: center;
+}
+/* Card chrome is chrome, not content: bylines, verdict lines, section
+   headings, reaction bars, and composer controls must not paint blue
+   under Select All — a native app selects prose, not furniture. Bodies
+   and excerpts stay selectable. */
+.pm-thread-head,
+.pm-verdict,
+.pm-thread-header,
+.pm-reactions,
+.pm-composer-actions,
+.pm-discussion-heading,
+.pm-discussion-count,
+.pm-discussion-file,
+.pm-empty-note {
+  -webkit-user-select: none;
+  user-select: none;
+}
 /* The section-foot composer never closes — it reads as the section's
    own input, not a transient popover. */
 .pm-conversation-composer {

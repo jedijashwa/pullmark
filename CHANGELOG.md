@@ -4,6 +4,30 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **The PR overview now shows where the pull request stands.** The
+  header gained the missing half of the review loop: an
+  Approved / Changes requested / Review required capsule, every
+  reviewer's standing verdict as badged avatars (with awaited
+  reviewers and teams alongside), and a CI checks capsule — passed,
+  failed, running, or awaiting approval — that opens into the full
+  check list with durations, required tags, and links to each check's
+  logs. Everything refreshes quietly on the same one-minute cadence
+  the app already used; the update banner still only appears when new
+  commits actually change what you're reviewing.
+- **The conversation is readable now, not just writable.** The
+  overview renders the PR's conversation as a timeline — comments and
+  review verdicts interleaved in order, with reactions, edit and
+  delete on your own comments, and a quiet tag on bot comments. The
+  comment box moved to the timeline's foot, where conversations end.
+- **Review discussion is on for everyone.** The per-file review
+  discussion list ([introduced as a beta in
+  0.31.0](https://github.com/jedijashwa/pullmark/releases/tag/v0.31.0))
+  graduates: on by default, with its toggle now in Settings ▸
+  General ▸ Reviewing. If you turned it off during the beta, your
+  choice stands.
+
 ## 0.33.1 - 2026-08-17
 
 - **Big repos stopped dragging the app.** A Location holding a deeply

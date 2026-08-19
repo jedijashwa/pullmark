@@ -274,6 +274,7 @@ extension PRConversation {
                     dateLabel: GitHubDate.dayLabel(review.submittedAt),
                     body: review.body ?? "")
                 card.id = review.id
+                card.avatarUrl = review.user?.avatarUrl?.absoluteString
                 card.canReact = viewer != nil && meta != nil
                 card.reactions = CommentReactions.chips(
                     rollup: reviewReactions[review.id],
@@ -301,6 +302,7 @@ extension CommentPayload {
                                                    viewer: viewer)
         canReact = viewer != nil && meta != nil
         bot = comment.user?.type == "Bot"
+        avatarUrl = comment.user?.avatarUrl?.absoluteString
         reactions = CommentReactions.chips(rollup: comment.reactions,
                                            viewerReacted: meta?.viewerReacted ?? [],
                                            reactors: meta?.reactors ?? [:],

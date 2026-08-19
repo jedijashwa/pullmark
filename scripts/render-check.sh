@@ -246,6 +246,7 @@ conversation_check "approved headline"       'riley-chen approved these changes'
 conversation_check "bot tag"                 '<span class="pm-bot-tag">bot</span>'
 conversation_check "reaction chip"           'data-pm-comment="314"'
 conversation_check "foot composer"           'pm-conversation-composer'
+conversation_check "card avatars"            'pm-conv-avatar'
 conversation_check "composer placeholder"    'Comment on the pull request conversation'
 # Bounded to the card: the DOM is one long line, so the window is cut
 # at the next card's opening class before asserting — an unanchored .*
