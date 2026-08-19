@@ -361,18 +361,23 @@ struct ExperimentalSettingsTab: View {
         ScrollViewReader { scroll in
         Form {
             Section {
-                // A single literal: concatenation would select Text's
-                // verbatim String initializer and render raw markdown.
-                Text("Features land here before their design is settled. **Beta** features get a real compatibility effort between versions and are likely to graduate. **Alpha** features carry no guarantees: they may change incompatibly, their data formats may not migrate, and they may disappear entirely. [About experimental features](https://pullmark.app/docs/experimental/)")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                // No alpha features → no switch: a control that reveals
-                // nothing only confuses. The stored flag survives, so the
-                // switch returns with its old value when alpha refills.
+                // Single literals per branch: concatenation would select
+                // Text's verbatim String initializer and render raw
+                // markdown. The alpha sentence (and switch) only exist
+                // while something is actually at that level — explaining
+                // and gating an empty tier just confuses.
                 if Self.alphaFeatureCount > 0 {
+                    Text("Features land here before their design is settled. **Beta** features get a real compatibility effort between versions and are likely to graduate. **Alpha** features carry no guarantees: they may change incompatibly, their data formats may not migrate, and they may disappear entirely. [About experimental features](https://pullmark.app/docs/experimental/)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
                     Toggle("Show alpha features", isOn: alphaBinding)
+                } else {
+                    Text("Features land here before their design is settled. **Beta** features get a real compatibility effort between versions and are likely to graduate. [About experimental features](https://pullmark.app/docs/experimental/)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -444,7 +449,7 @@ struct ExperimentalSettingsTab: View {
         Section {
             // Visible whether or not the feature is on: what it is, and
             // where to read more.
-            Text("Comment on any local Markdown document the way you'd comment on a PR. Notes save into the file itself as `<!-- note @you: … -->` comments — invisible to every other tool, rendered by PullMark as bubbles pinned to their spot, and written so agents can read and act on them. [How margin notes work](https://pullmark.app/docs/experimental/margin-notes/)")
+            Text("Comment on any local Markdown document the way you'd comment on a PR. Notes save into the file itself as `<!-- note @you: … -->` comments — ordinary HTML comments that stay out of rendered Markdown, shown by PullMark as bubbles pinned to their spot, and written so agents can read and act on them. [How margin notes work](https://pullmark.app/docs/experimental/margin-notes/)")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -31,7 +31,7 @@ struct MarginNotesIntroSheet: View {
                     .font(.headline)
                 ExperimentalBadge(level: .beta)
             }
-            Text("Comment on any local Markdown document the way you'd comment on a PR. Notes save into the file itself as `<!-- note @you: … -->` comments — invisible to every other tool, rendered by PullMark as bubbles pinned to their spot. Deleting a note is how it's resolved.")
+            Text("Comment on any local Markdown document the way you'd comment on a PR. Notes save into the file itself as `<!-- note @you: … -->` comments — ordinary HTML comments that stay out of rendered Markdown, shown by PullMark as bubbles pinned to their spot. Deleting a note is how it's resolved.")
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
             Text("Margin notes are experimental (beta): the design may still shift between versions, and Settings → Experimental turns them off any time. [How margin notes work](https://pullmark.app/docs/experimental/margin-notes/)")

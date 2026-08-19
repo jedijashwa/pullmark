@@ -43,10 +43,11 @@
       <h1>Margin notes<span class="beta-badge">beta</span></h1>
       <p class="article-lede">Comment on any local Markdown document the way
       you'd comment on a pull request — except the comments live in the
-      file itself, as plain HTML comments every other tool ignores. Built
-      for one loop in particular: an agent writes you a document, you read
-      it in PullMark leaving notes as you go, then hand the file back with
-      "address the notes and delete them as you're done."</p>
+      file itself, as plain HTML comments that stay out of the rendered
+      page. Built for one loop in particular: an agent writes you a
+      document, you read it in PullMark leaving notes as you go, then hand
+      the file back with "address the notes and delete them as you're
+      done."</p>
 
       <h2 id="using">Using them in PullMark</h2>
       <p class="table-note">Reading this on the Mac where PullMark
@@ -145,10 +146,11 @@ Requests retry five times with exponential backoff.
         <tr><td>Code blocks</td><td>A note-shaped comment inside a fenced
           code block is code, not a note.</td></tr>
       </table>
-      <p>Because HTML comments are invisible to every Markdown renderer, a
-      file with notes in it renders normally on GitHub, in editors, and in
-      any other tool — the notes simply don't show. PullMark is the pretty
-      client for a format that works everywhere.</p>
+      <p>Because Markdown renderers skip HTML comments, a file with notes
+      in it renders clean on GitHub, in editors, and in any other tool —
+      the notes ride along in the source without cluttering the page.
+      PullMark is the pretty client for a format that works
+      everywhere.</p>
 
       <h2 id="agents">For agents</h2>
       <p>The handoff is zero-protocol: agents read files, and the notes are
