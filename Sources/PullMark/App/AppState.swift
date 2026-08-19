@@ -2382,33 +2382,29 @@ final class AppState: ObservableObject {
         await refreshCockpit(sessionID: sessionID)
     }
 
-    // MARK: - Conversation mutations (spec: pr-cockpit)
+    // MARK: - Conversation fold-ins (spec: pr-cockpit)
 
     /// All conversation writes fold the API's echo into the model
     /// locally — the comments list lags fresh writes (0.31.0 lesson;
-    /// never refetch on mutation).
-    func postConversationComment(sessionID: String, body: String) async throws {
-        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
-        let comment = try await client.createIssueComment(session.ref, body: body)
-        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+    /// never refetch on mutation). Network calls live in
+    /// ThreadCardActions, same as the review-thread family.
+    func applyPostedConversationComment(sessionID: String, comment: IssueComment) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }),
+              !prSessions[index].issueComments.contains(where: { $0.id == comment.id })
+        else { return }
         prSessions[index].issueComments.append(comment)
         prSessions[index].conversationUnavailable = false
     }
 
-    func editConversationComment(sessionID: String, commentID: Int, body: String) async throws {
-        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
-        let updated = try await client.updateIssueComment(session.ref, commentID: commentID,
-                                                          body: body)
-        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
-        if let at = prSessions[index].issueComments.firstIndex(where: { $0.id == commentID }) {
-            prSessions[index].issueComments[at].body = updated.body
-            prSessions[index].conversationMeta[commentID]?.edited = true
-        }
+    func applyConversationCommentEdit(sessionID: String, commentID: Int, body: String) {
+        guard let index = prSessions.firstIndex(where: { $0.id == sessionID }),
+              let at = prSessions[index].issueComments.firstIndex(where: { $0.id == commentID })
+        else { return }
+        prSessions[index].issueComments[at].body = body
+        prSessions[index].conversationMeta[commentID]?.edited = true
     }
 
-    func deleteConversationComment(sessionID: String, commentID: Int) async throws {
-        guard let session = prSessions.first(where: { $0.id == sessionID }) else { return }
-        try await client.deleteIssueComment(session.ref, commentID: commentID)
+    func applyConversationCommentDelete(sessionID: String, commentID: Int) {
         guard let index = prSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         prSessions[index].issueComments.removeAll { $0.id == commentID }
     }

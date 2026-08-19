@@ -1827,7 +1827,8 @@
     var reacted = !(chip && chip.mine);
     applyReactionLocal(c, content, reacted);
     refreshReactionBars(c.id);
-    post({ type: "reactionToggle", commentID: c.id, content: content, reacted: reacted });
+    post({ type: "reactionToggle", commentID: c.id, content: content, reacted: reacted,
+           source: c.source });
   }
 
   // A failed write reverts the optimistic flip (Swift calls this with the
@@ -1996,7 +1997,7 @@
       del.textContent = "Delete";
       del.addEventListener("click", function () {
         closeTransientPopup();
-        post({ type: "commentDelete", commentID: c.id });
+        post({ type: "commentDelete", commentID: c.id, source: c.source });
       });
       menu.append(edit, del);
       card.append(menu);
@@ -2051,7 +2052,8 @@
     function submit() {
       var body = ta.value.trim();
       if (body === "") { return; }
-      post({ type: "commentEdit", commentID: c.id, body: body, draftKey: draftKey });
+      post({ type: "commentEdit", commentID: c.id, body: body, draftKey: draftKey,
+             source: c.source });
       draftDiscard(draftKey);
       close(false);
     }
@@ -2165,6 +2167,18 @@
     Object.keys(map || {}).forEach(function (key) {
       composerDrafts[key] = map[key];
     });
+    // The conversation composer is built at page setup — before this
+    // push arrives — so its restored draft must reach the live
+    // textarea (reply composers open later and read the map in time).
+    // Never clobber text typed in the meantime.
+    var draft = composerDrafts["conversation:new"];
+    if (draft) {
+      var ta = document.querySelector(".pm-conversation-composer .pm-composer-text");
+      if (ta && ta.value.trim() === "") {
+        ta.value = draft;
+        ta.dispatchEvent(new Event("input"));
+      }
+    }
   };
 
   function draftSave(key, text) {
@@ -3377,6 +3391,159 @@
       });
     }
     return action;
+  }
+
+  // ---- Conversation timeline (PR overview, spec: pr-cockpit) ----
+  // Issue comments interleaved with review verdicts, chronological.
+  // Cards reuse the thread-card chrome; `source` on each card object
+  // routes its bridge messages to the issue-comment/review endpoints
+  // instead of /pulls/comments.
+
+  function verdictText(kind) {
+    switch (kind) {
+      case "approved": return "approved these changes";
+      case "changes_requested": return "requested changes";
+      case "dismissed": return "dismissed their review";
+      default: return "reviewed";
+    }
+  }
+
+  function conversationCardEl(entry) {
+    var c = entry.card;
+    c.source = entry.kind === "comment" ? "conversation" : "review";
+    var box = document.createElement("div");
+    box.className = "pm-thread pm-conversation-card";
+    if (entry.kind !== "comment") {
+      var verdict = document.createElement("div");
+      verdict.className = "pm-verdict pm-verdict-" + entry.kind;
+      var icon = document.createElement("span");
+      icon.className = "pm-verdict-icon";
+      icon.textContent = entry.kind === "approved" ? "✓"
+        : entry.kind === "changes_requested" ? "±" : "·";
+      var text = document.createElement("span");
+      // The verdict line owns author + date — the card byline beneath
+      // would repeat both, so review cards hide it (CSS).
+      text.textContent = c.author + " " + verdictText(entry.kind)
+        + (c.dateLabel ? " · " + c.dateLabel : "");
+      verdict.append(icon, text);
+      box.append(verdict);
+      var hasChips = c.id && ((c.reactions && c.reactions.length) || c.canReact);
+      // A verdict with no summary is complete as a headline — no empty
+      // body beneath it (APPROVED usually says nothing); the reaction
+      // bar still attaches when it can.
+      if (!(c.body || "").trim() && !hasChips) { return box; }
+      var reviewComment = commentEl(c);
+      if (!(c.body || "").trim()) {
+        var emptyBody = reviewComment.querySelector(".pm-thread-body");
+        if (emptyBody) { emptyBody.remove(); }
+      }
+      box.append(reviewComment);
+      return box;
+    }
+    var comment = commentEl(c);
+    if (c.bot) {
+      var tag = document.createElement("span");
+      tag.className = "pm-bot-tag";
+      tag.textContent = "bot";
+      var head = comment.querySelector(".pm-thread-head");
+      if (head) { head.append(tag); }
+    }
+    box.append(comment);
+    return box;
+  }
+
+  // The section-foot composer: always present (GitHub's convention),
+  // draft-persistent, ⌘↩ submits. Unlike reply composers it never
+  // closes — input just syncs the draft.
+  function conversationComposerEl() {
+    var draftKey = "conversation:new";
+    var root = document.createElement("div");
+    root.className = "pm-reply-composer pm-conversation-composer";
+    var ta = document.createElement("textarea");
+    ta.className = "pm-composer-text";
+    ta.placeholder = "Comment on the pull request conversation";
+    ta.rows = 2;
+    var actions = document.createElement("div");
+    actions.className = "pm-composer-actions";
+    var send = document.createElement("button");
+    send.type = "button";
+    send.className = "pm-composer-primary";
+    send.textContent = "Comment";
+    send.title = "Post to the PR conversation right away — not part of a review (⌘↩)";
+    actions.append(send);
+    root.append(ta, actions);
+
+    var syncTimer = null;
+    function grow() {
+      ta.style.height = "auto";
+      ta.style.height = Math.max(56, ta.scrollHeight) + "px";
+    }
+    function submit() {
+      var body = ta.value.trim();
+      if (body === "") { return; }
+      post({ type: "conversationSubmit", body: body, draftKey: draftKey });
+      draftDiscard(draftKey);
+      ta.value = "";
+      send.disabled = true;
+      grow();
+    }
+    send.addEventListener("click", submit);
+    ta.addEventListener("input", function () {
+      grow();
+      send.disabled = ta.value.trim() === "";
+      if (syncTimer) { clearTimeout(syncTimer); }
+      syncTimer = setTimeout(function () {
+        syncTimer = null;
+        draftSave(draftKey, ta.value);
+      }, 400);
+    });
+    ta.addEventListener("keydown", function (event) {
+      if (event.isComposing) { return; }
+      if (event.key === "Enter" && event.metaKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        submit();
+      }
+    });
+    root.__pmFlushDraft = function () { draftSave(draftKey, ta.value); };
+    var draft = composerDrafts[draftKey];
+    if (draft) { ta.value = draft; }
+    send.disabled = ta.value.trim() === "";
+    // The restored draft needs a layout pass before scrollHeight is
+    // real — grow after insertion (the caller appends synchronously).
+    setTimeout(grow, 0);
+    return root;
+  }
+
+  function setupConversation(entries) {
+    var section = document.createElement("section");
+    section.className = "pm-conversation pm-annotation";
+    var heading = document.createElement("h2");
+    heading.className = "pm-discussion-heading";
+    heading.textContent = "Conversation";
+    if (entries.length) {
+      var count = document.createElement("span");
+      count.className = "pm-discussion-count";
+      count.textContent = entries.length + (entries.length === 1
+        ? " entry" : " entries");
+      heading.append(count);
+    }
+    section.append(heading);
+    if (payload.conversationUnavailable) {
+      var note = document.createElement("p");
+      note.className = "pm-empty-note";
+      note.textContent = "The conversation could not be loaded — retrying.";
+      section.append(note);
+    }
+    entries.forEach(function (entry) {
+      section.append(conversationCardEl(entry));
+    });
+    if (payload.conversationComposer) {
+      section.append(conversationComposerEl());
+    }
+    rewriteRemoteResources(section);
+    enhance(section);
+    content.append(section);
   }
 
   function setupDiscussion(groups) {
@@ -4741,6 +4908,13 @@
     if (linesAnnotated && payload.noteAuthoring && !payload.preview
         && !payload.editable) {
       setupNoteAffordances();
+    }
+    // PR overview: the conversation timeline first, then the review
+    // discussion list beneath it (spec: pr-cockpit) — what was decided
+    // and said, then what's open where.
+    if ((payload.conversation || []).length || payload.conversationComposer
+        || payload.conversationUnavailable) {
+      setupConversation(payload.conversation || []);
     }
     // PR overview: the review discussion list (spec: pr-review-discussion).
     if ((payload.discussion || []).length) {
