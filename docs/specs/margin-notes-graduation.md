@@ -65,8 +65,11 @@ alert; it carries a link and a copy control:
 
 - Title row: "Margin Notes" + BETA badge.
 - Two short paragraphs: what a note is (saved into the file itself as
-  `<!-- note @you: … -->`, rendered as a bubble pinned to its spot,
-  invisible to every other tool), and that the feature is experimental
+  `<!-- note @you: … -->`, rendered as a bubble pinned to its spot, an
+  ordinary HTML comment that stays out of rendered Markdown — never
+  claim other tools "can't see" notes; source views show them and
+  other tools may render them someday), and that the feature is
+  experimental
   — beta, its design may still shift. Link: *How margin notes work* →
   pullmark.app/docs/experimental/margin-notes/.
 - A "Tell your agent" row: one sentence plus a **Copy** button that
