@@ -27,6 +27,8 @@ struct GitHubSetupSheet: View {
             HStack {
                 Button(checking ? "Checking…" : "Check Again") { check() }
                     .disabled(checking)
+                    .help("Re-read credentials from the GitHub CLI and "
+                        + "git credential helpers")
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
@@ -35,13 +37,17 @@ struct GitHubSetupSheet: View {
         .padding(20)
         .frame(width: 460)
         .onAppear { check() }
+        .onExitCommand { dismiss() }
     }
 
     @ViewBuilder
     private var stepContent: some View {
         if connection.isConnected {
             connectedContent
-        } else if cliInstalled == nil || checking {
+        } else if cliInstalled == nil {
+            // First detection only — later rechecks keep the last step
+            // rendered (the button narrates progress) so the sheet's
+            // height doesn't bounce (design-review catch).
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text("Checking this Mac's credentials…")
@@ -54,10 +60,10 @@ struct GitHubSetupSheet: View {
                 Text("Set up the GitHub CLI")
                     .font(.callout.weight(.semibold))
                 commandRow(number: "1", label: "Install it:", command: "brew install gh")
-                Text("Not a Homebrew user? [Download it from cli.github.com](https://cli.github.com).")
+                commandRow(number: "2", label: "Sign in:", command: "gh auth login")
+                Text("Not a Homebrew user? [Download the CLI from cli.github.com](https://cli.github.com), then sign in the same way.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                commandRow(number: "2", label: "Sign in:", command: "gh auth login")
                 helperFootnote
             }
         } else {
@@ -120,6 +126,7 @@ struct GitHubSetupSheet: View {
             }
             Text(command)
                 .font(.body.monospaced())
+                .textSelection(.enabled)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(RoundedRectangle(cornerRadius: 5)
@@ -134,6 +141,11 @@ struct GitHubSetupSheet: View {
                     if copiedCommand == command { copiedCommand = nil }
                 }
             }
+            // Two visually identical Copy buttons per step — VoiceOver
+            // needs to say which command each one takes.
+            .accessibilityLabel(copiedCommand == command
+                ? "Copied \(command)" : "Copy \(command)")
+            .help("Copy \(command) to the clipboard")
         }
     }
 
