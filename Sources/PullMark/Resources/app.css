@@ -302,7 +302,15 @@ body {
   gap: 7px;
   font: 600 13px -apple-system, sans-serif;
   color: var(--fgColor-default, #1f2328);
-  padding: 8px 12px 0;
+  /* The card's own padding is the inset — extra padding here put the
+     headline on a third left edge (design-review catch). */
+  padding: 2px 0;
+}
+/* The verdict line replaces the comment's byline, so the divider
+   between them separates nothing — and :first-of-type can't kill it
+   (pm-verdict is also a div). */
+.pm-verdict + .pm-thread-comment {
+  border-top: none;
 }
 .pm-verdict-icon {
   font: 700 12px ui-monospace, SFMono-Regular, monospace;
