@@ -295,6 +295,321 @@ final class GitHubClient {
         return (meta, nextCursor)
     }
 
+    // MARK: - Cockpit (spec: pr-cockpit)
+
+    /// Everything the cockpit query returns: where the PR stands, plus
+    /// the GraphQL-only per-comment state for the conversation timeline
+    /// (node ids for reaction mutations, viewer reactions, edit
+    /// signals) — for issue comments AND review summaries. REST carries
+    /// no reaction data at all for review bodies and no viewer state
+    /// anywhere, so both chips and tints come from here.
+    struct CockpitPayload {
+        var state = PRCockpitState()
+        var commentMeta: [Int: ReviewCommentMeta] = [:]
+        var reviewMeta: [Int: ReviewCommentMeta] = [:]
+        var reviewReactions: [Int: ReactionRollup] = [:]
+    }
+
+    /// One measured rate-limit point per page (probed live). This is
+    /// deliberately a SEPARATE query from reviewThreadMeta: that
+    /// query's failure mode — a shape error silently blanking all
+    /// thread state through the caller's `try?` — must not couple to
+    /// cockpit state. Neither can take the other down.
+    func cockpit(_ ref: PullRequestRef) async throws -> CockpitPayload {
+        let query = """
+        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+          repository(owner: $owner, name: $repo) {
+            pullRequest(number: $number) {
+              reviewDecision
+              latestOpinionatedReviews(first: 20, writersOnly: false) {
+                nodes { state submittedAt author { login avatarUrl } }
+              }
+              reviewRequests(first: 20) {
+                nodes {
+                  requestedReviewer {
+                    __typename
+                    ... on User { login avatarUrl }
+                    ... on Team { name avatarUrl }
+                    ... on Bot { login avatarUrl }
+                    ... on Mannequin { login avatarUrl }
+                  }
+                }
+              }
+              statusCheckRollup {
+                contexts(first: 50) {
+                  totalCount
+                  nodes {
+                    __typename
+                    ... on CheckRun {
+                      name status conclusion detailsUrl startedAt completedAt
+                      isRequired(pullRequestNumber: $number)
+                      checkSuite { workflowRun { workflow { name } } app { name } }
+                    }
+                    ... on StatusContext {
+                      context state targetUrl
+                      isRequired(pullRequestNumber: $number)
+                    }
+                  }
+                }
+              }
+              reviews(first: 100) {
+                nodes {
+                  id databaseId lastEditedAt
+                  reactionGroups {
+                    content viewerHasReacted
+                    reactors(first: 10) {
+                      totalCount
+                      nodes {
+                        ... on User { login }
+                        ... on Bot { login }
+                        ... on Organization { login }
+                        ... on Mannequin { login }
+                      }
+                    }
+                  }
+                }
+              }
+              comments(first: 100, after: $after) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  id databaseId lastEditedAt
+                  reactionGroups {
+                    content viewerHasReacted
+                    reactors(first: 10) {
+                      totalCount
+                      nodes {
+                        ... on User { login }
+                        ... on Bot { login }
+                        ... on Organization { login }
+                        ... on Mannequin { login }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        var payload = CockpitPayload()
+        var cursor: String?
+        // Cursor pagination walks the comments connection only; header
+        // state and review meta come from the first page (identical on
+        // every page — re-parsing them is harmless). Reviews cap at 100
+        // with no pagination: chips degrade past that, never a failure.
+        for _ in 1...30 {
+            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo,
+                                            "number": ref.number]
+            if let cursor { variables["after"] = cursor }
+            let data = try await graphQL(query, variables: variables)
+            let page = try Self.parseCockpitPage(data)
+            if cursor == nil {
+                payload.state = page.state
+                payload.reviewMeta = page.reviewMeta
+                payload.reviewReactions = page.reviewReactions
+            }
+            payload.commentMeta.merge(page.commentMeta) { _, new in new }
+            guard let next = page.nextCursor else { break }
+            cursor = next
+        }
+        return payload
+    }
+
+    /// One page of the cockpit query, decoded defensively: nullable
+    /// requested reviewers (code-owner/Copilot rows arrive null in live
+    /// data), unknown check states, and missing connections all degrade
+    /// to empty rather than failing the page.
+    nonisolated static func parseCockpitPage(_ data: Data) throws
+        -> (state: PRCockpitState,
+            commentMeta: [Int: ReviewCommentMeta],
+            reviewMeta: [Int: ReviewCommentMeta],
+            reviewReactions: [Int: ReactionRollup],
+            nextCursor: String?) {
+        struct Response: Decodable {
+            struct DataBox: Decodable { let repository: Repo? }
+            struct Repo: Decodable { let pullRequest: PR? }
+            struct PR: Decodable {
+                let reviewDecision: String?
+                let latestOpinionatedReviews: Opinions?
+                let reviewRequests: Requests?
+                let statusCheckRollup: Rollup?
+                let reviews: MetaNodes?
+                let comments: CommentsPage?
+            }
+            struct Opinions: Decodable { let nodes: [Opinion]? }
+            struct Opinion: Decodable {
+                struct Author: Decodable {
+                    let login: String?
+                    let avatarUrl: String?
+                }
+                let state: String?
+                let submittedAt: String?
+                let author: Author?
+            }
+            struct Requests: Decodable { let nodes: [Request]? }
+            struct Request: Decodable {
+                struct Reviewer: Decodable {
+                    let __typename: String?
+                    let login: String?
+                    let name: String?
+                    let avatarUrl: String?
+                }
+                let requestedReviewer: Reviewer?
+            }
+            struct Rollup: Decodable { let contexts: Contexts? }
+            struct Contexts: Decodable {
+                let totalCount: Int?
+                let nodes: [Context]?
+            }
+            struct Context: Decodable {
+                struct Suite: Decodable {
+                    struct Run: Decodable {
+                        struct Workflow: Decodable { let name: String? }
+                        let workflow: Workflow?
+                    }
+                    struct App: Decodable { let name: String? }
+                    let workflowRun: Run?
+                    let app: App?
+                }
+                let __typename: String?
+                // CheckRun fields
+                let name: String?
+                let status: String?
+                let conclusion: String?
+                let detailsUrl: String?
+                let startedAt: String?
+                let completedAt: String?
+                let isRequired: Bool?
+                let checkSuite: Suite?
+                // StatusContext fields
+                let context: String?
+                let state: String?
+                let targetUrl: String?
+            }
+            struct MetaNodes: Decodable { let nodes: [MetaNode]? }
+            struct CommentsPage: Decodable {
+                struct PageInfo: Decodable {
+                    let hasNextPage: Bool
+                    let endCursor: String?
+                }
+                let pageInfo: PageInfo?
+                let nodes: [MetaNode]?
+            }
+            struct MetaNode: Decodable {
+                struct ReactionGroup: Decodable {
+                    struct Reactors: Decodable {
+                        struct Node: Decodable { let login: String? }
+                        let totalCount: Int
+                        let nodes: [Node]?
+                    }
+                    let content: String
+                    let viewerHasReacted: Bool
+                    let reactors: Reactors?
+                }
+                let id: String
+                let databaseId: Int?
+                let lastEditedAt: String?
+                let reactionGroups: [ReactionGroup]?
+            }
+            let data: DataBox?
+        }
+
+        func meta(from node: Response.MetaNode) -> ReviewCommentMeta {
+            let reacted = (node.reactionGroups ?? [])
+                .filter(\.viewerHasReacted)
+                .compactMap { ReactionKind(graphQL: $0.content)?.rawValue }
+            var reactors: [String: ReactorRoster] = [:]
+            for group in node.reactionGroups ?? [] {
+                guard let kind = ReactionKind(graphQL: group.content),
+                      let who = group.reactors, who.totalCount > 0 else { continue }
+                reactors[kind.rawValue] = ReactorRoster(
+                    logins: (who.nodes ?? []).compactMap(\.login),
+                    totalCount: who.totalCount)
+            }
+            return ReviewCommentMeta(nodeID: node.id,
+                                     viewerReacted: Set(reacted),
+                                     edited: node.lastEditedAt != nil,
+                                     reactors: reactors)
+        }
+
+        func rollup(from node: Response.MetaNode) -> ReactionRollup? {
+            var rollup = ReactionRollup()
+            var any = false
+            for group in node.reactionGroups ?? [] {
+                guard let kind = ReactionKind(graphQL: group.content),
+                      let count = group.reactors?.totalCount, count > 0 else { continue }
+                rollup.setCount(count, for: kind)
+                any = true
+            }
+            return any ? rollup : nil
+        }
+
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard let pr = response.data?.repository?.pullRequest else {
+            return (PRCockpitState(), [:], [:], [:], nil)
+        }
+
+        var state = PRCockpitState()
+        state.reviewDecision = pr.reviewDecision.flatMap(ReviewDecision.init(rawValue:))
+        state.reviewers = (pr.latestOpinionatedReviews?.nodes ?? []).compactMap { opinion in
+            // DISMISSED and future states drop off the strip; the
+            // timeline still carries their cards.
+            guard let login = opinion.author?.login,
+                  opinion.state == "APPROVED" || opinion.state == "CHANGES_REQUESTED"
+            else { return nil }
+            return ReviewerState(login: login,
+                                 avatarUrl: opinion.author?.avatarUrl.flatMap(URL.init(string:)),
+                                 approved: opinion.state == "APPROVED",
+                                 submittedAt: opinion.submittedAt)
+        }
+        state.reviewRequests = (pr.reviewRequests?.nodes ?? []).compactMap { request in
+            guard let reviewer = request.requestedReviewer,
+                  let name = reviewer.login ?? reviewer.name else { return nil }
+            return ReviewRequestEntry(name: name,
+                                      avatarUrl: reviewer.avatarUrl.flatMap(URL.init(string:)),
+                                      isTeam: reviewer.__typename == "Team")
+        }
+        let contexts = pr.statusCheckRollup?.contexts
+        state.checksTotal = contexts?.totalCount ?? 0
+        state.checks = (contexts?.nodes ?? []).compactMap { node in
+            if node.__typename == "StatusContext" {
+                guard let name = node.context else { return nil }
+                return CheckItem(name: name, group: nil,
+                                 state: CheckItem.state(contextState: node.state),
+                                 detailsUrl: node.targetUrl.flatMap(URL.init(string:)),
+                                 isRequired: node.isRequired ?? false,
+                                 durationLabel: nil)
+            }
+            guard let name = node.name else { return nil }
+            return CheckItem(name: name,
+                             group: node.checkSuite?.workflowRun?.workflow?.name
+                                 ?? node.checkSuite?.app?.name,
+                             state: CheckItem.state(status: node.status,
+                                                    conclusion: node.conclusion),
+                             detailsUrl: node.detailsUrl.flatMap(URL.init(string:)),
+                             isRequired: node.isRequired ?? false,
+                             durationLabel: CheckItem.durationLabel(
+                                 startedAt: node.startedAt,
+                                 completedAt: node.completedAt))
+        }
+
+        var commentMeta: [Int: ReviewCommentMeta] = [:]
+        for node in pr.comments?.nodes ?? [] {
+            guard let id = node.databaseId else { continue }
+            commentMeta[id] = meta(from: node)
+        }
+        var reviewMeta: [Int: ReviewCommentMeta] = [:]
+        var reviewReactions: [Int: ReactionRollup] = [:]
+        for node in pr.reviews?.nodes ?? [] {
+            guard let id = node.databaseId else { continue }
+            reviewMeta[id] = meta(from: node)
+            reviewReactions[id] = rollup(from: node)
+        }
+        let page = pr.comments?.pageInfo
+        let nextCursor = page?.hasNextPage == true ? page?.endCursor : nil
+        return (state, commentMeta, reviewMeta, reviewReactions, nextCursor)
+    }
+
     /// Adds or removes the viewer's reaction on a comment.
     ///
     /// API choice: GraphQL, not REST. REST's remove route
@@ -707,10 +1022,76 @@ final class GitHubClient {
 
     /// Posts a general conversation comment on the pull request (the
     /// issue-comment timeline, not tied to any file or line).
-    func createIssueComment(_ ref: PullRequestRef, body: String) async throws {
+    @discardableResult
+    func createIssueComment(_ ref: PullRequestRef, body: String) async throws -> IssueComment {
         let payload = try Self.issueCommentRequestBody(body: body)
-        _ = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments",
-                              jsonBody: payload)
+        let data = try await request("POST", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments",
+                                     jsonBody: payload)
+        // The echoed comment folds into the timeline locally — the
+        // comments list lags fresh writes (0.31.0 lesson; never refetch
+        // on mutation).
+        return try Self.decoder.decode(IssueComment.self, from: data)
+    }
+
+    /// Every conversation comment on the PR (the issue-comment
+    /// timeline — every pull request is an issue), ascending by id.
+    /// 30 pages bounds a pathological PR.
+    func issueComments(_ ref: PullRequestRef) async throws -> [IssueComment] {
+        var all: [IssueComment] = []
+        for page in 1...30 {
+            let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments",
+                                         query: [URLQueryItem(name: "per_page", value: "100"),
+                                                 URLQueryItem(name: "page", value: "\(page)")])
+            let batch = try Self.decoder.decode([IssueComment].self, from: data)
+            all.append(contentsOf: batch)
+            if batch.count < 100 { break }
+        }
+        return all
+    }
+
+    /// The quiet-tick variant: conditional on the previous ETag; nil
+    /// comments means unchanged (the 304 was free). The ETag contract
+    /// only holds while the whole list fits one page — the list is
+    /// ascending, so appends land on the LAST page and a page-1 ETag
+    /// would miss them past 100. A spilled list returns etag nil,
+    /// sending every following tick down the plain full-fetch path.
+    func issueCommentsIfChanged(_ ref: PullRequestRef, etag: String?)
+        async throws -> (comments: [IssueComment]?, etag: String?) {
+        let path = "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)/comments"
+        let (data, freshTag) = try await conditionalGET(
+            path,
+            query: [URLQueryItem(name: "per_page", value: "100"),
+                    URLQueryItem(name: "page", value: "1")],
+            etag: etag)
+        guard let data else { return (nil, etag) }
+        var all = try Self.decoder.decode([IssueComment].self, from: data)
+        if all.count == 100 {
+            for page in 2...30 {
+                let more = try await request("GET", path,
+                                             query: [URLQueryItem(name: "per_page", value: "100"),
+                                                     URLQueryItem(name: "page", value: "\(page)")])
+                let batch = try Self.decoder.decode([IssueComment].self, from: more)
+                all.append(contentsOf: batch)
+                if batch.count < 100 { break }
+            }
+            return (all, nil)
+        }
+        return (all, freshTag)
+    }
+
+    /// Edits the body of a conversation comment (the viewer's own).
+    /// Same shape as updateReviewComment, different endpoint family —
+    /// issue comments live under /issues/comments, not /pulls/comments.
+    func updateIssueComment(_ ref: PullRequestRef, commentID: Int, body: String) async throws -> IssueComment {
+        let payload = try Self.editCommentRequestBody(body: body)
+        let data = try await request("PATCH", "/repos/\(ref.owner)/\(ref.repo)/issues/comments/\(commentID)",
+                                     jsonBody: payload)
+        return try Self.decoder.decode(IssueComment.self, from: data)
+    }
+
+    func deleteIssueComment(_ ref: PullRequestRef, commentID: Int) async throws {
+        _ = try await request("DELETE",
+                              "/repos/\(ref.owner)/\(ref.repo)/issues/comments/\(commentID)")
     }
 
     // MARK: - Request body builders (pure, unit-tested)
@@ -829,6 +1210,29 @@ final class GitHubClient {
                          query: [URLQueryItem] = [],
                          accept: String = "application/vnd.github+json",
                          jsonBody: Data? = nil) async throws -> Data {
+        let (data, http) = try await perform(method, path, query: query,
+                                             accept: accept, jsonBody: jsonBody)
+        return try await validate(data, http)
+    }
+
+    /// Conditional GET on a previous ETag: a 304 returns nil data and
+    /// costs no rate limit (verified live). Callers get the fresh ETag
+    /// back for the next round trip.
+    private func conditionalGET(_ path: String, query: [URLQueryItem] = [],
+                                etag: String?) async throws -> (data: Data?, etag: String?) {
+        var headers: [String: String] = [:]
+        if let etag { headers["If-None-Match"] = etag }
+        let (data, http) = try await perform("GET", path, query: query, headers: headers)
+        if http.statusCode == 304 { return (nil, etag) }
+        let validated = try await validate(data, http)
+        return (validated, http.value(forHTTPHeaderField: "ETag"))
+    }
+
+    private func perform(_ method: String, _ path: String,
+                         query: [URLQueryItem] = [],
+                         accept: String = "application/vnd.github+json",
+                         jsonBody: Data? = nil,
+                         headers: [String: String] = [:]) async throws -> (Data, HTTPURLResponse) {
         // The one transport choke point (REST and GraphQL both land
         // here): demo mode is offline by construction, not by hoping
         // every caller remembered its own guard.
@@ -850,6 +1254,14 @@ final class GitHubClient {
         if let token = await authToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+        for (field, value) in headers {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
+        // Manual revalidation owns the 304 contract — URLSession's own
+        // cache layer must not answer for the server.
+        if headers["If-None-Match"] != nil {
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+        }
         if let jsonBody {
             request.httpBody = jsonBody
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -859,6 +1271,10 @@ final class GitHubClient {
         guard let http = response as? HTTPURLResponse else {
             throw APIError(status: -1, message: "No HTTP response")
         }
+        return (data, http)
+    }
+
+    private func validate(_ data: Data, _ http: HTTPURLResponse) async throws -> Data {
         guard (200..<300).contains(http.statusCode) else {
             if http.statusCode == 401 || http.statusCode == 404 {
                 let hasToken = await authToken() != nil

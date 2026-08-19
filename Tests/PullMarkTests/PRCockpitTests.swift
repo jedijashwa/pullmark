@@ -243,3 +243,101 @@ import Testing
         #expect(reviews[0].user?.avatarUrl != nil)
     }
 }
+
+@Suite struct CockpitParserTests {
+    /// A live-shaped page: null decision would be legal too — here
+    /// REVIEW_REQUIRED, one opinion, one null requested reviewer (the
+    /// code-owner/Copilot shape observed on cli/cli), one team request,
+    /// a CheckRun + StatusContext mix, review meta, one comments page.
+    private let fixture = Data("""
+    {"data": {"repository": {"pullRequest": {
+      "reviewDecision": "REVIEW_REQUIRED",
+      "latestOpinionatedReviews": {"nodes": [
+        {"state": "APPROVED", "submittedAt": "2026-08-18T09:00:00Z",
+         "author": {"login": "riley-chen", "avatarUrl": "https://avatars.example/u/2"}},
+        {"state": "DISMISSED", "submittedAt": "2026-08-17T09:00:00Z",
+         "author": {"login": "gone", "avatarUrl": null}}
+      ]},
+      "reviewRequests": {"nodes": [
+        {"requestedReviewer": null},
+        {"requestedReviewer": {"__typename": "User", "login": "sam-ortega",
+                               "avatarUrl": "https://avatars.example/u/3"}},
+        {"requestedReviewer": {"__typename": "Team", "name": "docs-team", "avatarUrl": null}}
+      ]},
+      "statusCheckRollup": {"contexts": {"totalCount": 3, "nodes": [
+        {"__typename": "CheckRun", "name": "build", "status": "COMPLETED",
+         "conclusion": "SUCCESS", "detailsUrl": "https://github.com/o/r/runs/1",
+         "startedAt": "2026-08-19T10:00:00Z", "completedAt": "2026-08-19T10:01:30Z",
+         "isRequired": true,
+         "checkSuite": {"workflowRun": {"workflow": {"name": "CI"}}, "app": {"name": "GitHub Actions"}}},
+        {"__typename": "CheckRun", "name": "deploy", "status": "WAITING",
+         "conclusion": null, "detailsUrl": null, "startedAt": null, "completedAt": null,
+         "isRequired": false, "checkSuite": {"workflowRun": null, "app": {"name": "GitHub Actions"}}},
+        {"__typename": "StatusContext", "context": "license/cla", "state": "SUCCESS",
+         "targetUrl": "https://cla.example/check", "isRequired": false}
+      ]}},
+      "reviews": {"nodes": [
+        {"id": "PRR_9", "databaseId": 9, "lastEditedAt": null,
+         "reactionGroups": [{"content": "THUMBS_UP", "viewerHasReacted": true,
+           "reactors": {"totalCount": 2, "nodes": [{"login": "sam-ortega"}, {"login": "riley-chen"}]}}]}
+      ]},
+      "comments": {
+        "pageInfo": {"hasNextPage": true, "endCursor": "CURSOR1"},
+        "nodes": [
+          {"id": "IC_314", "databaseId": 314, "lastEditedAt": "2026-08-19T11:00:00Z",
+           "reactionGroups": [{"content": "HEART", "viewerHasReacted": false,
+             "reactors": {"totalCount": 1, "nodes": [{"login": "riley-chen"}]}}]}
+        ]
+      }
+    }}}}
+    """.utf8)
+
+    @Test func parsesTheFullPage() throws {
+        let page = try GitHubClient.parseCockpitPage(fixture)
+        #expect(page.state.reviewDecision == .reviewRequired)
+        // DISMISSED drops off the strip; the timeline still shows it.
+        #expect(page.state.reviewers == [ReviewerState(
+            login: "riley-chen",
+            avatarUrl: URL(string: "https://avatars.example/u/2"),
+            approved: true, submittedAt: "2026-08-18T09:00:00Z")])
+        // The null requested-reviewer node is dropped, not fatal.
+        #expect(page.state.reviewRequests.count == 2)
+        #expect(page.state.reviewRequests[0] == ReviewRequestEntry(
+            name: "sam-ortega", avatarUrl: URL(string: "https://avatars.example/u/3"),
+            isTeam: false))
+        #expect(page.state.reviewRequests[1].isTeam)
+        #expect(page.state.checksTotal == 3)
+        #expect(page.state.checks.count == 3)
+        #expect(page.state.checks[0].state == .passed)
+        #expect(page.state.checks[0].group == "CI")
+        #expect(page.state.checks[0].isRequired)
+        #expect(page.state.checks[0].durationLabel == "1m 30s")
+        #expect(page.state.checks[1].state == .waiting)
+        // No workflow run (gated) — the app name still groups the row.
+        #expect(page.state.checks[1].group == "GitHub Actions")
+        #expect(page.state.checks[2].state == .passed)
+        #expect(page.state.checks[2].group == nil)
+        #expect(page.nextCursor == "CURSOR1")
+    }
+
+    @Test func commentAndReviewMetaCarryViewerState() throws {
+        let page = try GitHubClient.parseCockpitPage(fixture)
+        let comment = try #require(page.commentMeta[314])
+        #expect(comment.nodeID == "IC_314")
+        #expect(comment.edited)
+        #expect(comment.viewerReacted.isEmpty)
+        #expect(comment.reactors["heart"]?.totalCount == 1)
+        let review = try #require(page.reviewMeta[9])
+        #expect(review.viewerReacted == ["+1"])
+        // REST has no reaction rollup for review bodies — synthesized
+        // from the GraphQL reactor totals.
+        #expect(page.reviewReactions[9]?.plusOne == 2)
+    }
+
+    @Test func emptyAndShapelessPagesDegrade() throws {
+        let empty = Data(#"{"data": {"repository": {"pullRequest": null}}}"#.utf8)
+        let page = try GitHubClient.parseCockpitPage(empty)
+        #expect(page.state == PRCockpitState())
+        #expect(page.nextCursor == nil)
+    }
+}
