@@ -14,8 +14,8 @@ enum SystemGitCredentials {
 
         var label: String {
             switch self {
-            case .githubCLI: return "GitHub CLI"
-            case .credentialHelper: return "git credential helper"
+            case .githubCLI: return String(localized: "GitHub CLI")
+            case .credentialHelper: return String(localized: "git credential helper")
             }
         }
     }

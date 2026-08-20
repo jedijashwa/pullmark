@@ -25,7 +25,7 @@ struct GitHubSetupSheet: View {
             stepContent
 
             HStack {
-                Button(checking ? "Checking…" : "Check Again") { check() }
+                Button(checking ? String(localized: "Checking…") : String(localized: "Check Again")) { check() }
                     .disabled(checking)
                     .help("Re-read credentials from the GitHub CLI and git credential helpers")
                 Spacer()
@@ -97,7 +97,7 @@ struct GitHubSetupSheet: View {
 
     private var connectedLine: String {
         guard case .connected(let login, let source) = connection.status else {
-            return "Connected"
+            return String(localized: "Connected")
         }
         let who = login.map { "Connected as \($0)" } ?? "Connected"
         return "\(who) · \(source.label)"

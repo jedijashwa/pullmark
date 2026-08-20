@@ -130,11 +130,11 @@ private struct ChecksCapsule: View {
         switch summary {
         case .none: return ""
         case .failed(let failing, let total):
-            return "\(failing) of \(total) failing"
+            return String(localized: "\(failing) of \(total) failing")
         case .running(let done, let total):
-            return "\(done) of \(total) done"
+            return String(localized: "\(done) of \(total) done")
         case .awaitingApproval:
-            return "A workflow is waiting for approval"
+            return String(localized: "A workflow is waiting for approval")
         case .passed(let passed, let skipped):
             return skipped > 0 ? "\(passed) passed, \(skipped) skipped"
                                : "\(passed) passed"
