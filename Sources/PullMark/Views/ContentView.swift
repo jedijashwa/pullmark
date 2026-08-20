@@ -543,6 +543,7 @@ private struct SidebarFileRow: View {
             Divider()
             Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([file.url]) }
             Button("Copy Path") { SidebarActions.copyPath(file.url) }
+            SidebarActions.copyGitHubLinkItems(url: file.url, state: state)
         }
     }
 }
@@ -597,6 +598,78 @@ enum SidebarActions {
     static func copyPath(_ url: URL) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url.path, forType: .string)
+    }
+
+    /// Copy GitHub Link (spec: copy-github-link §3): resolve the
+    /// checkout at click time and put the github.com URL on the
+    /// pasteboard. A repo with no GitHub remote gets the quiet notice,
+    /// never the error alert. Detached HEAD falls back to the SHA form,
+    /// so the branch flavor never dead-ends.
+    @MainActor
+    static func copyGitHubLink(_ url: URL, isDirectory: Bool,
+                               permalink: Bool, state: AppState) {
+        let root = isDirectory
+            ? LocalGit.repoRoot(forDirectory: url)
+            : LocalGit.repoRoot(for: url)
+        guard let root else { return }
+        guard let repo = LocalGit.linkableGitHubRepo(in: root) else {
+            state.lastNotice = "This repository has no GitHub remote."
+            return
+        }
+        let ref = permalink
+            ? LocalGit.headSHA(in: root)
+            : LocalGit.currentBranch(in: root) ?? LocalGit.headSHA(in: root)
+        guard let ref else { return }
+        // The checkout root itself links as the bare tree/<ref> —
+        // relativePath's lastPathComponent fallback is for files.
+        let path = url.standardizedFileURL.path == root.standardizedFileURL.path
+            ? "" : LocalGit.relativePath(of: url, in: root)
+        let link = GitHubLink.url(
+            owner: repo.owner, repo: repo.repo, ref: ref,
+            path: path, isDirectory: isDirectory)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(link, forType: .string)
+    }
+}
+
+extension SidebarActions {
+    /// "Copy GitHub Link" plus its ⌥ alternate for context menus (spec:
+    /// copy-github-link §4). A @ViewBuilder FUNCTION, deliberately: a
+    /// custom View struct with @EnvironmentObject silently renders
+    /// nothing inside .contextMenu (the environment never crosses the
+    /// menu bridge — verified live), so the items inline into the row's
+    /// own builder and take state explicitly. Renders nothing outside a
+    /// git checkout; the primary copies what Settings says, the
+    /// alternate names the other flavor. macOS 13/14 lack
+    /// modifierKeyAlternate and show only the primary item.
+    @MainActor @ViewBuilder
+    static func copyGitHubLinkItems(url: URL, isDirectory: Bool = false,
+                                    state: AppState) -> some View {
+        if GitHubLink.inRepository(url, isDirectory: isDirectory) {
+            // The setting is read at CLICK time — context menu content
+            // builds at row render, and a builder-time read would copy
+            // a stale flavor after Settings changes. Only the alternate
+            // TITLE reads at build (cosmetic; heals on next render).
+            let primary = Button("Copy GitHub Link") {
+                copyGitHubLink(url, isDirectory: isDirectory,
+                               permalink: permalinkIsDefault, state: state)
+            }
+            if #available(macOS 15.0, *) {
+                primary.modifierKeyAlternate(.option) {
+                    Button(permalinkIsDefault ? "Copy GitHub Branch Link"
+                                              : "Copy GitHub Permalink") {
+                        copyGitHubLink(url, isDirectory: isDirectory,
+                                       permalink: !permalinkIsDefault, state: state)
+                    }
+                }
+            } else {
+                primary
+            }
+        }
+    }
+
+    private static var permalinkIsDefault: Bool {
+        UserDefaults.pullmark.string(forKey: DefaultsKeys.githubLinkStyle) == "commit"
     }
 }
 
@@ -785,6 +858,7 @@ private struct FolderRootGroup: View {
                 NSWorkspace.shared.activateFileViewerSelecting([folder.rootURL])
             }
             Button("Copy Path") { SidebarActions.copyPath(folder.rootURL) }
+            SidebarActions.copyGitHubLinkItems(url: folder.rootURL, isDirectory: true, state: state)
             Button("Refresh Folder") { state.rescanFolder(root: folder.rootURL) }
             // Right-click parity with the branch chip (SwiftUI context
             // menus rebuild per open, so live content is safe here).
@@ -828,6 +902,7 @@ private struct FolderRootGroup: View {
         Divider()
         Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         Button("Copy Path") { SidebarActions.copyPath(url) }
+        SidebarActions.copyGitHubLinkItems(url: url, state: state)
     }
 }
 
@@ -876,6 +951,7 @@ private struct FolderNodeView: View {
                         Button("Copy Path") {
                             SidebarActions.copyPath(folder.fileURL(for: node.path))
                         }
+                        SidebarActions.copyGitHubLinkItems(url: folder.fileURL(for: node.path), isDirectory: true, state: state)
                     }
             }
         } else {
@@ -905,6 +981,8 @@ private struct FolderNodeView: View {
                     Button("Copy Path") {
                         SidebarActions.copyPath(folder.fileURL(for: node.path))
                     }
+                    SidebarActions.copyGitHubLinkItems(
+                        url: folder.fileURL(for: node.path), state: state)
                 }
         }
     }

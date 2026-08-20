@@ -113,7 +113,7 @@ struct KeyCombo: Codable, Equatable, Hashable {
 /// persistence keys — never change one once shipped.
 enum ShortcutAction: String, CaseIterable, Codable {
     case openFile, openPullRequest, openQuickly, commitChanges, revertLastEdit
-    case revealInFinder, copyPath, refreshFolder, clearRecents
+    case revealInFinder, copyPath, copyGitHubLink, refreshFolder, clearRecents
     case pageSetup, printDocument, exportPDF, exportHTML
     case editMode, copyAsMarkdown
     case findInPage, findNext, findPrevious, searchAllFiles
@@ -134,6 +134,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .revertLastEdit: return "Revert Last Edit"
         case .revealInFinder: return "Reveal in Finder"
         case .copyPath: return "Copy Path"
+        case .copyGitHubLink: return "Copy GitHub Link"
         case .refreshFolder: return "Refresh Folder"
         case .clearRecents: return "Clear Recents"
         case .pageSetup: return "Page Setup…"
@@ -174,8 +175,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
     var category: String {
         switch self {
         case .openFile, .openPullRequest, .openQuickly, .commitChanges,
-             .revertLastEdit, .revealInFinder, .copyPath, .refreshFolder,
-             .clearRecents, .pageSetup, .printDocument, .exportPDF, .exportHTML:
+             .revertLastEdit, .revealInFinder, .copyPath, .copyGitHubLink,
+             .refreshFolder, .clearRecents, .pageSetup, .printDocument,
+             .exportPDF, .exportHTML:
             return "File"
         case .editMode, .copyAsMarkdown, .addMarginNote, .addFileMarginNote,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
@@ -203,6 +205,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
             return "In a local document"
         case .revealInFinder, .copyPath:
             return "With a local file or folder selected"
+        case .copyGitHubLink:
+            return "With a local file or folder in a GitHub repository selected"
         case .refreshFolder:
             return "With a folder selected"
         case .findNext, .findPrevious:
@@ -235,6 +239,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         // Keyboard settings, and the user records a combo if they want one.
         case .revealInFinder: return nil
         case .copyPath: return nil
+        case .copyGitHubLink: return nil
         case .refreshFolder: return nil
         case .clearRecents: return nil
         case .pageSetup: return KeyCombo(key: "p", command: true, shift: true)
