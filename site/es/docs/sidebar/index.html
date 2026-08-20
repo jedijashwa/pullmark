@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La barra lateral — Docs de PullMark</title>
+<meta name="description" content="La barra lateral de PullMark explicada: Open Files y las vistas previas, Locations, Pull Requests, Recents y qué significa cada icono.">
+<link rel="canonical" href="https://pullmark.app/es/docs/sidebar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/sidebar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/sidebar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/sidebar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/sidebar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/sidebar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
+<meta property="og:title" content="La barra lateral — Docs de PullMark">
+<meta property="og:description" content="La barra lateral de PullMark explicada: Open Files y las vistas previas, Locations, Pull Requests, Recents y qué significa cada icono.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/es/docs/sidebar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/es/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/es/docs/" aria-current="true">Docs</a>
+      <a href="/es/uses/agents/">Casos de uso</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versiones</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/es/docs/">Visión general</a></li>
+        <li><a href="/es/docs/features/">Funciones</a></li>
+        <li><a href="/es/docs/sidebar/" aria-current="page">La barra lateral</a></li>
+        <li><a href="/es/docs/toolbar/">La barra de herramientas</a></li>
+        <li><a href="/es/docs/settings/">Ajustes</a></li>
+        <li><a href="/es/docs/shortcuts/">Atajos de teclado</a></li>
+        <li><a href="/es/docs/cli/">Línea de comandos</a></li>
+        <li><a href="/es/docs/troubleshooting/">Solución de problemas</a></li>
+        <li><a href="/es/docs/experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>La barra lateral</h1>
+      <p class="article-lede">Cuatro secciones, organizadas por lo que las cosas
+      <em>significan</em> y no por su origen: lo que tienes abierto, los
+      lugares que navegas, los pull requests que estás revisando y por dónde
+      has pasado.</p>
+
+      <h2 id="open-files">Open Files (archivos abiertos)</h2>
+      <p>El conjunto de trabajo: cada documento que has abierto
+      explícitamente — desde el Finder, arrastrar y soltar, ⌘O, la
+      <a href="/es/docs/cli/">línea de comandos</a> o al conservar un archivo
+      de una Location. Plano, reordenable arrastrando, cada fila eliminable
+      con la ✕ que aparece al pasar el cursor (o ⌫ en la fila seleccionada).
+      Clic derecho en la cabecera de la sección para <strong>Close All</strong>
+      (cerrar todo).</p>
+
+      <h3 id="previews">Vistas previas</h3>
+      <p>Un solo clic en un archivo dentro de una Location y se renderiza al
+      instante — y aparece en Open Files como <em>vista previa</em>: una única
+      entrada en cursiva, siempre la última de la sección. Haz clic en otro
+      archivo y la entrada de vista previa se reemplaza, así que navegar un
+      árbol grande nunca acumula filas. Es la misma idea que las pestañas de
+      vista previa de VS Code o el editor temporal de Xcode, con la misma
+      cursiva.</p>
+      <p>Una vista previa se convierte en una entrada normal, fijada, cuando
+      le muestras un compromiso más allá de leerla:</p>
+      <ul>
+        <li><strong>Doble clic</strong> en el archivo del árbol, o en la
+        propia entrada en cursiva</li>
+        <li><strong>Empezar a editar</strong> — entrar en el modo de edición o
+        guardar la edición de un bloque la fija</li>
+        <li><strong>Keep Open</strong> (mantener abierto) en el menú
+        contextual</li>
+      </ul>
+      <p>Las interacciones de lectura — blame, historial de líneas,
+      inspeccionar una imagen o un diagrama — deliberadamente nunca ascienden
+      una vista previa. Si prefieres que cada clic abra los archivos del
+      todo, cambia <a href="/es/docs/settings/#clicking-files">Clicking files
+      in Locations</a> en Settings.</p>
+      <p><strong>Los repos remotos se previsualizan igual, en el mismo
+      lugar.</strong> Navegar el árbol de un repo de GitHub, o seguir enlaces
+      dentro de un documento remoto, pone la misma entrada única en cursiva
+      en Open Files — con un icono de libro y una segunda línea
+      <code>owner/repo @ ref</code>, ya que el archivo no está en tu Mac.
+      Solo existe <em>una</em> vista previa por ventana, local o remota:
+      previsualizar algo reemplaza lo que estuvieras previsualizando antes.
+      Conservar un doc remoto (doble clic o Keep Open) es lo que lo archiva
+      con su repo — pasa a la lista de fijados del repo bajo Locations. ⌘K
+      abre fijando directamente, porque pegar una URL es intención
+      explícita.</p>
+      <p>Cualquier fila de Open Files que viva dentro de una Location abierta
+      tiene <strong>Reveal in Location</strong> (mostrar en su ubicación) en
+      su menú contextual — el salto de vuelta de «lo que estoy leyendo» a
+      «donde vive».</p>
+
+      <h2 id="locations">Locations (ubicaciones)</h2>
+      <p>Raíces navegables, vivan donde vivan. Dos clases comparten la
+      sección, distinguidas por el icono:</p>
+      <table>
+        <tr><th>Fila</th><th>Significado</th></tr>
+        <tr><td>📁 icono de carpeta</td><td>Una carpeta local — sus archivos Markdown como árbol
+          (o como lista plana; clic derecho → View as List). Vigilada por si cambia.</td></tr>
+        <tr><td>📕 icono de libro</td><td>Un repositorio de GitHub abierto para navegar —
+          descargado de la API, nada se escribe en disco.</td></tr>
+      </table>
+      <p>Una carpeta local que es un checkout de git gana un <strong>chip de
+      rama</strong> (glifo de rama + nombre); si su remoto está en GitHub,
+      aparece además una pequeña marca de libro cerrado — pasa el cursor para
+      ver de qué repo. Hacer clic en el chip de rama abre el menú de ramas y
+      worktrees:</p>
+      <ul>
+        <li><strong>Worktrees</strong> — cada worktree del repo, con una marca
+        en el que corresponde a esta fila; elige otro para abrirlo como su
+        propia Location. PullMark nunca hace checkout ni cambia de worktree —
+        abre la carpeta que ya está ahí.</li>
+        <li><strong>View Branch from GitHub</strong> (ver rama desde GitHub) —
+        lee los archivos de otra rama en remoto, sin tocar tu checkout. Una
+        rama que ya tiene worktree local salta al worktree — lo local gana a
+        lo remoto.</li>
+        <li><strong>Open on GitHub</strong> (abrir en GitHub) — el repo (en
+        esta rama) en tu navegador.</li>
+      </ul>
+      <p>En un repo remoto (icono de libro), el mismo chip lista ramas:
+      <strong>Switch To</strong> (cambiar a) vuelve a fijar la sesión en otra
+      rama y, manteniendo ⌥, aparece <strong>Open Branch Separately</strong>
+      (abrir la rama por separado) para leer lado a lado. <strong>Browse Repo
+      Files…</strong> (explorar los archivos del repo) carga el árbol
+      Markdown completo del repo. Los docs conservados del repo van encima
+      del árbol, para que nunca se ahoguen bajo un repo grande; un doc
+      conservado que ya es visible en el árbol simplemente se representa ahí.
+      (Un doc que solo estás previsualizando aparece en
+      <a href="#previews">Open Files</a>, no aquí.)</p>
+      <p>Una carpeta cuya ruta deja de resolverse (un volumen desmontado, un
+      worktree borrado) se atenúa con una insignia de interrogación en vez de
+      desaparecer — revive por sí sola cuando la ruta vuelve.</p>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <p>Cada PR abierto es un grupo: la fila de resumen (icono de estado +
+      número de archivos Markdown modificados) y luego sus archivos Markdown
+      modificados — un globo de comentario con contador marca los archivos
+      con hilos de revisión sin resolver. Bajo tus PR abiertos,
+      <strong>Review Requests</strong> (solicitudes de revisión) reúne los PR
+      que esperan tu revisión, con un contador de no leídos que sigue visible
+      incluso plegado (ocultable en Settings, y filtrable a solo los PR que
+      tocan Markdown).</p>
+      <p>Iconos de estado en las filas de PR:</p>
+      <table>
+        <tr><th>Estado</th><th>Icono</th></tr>
+        <tr><td>Borrador</td><td>flechas de pull request, gris</td></tr>
+        <tr><td>Abierto</td><td>flechas de pull request, verde</td></tr>
+        <tr><td>Fusionado</td><td>flechas de merge, morado</td></tr>
+        <tr><td>Cerrado</td><td>círculo con ✕, rojo</td></tr>
+        <tr><td>No disponible</td><td>papelera, gris — el PR (o tu acceso) desapareció</td></tr>
+      </table>
+      <p>Marcadores por archivo dentro de un PR: círculo <strong>+</strong>
+      (verde) para añadido, círculo <strong>−</strong> (rojo) para eliminado,
+      círculo <strong>→</strong> para renombrado, círculo con lápiz para
+      modificado.</p>
+
+      <h2 id="recents">Recents (recientes)</h2>
+      <p>Archivos, carpetas y pull requests abiertos hace poco que no estén
+      ya visibles arriba. Las entradas de PR llevan su icono de estado en
+      vivo; un reciente cuyo archivo desapareció se atenúa (insignia de
+      reloj) en vez de esfumarse y revive cuando la ruta vuelve — pensado
+      para cambios de rama y volúmenes desmontados. Clic derecho en la
+      cabecera para <strong>Clear Recents</strong> (vaciar recientes).</p>
+
+      <h2 id="removal">Quitar cosas</h2>
+      <p>Pasa el cursor por cualquier fila de primer nivel para la ✕ — quita
+      la fila de la barra lateral, jamás nada del disco ni de GitHub. ⌫ en
+      una fila seleccionada hace lo mismo. Los archivos dentro del árbol de
+      una Location no tienen ✕: son contenidos de un lugar, no elementos de
+      la barra lateral.</p>
+
+      <h2 id="icon-glossary">Glosario de iconos</h2>
+      <table>
+        <tr><th>Icono</th><th>Significado</th></tr>
+        <tr><td>Documento</td><td>Un archivo Markdown</td></tr>
+        <tr><td>Documento, nombre en cursiva</td><td>La vista previa — reemplazada por tu siguiente clic simple</td></tr>
+        <tr><td>Carpeta</td><td>Una carpeta o directorio local</td></tr>
+        <tr><td>Carpeta + ?</td><td>Carpeta no encontrada ahora mismo — atenuada, revivirá</td></tr>
+        <tr><td>Documento + reloj</td><td>Un archivo reciente que desapareció</td></tr>
+        <tr><td>Libro cerrado</td><td>Un repositorio de GitHub (como icono de fila: navegado en
+          remoto; como pequeña marca al final: esta carpeta local es un checkout de uno)</td></tr>
+        <tr><td>Glifo de rama + nombre</td><td>El chip de rama — haz clic para ramas y worktrees</td></tr>
+        <tr><td>Flechas de pull request</td><td>Un pull request</td></tr>
+        <tr><td>Bandeja</td><td>Review Requests — PRs que esperan tu revisión</td></tr>
+        <tr><td>Globo de diálogo + contador</td><td>En un archivo de PR: comentarios de revisión sin
+          resolver. En una fila de Open Files: <a href="/es/docs/experimental/margin-notes/">notas al
+          margen</a> aún presentes en el documento</td></tr>
+        <tr><td>Punto de color (borde izquierdo)</td><td>Una solicitud de revisión sin leer</td></tr>
+        <tr><td>✕ en un círculo (al pasar el cursor)</td><td>Quitar de la barra lateral / descartar la vista previa</td></tr>
+      </table>
+      <p class="table-note">El glifo de rama aparece solo en refs reales de
+      git (chips, nunca como icono de carpeta) — una carpeta es una carpeta,
+      un repo es un libro y una rama es una rama.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versiones</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licencia MIT</a>
+    <a href="/licenses/">Licencias de código abierto</a>
+    <a href="/privacy/">Privacidad</a>
+    <a href="https://ko-fi.com/pullmark">Apoya a PullMark&nbsp;♥</a>
+    <span class="note">PullMark no está afiliado a GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Idioma">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Idioma</span>
+    <a href="/docs/sidebar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/sidebar/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/sidebar/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/sidebar/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/sidebar/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/sidebar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/sidebar/" hreflang="es" lang="es" aria-current="true">Español</a>
+    <a href="/pt/docs/sidebar/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

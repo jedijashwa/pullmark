@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recursos — Documentação do PullMark</title>
+<meta name="description" content="Um tour guiado pelo PullMark: ler Markdown, revisar diffs de PR, navegar pelo GitHub, editar no lugar e tirar documentos de volta.">
+<link rel="canonical" href="https://pullmark.app/pt/docs/features/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/features/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/features/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/features/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/features/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/features/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/features/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/features/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/features/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/features/">
+<meta property="og:title" content="Recursos — Documentação do PullMark">
+<meta property="og:description" content="Um tour guiado pelo PullMark: ler Markdown, revisar diffs de PR, navegar pelo GitHub, editar no lugar e tirar documentos de volta.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/pt/docs/features/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/pt/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/pt/docs/" aria-current="true">Documentação</a>
+      <a href="/pt/uses/agents/">Casos de uso</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Documentação">
+      <p class="docs-nav-title">Documentação</p>
+      <ul>
+        <li><a href="/pt/docs/">Visão geral</a></li>
+        <li><a href="/pt/docs/features/" aria-current="page">Recursos</a></li>
+        <li><a href="/pt/docs/sidebar/">A barra lateral</a></li>
+        <li><a href="/pt/docs/toolbar/">A barra de ferramentas</a></li>
+        <li><a href="/pt/docs/settings/">Ajustes</a></li>
+        <li><a href="/pt/docs/shortcuts/">Atalhos de teclado</a></li>
+        <li><a href="/pt/docs/cli/">Linha de comando</a></li>
+        <li><a href="/pt/docs/troubleshooting/">Solução de problemas</a></li>
+        <li><a href="/pt/docs/experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Recursos</h1>
+      <p class="article-lede">O tour, agrupado pelo que você está fazendo:
+      ler, revisar, navegar pelo GitHub, editar e tirar documentos de volta.
+      O PullMark deliberadamente <em>não</em> é um cliente de revisão
+      completo — ele mostra o Markdown de uma mudança; suas ferramentas de
+      sempre continuam certas para o código.</p>
+
+      <h2 id="reading">Leitura</h2>
+      <ul>
+        <li><strong>Renderização fiel ao GitHub</strong> — tabelas, listas de
+        tarefas, notas de rodapé, alertas, <code>&lt;details&gt;</code>
+        recolhíveis, realce de sintaxe, diagramas Mermaid e matemática KaTeX
+        (<code>$…$</code> / <code>$$…$$</code>), tudo offline. Um parágrafo
+        contendo só <code>[toc]</code> vira um sumário com links;
+        <code>==destaque==</code>, <code>~sub~</code> e <code>^sup^</code>
+        também renderizam.</li>
+        <li><strong>Clique para inspecionar</strong> — imagens, diagramas e
+        fórmulas de bloco abrem num overlay de pan e zoom; Save As… (salvar
+        como) e Share (compartilhar) exportam exatamente o que você está
+        inspecionando (diagramas como SVG de verdade).</li>
+        <li><strong>Arquivos vivos</strong> — documentos re-renderizam ao
+        serem salvos em qualquer editor; imagens e links relativos resolvem,
+        e clicar num link para outro arquivo Markdown o abre no lugar (como
+        <a href="/pt/docs/sidebar/#previews">prévia</a> quando ele mora num
+        Location aberto).</li>
+        <li><strong>Navegação</strong> — a barra lateral de estrutura (⌥⌘O),
+        busca na página com ⌘F, busca em todos os arquivos da barra lateral
+        com ⇧⌘F, e o Open Quickly (abrir rapidamente) com ⌘K para títulos,
+        arquivos, PRs e recentes — ou cole nele um caminho ou uma URL do
+        GitHub.</li>
+        <li><strong>Blame à altura da leitura</strong> — uma régua discreta de
+        autoria: um avatar por sequência de blocos, passe o mouse para ver o
+        commit, clique para o histórico das linhas. A API de blame do GitHub
+        quando o arquivo mora no GitHub, <code>git blame</code> puro nos
+        demais casos.</li>
+        <li><strong>Conforto de leitura</strong> — temas, largura do conteúdo,
+        números de linha (<a href="/pt/docs/settings/">Ajustes</a>), zoom no
+        estilo dos navegadores, claro/escuro, tela cheia e posições de
+        leitura lembradas por documento.</li>
+      </ul>
+
+      <h2 id="reviewing">Revisão de pull requests</h2>
+      <ul>
+        <li><strong>Diffs renderizados</strong> — blocos adicionados,
+        removidos e alterados destacados na página renderizada, diffs
+        palavra por palavra quando a edição é pequena o bastante para fazer
+        sentido, inline ou lado a lado (⌥⌘L), mais o Source Diff cru (⌘2) e o
+        Result final (⌘3). Parágrafos movidos ganham um chip discreto de
+        “movido” em vez de ruído vermelho-mais-verde.</li>
+        <li><strong>Threads de revisão no lugar</strong> — comentários
+        existentes aparecem sob os blocos que discutem; passe o mouse sobre
+        um bloco para Comment Now (comentar agora), Add to Review (adicionar
+        à revisão) ou Insert Suggestion (inserir sugestão) — e o lápis edita
+        o bloco como sugestão. Revisões são enviadas com veredito, ou salvas
+        no GitHub como revisão pendente.</li>
+        <li><strong>Onde o PR está</strong> — o cabeçalho da visão geral
+        mostra a decisão da revisão (aprovado, alterações solicitadas,
+        revisão necessária), o veredito de cada revisor como avatares com
+        selos, com os revisores aguardados ao lado, e uma cápsula de
+        verificações de CI que abre a lista completa — durações, marcas de
+        obrigatoriedade e um link para os logs de cada verificação. Tudo se
+        atualiza silenciosamente a cada minuto.</li>
+        <li><strong>A conversa, legível</strong> — uma linha do tempo
+        cronológica na visão geral: comentários e vereditos de revisão em
+        ordem, os comentários inline de cada revisão aninhados sob seu
+        resumo, com o arquivo que discutem nomeado no cartão. Reações,
+        edições e exclusões dos seus próprios comentários, e a caixa de
+        comentário no pé da linha do tempo. Ativa para todos (Settings ▸
+        General ▸ Reviewing esconde as threads).</li>
+        <li><strong>Sempre atual</strong> — PRs abertos são checados a cada
+        minuto; um banner oferece atualizar quando a branch avança, e seus
+        rascunhos de comentário sobrevivem. Comentários escritos offline
+        entram na fila e sobem quando podem.</li>
+        <li><strong>Solicitações de revisão</strong> — PRs aguardando a sua
+        revisão, na barra lateral com contadores de não lidos. Imagens de PR
+        e links relativos ao repositório resolvem no commit do PR.</li>
+      </ul>
+
+      <h2 id="github">GitHub, sem o navegador</h2>
+      <ul>
+        <li><strong>Links de Markdown abrem no app</strong> — clique num link
+        <code>github.com/…/blob/…</code> e o PullMark o renderiza (o primeiro
+        clique pergunta; ⌘-clique inverte seu padrão). Uma barra de
+        procedência fixa <code>owner/repo @ ref · caminho</code> com um
+        caminho de volta ao GitHub.</li>
+        <li><strong>Navegue por repositórios inteiros</strong> — carregue a
+        árvore Markdown de um repositório em
+        <a href="/pt/docs/sidebar/#locations">Locations</a>, troque de
+        branch, compare com outras branches, veja o blame — repositórios
+        privados usam as credenciais que os PRs já usam, e nada do que é
+        buscado toca o disco.</li>
+        <li><strong>Branches e worktrees</strong> — checkouts locais vestem um
+        chip de branch; seu menu abre worktrees como Locations próprios e lê
+        outras branches remotamente. Local sempre ganha do remoto quando uma
+        worktree já tem a branch.</li>
+      </ul>
+
+      <h2 id="editing">Edição e commits</h2>
+      <ul>
+        <li><strong>Edite no lugar</strong> — o lápis de um bloco (ou ⌘E para
+        o documento inteiro) transforma blocos em editores dentro da página
+        renderizada; ⌘↩ salva, Esc cancela. Os salvamentos são protegidos
+        contra o arquivo mudar por baixo, e versionados para o Revert Last
+        Edit (reverter última edição).</li>
+        <li><strong>Commit de dentro do app</strong> — ⌃⌘K abre a folha de
+        commit para o repositório do arquivo: escolha arquivos, escreva a
+        mensagem, opcionalmente faça push, com uma proteção antes de
+        commitar direto na main.</li>
+      </ul>
+
+      <h2 id="compare">Comparação com o histórico</h2>
+      <ul>
+        <li><strong>Qualquer arquivo, qualquer revisão</strong> — o botão
+        Compare da barra de ferramentas (o relógio com chevron) diffa o
+        arquivo de trabalho contra qualquer um dos seus últimos 25 commits,
+        ou qualquer branch local ou remota — renderizado, com as palavras
+        alteradas em destaque, exatamente como um pull request. Um ponto
+        discreto no botão significa que o arquivo tem mudanças não
+        commitadas.</li>
+        <li><strong>“O que eu acabei de mudar?”</strong> — um item de menu
+        (<strong>View → Compare with Last Commit</strong>) ou um comando de
+        shell (<code>pullmark --diff arquivo.md</code>, veja a
+        <a href="/pt/docs/cli/#diff">CLI</a>). O diff acompanha o arquivo
+        enquanto ele continua mudando — veja as edições de um agente
+        aterrissarem, destacadas, a cada salvamento.</li>
+      </ul>
+
+      <h2 id="output">Tirando documentos de volta</h2>
+      <ul>
+        <li><strong>Exportação</strong> — PDF (uma página contínua) ou HTML
+        totalmente autossuficiente; Share (compartilhar) envia o documento
+        para onde o macOS alcançar.</li>
+        <li><strong>Cópia em dois sabores</strong> — ⌘C é texto rico para
+        Docs/Slack; ⌥⌘C é o Markdown por trás.</li>
+        <li><strong>Impressão</strong> — ⌘P, a 100% independentemente do
+        zoom.</li>
+        <li><strong>Quick Look</strong> — espaço no Finder pré-visualiza
+        Markdown com a renderização do próprio PullMark.</li>
+      </ul>
+
+      <h2 id="toolbar">Uma barra de ferramentas que é sua</h2>
+      <p>Clique com o botão direito na barra de ferramentas — ou View →
+      Customize Toolbar… — para a paleta nativa de personalização: arraste
+      para fora o que você nunca usa, reorganize o resto, adicione Flexible
+      Space (espaço flexível). Cada tipo de visão mantém seu próprio arranjo,
+      lembrado entre as aberturas: um arquivo local, um doc do GitHub, um
+      arquivo de pull request e a visão geral do PR são barras separadas, e
+      você personaliza cada uma enquanto está nela — do mesmo jeito que a
+      janela de composição do Mail mantém sua própria barra.</p>
+      <p>Além do conjunto padrão, a paleta guarda itens que começam ocultos:
+      um interruptor de <strong>Source</strong> (fonte crua), <strong>Zoom
+      In / Actual Size / Zoom Out</strong>, o seletor de <strong>Content
+      Width</strong> (largura do conteúdo), <strong>Add Margin Note</strong>
+      (adicionar nota de margem, enquanto o recurso estiver ativo) e, para
+      docs do GitHub, <strong>Share</strong> — a página github.com do
+      documento, nunca um link cru — e <strong>Reload</strong>, que
+      re-resolve uma branch para sua ponta atual e permanece desativado, com
+      o motivo, para documentos abertos num commit específico. De fábrica,
+      nada muda; a paleta guarda o resto.
+      <a href="/pt/docs/toolbar/">A barra de ferramentas</a> lista os itens
+      de cada visão.</p>
+
+      <h2 id="everything-else">Todo o resto</h2>
+      <ul>
+        <li><strong>Janelas e abas</strong> — ⌘N abre uma janela
+        independente; mescle em abas nativas. Aberturas externas chegam na
+        janela da frente.</li>
+        <li><strong>O comando <code>pullmark</code></strong> — arquivos,
+        pastas e worktrees de qualquer terminal. Veja
+        <a href="/pt/docs/cli/">Linha de comando</a>.</li>
+        <li><strong>Controle do app padrão</strong> — torne o PullMark o
+        responsável por <code>.md</code> com um clique, e ele percebe se uma
+        atualização derrubar o vínculo.</li>
+        <li><strong>Atualizações embutidas</strong> — releases assinadas e
+        notarizadas, com atualização em um clique e uma folha de novidades
+        (What's New).</li>
+        <li><strong>Postura de privacidade</strong> — o conteúdo do GitHub é
+        buscado pela API e mantido em memória, e documentos nunca são
+        copiados para lugar nenhum. A <a href="/privacy/">página de
+        privacidade</a> conta a história completa.</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licença MIT</a>
+    <a href="/licenses/">Licenças de código aberto</a>
+    <a href="/privacy/">Privacidade</a>
+    <a href="https://ko-fi.com/pullmark">Apoie o PullMark&nbsp;♥</a>
+    <span class="note">O PullMark não é afiliado ao GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Idioma">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Idioma</span>
+    <a href="/docs/features/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/features/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/features/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/features/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/features/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/features/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/features/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/features/" hreflang="pt-BR" lang="pt-BR" aria-current="true">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

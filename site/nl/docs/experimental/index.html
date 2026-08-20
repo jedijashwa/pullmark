@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experimentele functies — PullMark Docs</title>
+<meta name="description" content="PullMarks experimentele functies: wat de niveaus alpha en beta beloven, wat er nu experimenteel is en hoe je meedoet.">
+<link rel="canonical" href="https://pullmark.app/nl/docs/experimental/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/">
+<meta property="og:title" content="Experimentele functies — PullMark Docs">
+<meta property="og:description" content="PullMarks experimentele functies: wat de niveaus alpha en beta beloven, wat er nu experimenteel is en hoe je meedoet.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/nl/docs/experimental/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hoofdnavigatie">
+    <a class="brand" href="/nl/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/nl/docs/" aria-current="true">Docs</a>
+      <a href="/nl/uses/agents/">Toepassingen</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/nl/docs/">Overzicht</a></li>
+        <li><a href="/nl/docs/features/">Functies</a></li>
+        <li><a href="/nl/docs/sidebar/">De zijbalk</a></li>
+        <li><a href="/nl/docs/toolbar/">De toolbar</a></li>
+        <li><a href="/nl/docs/settings/">Instellingen</a></li>
+        <li><a href="/nl/docs/shortcuts/">Sneltoetsen</a></li>
+        <li><a href="/nl/docs/cli/">Command line</a></li>
+        <li><a href="/nl/docs/troubleshooting/">Problemen oplossen</a></li>
+        <li><a href="/nl/docs/experimental/" aria-current="page">Experimenteel</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs / experimenteel</p>
+      <h1>Experimentele functies</h1>
+      <p class="article-lede">Sommige functies verschijnen voordat hun
+      ontwerp vastligt — duidelijk gelabeld, buiten het gebaande pad, en
+      eerlijk over hoe uitgekristalliseerd ze zijn. Ze wonen in
+      <strong>Settings&nbsp;→&nbsp;Experimental</strong>, elk met hun
+      niveau erop.</p>
+
+      <h2 id="levels">De twee niveaus</h2>
+      <table>
+        <tr><th>Niveau</th><th>Het contract</th></tr>
+        <tr><td><span class="beta-badge">beta</span></td>
+        <td>Het ontwerp ligt grotendeels vast. We doen serieus ons best om
+        gedrag en dataformaten compatibel te houden tussen versies, en de
+        functie slaagt waarschijnlijk uit Experimental — al is niets
+        gegarandeerd tot het zover is.</td></tr>
+        <tr><td><span class="beta-badge alpha">alpha</span></td>
+        <td>Geen garanties, gebruik op eigen risico. Gedrag en
+        dataformaten kunnen incompatibel veranderen tussen versies — we
+        ondersteunen misschien het overzetten van oudere formaten,
+        misschien ook niet — en de functie kan volledig worden verwijderd.
+        Alpha-functies blijven verborgen tot je <em>Show alpha
+        features</em> aanzet, wat dit contract eerst uitlegt voordat het
+        van kracht wordt.</td></tr>
+      </table>
+      <p>Functies kunnen opklimmen (alpha → beta → een gewone functie), en
+      elke experimentele functie kan op elk niveau worden teruggetrokken.
+      De releasenotes melden het altijd wanneer een van beide gebeurt.</p>
+
+      <h2 id="whats-experimental">Nu experimenteel</h2>
+      <p class="table-note">Review Discussion is in 0.34 geslaagd (nu een
+      gewone functie, aan voor iedereen, met haar schakelaar in
+      <a href="/nl/docs/settings/#general">Settings ▸ General ▸ Reviewing</a>),
+      en Margin Notes klom in 0.35 op van alpha naar beta — de niveaus
+      werken zoals bedoeld.</p>
+      <ul class="doc-cards">
+        <li><a href="/nl/docs/experimental/margin-notes/">
+          <p class="card-title">Margin Notes <span class="beta-badge">beta</span></p>
+          <p class="card-sub">Reageer op elk lokaal Markdown-document zoals
+          je op een PR zou reageren — opgeslagen in het bestand zelf, in
+          een formaat dat agents kunnen lezen. Standaard aan: de eerste
+          keer dat je ernaar grijpt introduceert PullMark de functie en
+          biedt aan haar uit te zetten. Inclusief de formaatspec en een
+          instructiefragment voor je agent.</p>
+        </a></li>
+      </ul>
+
+      <h2 id="opt-in">Uitproberen</h2>
+      <p>Open <strong>Settings&nbsp;→&nbsp;Experimental</strong>.
+      Beta-functies staan er meteen; alpha-functies verschijnen nadat je
+      <em>Show alpha features</em> hebt aangezet en hebt geaccepteerd wat
+      alpha betekent (de schakelaar bestaat alleen zolang er echt iets op
+      alpha-niveau is). Elke functie heeft haar eigen aan/uit-schakelaar.
+      Alpha-functies staan nooit standaard aan; een beta-functie kan dat
+      wel — Margin Notes is dat — en dan introduceert het eerste gebruik
+      haar, met een Turn Off-knop direct in de introductie.</p>
+      <p class="table-note">Lees je dit op de Mac waar PullMark (0.28.1+)
+      is geïnstalleerd?
+      <a href="pullmark://settings/experimental">Open nu
+      Settings&nbsp;→&nbsp;Experimental</a>.</p>
+
+      <h2 id="feedback">Feedback</h2>
+      <p>Experimentele functies veranderen <em>dankzij</em> wat vroege
+      gebruikers melden.
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Open
+      een issue</a> — Help&nbsp;→&nbsp;Report&nbsp;a&nbsp;Bug… vult je
+      versie alvast in.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-licentie</a>
+    <a href="/licenses/">Opensourcelicenties</a>
+    <a href="/privacy/">Privacy</a>
+    <a href="https://ko-fi.com/pullmark">Steun PullMark&nbsp;♥</a>
+    <span class="note">PullMark is niet verbonden aan GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Taal">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Taal</span>
+    <a href="/docs/experimental/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/experimental/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/experimental/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/experimental/" hreflang="nl" lang="nl" aria-current="true">Nederlands</a>
+    <a href="/es/docs/experimental/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>功能 — PullMark 文档</title>
+<meta name="description" content="PullMark 功能导览：阅读 Markdown、审查 PR 差异、浏览 GitHub、原地编辑，以及把文档带出去。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/features/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/features/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/features/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/features/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/features/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/features/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/features/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/features/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/features/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/features/">
+<meta property="og:title" content="功能 — PullMark 文档">
+<meta property="og:description" content="PullMark 功能导览：阅读 Markdown、审查 PR 差异、浏览 GitHub、原地编辑，以及把文档带出去。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/features/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/" aria-current="page">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>功能</h1>
+      <p class="article-lede">这趟导览按你正在做的事分组：阅读、审查、
+      浏览 GitHub、编辑，以及把文档带出去。PullMark 有意<em>不做</em>完整的
+      审查客户端——它只显示改动里的 Markdown；代码部分，你惯用的工具依然
+      是对的。</p>
+
+      <h2 id="reading">阅读</h2>
+      <ul>
+        <li><strong>忠实于 GitHub 的渲染</strong>——表格、任务列表、脚注、
+        提示框、可折叠的 <code>&lt;details&gt;</code>、语法高亮、Mermaid 图表和
+        KaTeX 数学公式（<code>$…$</code> / <code>$$…$$</code>），全部离线可用。
+        只含 <code>[toc]</code> 的段落会变成带链接的目录；<code>==highlight==</code>、
+        <code>~sub~</code>、<code>^sup^</code> 也照样渲染。</li>
+        <li><strong>点开细看</strong>——图片、图表和块级公式在可平移缩放的
+        浮层中打开；Save As…（存储为）和 Share（共享）导出的正是你细看的内容
+        （图表为真正的 SVG）。</li>
+        <li><strong>活的文件</strong>——在任何编辑器里保存，文档随即重新渲染；
+        相对路径的图片与链接自动解析，点击指向另一个 Markdown 文件的链接会
+        就地打开它（当它位于已打开的 Location 中时，以<a href="/zh/docs/sidebar/#previews">预览</a>方式）。</li>
+        <li><strong>导航</strong>——大纲侧边栏（⌥⌘O）、⌘F 页内查找、⇧⌘F
+        搜索侧边栏里的所有文件，以及 ⌘K 的 Open Quickly（快速打开），可达
+        标题、文件、PR、最近使用——也可以直接把路径或 GitHub 链接粘进去。</li>
+        <li><strong>阅读高度的 blame</strong>——一条安静的作者边栏：每段连续
+        区块一个头像，悬停看提交，点击看完整行历史。文件在 GitHub 上时用
+        GitHub 的 blame API，其余情况用普通的 <code>git blame</code>。</li>
+        <li><strong>阅读的舒适度</strong>——主题、栏宽、行号
+        （<a href="/zh/docs/settings/">设置</a>）、浏览器式缩放、浅色/深色、
+        全屏，以及按文档记忆的阅读位置。</li>
+      </ul>
+
+      <h2 id="reviewing">审查拉取请求</h2>
+      <ul>
+        <li><strong>渲染差异</strong>——新增、删除、修改的区块直接在渲染页面上
+        高亮；改动小到讲得通时给出词级差异；行内或并排（⌥⌘L）；还有原始的
+        Source Diff（源码差异，⌘2）和最终的 Result（结果，⌘3）。整段搬家的
+        文字得到一枚安静的“moved”标签，而不是红加绿的噪音。</li>
+        <li><strong>审查会话就地呈现</strong>——已有评论出现在它们讨论的区块
+        下方；悬停区块即可 Comment Now（立即评论）、Add to Review（加入审查）
+        或 Insert Suggestion（插入建议）（铅笔则把区块编辑成一条建议）。
+        审查连同结论一并提交，或作为待完成审查保存到 GitHub。</li>
+        <li><strong>PR 的处境</strong>——总览页头部显示审查结论（已批准、
+        已请求更改、需要审查）、每位审查者的裁定（佩戴徽章的头像，等待中的
+        审查者列在旁边），以及一枚 CI 检查胶囊，展开即是完整检查列表——时长、
+        必需标记，和通往每项检查日志的链接。这一切每分钟安静刷新一次。</li>
+        <li><strong>会话，变得可读</strong>——总览页上一条按时间排列的时间线：
+        评论与审查结论按序呈现，每次审查的行内评论嵌在其总结之下，卡片上
+        写明所讨论的文件。支持回应表情、编辑和删除自己的评论，评论框就在
+        时间线末尾。对所有人开启（Settings ▸ General ▸ Reviewing 可把会话
+        收起来）。</li>
+        <li><strong>保持最新</strong>——打开的 PR 每分钟检查一次；分支前进时
+        横幅提示刷新，你的草稿评论安然无恙。离线写下的评论会排队，能上传时
+        就上传。</li>
+        <li><strong>审查请求</strong>——等待你审查的 PR 出现在侧边栏，带未读
+        计数。PR 中的图片和仓库相对链接按 PR 的提交解析。</li>
+      </ul>
+
+      <h2 id="github">GitHub，不必开浏览器</h2>
+      <ul>
+        <li><strong>Markdown 链接在应用内打开</strong>——点击
+        <code>github.com/…/blob/…</code> 链接，PullMark 直接渲染（第一次点击
+        会询问；⌘-点击执行你默认的反面）。来源栏钉着
+        <code>owner/repo @ ref · path</code>，并留着回 GitHub 的路。</li>
+        <li><strong>浏览整个仓库</strong>——把仓库的 Markdown 树装进
+        <a href="/zh/docs/sidebar/#locations">Locations（位置）</a>，切换分支、
+        与其他分支比较、查看 blame——私有仓库用的就是 PR 已在用的凭据，
+        抓取的内容从不落盘。</li>
+        <li><strong>分支与工作树</strong>——本地检出佩戴分支标签；标签的菜单
+        能把工作树作为独立 Location 打开，也能远程读取其他分支。某个分支
+        已有本地工作树时，本地永远优先于远程。</li>
+      </ul>
+
+      <h2 id="editing">编辑与提交</h2>
+      <ul>
+        <li><strong>原地编辑</strong>——点区块的铅笔（或按 ⌘E 编辑整篇），
+        区块就在渲染页面里变成编辑器；⌘↩ 保存，Esc 取消。保存有防护，
+        防止文件在你眼皮底下被改，并有版本记录供 Revert Last Edit
+        （撤销上次编辑）使用。</li>
+        <li><strong>在应用里提交</strong>——⌃⌘K 打开该文件所在仓库的提交
+        面板：挑选文件、写提交信息、可选推送，直接提交到 main 之前还有
+        一道防护。</li>
+      </ul>
+
+      <h2 id="compare">与历史比较</h2>
+      <ul>
+        <li><strong>任意文件，任意版本</strong>——工具栏的 Compare（比较）
+        按钮（时钟加箭头）把工作文件与它最近 25 次提交中的任何一次、或任何
+        本地/远程分支相比较——渲染呈现，改动的词高亮，和拉取请求一模一样。
+        按钮上一枚安静的小点表示文件有未提交的改动。</li>
+        <li><strong>“我刚才改了什么？”</strong>——一个菜单项
+        （<strong>View → Compare with Last Commit</strong>）或一条命令
+        （<code>pullmark --diff file.md</code>，见
+        <a href="/zh/docs/cli/#diff">命令行</a>）。文件继续变化，差异就继续
+        跟进——看着智能体的修改带着高亮逐次落地。</li>
+      </ul>
+
+      <h2 id="output">把文档带出去</h2>
+      <ul>
+        <li><strong>导出</strong>——PDF（连续一整页）或完全自包含的 HTML；
+        Share（共享）能把文档送到 macOS 能送达的任何地方。</li>
+        <li><strong>两种口味的拷贝</strong>——⌘C 是给 Docs/Slack 的富文本；
+        ⌥⌘C 是底下的 Markdown。</li>
+        <li><strong>打印</strong>——⌘P，无论缩放多少都按 100% 打印。</li>
+        <li><strong>Quick Look（快速查看）</strong>——在 Finder 里按空格，
+        用 PullMark 自己的渲染预览 Markdown。</li>
+      </ul>
+
+      <h2 id="toolbar">一条属于你的工具栏</h2>
+      <p>右键点击工具栏——或 View → Customize Toolbar…——调出原生的自定义
+      面板：把从不用的拖走，其余的重新排列，加上 Flexible Space（弹性空间）。
+      每种视图各自记住自己的排布，跨启动保留：本地文件、GitHub 文档、
+      拉取请求文件和 PR 总览是四条相互独立的工具栏，身在哪个视图就自定义
+      哪一条——就像 Mail 的撰写窗口保有自己的工具栏一样。</p>
+      <p>默认项之外，面板里还备着一些初始隐藏的项目：原始
+      <strong>Source</strong>（源码）开关、<strong>Zoom
+      In / Actual Size / Zoom Out</strong>、<strong>Content
+      Width</strong>（栏宽）选择器、<strong>Add Margin Note</strong>
+      （在该功能开启期间），以及 GitHub 文档专属的 <strong>Share</strong>——
+      分享的是文档的 github.com 页面，绝不是裸链接——和
+      <strong>Reload</strong>，它把分支重新解析到当前最新提交；对钉在特定
+      提交上打开的文档则保持禁用，并写明原因。开箱状态下一切如常；其余都
+      收在面板里。<a href="/zh/docs/toolbar/">工具栏</a>一页列出了每个视图的
+      项目。</p>
+
+      <h2 id="everything-else">其余种种</h2>
+      <ul>
+        <li><strong>窗口与标签页</strong>——⌘N 打开独立窗口；可合并为原生
+        标签页。外部打开落在最前面的窗口。</li>
+        <li><strong><code>pullmark</code> 命令</strong>——在任何终端打开文件、
+        文件夹和工作树。见<a href="/zh/docs/cli/">命令行</a>。</li>
+        <li><strong>默认应用控制</strong>——一键让 PullMark 接管
+        <code>.md</code>，升级弄丢绑定时它会自己发现。</li>
+        <li><strong>内置更新</strong>——已签名、已公证的版本，一键更新，
+        外加一张 What's New 说明。</li>
+        <li><strong>隐私姿态</strong>——GitHub 内容经 API 抓取、只存内存，
+        文档从不被复制到任何地方。<a href="/privacy/">隐私页面</a>有完整
+        说明。</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/features/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/features/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/features/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/features/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/features/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/features/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/features/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/features/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

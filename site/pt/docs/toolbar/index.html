@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A barra de ferramentas — Documentação do PullMark</title>
+<meta name="description" content="A barra de ferramentas do PullMark explicada: cada tipo de visão mantém sua própria barra personalizável — o que vem em cada uma por padrão e o que a paleta guarda.">
+<link rel="canonical" href="https://pullmark.app/pt/docs/toolbar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/toolbar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/toolbar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/toolbar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/toolbar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/toolbar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/toolbar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/toolbar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/toolbar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/toolbar/">
+<meta property="og:title" content="A barra de ferramentas — Documentação do PullMark">
+<meta property="og:description" content="A barra de ferramentas do PullMark explicada: cada tipo de visão mantém sua própria barra personalizável — o que vem em cada uma por padrão e o que a paleta guarda.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/pt/docs/toolbar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/pt/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/pt/docs/" aria-current="true">Documentação</a>
+      <a href="/pt/uses/agents/">Casos de uso</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Documentação">
+      <p class="docs-nav-title">Documentação</p>
+      <ul>
+        <li><a href="/pt/docs/">Visão geral</a></li>
+        <li><a href="/pt/docs/features/">Recursos</a></li>
+        <li><a href="/pt/docs/sidebar/">A barra lateral</a></li>
+        <li><a href="/pt/docs/toolbar/" aria-current="page">A barra de ferramentas</a></li>
+        <li><a href="/pt/docs/settings/">Ajustes</a></li>
+        <li><a href="/pt/docs/shortcuts/">Atalhos de teclado</a></li>
+        <li><a href="/pt/docs/cli/">Linha de comando</a></li>
+        <li><a href="/pt/docs/troubleshooting/">Solução de problemas</a></li>
+        <li><a href="/pt/docs/experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>A barra de ferramentas</h1>
+      <p class="article-lede">Uma barra por tipo de visão, cada uma totalmente
+      personalizável: clique nela com o botão direito (ou View → Customize
+      Toolbar…) e arraste itens para fora, reorganize-os, adicione o que
+      começa oculto. Cada visão lembra seu próprio arranjo entre as
+      aberturas do app.</p>
+
+      <h2 id="customizing">Como funciona a personalização</h2>
+      <p>O PullMark não tem uma barra de ferramentas — tem uma por tipo de
+      visão, do mesmo jeito que a janela de composição do Mail mantém uma
+      barra diferente da janela principal. Você personaliza a barra que está
+      vendo: abra um arquivo de pull request para personalizar a barra de
+      arquivo de PR, um documento local para personalizar a barra de arquivo
+      local. A paleta só oferece os itens que existem onde você a abriu.</p>
+      <p>Tudo na paleta é permitido — remova, reordene, solte um Flexible
+      Space (espaço flexível) para afastar os grupos. Itens marcados como
+      <em>oculto</em> abaixo começam na paleta, não na barra. O único lugar
+      aonde itens não vão é a faixa da própria barra lateral, ao lado do
+      botão de alternância: aquela seção pertence ao sistema, e o que for
+      solto lá se acomoda no início da seção principal. Restaure qualquer
+      barra arrastando o conjunto padrão de volta, do rodapé da paleta.</p>
+
+      <h2 id="every-view">Em toda visão</h2>
+      <table>
+        <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
+        <tr><td>Review</td><td>exibido</td>
+          <td>O controle de revisão que se transforma, só em visões de PR —
+          contagem de comentários pendentes, veredito, envio. Sobrevive mais
+          tempo a uma janela estreita: o status da revisão continua visível
+          quando os outros itens recolhem para o overflow.</td></tr>
+        <tr><td>Open File or Folder</td><td>exibido</td>
+          <td>Abrir Markdown local ou uma pasta como Location.</td></tr>
+        <tr><td>Open Pull Request</td><td>exibido</td>
+          <td>Abrir um pull request do GitHub por URL.</td></tr>
+        <tr><td>Appearance</td><td>exibido</td>
+          <td>Light · Dark · System (claro, escuro, sistema), para o app
+          inteiro.</td></tr>
+      </table>
+
+      <h2 id="local-files">Arquivos locais</h2>
+      <table>
+        <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
+        <tr><td>Share</td><td>exibido</td><td>A folha padrão de compartilhamento para o arquivo.</td></tr>
+        <tr><td>Edit</td><td>exibido</td><td>Modo de edição — clique em qualquer bloco para editar no lugar.</td></tr>
+        <tr><td>Compare</td><td>exibido</td>
+          <td>Comparar com um commit ou branch (exige um repositório git).
+          Um pontinho significa que o arquivo tem mudanças não commitadas.</td></tr>
+        <tr><td>Blame</td><td>exibido</td>
+          <td>Quem mudou cada bloco por último; desativado fora de um repositório.</td></tr>
+        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+        <tr><td>Reload</td><td>exibido</td><td>Reler o arquivo do disco.</td></tr>
+        <tr><td>Source</td><td>oculto</td><td>O Markdown cru por trás da página renderizada.</td></tr>
+        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>oculto</td>
+          <td>Itens separados — adicione só o par que você usa.</td></tr>
+        <tr><td>Content Width</td><td>oculto</td><td>Standard · Wide · Full Width (largura do conteúdo).</td></tr>
+        <tr><td>Add Margin Note</td><td>oculto</td>
+          <td>Só na paleta enquanto as
+          <a href="/pt/docs/experimental/margin-notes/">notas de margem</a>
+          estiverem ativadas.</td></tr>
+      </table>
+
+      <h2 id="github-docs">Documentos do GitHub</h2>
+      <p>Documentos lidos direto de um repositório — abertos por links, ⌘K ou
+      um Location de repositório navegado.</p>
+      <table>
+        <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
+        <tr><td>Compare</td><td>exibido</td><td>O mesmo documento em outra branch, como diff renderizado.</td></tr>
+        <tr><td>Blame</td><td>exibido</td><td>Blame por bloco, pela API do GitHub.</td></tr>
+        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+        <tr><td>Share</td><td>oculto</td>
+          <td>A página github.com do documento — o link que uma pessoa quer
+          de verdade, nunca uma URL crua.</td></tr>
+        <tr><td>Reload</td><td>oculto</td>
+          <td>Re-resolve a branch para sua ponta atual e rebusca. Desativado
+          — com o motivo — para documentos abertos num commit específico,
+          que não pode mudar.</td></tr>
+        <tr><td>Source</td><td>oculto</td><td>O Markdown cru.</td></tr>
+        <tr><td>Itens de zoom · Content Width</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
+      </table>
+
+      <h2 id="pr-files">Arquivos de pull request</h2>
+      <table>
+        <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
+        <tr><td>Navigation</td><td>exibido</td>
+          <td>De volta à visão geral, arquivo Markdown anterior/seguinte e o
+          menu de salto n-de-m — um grupo só, uma unidade arrastável.</td></tr>
+        <tr><td>View picker</td><td>exibido</td>
+          <td>Rendered Diff · Source Diff · Result, centralizado.</td></tr>
+        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+        <tr><td>Layout</td><td>exibido</td>
+          <td>Inline ou lado a lado — ativo na visão Rendered Diff (arquivos
+          novos sempre renderizam inline).</td></tr>
+        <tr><td>Blame</td><td>exibido</td>
+          <td>Ativo na visão Result, onde há um documento pronto para
+          anotar.</td></tr>
+        <tr><td>Comment on File</td><td>exibido</td>
+          <td>Um comentário sobre o arquivo como um todo, não sobre uma linha
+          específica.</td></tr>
+        <tr><td>Itens de zoom · Content Width</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
+      </table>
+
+      <h2 id="other-views">A visão geral do PR e docs de repositório navegados de um PR</h2>
+      <p>A visão geral se mantém mínima: <strong>Share</strong> (a página do
+      pull request no GitHub) mais os itens de toda visão. Um documento de
+      repositório navegado a partir do conteúdo de um PR carrega
+      <strong>Blame</strong> e <strong>Outline</strong>, com os itens de zoom
+      e o Content Width na sua paleta.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licença MIT</a>
+    <a href="/licenses/">Licenças de código aberto</a>
+    <a href="/privacy/">Privacidade</a>
+    <a href="https://ko-fi.com/pullmark">Apoie o PullMark&nbsp;♥</a>
+    <span class="note">O PullMark não é afiliado ao GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Idioma">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Idioma</span>
+    <a href="/docs/toolbar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/toolbar/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/toolbar/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/toolbar/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/toolbar/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/toolbar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/toolbar/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/toolbar/" hreflang="pt-BR" lang="pt-BR" aria-current="true">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

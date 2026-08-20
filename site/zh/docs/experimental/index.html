@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实验性功能 — PullMark 文档</title>
+<meta name="description" content="PullMark 的实验性功能：alpha 与 beta 级别各承诺什么、现在有哪些实验性功能，以及如何选择加入。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/experimental/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/">
+<meta property="og:title" content="实验性功能 — PullMark 文档">
+<meta property="og:description" content="PullMark 的实验性功能：alpha 与 beta 级别各承诺什么、现在有哪些实验性功能，以及如何选择加入。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/experimental/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/" aria-current="page">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档 / 实验性</p>
+      <h1>实验性功能</h1>
+      <p class="article-lede">有些功能在设计定稿之前就先发布了——标签清清
+      楚楚，避开主路，并对自己有多稳定实话实说。它们住在
+      <strong>Settings&nbsp;→&nbsp;Experimental</strong>（设置 → 实验性）里，
+      各自佩着自己的级别。</p>
+
+      <h2 id="levels">两个级别</h2>
+      <table>
+        <tr><th>级别</th><th>契约</th></tr>
+        <tr><td><span class="beta-badge">beta</span></td>
+        <td>设计大体已定。我们切实努力在版本之间保持行为与数据格式兼容，
+        功能很可能从 Experimental 毕业——但在毕业之前，一切都不算
+        保证。</td></tr>
+        <tr><td><span class="beta-badge alpha">alpha</span></td>
+        <td>没有任何保证，风险自担。行为和数据格式可能在版本之间不兼容地
+        改变——旧格式的迁移我们可能支持，也可能不支持——功能也可能被
+        整个移除。Alpha 功能在你打开 <em>Show alpha features</em> 之前保持
+        隐藏，而那个开关生效之前会先说明这份契约。</td></tr>
+      </table>
+      <p>功能可以往上走（alpha → beta → 常规功能），任何实验性功能也可能
+      在任何级别被撤下。无论发生哪种，发行说明都会写明。</p>
+
+      <h2 id="whats-experimental">现在的实验性功能</h2>
+      <p class="table-note">Review Discussion 已在 0.34 毕业（现在是常规
+      功能，对所有人开启，开关在
+      <a href="/zh/docs/settings/#general">Settings ▸ General ▸ Reviewing</a>），
+      Margin Notes 在 0.35 从 alpha 升到了 beta——级别机制正按设计
+      运转。</p>
+      <ul class="doc-cards">
+        <li><a href="/zh/docs/experimental/margin-notes/">
+          <p class="card-title">Margin Notes（页边批注）<span class="beta-badge">beta</span></p>
+          <p class="card-sub">像评论 PR 一样评论任何本地 Markdown 文档——
+          批注保存进文件本身，格式智能体读得懂。默认开启：你第一次伸手
+          用它时，PullMark 会介绍这个功能并提供关闭的选项。附带格式规范
+          和给智能体的指令片段。</p>
+        </a></li>
+      </ul>
+
+      <h2 id="opt-in">试用</h2>
+      <p>打开 <strong>Settings&nbsp;→&nbsp;Experimental</strong>。Beta 功能
+      就列在那里；alpha 功能要等你打开 <em>Show alpha features</em> 并接受
+      alpha 的含义之后才出现（只有确实有功能处在 alpha 级别时，这个开关
+      才存在）。每个功能都有自己的启用开关。Alpha 功能从不默认开启；
+      beta 功能可以——Margin Notes 就是——那样的话，第一次使用会做一次
+      介绍，介绍里就带着 Turn Off 按钮。</p>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？
+      <a href="pullmark://settings/experimental">现在就打开
+      Settings&nbsp;→&nbsp;Experimental</a>。</p>
+
+      <h2 id="feedback">反馈</h2>
+      <p>实验性功能<em>正因为</em>早期用户的反馈而改变。
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">提一个
+      issue</a>——Help&nbsp;→&nbsp;Report&nbsp;a&nbsp;Bug… 会预填你的
+      版本号。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/experimental/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/experimental/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/experimental/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/experimental/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/experimental/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La barre latérale — Docs PullMark</title>
+<meta name="description" content="La barre latérale de PullMark expliquée&nbsp;: Open Files et les aperçus, Locations, Pull Requests, Recents, et la signification de chaque icône.">
+<link rel="canonical" href="https://pullmark.app/fr/docs/sidebar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/sidebar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/sidebar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/sidebar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/sidebar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/sidebar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
+<meta property="og:title" content="La barre latérale — Docs PullMark">
+<meta property="og:description" content="La barre latérale de PullMark expliquée&nbsp;: Open Files et les aperçus, Locations, Pull Requests, Recents, et la signification de chaque icône.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/fr/docs/sidebar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principale">
+    <a class="brand" href="/fr/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/fr/docs/" aria-current="true">Docs</a>
+      <a href="/fr/uses/agents/">Cas d'usage</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versions</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/fr/docs/">Vue d'ensemble</a></li>
+        <li><a href="/fr/docs/features/">Fonctionnalités</a></li>
+        <li><a href="/fr/docs/sidebar/" aria-current="page">La barre latérale</a></li>
+        <li><a href="/fr/docs/toolbar/">La barre d'outils</a></li>
+        <li><a href="/fr/docs/settings/">Réglages</a></li>
+        <li><a href="/fr/docs/shortcuts/">Raccourcis clavier</a></li>
+        <li><a href="/fr/docs/cli/">Ligne de commande</a></li>
+        <li><a href="/fr/docs/troubleshooting/">Dépannage</a></li>
+        <li><a href="/fr/docs/experimental/">Expérimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>La barre latérale</h1>
+      <p class="article-lede">Quatre sections, organisées selon ce que les choses
+      <em>signifient</em> plutôt que leur provenance&nbsp;: ce que vous avez ouvert, les
+      lieux que vous parcourez, les pull requests que vous révisez, et là où vous êtes
+      passé.</p>
+
+      <h2 id="open-files">Open Files</h2>
+      <p>Open Files (fichiers ouverts), c'est l'ensemble de travail&nbsp;: chaque
+      document explicitement ouvert — depuis le Finder, par glisser-déposer, ⌘O, la
+      <a href="/fr/docs/cli/">ligne de commande</a>, ou en gardant un fichier d'une
+      Location. À plat, réordonnable en glissant, chaque ligne retirable avec le ✕ au
+      survol (ou ⌫ sur la ligne sélectionnée). Clic droit sur l'en-tête de section pour
+      <strong>Close All</strong> (tout fermer).</p>
+
+      <h3 id="previews">Aperçus</h3>
+      <p>Cliquez une fois un fichier dans une Location&nbsp;: il se rend
+      immédiatement — et apparaît dans Open Files en <em>aperçu</em>, une seule entrée
+      en italique, toujours dernière de la section. Cliquez un autre fichier et
+      l'entrée d'aperçu est remplacée&nbsp;: parcourir une grande arborescence
+      n'empile jamais de lignes. C'est la même idée que les onglets d'aperçu de VS
+      Code ou l'éditeur temporaire de Xcode, avec les mêmes italiques.</p>
+      <p>Un aperçu devient une entrée normale, épinglée, dès que vous lui montrez un
+      engagement au-delà de la lecture&nbsp;:</p>
+      <ul>
+        <li><strong>Double-cliquez</strong> le fichier dans l'arborescence, ou l'entrée
+        italique elle-même</li>
+        <li><strong>Commencez à éditer</strong> — entrer en Edit Mode (mode édition) ou
+        enregistrer l'édition d'un bloc l'épingle</li>
+        <li><strong>Keep Open</strong> (garder ouvert) dans le menu contextuel</li>
+      </ul>
+      <p>Les interactions de lecture — blame, historique de lignes, inspection d'une
+      image ou d'un diagramme — ne promeuvent délibérément jamais un aperçu. Si vous
+      préférez que chaque clic ouvre pleinement les fichiers, basculez
+      <a href="/fr/docs/settings/#clicking-files">Clicking files in Locations</a>
+      dans Settings (réglages).</p>
+      <p><strong>Les dépôts distants s'aperçoivent de la même façon, au même
+      endroit.</strong> Parcourir l'arborescence d'un dépôt GitHub, ou suivre des liens
+      dans un document distant, place la même entrée italique unique dans Open
+      Files — avec une icône de livre et une seconde ligne
+      <code>owner/repo @ ref</code>, puisque le fichier n'est pas sur votre Mac. Il n'y
+      a jamais qu'<em>un seul</em> aperçu par fenêtre, local ou distant&nbsp;:
+      apercevoir quoi que ce soit remplace ce que vous aperceviez avant. Garder un
+      document distant (double-clic ou Keep Open) est ce qui le classe avec son
+      dépôt — il rejoint la liste épinglée du dépôt sous Locations. ⌘K ouvre
+      directement épinglé, coller une URL étant une intention explicite.</p>
+      <p>Toute ligne d'Open Files qui vit dans une Location ouverte gagne
+      <strong>Reveal in Location</strong> (afficher dans l'emplacement) dans son menu
+      contextuel — le saut retour de «&nbsp;ce que je lis&nbsp;» vers «&nbsp;là où ça
+      vit&nbsp;».</p>
+
+      <h2 id="locations">Locations</h2>
+      <p>Locations (emplacements) regroupe les racines navigables, où qu'elles vivent.
+      Deux espèces partagent la section, distinguées par l'icône&nbsp;:</p>
+      <table>
+        <tr><th>Ligne</th><th>Signification</th></tr>
+        <tr><td>📁 icône dossier</td><td>Un dossier local — ses fichiers Markdown en arborescence (ou en
+          liste à plat&nbsp;; clic droit → View as List). Surveillé pour les changements.</td></tr>
+        <tr><td>📕 icône livre</td><td>Un dépôt GitHub ouvert pour la navigation — récupéré via
+          l'API, rien n'est écrit sur le disque.</td></tr>
+      </table>
+      <p>Un dossier local qui est une copie de travail git gagne une <strong>pastille de
+      branche</strong> (glyphe de branche + nom)&nbsp;; si son remote est sur GitHub,
+      une petite marque de livre fermé apparaît aussi — survolez-la pour voir quel
+      dépôt. Cliquer la pastille de branche ouvre le menu branches-et-worktrees&nbsp;:</p>
+      <ul>
+        <li><strong>Worktrees</strong> — chaque worktree du dépôt, avec une coche sur
+        celui de cette ligne&nbsp;; choisissez-en un autre pour l'ouvrir comme Location
+        à part. Les worktrees ne sont jamais «&nbsp;checkout&nbsp;» ni basculés depuis
+        PullMark — il ouvre le dossier qui est déjà là.</li>
+        <li><strong>View Branch from GitHub</strong> (voir la branche depuis GitHub) —
+        lisez les fichiers d'une autre branche à distance, sans toucher à votre copie
+        locale. Une branche qui a déjà un worktree local saute vers le worktree — le
+        local l'emporte sur le distant.</li>
+        <li><strong>Open on GitHub</strong> (ouvrir sur GitHub) — le dépôt (à cette
+        branche) dans votre navigateur.</li>
+      </ul>
+      <p>Sur un dépôt distant (icône livre), la même pastille liste les
+      branches&nbsp;: <strong>Switch To</strong> (basculer vers) ré-épingle la session
+      sur une autre branche, et maintenir ⌥ propose <strong>Open Branch
+      Separately</strong> (ouvrir la branche à part) pour une lecture côte à côte.
+      <strong>Browse Repo Files…</strong> (parcourir les fichiers du dépôt) charge
+      toute l'arborescence Markdown du dépôt. Les docs gardées du dépôt siègent
+      au-dessus de l'arborescence, pour ne jamais se noyer sous un gros dépôt&nbsp;;
+      une doc gardée visible dans l'arborescence y est simplement représentée. (Une
+      doc simplement en cours d'aperçu s'affiche dans
+      <a href="#previews">Open Files</a>, pas ici.)</p>
+      <p>Un dossier dont le chemin cesse de se résoudre (volume démonté, worktree
+      supprimé) s'estompe avec un badge point d'interrogation au lieu de
+      disparaître — il ressuscite tout seul quand le chemin revient.</p>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <p>Chaque PR ouverte est un groupe&nbsp;: la ligne de vue d'ensemble (icône
+      d'état + nombre de fichiers Markdown modifiés), puis ses fichiers Markdown
+      modifiés — une bulle avec compteur marque les fichiers aux fils de révision non
+      résolus. Sous vos PR ouvertes, <strong>Review Requests</strong> (demandes de
+      révision) rassemble les PR qui attendent votre révision, avec un compteur non lu
+      qui reste visible même replié (masquable dans Settings, et filtrable aux seules
+      PR touchant du Markdown).</p>
+      <p>Icônes d'état sur les lignes de PR&nbsp;:</p>
+      <table>
+        <tr><th>État</th><th>Icône</th></tr>
+        <tr><td>Brouillon</td><td>flèches de pull request, grises</td></tr>
+        <tr><td>Ouverte</td><td>flèches de pull request, vertes</td></tr>
+        <tr><td>Fusionnée</td><td>flèches de fusion, violettes</td></tr>
+        <tr><td>Fermée</td><td>✕ dans un cercle, rouge</td></tr>
+        <tr><td>Indisponible</td><td>corbeille, grise — la PR (ou votre accès) a disparu</td></tr>
+      </table>
+      <p>Marqueurs par fichier dans une PR&nbsp;: cercle <strong>+</strong> (vert)
+      pour ajouté, cercle <strong>−</strong> (rouge) pour supprimé, cercle
+      <strong>→</strong> pour renommé, cercle crayon pour modifié.</p>
+
+      <h2 id="recents">Recents</h2>
+      <p>Recents (récents)&nbsp;: les fichiers, dossiers et pull requests récemment
+      ouverts qui ne sont pas déjà visibles au-dessus. Les entrées de PR portent leur
+      icône d'état en direct&nbsp;; un récent dont le fichier a disparu s'estompe
+      (badge horloge) au lieu de s'effacer, et ressuscite quand le chemin revient —
+      pensé pour les changements de branche et les volumes démontés. Clic droit sur
+      l'en-tête pour <strong>Clear Recents</strong> (effacer les récents).</p>
+
+      <h2 id="removal">Retirer des éléments</h2>
+      <p>Survolez n'importe quelle ligne de premier niveau pour le ✕ — il retire la
+      ligne de la barre latérale, jamais rien du disque ni de GitHub. ⌫ sur une ligne
+      sélectionnée fait de même. Les fichiers dans l'arborescence d'une Location n'ont
+      pas de ✕&nbsp;: ce sont les contenus d'un lieu, pas des éléments de la barre
+      latérale.</p>
+
+      <h2 id="icon-glossary">Glossaire des icônes</h2>
+      <table>
+        <tr><th>Icône</th><th>Signification</th></tr>
+        <tr><td>Document</td><td>Un fichier Markdown</td></tr>
+        <tr><td>Document, nom en italique</td><td>L'aperçu — remplacé par votre prochain simple clic</td></tr>
+        <tr><td>Dossier</td><td>Un dossier ou répertoire local</td></tr>
+        <tr><td>Dossier + ?</td><td>Dossier introuvable pour l'instant — estompé, il ressuscitera</td></tr>
+        <tr><td>Document + horloge</td><td>Un fichier récent qui a disparu</td></tr>
+        <tr><td>Livre fermé</td><td>Un dépôt GitHub (en icône de ligne&nbsp;: parcouru à distance&nbsp;;
+          en petite marque de fin de ligne&nbsp;: ce dossier local en est une copie de travail)</td></tr>
+        <tr><td>Glyphe de branche + nom</td><td>La pastille de branche — cliquez pour branches et worktrees</td></tr>
+        <tr><td>Flèches de pull request</td><td>Une pull request</td></tr>
+        <tr><td>Bac de réception</td><td>Review Requests — les PR qui attendent votre révision</td></tr>
+        <tr><td>Bulle + compteur</td><td>Sur un fichier de PR&nbsp;: commentaires de révision non résolus. Sur
+          une ligne d'Open Files&nbsp;: des <a href="/fr/docs/experimental/margin-notes/">notes de marge</a> encore dans le document</td></tr>
+        <tr><td>Point coloré (bord gauche)</td><td>Une demande de révision non lue</td></tr>
+        <tr><td>✕ dans un cercle (au survol)</td><td>Retirer de la barre latérale / congédier l'aperçu</td></tr>
+      </table>
+      <p class="table-note">Le glyphe de branche n'apparaît que sur de vraies refs git
+      (des pastilles, jamais comme icône de dossier) — un dossier est un dossier, un
+      dépôt est un livre, une branche est une branche.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versions</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licence MIT</a>
+    <a href="/licenses/">Licences open source</a>
+    <a href="/privacy/">Confidentialité</a>
+    <a href="https://ko-fi.com/pullmark">Soutenir PullMark&nbsp;♥</a>
+    <span class="note">PullMark n'est pas affilié à GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Langue">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Langue</span>
+    <a href="/docs/sidebar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/sidebar/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/sidebar/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/sidebar/" hreflang="fr" lang="fr" aria-current="true">Français</a>
+    <a href="/de/docs/sidebar/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/sidebar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/sidebar/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/sidebar/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>機能 — PullMark ドキュメント</title>
+<meta name="description" content="PullMark のガイド付きツアー。Markdown を読む、PR の差分をレビューする、GitHub をブラウズする、その場で編集する、文書を取り出す。">
+<link rel="canonical" href="https://pullmark.app/ja/docs/features/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/features/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/features/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/features/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/features/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/features/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/features/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/features/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/features/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/features/">
+<meta property="og:title" content="機能 — PullMark ドキュメント">
+<meta property="og:description" content="PullMark のガイド付きツアー。Markdown を読む、PR の差分をレビューする、GitHub をブラウズする、その場で編集する、文書を取り出す。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/ja/docs/features/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="メイン">
+    <a class="brand" href="/ja/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/ja/docs/" aria-current="true">ドキュメント</a>
+      <a href="/ja/uses/agents/">ユースケース</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="ドキュメント">
+      <p class="docs-nav-title">ドキュメント</p>
+      <ul>
+        <li><a href="/ja/docs/">概要</a></li>
+        <li><a href="/ja/docs/features/" aria-current="page">機能</a></li>
+        <li><a href="/ja/docs/sidebar/">サイドバー</a></li>
+        <li><a href="/ja/docs/toolbar/">ツールバー</a></li>
+        <li><a href="/ja/docs/settings/">設定</a></li>
+        <li><a href="/ja/docs/shortcuts/">キーボードショートカット</a></li>
+        <li><a href="/ja/docs/cli/">コマンドライン</a></li>
+        <li><a href="/ja/docs/troubleshooting/">トラブルシューティング</a></li>
+        <li><a href="/ja/docs/experimental/">実験的機能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">ドキュメント</p>
+      <h1>機能</h1>
+      <p class="article-lede">やりたいことごとにまとめたツアーです。読む、レビューする、GitHub を
+      ブラウズする、編集する、文書を取り出す。PullMark はあえてフルレビュークライアントには
+      <em>していません</em>——表示するのは変更の中の Markdown で、コードにはいつものツールが
+      引き続き最適です。</p>
+
+      <h2 id="reading">読む</h2>
+      <ul>
+        <li><strong>GitHub に忠実なレンダリング</strong> — 表、タスクリスト、脚注、アラート、
+        折りたたみの <code>&lt;details&gt;</code>、シンタックスハイライト、Mermaid 図、KaTeX 数式
+        （<code>$…$</code> / <code>$$…$$</code>）を、すべてオフラインで。<code>[toc]</code> だけの
+        段落はリンク付きの目次になり、<code>==highlight==</code>、<code>~sub~</code>、
+        <code>^sup^</code> もレンダリングされます。</li>
+        <li><strong>クリックで拡大表示</strong> — 画像・図・ブロック数式はパンとズームのできる
+        オーバーレイで開きます。Save As…（別名で保存）と Share（共有）は、見ているそのものを
+        書き出します（図は本物の SVG として）。</li>
+        <li><strong>生きているファイル</strong> — どのエディタから保存しても文書は再レンダリング
+        されます。相対パスの画像とリンクは解決され、別の Markdown ファイルへのリンクをクリック
+        すればその場で開きます（開いている Location 内にあるファイルは
+        <a href="/ja/docs/sidebar/#previews">プレビュー</a>として）。</li>
+        <li><strong>ナビゲーション</strong> — アウトラインサイドバー（⌥⌘O）、⌘F のページ内検索、
+        ⇧⌘F のサイドバー全ファイル検索、そして ⌘K の Open Quickly。見出し・ファイル・PR・最近の
+        項目に飛べるほか、パスや GitHub の URL をそのまま貼り付けられます。</li>
+        <li><strong>読むための高度の blame</strong> — 控えめな作者情報のガター。連続ブロックの
+        まとまりごとにアバターがひとつ、ホバーでコミット、クリックで行履歴へ。ファイルが GitHub 上に
+        あるときは GitHub の blame API、それ以外は素の <code>git blame</code> を使います。</li>
+        <li><strong>読み心地</strong> — テーマ、本文幅、行番号（<a href="/ja/docs/settings/">設定</a>）、
+        ブラウザ式のズーム、ライト／ダーク、フルスクリーン、そして文書ごとに記憶される読書位置。</li>
+      </ul>
+
+      <h2 id="reviewing">プルリクエストをレビューする</h2>
+      <ul>
+        <li><strong>レンダリングされた差分</strong> — 追加・削除・変更されたブロックが
+        レンダリングされたページの上でハイライトされ、編集が十分小さければ単語単位の差分に。
+        インラインでも左右並列（⌥⌘L）でも表示でき、生の Source Diff（⌘2）と最終形の
+        Result（⌘3）にも切り替えられます。移動しただけの段落には、赤と緑のノイズではなく控えめな
+        「moved」チップが付きます。</li>
+        <li><strong>レビュースレッドはその場に</strong> — 既存のコメントは話題のブロックの下に
+        現れます。ブロックにホバーして Comment Now、Add to Review、Insert Suggestion
+        （鉛筆はブロックを提案として編集）。レビューは判定付きで送信するか、保留中のレビューとして
+        GitHub に保存できます。</li>
+        <li><strong>PR の現在地</strong> — 概要ヘッダには、レビューの決定（承認済み・変更リクエスト・
+        レビュー必須）、バッジ付きアバターで示される各レビュアーの判定と待機中のレビュアー、
+        そしてクリックでチェック一覧の全体へ開く CI チェックのカプセル——所要時間、required タグ、
+        各チェックのログへのリンク付き。すべて毎分、静かに更新されます。</li>
+        <li><strong>読みやすい会話</strong> — 概要にひとつの時系列タイムライン。コメントとレビュー
+        判定が順に並び、各レビューのインラインコメントはその要約の下にネストされ、カードには対象
+        ファイルの名前が記されます。リアクション、自分のコメントの編集と削除、タイムライン末尾の
+        コメント欄も。全員に有効です（Settings ▸ General ▸ Reviewing でスレッドを畳めます）。</li>
+        <li><strong>つねに最新</strong> — 開いている PR は毎分チェックされます。ブランチが動くと
+        バナーが更新を提案し、下書きコメントは失われません。オフラインで書いたコメントはキューに
+        入り、可能になり次第アップロードされます。</li>
+        <li><strong>レビューリクエスト</strong> — あなたのレビュー待ちの PR が、未読数とともに
+        サイドバーに並びます。PR の画像とリポジトリ相対リンクは、その PR のコミットを基準に
+        解決されます。</li>
+      </ul>
+
+      <h2 id="github">GitHub を、ブラウザなしで</h2>
+      <ul>
+        <li><strong>Markdown リンクはアプリ内で</strong> — <code>github.com/…/blob/…</code> の
+        リンクをクリックすると PullMark がレンダリングします（最初のクリックで確認、⌘ クリックは
+        デフォルトの逆）。出所バーが <code>owner/repo @ ref · path</code> を固定表示し、GitHub への
+        戻り道も用意します。</li>
+        <li><strong>リポジトリ丸ごとブラウズ</strong> — リポジトリの Markdown ツリーを
+        <a href="/ja/docs/sidebar/#locations">Locations</a> に読み込み、ブランチを切り替え、
+        他ブランチと比較し、blame を表示。プライベートリポジトリは PR がすでに使っている認証情報を
+        使い、取得した内容はディスクに一切触れません。</li>
+        <li><strong>ブランチとワークツリー</strong> — ローカルのチェックアウトにはブランチチップが
+        付き、そのメニューからワークツリーを独立した Location として開いたり、他のブランチを
+        リモートから読んだりできます。ブランチをすでに持つワークツリーがあれば、つねにローカルが
+        リモートに勝ちます。</li>
+      </ul>
+
+      <h2 id="editing">編集とコミット</h2>
+      <ul>
+        <li><strong>その場で編集</strong> — ブロックの鉛筆（文書全体なら ⌘E）で、レンダリングされた
+        ページの中でブロックがエディタに変わります。⌘↩ で保存、Esc でキャンセル。保存はファイルが
+        裏で変わっていないか確かめるガード付きで、Revert Last Edit のためにバージョン管理されます。</li>
+        <li><strong>アプリからコミット</strong> — ⌃⌘K でそのファイルのリポジトリのコミットシートが
+        開きます。ファイルを選び、メッセージを書き、必要ならプッシュ。main への直接コミットには
+        ガードが入ります。</li>
+      </ul>
+
+      <h2 id="compare">履歴と比較する</h2>
+      <ul>
+        <li><strong>どのファイルも、どのリビジョンとも</strong> — ツールバーの Compare ボタン
+        （時計とシェブロン）が、作業中のファイルを直近 25 コミットの任意のもの、または任意の
+        ローカル／リモートブランチと比較します。プルリクエストとまったく同じく、レンダリングされ、
+        変わった単語がハイライトされた姿で。ボタンの小さなドットは、未コミットの変更がある
+        しるしです。</li>
+        <li><strong>「いま何を変えた？」</strong> — メニュー項目ひとつ
+        （<strong>View → Compare with Last Commit</strong>）またはシェルコマンドひとつ
+        （<code>pullmark --diff file.md</code>、<a href="/ja/docs/cli/#diff">CLI</a> 参照）。
+        ファイルが変わり続けても差分は追従します——エージェントの編集が保存されるそばから、
+        ハイライト付きで届くのを見ていられます。</li>
+      </ul>
+
+      <h2 id="output">文書を取り出す</h2>
+      <ul>
+        <li><strong>書き出し</strong> — PDF（切れ目のない 1 ページ）または完全に自己完結した
+        HTML。Share は macOS が送れる先ならどこへでも文書を送ります。</li>
+        <li><strong>2 種類のコピー</strong> — ⌘C は Docs や Slack 向けのリッチテキスト、⌥⌘C は
+        元の Markdown。</li>
+        <li><strong>印刷</strong> — ⌘P。ズームに関係なく、つねに 100% で。</li>
+        <li><strong>Quick Look</strong> — Finder でスペースキーを押せば、PullMark 自身の
+        レンダリングで Markdown をプレビューします。</li>
+      </ul>
+
+      <h2 id="toolbar">あなたのものになるツールバー</h2>
+      <p>ツールバーを右クリック——または View → Customize Toolbar…——で、ネイティブのカスタマイズ
+      パレットが開きます。使わないものはドラッグして外し、残りを並べ替え、Flexible Space を足す。
+      ビューの種類ごとに配置が保存され、起動をまたいで記憶されます。ローカルファイル、GitHub の
+      ドキュメント、プルリクエストのファイル、PR の概要はそれぞれ別のツールバーで、いままさに
+      見ているビューのツールバーをカスタマイズします——メールの作成ウィンドウが独自のツールバーを
+      持つのと同じ流儀です。</p>
+      <p>デフォルトの一式のほかに、パレットには最初は非表示の項目が控えています。生ソースの
+      <strong>Source</strong> トグル、<strong>Zoom In / Actual Size / Zoom Out</strong>、
+      <strong>Content Width</strong> ピッカー、<strong>Add Margin Note</strong>（機能が有効な
+      あいだ）、そして GitHub ドキュメント向けの <strong>Share</strong>——共有されるのはその文書の
+      github.com ページで、生のリンクは決して渡しません——と <strong>Reload</strong>。Reload は
+      ブランチを現在の先端に解決し直し、特定のコミットで開いた文書では、理由の表示とともに無効の
+      ままです。初期状態では何も変わりません。残りはパレットの中に。
+      <a href="/ja/docs/toolbar/">ツールバー</a>のページに全ビューの項目一覧があります。</p>
+
+      <h2 id="everything-else">そのほかのすべて</h2>
+      <ul>
+        <li><strong>ウィンドウとタブ</strong> — ⌘N で独立したウィンドウを開き、ネイティブのタブに
+        統合できます。外部からのオープンは最前面のウィンドウに届きます。</li>
+        <li><strong><code>pullmark</code> コマンド</strong> — どのターミナルからでもファイル・
+        フォルダ・ワークツリーを。<a href="/ja/docs/cli/">コマンドライン</a>を参照。</li>
+        <li><strong>デフォルトアプリの管理</strong> — ワンクリックで PullMark を <code>.md</code> の
+        ハンドラにでき、アップグレードで関連付けが外れれば気づいて知らせます。</li>
+        <li><strong>内蔵アップデート</strong> — 署名・公証済みのリリースを、ワンクリック更新と
+        What's New シートで。</li>
+        <li><strong>プライバシーの姿勢</strong> — GitHub の内容は API 経由で取得されてメモリ内に
+        とどまり、文書がどこかへコピーされることはありません。詳しくは
+        <a href="/privacy/">プライバシーのページ</a>へ。</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT ライセンス</a>
+    <a href="/licenses/">オープンソースライセンス</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="https://ko-fi.com/pullmark">PullMark を応援する&nbsp;♥</a>
+    <span class="note">PullMark は GitHub とは提携していません。</span>
+  </div>
+  <nav class="lang-switch" aria-label="言語">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>言語</span>
+    <a href="/docs/features/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/features/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/features/" hreflang="ja" lang="ja" aria-current="true">日本語</a>
+    <a href="/fr/docs/features/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/features/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/features/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/features/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/features/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

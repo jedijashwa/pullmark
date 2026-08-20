@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工具栏 — PullMark 文档</title>
+<meta name="description" content="PullMark 工具栏详解：每种视图各有一条可自定义的工具栏——各视图默认有什么，面板里还备着什么。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/toolbar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/toolbar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/toolbar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/toolbar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/toolbar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/toolbar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/toolbar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/toolbar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/toolbar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/toolbar/">
+<meta property="og:title" content="工具栏 — PullMark 文档">
+<meta property="og:description" content="PullMark 工具栏详解：每种视图各有一条可自定义的工具栏——各视图默认有什么，面板里还备着什么。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/toolbar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/" aria-current="page">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>工具栏</h1>
+      <p class="article-lede">每种视图一条工具栏，全都可以自定义：右键点它
+      （或 View → Customize Toolbar…），把项目拖走、重新排列、加入初始
+      隐藏的项目。每个视图跨启动记住自己的排布。</p>
+
+      <h2 id="customizing">自定义的原理</h2>
+      <p>PullMark 没有“一条”工具栏——它给每种视图各配一条，就像 Mail 的
+      撰写窗口和主窗口各有各的工具栏。你自定义的是眼前这一条：打开一个
+      拉取请求文件，自定义的就是 PR 文件工具栏；打开本地文档，自定义的
+      就是本地文件工具栏。面板只提供在你打开它的地方真实存在的项目。</p>
+      <p>面板里的一切都任你处置——移除、重排、放入 Flexible Space
+      （弹性空间）把项目群推开。下方标注<em>隐藏</em>的项目初始待在面板里
+      而不在栏上。唯一放不进去的位置是侧边栏切换键旁边、属于侧边栏自己的
+      那一段：它归系统所有，扔过去的项目会落到主区域的最前端。把面板底部
+      的默认项目组拖回去，即可恢复任何一条工具栏。</p>
+
+      <h2 id="every-view">每个视图都有</h2>
+      <table>
+        <tr><th>项目</th><th>默认</th><th>作用</th></tr>
+        <tr><td>Review（审查）</td><td>显示</td>
+          <td>会变形的审查控件，仅在 PR 视图上——待提交评论数、结论、提交。
+          窗口收窄时它坚持得最久：其他项目折进溢出菜单后，审查状态依然
+          可见。</td></tr>
+        <tr><td>Open File or Folder（打开文件或文件夹）</td><td>显示</td>
+          <td>打开本地 Markdown 或一个文件夹 Location。</td></tr>
+        <tr><td>Open Pull Request（打开拉取请求）</td><td>显示</td>
+          <td>按 URL 打开 GitHub 拉取请求。</td></tr>
+        <tr><td>Appearance（外观）</td><td>显示</td>
+          <td>浅色 · 深色 · 跟随系统，应用全局。</td></tr>
+      </table>
+
+      <h2 id="local-files">本地文件</h2>
+      <table>
+        <tr><th>项目</th><th>默认</th><th>作用</th></tr>
+        <tr><td>Share（共享）</td><td>显示</td><td>该文件的标准共享面板。</td></tr>
+        <tr><td>Edit（编辑）</td><td>显示</td><td>编辑模式——点击任意区块原地编辑。</td></tr>
+        <tr><td>Compare（比较）</td><td>显示</td>
+          <td>与某个提交或分支比较（需要 git 仓库）。一枚小点表示文件有
+          未提交的改动。</td></tr>
+        <tr><td>Blame</td><td>显示</td>
+          <td>每个区块最后由谁改动；不在仓库中时禁用。</td></tr>
+        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>Reload（重新载入）</td><td>显示</td><td>从磁盘重读文件。</td></tr>
+        <tr><td>Source（源码）</td><td>隐藏</td><td>渲染页面背后的原始 Markdown。</td></tr>
+        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>隐藏</td>
+          <td>相互独立的项目——只加你用得着的那几个。</td></tr>
+        <tr><td>Content Width（栏宽）</td><td>隐藏</td><td>Standard · Wide · Full Width。</td></tr>
+        <tr><td>Add Margin Note（添加页边批注）</td><td>隐藏</td>
+          <td>仅当<a href="/zh/docs/experimental/margin-notes/">页边批注</a>
+          开启时出现在面板里。</td></tr>
+      </table>
+
+      <h2 id="github-docs">GitHub 文档</h2>
+      <p>直接从仓库读取的文档——经由链接、⌘K 或浏览中的仓库 Location
+      打开。</p>
+      <table>
+        <tr><th>项目</th><th>默认</th><th>作用</th></tr>
+        <tr><td>Compare（比较）</td><td>显示</td><td>同一文档在另一分支上的版本，以渲染差异呈现。</td></tr>
+        <tr><td>Blame</td><td>显示</td><td>来自 GitHub API 的逐区块 blame。</td></tr>
+        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>Share（共享）</td><td>隐藏</td>
+          <td>文档的 github.com 页面——人真正想要的那个链接，绝不是
+          裸 URL。</td></tr>
+        <tr><td>Reload（重新载入）</td><td>隐藏</td>
+          <td>把分支重新解析到当前最新提交并重新抓取。对钉在特定提交上
+          打开的文档保持禁用——并写明原因——因为那不可能再变。</td></tr>
+        <tr><td>Source（源码）</td><td>隐藏</td><td>原始 Markdown。</td></tr>
+        <tr><td>缩放项目 · Content Width</td><td>隐藏</td><td>与本地文件相同。</td></tr>
+      </table>
+
+      <h2 id="pr-files">拉取请求文件</h2>
+      <table>
+        <tr><th>项目</th><th>默认</th><th>作用</th></tr>
+        <tr><td>Navigation（导航）</td><td>显示</td>
+          <td>回到总览、上一个/下一个 Markdown 文件，以及 n/m 跳转菜单——
+          一个整体，一次拖动。</td></tr>
+        <tr><td>View picker（视图选择器）</td><td>显示</td>
+          <td>Rendered Diff · Source Diff · Result，居中。</td></tr>
+        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>Layout（布局）</td><td>显示</td>
+          <td>行内或并排——在 Rendered Diff 视图中可用（新文件始终以行内
+          渲染）。</td></tr>
+        <tr><td>Blame</td><td>显示</td>
+          <td>在 Result 视图中可用——那里才有一份完成的文档可以注解。</td></tr>
+        <tr><td>Comment on File（评论文件）</td><td>显示</td>
+          <td>针对文件整体、而非某一行的评论。</td></tr>
+        <tr><td>缩放项目 · Content Width</td><td>隐藏</td><td>与本地文件相同。</td></tr>
+      </table>
+
+      <h2 id="other-views">PR 总览，以及从 PR 浏览的仓库文档</h2>
+      <p>总览保持精简：<strong>Share</strong>（拉取请求的 GitHub 页面）加上
+      每个视图都有的项目。从 PR 内容浏览到的仓库文档带
+      <strong>Blame</strong> 和 <strong>Outline</strong>，缩放项目和
+      Content Width 收在它的面板里。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/toolbar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/toolbar/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/toolbar/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/toolbar/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/toolbar/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/toolbar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/toolbar/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/toolbar/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

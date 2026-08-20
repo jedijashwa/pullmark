@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review de plannen en docs van je AI-agent — PullMark</title>
+<meta name="description" content="Lees de Markdown-plannen van je agent gerenderd, zet margin notes in het bestand zelf en geef het terug — feedback die je agent ter plekke verwerkt. Een native macOS-app.">
+<link rel="canonical" href="https://pullmark.app/nl/uses/agents/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/uses/agents/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/uses/agents/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/uses/agents/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/uses/agents/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/uses/agents/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/uses/agents/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/uses/agents/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/uses/agents/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/uses/agents/">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<meta property="og:title" content="Review de plannen en docs van je AI-agent — PullMark">
+<meta property="og:description" content="Lees Markdown van je agent gerenderd, zet margin notes in het bestand en geef het terug — feedback die je agent ter plekke verwerkt.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/nl/uses/agents/">
+<meta property="og:image" content="https://pullmark.app/img/og-card-agents.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+/* ============ tokens (shared with the front page) ============ */
+:root {
+  color-scheme: light dark;
+  --paper:      #fbfaf8;
+  --panel:      #ffffff;
+  --ink:        #1a212b;
+  --muted:      #5b6672;
+  --faint:      #98a1ab;
+  --line:       #e4e2dd;
+  --line-soft:  #efede8;
+  --green:      #1a7f37;
+  --green-ink:  #116329;
+  --green-bg:   #d6efdc;
+  --red:        #cf222e;
+  --red-bg:     #ffe3e0;
+  --blue:       #0969da;
+  --shadow-sm:  0 1px 2px rgba(26,33,43,.06), 0 4px 12px rgba(26,33,43,.06);
+  --code-bg:    #f2f1ee;
+  --shot-edge:  rgba(26,33,43,.18);
+  --shot-soft:  rgba(26,33,43,.12);
+  --serif: "New York", ui-serif, "Iowan Old Style", "Palatino", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
+}
+
+/* ============ base ============ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 3px; }
+::selection { background: var(--green-bg); }
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 0 28px; }
+
+/* ============ nav ============ */
+.nav {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 0 0;
+}
+.nav .brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+}
+.nav .brand img { width: 30px; height: 30px; }
+.nav .links { margin-left: auto; display: flex; gap: 4px; }
+.nav .links a {
+  text-decoration: none; color: var(--muted); font-size: 14px;
+  padding: 6px 12px; border-radius: 7px;
+}
+.nav .links a:hover { color: var(--ink); background: var(--line-soft); }
+
+/* ============ hero ============ */
+.hero { padding: 76px 0 8px; }
+.eyebrow {
+  font: 500 13px/1.6 var(--mono);
+  color: var(--muted);
+  letter-spacing: .02em;
+  margin: 0 0 26px;
+}
+.eyebrow b { color: var(--green); font-weight: 600; }
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(38px, 6vw, 62px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0 0 24px;
+  max-width: 16em;
+  text-wrap: balance;
+}
+.lede {
+  font-size: 19px; line-height: 1.6; color: var(--muted);
+  max-width: 36em; margin: 0 0 8px;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* ============ sections ============ */
+section { padding: 84px 0 0; }
+.kicker {
+  font: 500 13px/1 var(--mono);
+  color: var(--green);
+  margin: 0 0 14px;
+}
+.kicker::before { content: "## "; color: var(--faint); }
+h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0 0 18px;
+  text-wrap: balance;
+}
+.prose { color: var(--muted); font-size: 16.5px; max-width: 42em; }
+.prose p { margin: 0 0 1.1em; }
+.prose strong, .prose em { color: var(--ink); }
+.prose code {
+  font: 87% var(--mono);
+  background: var(--code-bg);
+  border-radius: 5px;
+  padding: .15em .38em;
+}
+.prose kbd {
+  font: 12px var(--mono); background: var(--code-bg);
+  border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 5px; padding: 1px 6px;
+}
+
+/* pull-quote */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(21px, 2.6vw, 27px);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink);
+  border-left: 4px solid var(--green);
+  padding: 4px 0 4px 24px;
+  margin: 36px 0;
+  max-width: 24em;
+}
+
+/* ============ screenshots ============ */
+.shot { margin: 0; }
+.shot img {
+  width: 100%; height: auto;
+  filter: drop-shadow(0 0 1px var(--shot-edge))
+          drop-shadow(0 2px 4px var(--shot-edge))
+          drop-shadow(0 18px 44px var(--shot-soft));
+}
+.shot figcaption {
+  text-align: center;
+  font: 400 13px var(--sans);
+  color: var(--muted);
+  margin-top: 2px;
+}
+.shot figcaption code { font: 92% var(--mono); }
+.reading-shot { max-width: 1150px; margin: 34px auto 0; }
+
+/* ============ the loop steps ============ */
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.trio .act {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+.trio .act .act-name {
+  font: 600 13px var(--mono);
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.trio .act .act-name::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); flex: none;
+}
+.trio .act:nth-child(2) .act-name::before { background: #bf8700; }
+.trio .act:nth-child(3) .act-name::before { background: var(--blue); }
+.trio .act p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.trio .act p code {
+  font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em;
+}
+
+/* ============ the snippet card ============ */
+.snippet {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  margin: 30px 0 0;
+  max-width: 46em;
+}
+.snippet .snippet-top {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.snippet .snippet-label {
+  font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint);
+}
+.snippet pre {
+  margin: 0;
+  padding: 16px 18px;
+  font: 12.5px/1.75 var(--mono);
+  color: var(--muted);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.copy-btn {
+  margin-left: auto;
+  font: 500 12.5px var(--sans);
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.copy-btn:hover { color: var(--ink); border-color: var(--faint); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+/* ============ install (closing) ============ */
+.closing {
+  margin-top: 100px;
+  border-top: 1px solid var(--line);
+  padding: 80px 0 20px;
+  text-align: center;
+}
+.closing img.icon { width: 76px; height: 76px; margin: 0 auto 22px; }
+.closing h2 { margin-bottom: 12px; }
+.closing .prose { margin: 0 auto 34px; }
+.install-row {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch;
+  justify-content: center;
+}
+.install {
+  display: inline-block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px 14px;
+  max-width: 100%;
+  text-align: left;
+}
+.install-row .install { display: flex; flex-direction: column; }
+.install .install-top {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
+}
+.install .install-label {
+  font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint);
+}
+.install pre {
+  margin: 0;
+  font: 13.5px/1.85 var(--mono);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.install pre .p { color: var(--faint); user-select: none; }
+.install pre b { font-weight: 500; color: var(--ink); }
+.install pre .arg { color: var(--green); }
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--green); color: #fff;
+  font: 600 14.5px/1 var(--sans);
+  padding: 12px 20px; border-radius: 9px;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: filter .15s;
+}
+.dl-btn:hover { filter: brightness(1.08); }
+.dl-btn svg { flex: none; }
+.dl-sub { margin: 12px 2px 0; max-width: 24em; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.dl-sub a { color: var(--muted); text-underline-offset: 3px; }
+.dl-sub a:hover { color: var(--ink); }
+.either-way { margin: 14px 2px 0; font-size: 13.5px; color: var(--muted); text-align: center; }
+
+/* ============ footer ============ */
+footer {
+  margin-top: 84px;
+  border-top: 1px solid var(--line);
+  padding: 30px 0 46px;
+}
+footer .foot {
+  display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center;
+  color: var(--muted); font-size: 13.5px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+footer .note { margin-left: auto; }
+
+/* ============ responsive ============ */
+@media (max-width: 880px) {
+  .trio { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 0 20px; }
+  .hero { padding-top: 56px; }
+  section { padding-top: 64px; }
+  .install { display: block; }
+  .install pre { font-size: 12.5px; }
+  footer .note { margin-left: 0; }
+  .closing { margin-top: 76px; padding-top: 60px; }
+}
+</style>
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hoofdnavigatie">
+    <a class="brand" href="/nl/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/nl/docs/">Docs</a>
+      <a href="/nl/uses/agents/" aria-current="page">Toepassingen</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">pullmark + je coding agent · <b>gratis &amp; open source</b> · native macOS</p>
+    <h1>Het plan van je agent verdient een echte review.</h1>
+    <p class="lede">Agents schrijven tegenwoordig serieuze Markdown — implementatieplannen,
+    specs, onderzoeksverslagen — en de stap die ze goed maakt is <strong>jouw
+    oordeel</strong>. PullMark toont het concept gerenderd en zet je feedback in het
+    bestand zelf, als margin notes die je agent ter plekke verwerkt.</p>
+  </div>
+</header>
+
+<main>
+
+<section id="moment">
+  <div class="wrap">
+    <p class="kicker">het moment</p>
+    <h2>Er is net een plan van 400 regels geland. En&nbsp;nu?</h2>
+    <div class="prose">
+      <p>Je kent het ritueel: de agent rondt een plan af, en de volgende zet
+      is aan jou. Ruwe Markdown lezen in een editor verbergt wat een lezer
+      zou zien — tabellen, structuur, de vorm van het betoog. Stukken
+      terugplakken in de chat rukt elk commentaar los van de plek waar het
+      over gaat, en de agent moet raden waar jouw "dit klopt niet" naar
+      wijst. En het ene gereedschap dat gebouwd is om op documenten te
+      reageren — een pull request — wil eerst dat het concept gecommit,
+      gepusht en in een browser gereviewd wordt.</p>
+    </div>
+    <blockquote class="pull">Niet elk document hoort in een commit, en niet
+    elke werkversie van een doc hoeft gepusht te&nbsp;worden.</blockquote>
+    <div class="prose">
+      <p>Een werkversie verdient de feedbackloop die je een collega bij een
+      whiteboard zou geven: wijs de alinea aan, zeg wat er mis is, geef het
+      terug. Dat zijn margin notes.</p>
+    </div>
+  </div>
+</section>
+
+<section id="loop">
+  <div class="wrap">
+    <p class="kicker">de loop</p>
+    <h2>Lees gerenderd. Noteer ter plekke. Geef&nbsp;het&nbsp;terug.</h2>
+    <div class="trio">
+      <div class="act">
+        <div class="act-name">1 · Lees gerenderd</div>
+        <p>Open het concept in PullMark — of gewoon <code>pullmark plan.md</code>
+        vanuit de terminal waarin je agent draait. Tabellen zijn tabellen,
+        diagrammen zijn diagrammen, en de pagina rendert opnieuw telkens
+        wanneer het bestand verandert.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">2 · Noteer ter plekke</div>
+        <p>Beweeg over het blok dat niet klopt, klik op het notitieballonnetje
+        en schrijf wat je een collega zou zeggen. Notities worden ondertekend
+        met je @naam en verankerd aan de exacte passage — een notitie boven de
+        titel gaat over het hele document.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">3 · Geef het terug</div>
+        <p>Zeg tegen je agent: <em>"verwerk mijn notities in plan.md."</em> De
+        notities staan in het bestand als gewone HTML-comments, dus de agent
+        leest elke notitie precies waar jij die achterliet — past haar toe,
+        beantwoordt haar, verwijdert haar.</p>
+      </div>
+    </div>
+
+    <figure class="shot reading-shot">
+      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+        alt="PullMark rendert een door een agent geschreven ontwerpspec met de titel Wind Gust Alerts, met drie margin notes als ondertekende kaarten van de reviewer — een notitie op bestandsniveau die om een schone tweede revisie vraagt, één die de aanname over de samplefrequentie in twijfel trekt, en één die YAGNI roept over een functie — terwijl de zijbalk de spec toont in een map docs/superpowers/specs van een git-repository op branch main">
+      <figcaption>De spec van een agent, een eerste reviewronde: ondertekende
+      notities verankerd aan precies de juiste blokken — geen commit, geen
+      plakwerk, geen pull request.</figcaption>
+    </figure>
+
+    <div class="prose" style="margin-top: 34px;">
+      <p><strong>Geen lock-in, per constructie.</strong> Een margin note is
+      <code>&lt;!-- note @you: … --&gt;</code> in de Markdown — een comment
+      die buiten de gerenderde pagina blijft. Je bestanden blijven platte
+      tekst, je notities reizen met het document mee, en alles wat het
+      bestand kan lezen kan de feedback lezen. De <a href="/nl/docs/experimental/margin-notes/">margin
+      notes-docs</a> behandelen de details; de functie is in beta en staat
+      standaard aan.</p>
+      <p>Agents volgen de conventie beter met één alinea context. Dit is
+      dezelfde tekst als achter de Copy-knop in
+      Settings&nbsp;→&nbsp;Experimental — plak hem in het instructiebestand
+      van je agent (<code>CLAUDE.md</code>, <code>AGENTS.md</code>) of in het
+      gesprek:</p>
+    </div>
+
+    <div class="snippet">
+      <div class="snippet-top">
+        <span class="snippet-label">Voor je agent</span>
+        <button class="copy-btn" type="button" id="copy-snippet">Kopieer</button>
+      </div>
+      <pre id="snippet-text">## Margin notes
+
+Markdown files may contain review notes as HTML comments:
+`&lt;!-- note @name: comment --&gt;` (possibly multi-line, closing
+with `--&gt;` on its own line). Each note sits directly after the
+passage it's about; a note above the first heading is about the
+whole document. `--\&gt;` inside a note means a literal `--&gt;`.
+
+When asked to address notes: work through each one, apply or
+answer it, and DELETE the note (with its surrounding blank line)
+once addressed. To reply or ask instead, leave your own note in
+the same format below the original, signed with your own @name.
+Don't add notes to code examples inside fenced blocks.
+
+A note about one list item sits inside that item — directly after
+the item's last line, indented to the item's content, with no
+blank lines around it. Keep (or delete) the whole indented
+comment; its indentation is what ties it to the item.</pre>
+    </div>
+  </div>
+</section>
+
+<section id="long-reviews">
+  <div class="wrap">
+    <p class="kicker">lange documenten</p>
+    <h2>Notities die op je wachten.</h2>
+    <div class="prose">
+      <p>Een grondige review van een lang document — een onderzoeksverslag,
+      een complex ontwerpdocument — kan zo een uur duren. Margin notes zijn
+      voor dat uur gebouwd. Het document houdt zich stil terwijl jij werkt:
+      schrijf de gedachte op waar ze je invalt en lees verder. Doet pagina
+      dertig je van gedachten veranderen over de notitie die je op pagina
+      drie achterliet, dan ga je terug om die aan te scherpen — of te
+      schrappen. Er bereikt je agent niets totdat de ronde af is en je
+      notities het onderling eens zijn, zodat de feedback landt als één
+      samenhangend geheel in plaats van een doorlopende stroom
+      correcties.</p>
+      <p>Het loont zelfs voor documenten die uiteindelijk gecommit worden.
+      Doe de ruwe eerste ronde in margin notes <em>vóór</em> de eerste
+      commit, en de pull request opent schoon — reviewers zien het gesprek
+      dat ertoe doet, niet de steigers die nodig waren om er te komen.</p>
+    </div>
+  </div>
+</section>
+
+<section id="revision">
+  <div class="wrap">
+    <p class="kicker">de revisie</p>
+    <h2>Zie de wijzigingen landen.</h2>
+    <div class="prose">
+      <p>Terwijl de agent je notities afwerkt, blijft PullMark bij. De pagina
+      rendert opnieuw bij elke save, en <strong>Compare</strong> toont de
+      revisie als gerenderde diff — de wijzigingen van de agent woord voor
+      woord gemarkeerd, live terwijl ze landen. Eén klik vergelijkt het
+      werkbestand met elke recente commit of branch;
+      <code>pullmark --diff plan.md</code> doet het vanuit de terminal. Het is
+      het snelste antwoord op <em>"wat heeft de agent net aan mijn doc
+      veranderd?"</em> — en zijn de notities verwerkt, dan zijn ze gewoon uit
+      het bestand verdwenen.</p>
+    </div>
+  </div>
+</section>
+
+<section id="pr">
+  <div class="wrap">
+    <p class="kicker">als het wél een PR is</p>
+    <h2>En als het document wél ter review gaat…</h2>
+    <div class="prose">
+      <p>Sommige documenten horen wél gecommit te worden — en repo's vol
+      agents vullen pull requests met Markdown: plannen, ADR's,
+      agentdefinities, runbooks. PullMark toont die PR's als
+      <strong>gerenderde diffs</strong> met alleen de gewijzigde woorden
+      gemarkeerd, laat je op precies de juiste blokken reageren en suggesties
+      doen, en dient je review in bij GitHub. Het overzicht weet waar de PR
+      staat: beslissing, oordelen van reviewers, checks, en de conversatie
+      als leesbare tijdlijn.</p>
+    </div>
+    <figure class="shot reading-shot">
+      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+        alt="Het pull request-overzicht van PullMark: de PR-titel met een Open-chip, een capsule Changes requested, een capsule Checks passed, reviewer-avatars met oordeelbadges, een teamchip docs-guild, de PR-beschrijving gerenderd, en de conversatietijdlijn waarvan de eerste reviewcomment een gerenderde tabel toont">
+      <figcaption>Dezelfde reviewinstincten, gericht op een pull request — de
+      <a href="/nl/#reviewing" style="color: inherit;">voorpagina</a> vertelt het hele
+      reviewverhaal.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<div class="closing">
+  <div class="wrap">
+    <img class="icon" src="/img/icon.svg" alt="" width="76" height="76">
+    <h2>Maak de cirkel rond met je agent.</h2>
+    <p class="prose" style="max-width: 30em; margin-left: auto; margin-right: auto;">Gratis,
+    open source, ondertekend en genotariseerd. macOS&nbsp;13+.</p>
+    <div class="install-row">
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Homebrew</span>
+          <button class="copy-btn" type="button" id="copy-brew">Kopieer</button>
+        </div>
+        <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+      </div>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Directe download</span>
+        </div>
+        <a class="dl-btn" href="https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v6.69l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V1.75ZM2.5 12.25a.75.75 0 0 1 .75.75v.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 12.5 15.5h-9a1.75 1.75 0 0 1-1.75-1.75v-.5a.75.75 0 0 1 .75-.75Z"/></svg>
+          Download PullMark</a>
+        <p class="dl-sub">De nieuwste DMG — open hem en sleep PullMark naar Applications
+          (het opruimen doet PullMark zelf).
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">Alle releases&nbsp;→</a></p>
+      </div>
+    </div>
+    <p class="either-way">Hoe dan ook: PullMark controleert op updates en installeert ze met één klik.</p>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a href="/nl/docs/">Docs</a>
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-licentie</a>
+    <a href="/licenses/">Opensourcelicenties</a>
+    <a href="/privacy/">Privacy</a>
+    <a href="https://ko-fi.com/pullmark">Steun PullMark&nbsp;♥</a>
+    <span class="note">PullMark is niet verbonden aan GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Taal">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Taal</span>
+    <a href="/uses/agents/" hreflang="en" lang="en">English</a>
+    <a href="/zh/uses/agents/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/uses/agents/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/uses/agents/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/uses/agents/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/uses/agents/" hreflang="nl" lang="nl" aria-current="true">Nederlands</a>
+    <a href="/es/uses/agents/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/uses/agents/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+<script>
+(function () {
+  function wire(id, getText) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(getText()).then(function () {
+        btn.textContent = 'Gekopieerd';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = 'Kopieer';
+          btn.classList.remove('copied');
+        }, 1600);
+      });
+    });
+  }
+  wire('copy-snippet', function () {
+    return document.getElementById('snippet-text').textContent;
+  });
+  wire('copy-brew', function () {
+    return 'brew tap jedijashwa/tap\nbrew trust jedijashwa/tap\nbrew install --cask pullmark';
+  });
+})();
+</script>
+
+</body>
+</html>

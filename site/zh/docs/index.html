@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PullMark 文档</title>
+<meta name="description" content="PullMark 文档：功能、侧边栏、设置、键盘快捷键、命令行与疑难解答。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/">
+<meta property="og:title" content="PullMark 文档">
+<meta property="og:description" content="PullMark 文档：功能、侧边栏、设置、键盘快捷键、命令行与疑难解答。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/" aria-current="page">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>PullMark，白纸黑字</h1>
+      <p class="article-lede">这款应用能做的每一件事，都写在这里：一趟功能导览、
+      每个设置与快捷键的参考、侧边栏每个图标的含义、<code>pullmark</code> 命令，
+      以及少数几处可能出岔子的地方该怎么修。</p>
+
+      <ul class="doc-cards">
+        <li><a href="/zh/docs/features/">
+          <p class="card-title">功能</p>
+          <p class="card-sub">导览——阅读、审查 PR 差异、GitHub 链接与仓库、
+          原地编辑、导出。</p>
+        </a></li>
+        <li><a href="/zh/docs/sidebar/">
+          <p class="card-title">侧边栏</p>
+          <p class="card-sub">Open Files（打开的文件）、预览、Locations（位置）、
+          Pull Requests（拉取请求）、Recents（最近使用）——以及每个图标和标签的含义。</p>
+        </a></li>
+        <li><a href="/zh/docs/settings/">
+          <p class="card-title">设置</p>
+          <p class="card-sub">⌘, 里的每一个控件——General（通用）、Appearance（外观）
+          和 Keyboard（键盘）——附默认值和每一项的作用。</p>
+        </a></li>
+        <li><a href="/zh/docs/shortcuts/">
+          <p class="card-title">键盘快捷键</p>
+          <p class="card-sub">完整键位表，包括哪些快捷键可以重新绑定、如何绑定。</p>
+        </a></li>
+        <li><a href="/zh/docs/cli/">
+          <p class="card-title">命令行</p>
+          <p class="card-sub"><code>pullmark</code> 命令：文件、文件夹、工作树，
+          以及写脚本时的注意事项。</p>
+        </a></li>
+        <li><a href="/zh/docs/troubleshooting/">
+          <p class="card-title">疑难解答</p>
+          <p class="card-sub">逐条解释错误信息，外加几个经典问题：Gatekeeper、
+          GitHub 认证、升级后的 Quick Look。</p>
+        </a></li>
+        <li><a href="/zh/docs/experimental/">
+          <p class="card-title">实验性功能</p>
+          <p class="card-sub">设计尚未定稿就先行发布的功能，标注 alpha 或
+          beta——页边批注（Margin Notes）现在就住在这里，格式规范与智能体指令
+          一应俱全。</p>
+        </a></li>
+      </ul>
+
+      <h2>第一次来？</h2>
+      <p><a href="/zh/">首页</a>有简明版介绍和安装方式。五分钟上手路径：安装，
+      打开任意 <code>.md</code> 文件或装满它们的文件夹，再粘贴一个 GitHub PR 链接
+      （或者就是一个 <code>github.com/…/blob/…</code> 链接），看它渲染出来。
+      接下来交给<a href="/zh/docs/features/">功能导览</a>。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

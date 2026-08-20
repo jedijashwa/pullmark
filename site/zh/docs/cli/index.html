@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>命令行 — PullMark 文档</title>
+<meta name="description" content="pullmark 命令：在 shell 里把文件、文件夹和 git 工作树在 PullMark 中打开。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/cli/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/cli/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/cli/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/cli/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/cli/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/cli/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/cli/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/cli/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/cli/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/cli/">
+<meta property="og:title" content="命令行 — PullMark 文档">
+<meta property="og:description" content="pullmark 命令：在 shell 里把文件、文件夹和 git 工作树在 PullMark 中打开。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/cli/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/" aria-current="page">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>命令行</h1>
+      <p class="article-lede">一条命令，<code>pullmark</code>，把文件和
+      文件夹递给应用。既为终端里的人而造，也为想把文档摆到你面前的智能体
+      和脚本而造。</p>
+
+      <h2 id="install">安装命令</h2>
+      <p>你怎么装的 PullMark，决定你怎么得到这条命令：</p>
+      <ul>
+        <li><strong>Homebrew</strong>——已经装好；cask 会把
+        <code>pullmark</code> 链接进你的 brew 前缀。</li>
+        <li><strong>DMG</strong>——打开 <strong>Settings&nbsp;(⌘,) → General</strong>，
+        点击 <strong>Install pullmark Command…</strong>；它会把命令链接进
+        <code>/usr/local/bin</code>（可能会要求授权）。</li>
+        <li><strong>源码检出</strong>——<code>make install-cli</code>
+        （加 <code>BIN_DIR=~/bin</code> 可自选位置）。</li>
+      </ul>
+      <p>基本用法其实不装也行——<code>open&nbsp;-a&nbsp;PullMark README.md ~/notes</code>
+      借 macOS 自身就能做到同样的事。</p>
+
+      <h2 id="usage">用法</h2>
+<pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
+pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># open files as rendered diffs vs HEAD</span>
+pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
+                             <span class="c"># … vs a branch, tag, or commit</span>
+pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
+                             <span class="c"># the file at two refs, both frozen</span>
+pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
+                             <span class="c"># … vs another file on disk</span>
+pullmark -h, --help          <span class="c"># the built-in reference</span>
+pullmark --version           <span class="c"># print the app version</span></code></pre>
+
+      <h2 id="semantics">打开时会发生什么</h2>
+      <p>规则刻意乏味，好让脚本可以放心依赖：</p>
+      <ul>
+        <li><strong>文件</strong>落进侧边栏的
+        <a href="/zh/docs/sidebar/#open-files">Open Files</a> 分区，作为固定
+        条目，最后传入的文件会被显示。</li>
+        <li><strong>文件夹</strong>——包括 git 工作树——成为
+        <a href="/zh/docs/sidebar/#locations">Locations</a>：其中 Markdown
+        文件的可浏览树。</li>
+        <li><strong>应用已在运行？</strong>一切都在最前面的窗口打开。绝不会
+        启动第二个应用实例。</li>
+        <li><strong>相对路径</strong>相对你的当前目录解析；<code>~</code>
+        照常工作。</li>
+        <li><strong>不存在的路径会中止整条命令</strong>，并给出一条消息和
+        退出码 1——不会打开一半。</li>
+      </ul>
+
+      <h2 id="worktrees">工作树，以及指定单个文件</h2>
+      <p>同时传一个文件夹和一个文件，两种行为一起发生：文件夹作为 Location
+      打开，文件固定并显示。这就是“打开这个工作树、给我看这份文档”的
+      完整配方：</p>
+<pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
+      <p>工作树的文件树进入 Locations（带分支标签，因为工作树就是一个 git
+      检出），<code>plan.md</code> 固定在 Open Files 中并渲染出来。右键它选
+      <strong>Reveal in Location</strong>（在位置中显示）即可跳到它在树中的
+      位置。Location 已经打开时行为完全相同——打开位于其中的文件绝不会
+      造出一个重复的世界，只会多一条工作集条目。</p>
+      <p>文件夹/文件的配对不看顺序，但显示的是<em>最后</em>传入的文件，
+      所以把你想上屏的文档放在最后。</p>
+
+      <h2 id="diff">来自 shell 的渲染差异</h2>
+      <p><code>--diff</code> 让每个文件以<em>比较状态</em>打开——工作内容
+      对比最后一次提交，呈现为拉取请求同款的渲染词级差异。
+      <code>--diff=&lt;ref&gt;</code> 改为对比某个分支、标签或提交 SHA。
+      它是通往应用内 Compare（比较）功能（工具栏的时钟加箭头按钮）的
+      shell 之门，也是“智能体刚对这份文档做了什么”的最快答案：</p>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># current file vs main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># between two revisions, both frozen</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># two files, old.md the baseline</span>
+<span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
+                                          <span class="c"># a worktree, plan.md diffed</span></code></pre>
+      <p>一同传入的文件夹照常作为 Location 打开，每种形式在工具栏的
+      Compare 菜单里都有应用内的孪生兄弟（包括
+      <strong>Compare Revisions…</strong> 和 <strong>Compare with
+      File…</strong>）。因为 <code>--diff</code> 和 <code>--diff-with</code>
+      是旗标而非子命令，一个恰好叫 <code>diff</code> 的文件永远会被正常
+      打开。</p>
+
+      <h2 id="exit-codes">退出码</h2>
+      <table>
+        <tr><th>代码</th><th>含义</th></tr>
+        <tr><td><code>0</code></td><td>一切都递给了 PullMark。</td></tr>
+        <tr><td><code>1</code></td><td>某个路径不存在（每个缺失路径都打印到 stderr）。</td></tr>
+        <tr><td><code>64</code></td><td>用法错误——未知选项、<code>--diff</code> 没带文件，或 <code>--diff=</code> 没带引用。</td></tr>
+      </table>
+
+      <h2 id="examples">示例</h2>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># read one file</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
+
+      <h2 id="agents">给智能体的说明</h2>
+      <p>如果你要把 PullMark 接进智能体或脚本：</p>
+      <ul>
+        <li>命令在 macOS 接受打开请求后立即返回——它不等应用渲染
+        完成。</li>
+        <li>重复打开是幂等的：已打开的文件或文件夹会被选中，不会
+        重复。</li>
+        <li>一切都落在最前面的窗口，这是设计使然——盯着一个窗口的人能
+        看到每次打开都到那里去。</li>
+        <li>编辑完文档之后，<code>pullmark --diff &lt;file&gt;</code> 是把
+        <em>你改了什么</em>摆到人面前的一行代码——渲染呈现，改动的词
+        高亮。</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/cli/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/cli/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/cli/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/cli/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/cli/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/cli/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/cli/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/cli/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

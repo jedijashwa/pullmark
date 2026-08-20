@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linha de comando — Documentação do PullMark</title>
+<meta name="description" content="O comando pullmark: abra arquivos, pastas e worktrees git no PullMark a partir do shell.">
+<link rel="canonical" href="https://pullmark.app/pt/docs/cli/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/cli/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/cli/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/cli/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/cli/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/cli/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/cli/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/cli/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/cli/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/cli/">
+<meta property="og:title" content="Linha de comando — Documentação do PullMark">
+<meta property="og:description" content="O comando pullmark: abra arquivos, pastas e worktrees git no PullMark a partir do shell.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/pt/docs/cli/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/pt/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/pt/docs/" aria-current="true">Documentação</a>
+      <a href="/pt/uses/agents/">Casos de uso</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Documentação">
+      <p class="docs-nav-title">Documentação</p>
+      <ul>
+        <li><a href="/pt/docs/">Visão geral</a></li>
+        <li><a href="/pt/docs/features/">Recursos</a></li>
+        <li><a href="/pt/docs/sidebar/">A barra lateral</a></li>
+        <li><a href="/pt/docs/toolbar/">A barra de ferramentas</a></li>
+        <li><a href="/pt/docs/settings/">Ajustes</a></li>
+        <li><a href="/pt/docs/shortcuts/">Atalhos de teclado</a></li>
+        <li><a href="/pt/docs/cli/" aria-current="page">Linha de comando</a></li>
+        <li><a href="/pt/docs/troubleshooting/">Solução de problemas</a></li>
+        <li><a href="/pt/docs/experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>A linha de comando</h1>
+      <p class="article-lede">Um comando, <code>pullmark</code>, que entrega
+      arquivos e pastas ao app. Feito para humanos num terminal e para
+      agentes e scripts que querem colocar um documento na sua frente.</p>
+
+      <h2 id="install">Instalando o comando</h2>
+      <p>Como você obteve o PullMark decide como você obtém o comando:</p>
+      <ul>
+        <li><strong>Homebrew</strong> — já instalado; o cask vincula o
+        <code>pullmark</code> ao seu prefixo do brew.</li>
+        <li><strong>DMG</strong> — abra <strong>Settings&nbsp;(⌘,) → General</strong>
+        e clique em <strong>Install pullmark Command…</strong>; ele vincula o
+        comando em <code>/usr/local/bin</code> (talvez você precise
+        autorizar).</li>
+        <li><strong>Checkout do código-fonte</strong> — <code>make install-cli</code>
+        (adicione <code>BIN_DIR=~/bin</code> para escolher onde).</li>
+      </ul>
+      <p>Para o básico, nem precisa instalar —
+      <code>open&nbsp;-a&nbsp;PullMark README.md ~/notes</code> faz o mesmo
+      pelo próprio macOS.</p>
+
+      <h2 id="usage">Uso</h2>
+<pre><code>pullmark                     <span class="c"># abre (ou foca) o PullMark</span>
+pullmark &lt;path&gt; ...          <span class="c"># abre arquivos e/ou pastas</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># abre arquivos como diffs renderizados vs HEAD</span>
+pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
+                             <span class="c"># … vs uma branch, tag ou commit</span>
+pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
+                             <span class="c"># o arquivo em duas refs, ambas congeladas</span>
+pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
+                             <span class="c"># … vs outro arquivo no disco</span>
+pullmark -h, --help          <span class="c"># a referência embutida</span>
+pullmark --version           <span class="c"># imprime a versão do app</span></code></pre>
+
+      <h2 id="semantics">O que abrir faz</h2>
+      <p>As regras são deliberadamente sem graça, para um script poder
+      confiar nelas:</p>
+      <ul>
+        <li><strong>Arquivos</strong> caem na seção
+        <a href="/pt/docs/sidebar/#open-files">Open Files</a> (arquivos
+        abertos) da barra lateral como entradas fixadas, e o último arquivo
+        passado é o exibido.</li>
+        <li><strong>Pastas</strong> — incluindo worktrees git — viram
+        <a href="/pt/docs/sidebar/#locations">Locations</a>: árvores
+        navegáveis dos arquivos Markdown lá dentro.</li>
+        <li><strong>Já em execução?</strong> Tudo abre na janela da frente.
+        Uma segunda instância do app nunca é iniciada.</li>
+        <li><strong>Caminhos relativos</strong> resolvem contra o seu
+        diretório atual; <code>~</code> funciona como sempre.</li>
+        <li><strong>Um caminho que não existe aborta o comando inteiro</strong>
+        com uma mensagem e código de saída 1 — nada abre pela metade.</li>
+      </ul>
+
+      <h2 id="worktrees">Worktrees, e apontando para um arquivo</h2>
+      <p>Passe uma pasta e um arquivo juntos e você ganha os dois
+      comportamentos de uma vez: a pasta abre como Location, o arquivo abre
+      fixado e exibido. Essa é a receita inteira de “abra esta worktree e me
+      mostre este doc”:</p>
+<pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
+      <p>A árvore da worktree cai em Locations (com seu chip de branch, já
+      que uma worktree é só um checkout git), <code>plan.md</code> fica
+      fixado em Open Files e renderizado. Clique nele com o botão direito e
+      escolha <strong>Reveal in Location</strong> (revelar no Location) para
+      pular até onde ele está na árvore. Funciona igual quando o Location já
+      estava aberto — abrir um arquivo que mora dentro dele nunca cria um
+      mundo duplicado, só uma entrada no conjunto de trabalho.</p>
+      <p>A ordem não importa para o par pasta/arquivo, mas o <em>último
+      arquivo</em> passado é o exibido, então deixe por último o documento
+      que você quer na tela.</p>
+
+      <h2 id="diff">Diffs renderizados a partir do shell</h2>
+      <p><code>--diff</code> abre cada arquivo <em>comparando</em> — seu
+      conteúdo de trabalho contra o último commit, mostrado como o mesmo
+      diff renderizado, palavra por palavra, que os pull requests recebem.
+      <code>--diff=&lt;ref&gt;</code> compara contra uma branch, tag ou SHA
+      de commit. É a porta de shell para o recurso Compare do app (o botão
+      de relógio com chevron da barra de ferramentas), e a resposta mais
+      rápida para “o que o agente acabou de fazer com este documento”:</p>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># o que as últimas edições mudaram</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># o arquivo atual vs a main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># entre duas revisões, ambas congeladas</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># dois arquivos, old.md como base</span>
+<span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
+                                          <span class="c"># uma worktree, plan.md em diff</span></code></pre>
+      <p>Pastas passadas junto ainda abrem como Locations, e cada forma tem
+      um gêmeo dentro do app no menu Compare da barra de ferramentas
+      (incluindo <strong>Compare Revisions…</strong> e <strong>Compare with
+      File…</strong>). Como <code>--diff</code> e <code>--diff-with</code>
+      são flags, nunca subcomandos, um arquivo que por acaso se chame
+      <code>diff</code> sempre simplesmente abre.</p>
+
+      <h2 id="exit-codes">Códigos de saída</h2>
+      <table>
+        <tr><th>Código</th><th>Significado</th></tr>
+        <tr><td><code>0</code></td><td>Tudo foi entregue ao PullMark.</td></tr>
+        <tr><td><code>1</code></td><td>Um caminho não existia (cada um que falta é impresso no stderr).</td></tr>
+        <tr><td><code>64</code></td><td>Uso incorreto — uma opção desconhecida, <code>--diff</code> sem arquivo ou <code>--diff=</code> sem ref.</td></tr>
+      </table>
+
+      <h2 id="examples">Exemplos</h2>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># ler um arquivo</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># navegar por uma pasta</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># um Location mais um documento</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># uma worktree, exibindo um doc</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># o que as últimas edições mudaram</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- encerra a análise de opções</span></code></pre>
+
+      <h2 id="agents">Notas para agentes</h2>
+      <p>Se você está ligando o PullMark a um agente ou script:</p>
+      <ul>
+        <li>O comando retorna assim que o macOS aceita a abertura — ele não
+        espera o app renderizar.</li>
+        <li>Repetir uma abertura é idempotente: um arquivo ou pasta já
+        aberto é selecionado, não duplicado.</li>
+        <li>Tudo chega à janela da frente por design, então um humano
+        observando uma janela vê cada abertura chegar ali.</li>
+        <li>Depois de editar um documento, <code>pullmark --diff &lt;arquivo&gt;</code>
+        é o jeito de uma linha de colocar <em>o que você mudou</em> na
+        frente do humano — renderizado, com as palavras alteradas em
+        destaque.</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licença MIT</a>
+    <a href="/licenses/">Licenças de código aberto</a>
+    <a href="/privacy/">Privacidade</a>
+    <a href="https://ko-fi.com/pullmark">Apoie o PullMark&nbsp;♥</a>
+    <span class="note">O PullMark não é afiliado ao GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Idioma">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Idioma</span>
+    <a href="/docs/cli/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/cli/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/cli/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/cli/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/cli/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/cli/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/cli/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/cli/" hreflang="pt-BR" lang="pt-BR" aria-current="true">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

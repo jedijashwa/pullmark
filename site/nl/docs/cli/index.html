@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command line — PullMark Docs</title>
+<meta name="description" content="Het pullmark-commando: open bestanden, mappen en git-worktrees in PullMark vanuit je shell.">
+<link rel="canonical" href="https://pullmark.app/nl/docs/cli/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/cli/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/cli/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/cli/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/cli/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/cli/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/cli/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/cli/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/cli/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/cli/">
+<meta property="og:title" content="Command line — PullMark Docs">
+<meta property="og:description" content="Het pullmark-commando: open bestanden, mappen en git-worktrees in PullMark vanuit je shell.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/nl/docs/cli/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hoofdnavigatie">
+    <a class="brand" href="/nl/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/nl/docs/" aria-current="true">Docs</a>
+      <a href="/nl/uses/agents/">Toepassingen</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/nl/docs/">Overzicht</a></li>
+        <li><a href="/nl/docs/features/">Functies</a></li>
+        <li><a href="/nl/docs/sidebar/">De zijbalk</a></li>
+        <li><a href="/nl/docs/toolbar/">De toolbar</a></li>
+        <li><a href="/nl/docs/settings/">Instellingen</a></li>
+        <li><a href="/nl/docs/shortcuts/">Sneltoetsen</a></li>
+        <li><a href="/nl/docs/cli/" aria-current="page">Command line</a></li>
+        <li><a href="/nl/docs/troubleshooting/">Problemen oplossen</a></li>
+        <li><a href="/nl/docs/experimental/">Experimenteel</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>De command line</h1>
+      <p class="article-lede">Eén commando, <code>pullmark</code>, dat
+      bestanden en mappen aan de app doorgeeft. Gebouwd voor mensen in een
+      terminal én voor agents en scripts die jou een document willen
+      voorleggen.</p>
+
+      <h2 id="install">Het commando installeren</h2>
+      <p>Hoe je aan PullMark kwam bepaalt hoe je aan het commando komt:</p>
+      <ul>
+        <li><strong>Homebrew</strong> — al geïnstalleerd; de cask linkt
+        <code>pullmark</code> in je brew-prefix.</li>
+        <li><strong>DMG</strong> — open <strong>Settings&nbsp;(⌘,) → General</strong>
+        en klik op <strong>Install pullmark Command…</strong>; dat linkt
+        het commando in <code>/usr/local/bin</code> (mogelijk wordt om
+        toestemming gevraagd).</li>
+        <li><strong>Broncheckout</strong> — <code>make install-cli</code>
+        (voeg <code>BIN_DIR=~/bin</code> toe om te kiezen waar).</li>
+      </ul>
+      <p>Voor de basis is er hoe dan ook geen installatie nodig —
+      <code>open&nbsp;-a&nbsp;PullMark README.md ~/notes</code> doet
+      hetzelfde via macOS zelf.</p>
+
+      <h2 id="usage">Gebruik</h2>
+<pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
+pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># open files as rendered diffs vs HEAD</span>
+pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
+                             <span class="c"># … vs a branch, tag, or commit</span>
+pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
+                             <span class="c"># the file at two refs, both frozen</span>
+pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
+                             <span class="c"># … vs another file on disk</span>
+pullmark -h, --help          <span class="c"># the built-in reference</span>
+pullmark --version           <span class="c"># print the app version</span></code></pre>
+
+      <h2 id="semantics">Wat openen doet</h2>
+      <p>De regels zijn met opzet saai, zodat een script erop kan
+      bouwen:</p>
+      <ul>
+        <li><strong>Bestanden</strong> landen in de sectie
+        <a href="/nl/docs/sidebar/#open-files">Open Files</a> van de zijbalk
+        als vastgezette regels, en het laatst doorgegeven bestand wordt
+        getoond.</li>
+        <li><strong>Mappen</strong> — inclusief git-worktrees — worden
+        <a href="/nl/docs/sidebar/#locations">Locations</a>: doorbladerbare
+        bomen van de Markdown-bestanden erin.</li>
+        <li><strong>Draait de app al?</strong> Alles opent in het voorste
+        venster. Er wordt nooit een tweede app-instantie gestart.</li>
+        <li><strong>Relatieve paden</strong> lossen op tegen je huidige
+        directory; <code>~</code> werkt zoals gewoonlijk.</li>
+        <li><strong>Een pad dat niet bestaat breekt het hele commando
+        af</strong> met een melding en exitcode 1 — er opent niets
+        half.</li>
+      </ul>
+
+      <h2 id="worktrees">Worktrees, en naar één bestand wijzen</h2>
+      <p>Geef een map en een bestand samen door en je krijgt beide
+      gedragingen tegelijk: de map opent als Location, het bestand opent
+      vastgezet en wordt getoond. Dat is het hele recept voor "open deze
+      worktree en laat me dit doc zien":</p>
+<pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
+      <p>De boom van de worktree landt in Locations (met zijn branch-chip,
+      want een worktree is gewoon een git-checkout), <code>plan.md</code>
+      wordt vastgezet in Open Files en gerenderd. Rechtsklik erop en kies
+      <strong>Reveal in Location</strong> om te springen naar waar het in
+      de boom zit. Dit werkt hetzelfde wanneer de Location al open was —
+      een bestand openen dat erin woont maakt nooit een dubbele wereld,
+      alleen een regel in de werkset.</p>
+      <p>De volgorde maakt niet uit voor het map/bestand-paar, maar het
+      <em>laatste bestand</em> dat je doorgeeft is het bestand dat wordt
+      getoond — zet het document dat je op het scherm wilt dus
+      achteraan.</p>
+
+      <h2 id="diff">Gerenderde diffs vanuit de shell</h2>
+      <p><code>--diff</code> opent elk bestand <em>vergelijkend</em> — de
+      werkinhoud tegen de laatste commit, getoond als dezelfde gerenderde
+      diff op woordniveau die pull requests krijgen.
+      <code>--diff=&lt;ref&gt;</code> vergelijkt in plaats daarvan met een
+      branch, tag of commit-SHA. Het is de shelldeur naar de
+      Compare-functie van de app (de klok-met-chevron-knop in de toolbar),
+      en het snelste antwoord op "wat heeft de agent net met dit document
+      gedaan":</p>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># current file vs main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># between two revisions, both frozen</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># two files, old.md the baseline</span>
+<span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
+                                          <span class="c"># a worktree, plan.md diffed</span></code></pre>
+      <p>Mappen die je erbij doorgeeft openen nog steeds als Locations, en
+      elke vorm heeft een tweelingbroer in de app, in het Compare-menu van
+      de toolbar (inclusief <strong>Compare Revisions…</strong> en
+      <strong>Compare with File…</strong>). Omdat <code>--diff</code> en
+      <code>--diff-with</code> flags zijn en nooit subcommando's, opent een
+      bestand dat toevallig <code>diff</code> heet altijd gewoon.</p>
+
+      <h2 id="exit-codes">Exitcodes</h2>
+      <table>
+        <tr><th>Code</th><th>Betekenis</th></tr>
+        <tr><td><code>0</code></td><td>Alles is aan PullMark doorgegeven.</td></tr>
+        <tr><td><code>1</code></td><td>Een pad bestond niet (elk ontbrekend pad wordt naar stderr geprint).</td></tr>
+        <tr><td><code>64</code></td><td>Verkeerd gebruik — een onbekende optie, <code>--diff</code> zonder bestand, of <code>--diff=</code> zonder ref.</td></tr>
+      </table>
+
+      <h2 id="examples">Voorbeelden</h2>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># read one file</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
+
+      <h2 id="agents">Aantekeningen voor agents</h2>
+      <p>Als je PullMark in een agent of script inbouwt:</p>
+      <ul>
+        <li>Het commando keert terug zodra macOS de open accepteert — het
+        wacht niet tot de app heeft gerenderd.</li>
+        <li>Een open herhalen is idempotent: een al geopend bestand of map
+        wordt geselecteerd, niet gedupliceerd.</li>
+        <li>Alles landt bewust in het voorste venster, zodat een mens die
+        naar één venster kijkt elke open daar ziet aankomen.</li>
+        <li>Na het bewerken van een document is
+        <code>pullmark --diff &lt;file&gt;</code> de éénregelige manier om
+        <em>wat je veranderde</em> aan de mens voor te leggen — gerenderd,
+        met de gewijzigde woorden gemarkeerd.</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-licentie</a>
+    <a href="/licenses/">Opensourcelicenties</a>
+    <a href="/privacy/">Privacy</a>
+    <a href="https://ko-fi.com/pullmark">Steun PullMark&nbsp;♥</a>
+    <span class="note">PullMark is niet verbonden aan GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Taal">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Taal</span>
+    <a href="/docs/cli/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/cli/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/cli/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/cli/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/cli/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/cli/" hreflang="nl" lang="nl" aria-current="true">Nederlands</a>
+    <a href="/es/docs/cli/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/cli/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>
