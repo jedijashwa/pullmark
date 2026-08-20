@@ -47,7 +47,7 @@ def problem(msg):
 # String.LocalizationValue renders them (\(x) → %@ by default — matches
 # String(localized:) runtime behavior for the common String/Int cases
 # only approximately; interpolated SwiftUI literals are flagged).
-SWIFTUI_CALLS = r"(?:Text|Button|Label|Toggle|Picker|TextField|Menu|Section|CommandMenu)"
+SWIFTUI_CALLS = r"(?:Text|Button|Label|Toggle|Picker|TextField|Menu|Section|CommandMenu|Link)"
 
 STRING_LIT = r'"(?:[^"\\\n]|\\.)*"'
 

@@ -577,3 +577,9 @@
 "· opens in browser" = "· öffnet im Browser";
 "{n} comment — click to expand" = "{n} Kommentar — zum Aufklappen klicken";
 "{n} comments — click to expand" = "{n} Kommentare — zum Aufklappen klicken";
+"Closed" = "Geschlossen";
+"Draft" = "Entwurf";
+"Merged" = "Zusammengeführt";
+"Unavailable" = "Nicht verfügbar";
+"View on GitHub" = "Auf GitHub anzeigen";
+"View all checks on GitHub" = "Alle Checks auf GitHub anzeigen";

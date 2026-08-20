@@ -1,19 +1,11 @@
 {
  "added": [
-  "%@ Markdown files changed",
-  "%@ other files not shown",
-  "1 Markdown file changed",
-  "1 other file not shown",
-  "Approved",
-  "Changes requested",
-  "Checks awaiting approval",
-  "Checks failed",
-  "Checks passed",
-  "Checks running",
-  "Resolve",
-  "Resolved",
-  "Review required",
-  "Unresolve"
+  "Closed",
+  "Draft",
+  "Merged",
+  "Unavailable",
+  "View all checks on GitHub",
+  "View on GitHub"
  ],
  "removed": []
 }

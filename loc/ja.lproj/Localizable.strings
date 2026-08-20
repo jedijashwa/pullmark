@@ -574,3 +574,9 @@
 "· opens in browser" = "· ブラウザで開きます";
 "{n} comment — click to expand" = "{n} 件のコメント — クリックで展開";
 "{n} comments — click to expand" = "{n} 件のコメント — クリックで展開";
+"Closed" = "クローズ";
+"Draft" = "ドラフト";
+"Merged" = "マージ済み";
+"Unavailable" = "利用できません";
+"View on GitHub" = "GitHub で表示";
+"View all checks on GitHub" = "GitHub ですべてのチェックを表示";

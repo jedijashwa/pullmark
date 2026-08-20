@@ -574,3 +574,9 @@
 "· opens in browser" = "· 在浏览器中打开";
 "{n} comment — click to expand" = "{n} 条评论 — 点击展开";
 "{n} comments — click to expand" = "{n} 条评论 — 点击展开";
+"Closed" = "已关闭";
+"Draft" = "草稿";
+"Merged" = "已合并";
+"Unavailable" = "不可用";
+"View on GitHub" = "在 GitHub 上查看";
+"View all checks on GitHub" = "在 GitHub 上查看所有检查";
