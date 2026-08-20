@@ -19,6 +19,7 @@ build:
 
 test:
 	swift test $(TEST_FLAGS)
+	python3 scripts/check-strings.py
 
 app:
 	./scripts/make-app.sh
