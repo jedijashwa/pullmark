@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fehlerbehebung — PullMark-Doku</title>
+<meta name="description" content="PullMarks Fehlermeldungen erklärt, plus die Fixes für Gatekeeper, GitHub-Authentifizierung und Quick Look.">
+<link rel="canonical" href="https://pullmark.app/de/docs/troubleshooting/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/troubleshooting/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/troubleshooting/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/troubleshooting/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/troubleshooting/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/troubleshooting/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/troubleshooting/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/troubleshooting/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/troubleshooting/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/troubleshooting/">
+<meta property="og:title" content="Fehlerbehebung — PullMark-Doku">
+<meta property="og:description" content="PullMarks Fehlermeldungen erklärt, plus die Fixes für Gatekeeper, GitHub-Authentifizierung und Quick Look.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/de/docs/troubleshooting/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hauptnavigation">
+    <a class="brand" href="/de/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/de/docs/" aria-current="true">Docs</a>
+      <a href="/de/uses/agents/">Anwendungsfälle</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Doku">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/de/docs/">Überblick</a></li>
+        <li><a href="/de/docs/features/">Features</a></li>
+        <li><a href="/de/docs/sidebar/">Die Seitenleiste</a></li>
+        <li><a href="/de/docs/toolbar/">Die Toolbar</a></li>
+        <li><a href="/de/docs/settings/">Einstellungen</a></li>
+        <li><a href="/de/docs/shortcuts/">Tastaturkürzel</a></li>
+        <li><a href="/de/docs/cli/">Kommandozeile</a></li>
+        <li><a href="/de/docs/troubleshooting/" aria-current="page">Fehlerbehebung</a></li>
+        <li><a href="/de/docs/experimental/">Experimentell</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Fehlerbehebung</h1>
+      <p class="article-lede">Die paar Dinge, die schiefgehen, was PullMarks
+      Meldungen bedeuten, und das Design hinter den leiseren Fehlschlägen — die
+      meisten „Fehler" hier sind die App, die sich absichtlich weigert, deine
+      Arbeit zu verlieren.</p>
+
+      <h2 id="github-access">GitHub-Zugriff: wie PullMark sich verbindet — und wie du es reparierst</h2>
+      <p>PullMark leiht sich die GitHub-Zugangsdaten, die deine eigenen Tools
+      längst haben — es hat kein eigenes Login und legt nie ein Geheimnis ab.
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> zeigt,
+      ob es verbunden ist, als wer und über welche Quelle;
+      <em>Set&nbsp;Up…</em> führt eine frische Maschine durchs Verbinden, und
+      <em>Check&nbsp;Again</em> greift eine Reparatur sofort auf — nach
+      <code>gh auth login</code> ohne Neustart.</p>
+      <p class="table-note">Liest du das auf dem Mac, auf dem PullMark
+      (ab 0.36) installiert ist?
+      <a href="pullmark://settings/general/github">Die Verbindungs-Zeile
+      jetzt öffnen</a>.</p>
+      <p>Die Quellen für Zugangsdaten, in der Reihenfolge, in der PullMark sie
+      probiert:</p>
+      <ol>
+        <li>Das Token der <a href="https://cli.github.com">GitHub CLI</a>:
+        <code>gh auth token</code> muss eines ausgeben. Wenn nicht,
+        <code>brew install gh &amp;&amp; gh auth login</code> — der empfohlene
+        Weg: Sein Token hat erwiesenermaßen passende Scopes, erledigt SSO im
+        Browser-Flow und erneuert sich selbst.</li>
+        <li>Sonst <code>git credential fill</code> — was auch immer git selbst
+        für github.com benutzt (macOS-Schlüsselbund, Git Credential Manager,
+        ein Token von einem alten HTTPS-Push).</li>
+      </ol>
+      <p>Das Kleingedruckte, für Tokens, die halb funktionieren: Klassische
+      Tokens brauchen den <code>repo</code>-Scope (und <code>read:org</code>
+      für die Team-Namen einer Org); <strong>fine-grained Tokens hängen an
+      genau einem Resource Owner</strong> — öffentliche Repos und die privaten
+      Repos dieses Owners gehen, alles andere wird abgelehnt; SSO-geschützte
+      Orgs brauchen ein Token, das für jede Org autorisiert ist; und von Hand
+      angelegte Tokens laufen ab — die Zeile in den Einstellungen ist der Ort,
+      an dem sich „ging gestern noch" diagnostizieren lässt.</p>
+
+      <h2 id="github-auth">GitHub: „may not exist… or may be a private repository"</h2>
+      <p><em>„Couldn't open … It may not exist at that ref, or it may be a
+      private repository your GitHub credentials can't access."</em> (Gibt es
+      an diesem Ref nicht — oder es ist ein privates Repo, an das deine
+      GitHub-Zugangsdaten nicht herankommen.) GitHubs API meldet
+      privat-ohne-Zugriff und gibt-es-nicht identisch, PullMark kann dir also
+      nicht sagen, was von beidem es ist. Sollte das Repo eigentlich gehen,
+      liegt es fast immer an der Authentifizierung — siehe
+      <a href="#github-access">GitHub-Zugriff</a> weiter oben, oder öffne
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> und
+      drück <em>Set&nbsp;Up…</em>.</p>
+
+      <h2 id="gatekeeper">Gatekeeper lässt die App nicht starten</h2>
+      <p>Releases sind mit einer Developer ID signiert und von Apple
+      notarisiert, ein normaler Download zeigt also keine Warnung. Hast du aus
+      dem Quelltext gebaut (<code>make app</code>), ist die App ad-hoc
+      signiert: Rechtsklick → <strong>Öffnen</strong> →
+      <strong>Öffnen</strong>, oder gib sie unter Systemeinstellungen →
+      Datenschutz &amp; Sicherheit frei.</p>
+
+      <h2 id="quick-look">Quick-Look-Vorschauen rendern nicht mehr</h2>
+      <p>Ein Homebrew-Upgrade ersetzt das App-Bundle, und dabei kann die
+      Registrierung der Quick-Look-Erweiterung stillschweigend verloren gehen.
+      PullMark meldet sie bei jedem Start neu an — starte die App also einfach
+      einmal. Zeigen die Vorschauen danach immer noch rohen Text, prüf, ob
+      Settings → General → „Quick Look previews" auf Rendered steht.</p>
+
+      <h2 id="default-app">„PullMark is no longer your default Markdown app"</h2>
+      <p>Dieselbe Ursache: Ein Upgrade hat das Bundle ersetzt und macOS hat die
+      <code>.md</code>-Zuordnung verworfen. Das <strong>Make Default
+      Again</strong> im Banner holt sie zurück; Settings → General
+      genauso.</p>
+
+      <h2 id="editing">„… changed while you were editing this block — nothing was saved"</h2>
+      <p>Die Datei hat sich auf der Platte geändert (ein anderer Editor, ein
+      Agent, eine Git-Operation), zwischen dem Öffnen des Block-Editors und dem
+      Speichern. PullMark weigert sich, in Zeilen hineinzuschreiben, die
+      verrutscht sind — verloren ist nichts außer der einen Änderung, und wenn
+      du den Block wieder öffnest, steht der aktuelle Text da. Dieselbe
+      Absicherung schützt Commits: Ein Vergleich gegen einen Ref, an dem es die
+      Datei gar nicht gibt, wird schlicht gemeldet, statt ein leeres Diff zu
+      zeigen.</p>
+
+      <h2 id="dimmed">Gedimmte Zeilen: Ordner und Recents, die „nicht da" sind</h2>
+      <p>Eine Location mit Fragezeichen-Badge oder ein ausgegrautes Recent
+      heißt: Der Pfad löst gerade nicht auf — ein nicht eingebundenes Volume,
+      ein gewechselter Git-Branch, ein gelöschter Worktree. Zeilen dimmen
+      absichtlich, statt zu verschwinden: Sie erwachen von selbst wieder, wenn
+      der Pfad zurückkommt. Klickst du ein totes Recent an, gibt es
+      <strong>Remove from Recents</strong> oder <strong>Keep</strong>.</p>
+
+      <h2 id="pr-sync">Pull Requests: Banner und ausstehende Kommentare</h2>
+      <ul>
+        <li><em>„This pull request was updated on GitHub."</em> — der Branch
+        hat sich bewegt, seit du ihn geladen hast. Aktualisieren ist ein Klick
+        und deine Kommentar-Entwürfe überleben; PullMark lädt nie von selbst
+        neu, während ein Review läuft.</li>
+        <li><em>„Review comments couldn't be loaded…"</em> — sonst gäbe sich
+        das Diff als PR ohne Kommentare aus; Retry holt sie erneut.</li>
+        <li><em>„Could not upload N pending comment(s)… kept locally for
+        retry."</em> — offline geschriebene Kommentare (oder solche, die einen
+        API-Schluckauf erwischt haben) warten pro PR-Head auf der Platte in der
+        Queue und laden hoch, sobald es geht. Nichts geht verloren.</li>
+        <li><em>„Committed …, but the push failed"</em> — der Commit liegt
+        sicher in deiner lokalen Historie; nur der Push muss noch einmal.</li>
+      </ul>
+
+      <h2 id="updates">Updates</h2>
+      <p>Das <strong>Update Now</strong> im Banner führt das Brew-Upgrade aus
+      (oder, bei DMG-Installationen, eine geprüfte Installation an Ort und
+      Stelle) und startet neu. Schlägt das fehl, zeigt das Banner den exakten
+      Befehl <code>brew upgrade --cask pullmark</code> mit einem Copy-Knopf —
+      im Terminal ausgeführt tut er dasselbe. Entwicklungs-Builds suchen nicht
+      nach Updates.</p>
+
+      <h2 id="cli-troubles">Der pullmark-Befehl</h2>
+      <ul>
+        <li><em>„no such file or folder"</em> — der Befehl prüft jeden Pfad,
+        bevor er irgendetwas öffnet; ein Tippfehler bricht das ganze Öffnen ab
+        (Exit-Code 1), damit Skripte laut scheitern.</li>
+        <li><em>Command not found</em> — siehe
+        <a href="/de/docs/cli/#install">Den Befehl installieren</a>.</li>
+        <li><em>„Couldn't install the command"</em> — der Installer in den
+        Einstellungen braucht eine Freigabe, um nach <code>/usr/local/bin</code>
+        zu schreiben; hast du die Abfrage weggeklickt, brich ab und ruf sie
+        neu auf.</li>
+      </ul>
+
+      <h2 id="still-stuck">Kommst du trotzdem nicht weiter?</h2>
+      <p><a href="https://github.com/jedijashwa/pullmark/issues">Mach ein Issue
+      auf</a> — Help → Report a Bug… füllt eins schon aus der App heraus
+      vor.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-Lizenz</a>
+    <a href="/licenses/">Open-Source-Lizenzen</a>
+    <a href="/privacy/">Datenschutz</a>
+    <a href="https://ko-fi.com/pullmark">PullMark unterstützen&nbsp;♥</a>
+    <span class="note">PullMark steht in keiner Verbindung zu GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Sprache">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Sprache</span>
+    <a href="/docs/troubleshooting/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/troubleshooting/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/troubleshooting/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/troubleshooting/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/troubleshooting/" hreflang="de" lang="de" aria-current="true">Deutsch</a>
+    <a href="/nl/docs/troubleshooting/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/troubleshooting/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/troubleshooting/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

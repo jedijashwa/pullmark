@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>マージンノート — PullMark ドキュメント</title>
+<meta name="description" content="マージンノート。どんな Markdown ファイルにも PR 流のコメントを、署名付きの HTML コメントとしてファイルそのものに保存します。フォーマット仕様の全体と、エージェント向けの指示。">
+<link rel="canonical" href="https://pullmark.app/ja/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/margin-notes/">
+<meta property="og:title" content="マージンノート — PullMark ドキュメント">
+<meta property="og:description" content="マージンノート。どんな Markdown ファイルにも PR 流のコメントを、署名付きの HTML コメントとしてファイルそのものに保存します。フォーマット仕様の全体と、エージェント向けの指示。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/ja/docs/experimental/margin-notes/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="メイン">
+    <a class="brand" href="/ja/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/ja/docs/" aria-current="true">ドキュメント</a>
+      <a href="/ja/uses/agents/">ユースケース</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">リリース</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="ドキュメント">
+      <p class="docs-nav-title">ドキュメント</p>
+      <ul>
+        <li><a href="/ja/docs/">概要</a></li>
+        <li><a href="/ja/docs/features/">機能</a></li>
+        <li><a href="/ja/docs/sidebar/">サイドバー</a></li>
+        <li><a href="/ja/docs/toolbar/">ツールバー</a></li>
+        <li><a href="/ja/docs/settings/">設定</a></li>
+        <li><a href="/ja/docs/shortcuts/">キーボードショートカット</a></li>
+        <li><a href="/ja/docs/cli/">コマンドライン</a></li>
+        <li><a href="/ja/docs/troubleshooting/">トラブルシューティング</a></li>
+        <li><a href="/ja/docs/experimental/" aria-current="page">実験的機能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">ドキュメント / ベータ</p>
+      <h1>マージンノート<span class="beta-badge">beta</span></h1>
+      <p class="article-lede">ローカルのどんな Markdown 文書にも、プルリクエストにコメントするのと
+      同じ感覚でコメントできます——ただし、コメントが住むのはファイルそのもの。レンダリングされた
+      ページには現れない、ごく普通の HTML コメントとして。とりわけ、ひとつのループのために
+      作りました。エージェントがあなたに文書を書き、あなたは PullMark で読みながらノートを残し、
+      「ノートに対応して、済んだものは消しておいて」と言ってファイルを返す。
+      <a href="/ja/uses/agents/">エージェントのページ</a>が、スクリーンショット付きでそのループの
+      全体を追いかけます。</p>
+
+      <h2 id="using">PullMark で使う</h2>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？
+      <a href="pullmark://settings/experimental/margin-notes">マージンノートのスイッチへ
+      直行する</a>。</p>
+      <ul>
+        <li><strong>デフォルトで有効です</strong> — マージンノートは、有効な状態で出荷される
+        <a href="/ja/docs/experimental/">ベータの実験的機能</a>です（0.35 から）。はじめて手を
+        伸ばしたとき——ホバーの吹き出し、<kbd>⌥⌘M</kbd>、あるいは誰かが残したノートの
+        Edit / Delete——PullMark が機能を紹介します。ノートとは何か、エージェントに教えるための
+        コピーボタン、そして自分向けでなければ押せる Turn Off ボタン。スイッチは
+        <strong>Settings&nbsp;→&nbsp;Experimental</strong> にあり、そこが左右するのは書く側の
+        道具だけです。すでにノートを含む文書は、どちらの設定でも吹き出しを表示します
+        （読み取り専用で）。同僚やエージェントが注釈を付けたファイルが、黙って空っぽに
+        レンダリングされることはありません。</li>
+        <li><strong>ノートを足す</strong> — ローカル文書のどれかのブロックにホバーして、余白の
+        吹き出しをクリックします（PR にコメントするのと同じ手つきです）。リストの中では指している
+        その項目が、表の中ではその行が対象になります——淡い色づきが、ノートの付き先を正確に
+        教えてくれます。先にテキストを選択しておけば、選択部分を引用した状態でノートが開きます
+        ——段落ではなく一文を指し示すやり方です。<kbd>⌥⌘M</kbd> はいま読んでいるブロックに
+        ノートを残し、<strong>Edit&nbsp;→&nbsp;File Margin Note…</strong> は文書全体についての
+        ノートを、いちばん上に残します。</li>
+        <li><strong>Markdown で書く</strong> — 太字、コードスパン、フェンス付きコード、リンク、
+        リスト。<kbd>⌘↩</kbd> で保存します。1 回の保存は、ファイルへの 1 回の編集です
+        （取り消しは File&nbsp;→&nbsp;Revert Last Edit）。</li>
+        <li><strong>Edit / Delete</strong> — ノートの吹き出しにホバーすると操作が出ます。ノートを
+        削除することが、解決するということ。状態もアーカイブもありません——対応されたノートとは、
+        そこに無いノートです。</li>
+        <li><strong>チップ</strong> — 文書がまだノートを抱えているあいだ、Open Files の行には
+        コメント数のチップが付きます。それは生きています。エージェントがファイルを片づけながら
+        ノートを消していくにつれ、数は減り、吹き出しは目の前で消えていきます。</li>
+        <li><strong>そのほかの場所では</strong> — ブラウズ中の GitHub ファイルでは読み取り専用で
+        レンダリングされ、印刷にも、PDF／HTML の書き出しにも、Quick Look にも決して現れません。
+        <strong>View&nbsp;→&nbsp;Hide Margin Notes</strong> は、きれいな状態で読みたいときに
+        ページを片づけます。</li>
+        <li><strong>あなたの署名</strong> — ノートにはデフォルトで
+        <code>@your-github-login</code> の署名が入ります。変えるのは
+        Settings&nbsp;→&nbsp;Experimental の、この機能自身のスイッチのところです。</li>
+      </ul>
+
+      <h2 id="format">フォーマット</h2>
+      <p>マージンノートは、<code>note</code> というキーワードと作者タグを持つ HTML コメントで、
+      対象のブロックのあとに、単独の行として置かれます。</p>
+      <pre><code>Requests retry three times with exponential backoff.
+
+&lt;!-- note @josh: Section 2 says five times. Which is it? --&gt;</code></pre>
+      <p>ひとつのリスト項目についてのノートは、その項目の中に住みます——項目の内容にそろえて
+      インデントし、すき間なく詰めて。リストがひとつづきのまま保たれるためです。</p>
+      <pre><code>- First point
+  &lt;!-- note @josh: too vague — name the metric --&gt;
+- Second point</code></pre>
+      <p>長いノートは、閉じマーカーを独立した行に置きます。本文は完全な Markdown で、空行も
+      フェンス付きコードも含められます。</p>
+      <pre><code>&lt;!-- note @josh:
+This contradicts the design doc. Either reconcile them or
+drop this section.
+
+```suggestion
+Requests retry five times with exponential backoff.
+```
+--&gt;</code></pre>
+      <p>文法の全体は、こうです。</p>
+      <table>
+        <tr><th>ルール</th><th>詳細</th></tr>
+        <tr><td>マーカー</td><td><code>&lt;!-- note @</code> がノートの始まりです。普通の
+          HTML コメント（lint のディレクティブ、TODO）はそのままにされます。</td></tr>
+        <tr><td>作者</td><td><code>@</code> から<em>最初の</em>コロンまでのすべて。スペースも
+          使えますが、短いハンドルがいちばん読みやすいでしょう。</td></tr>
+        <tr><td>本文</td><td>コロンから <code>--&gt;</code> までの Markdown——短いノートなら
+          同じ行に、長いノートなら続く行に。</td></tr>
+        <tr><td>エスケープ</td><td>本文の中でリテラルの <code>--&gt;</code> を書くには
+          <code>--\&gt;</code> とします（予約されている並びはこれだけで、エスケープと復元は
+          PullMark がやってくれます）。</td></tr>
+        <tr><td>置き場所</td><td>単独の行に、前後を空行で挟んで、注釈するブロックの直後に。
+          最初の見出しより上にあれば、文書全体についてのノートです。</td></tr>
+        <tr><td>リスト項目</td><td>ひとつのリスト項目についてのノートは、その項目の<em>中</em>に
+          座ります。項目の最終行の直後に、項目の内容にそろえてインデントし（スペースは最大 3 つ
+          まで。それ以上はコードと読まれます）、前後には空行を<em>入れず</em>に。項目と結び
+          付けているのは、このインデントです。</td></tr>
+        <tr><td>スレッド</td><td>同じブロックの下で隣り合ったノートは、会話として読まれます——
+          返信は、その下にもうひとつノートを足すこと。</td></tr>
+        <tr><td>予約</td><td><code>@name (attrs):</code>——括弧の枠は将来のために予約されていて、
+          そのままの姿で保存されます。いまこれを読み書きするものはありません。</td></tr>
+        <tr><td>コードブロック</td><td>フェンス付きコードブロックの中にある、ノートの形をした
+          コメントは、ノートではなくコードです。</td></tr>
+      </table>
+      <p>Markdown のレンダラは HTML コメントを飛ばすので、ノート入りのファイルは GitHub でも、
+      エディタでも、ほかのどんなツールでも、きれいにレンダリングされます——ノートはページを
+      散らかすことなく、ソースの中を一緒に運ばれていくのです。PullMark は、どこでも通用する
+      フォーマットのための、美しいクライアントです。</p>
+
+      <h2 id="agents">エージェント向け</h2>
+      <p>受け渡しにプロトコルは要りません。エージェントはファイルを読み、ノートはそのファイルの
+      中に、対象のテキストと物理的に隣り合って置かれています。次を <code>CLAUDE.md</code> /
+      <code>AGENTS.md</code> に貼り付けてください——Settings&nbsp;→&nbsp;Experimental には
+      同じ文言の Copy ボタンがあります（口で言ってしまっても構いません）。</p>
+      <pre><code>## Margin notes
+
+Markdown files may contain review notes as HTML comments:
+`&lt;!-- note @name: comment --&gt;` (possibly multi-line, closing
+with `--&gt;` on its own line). Each note sits directly after the
+passage it's about; a note above the first heading is about the
+whole document. `--\&gt;` inside a note means a literal `--&gt;`.
+
+When asked to address notes: work through each one, apply or
+answer it, and DELETE the note (with its surrounding blank line)
+once addressed. To reply or ask instead, leave your own note in
+the same format below the original, signed with your own @name.
+Don't add notes to code examples inside fenced blocks.
+
+A note about one list item sits inside that item — directly after
+the item's last line, indented to the item's content, with no
+blank lines around it. Keep (or delete) the whole indented
+comment; its indentation is what ties it to the item.</code></pre>
+      <p>収束のループは、フォーマットから自然に導かれます。残っている吹き出しが残っている仕事で、
+      空のファイルが終わったレビューです。ノートを決してプルリクエストまで届かせたくないなら、
+      CI のチェックは 1 行で済みます——
+      <code>grep -rn '&lt;!-- note @' docs/ && exit 1</code>。</p>
+
+      <h2 id="why-beta">なぜベータなのか</h2>
+      <p>仕組みそのものは、すでに自らを証明しました——出荷以来、フォーマットに互換性の無い変更が
+      必要になったことは一度もなく、だからこそアルファを卒業しました。
+      <a href="/ja/docs/experimental/">ベータの取り決め</a>のとおり、いまはバージョンをまたいで
+      文法とふるまいの互換性を保つよう本気で努めていますし、この機能が完全に卒業する見込みも
+      高いと考えています。まだ落ち着いていないのは、その周りの表層です。名前、操作の手がかり、
+      そしてこのワークフローが、設計の場だったエージェントレビューのループをどこまで超えて
+      通用するのか。もし何かが変わったなら、リリースノートが正確にそう書きます。
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">フィードバックは
+      歓迎です</a>。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT ライセンス</a>
+    <a href="/licenses/">オープンソースライセンス</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="https://ko-fi.com/pullmark">PullMark を応援する&nbsp;♥</a>
+    <span class="note">PullMark は GitHub とは提携していません。</span>
+  </div>
+  <nav class="lang-switch" aria-label="言語">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>言語</span>
+    <a href="/docs/experimental/margin-notes/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/margin-notes/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/experimental/margin-notes/" hreflang="ja" lang="ja" aria-current="true">日本語</a>
+    <a href="/fr/docs/experimental/margin-notes/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/margin-notes/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/experimental/margin-notes/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/experimental/margin-notes/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/margin-notes/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

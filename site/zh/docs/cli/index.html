@@ -79,17 +79,17 @@
       借 macOS 自身就能做到同样的事。</p>
 
       <h2 id="usage">用法</h2>
-<pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
-pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
-pullmark --diff &lt;path&gt; ...   <span class="c"># open files as rendered diffs vs HEAD</span>
+<pre><code>pullmark                     <span class="c"># 启动（或前置）PullMark</span>
+pullmark &lt;path&gt; ...          <span class="c"># 打开文件和/或文件夹</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># 以渲染差异打开文件（对比 HEAD）</span>
 pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
-                             <span class="c"># … vs a branch, tag, or commit</span>
+                             <span class="c"># ……对比分支、标签或提交</span>
 pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
-                             <span class="c"># the file at two refs, both frozen</span>
+                             <span class="c"># 同一文件的两个引用版本，均已冻结</span>
 pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
-                             <span class="c"># … vs another file on disk</span>
-pullmark -h, --help          <span class="c"># the built-in reference</span>
-pullmark --version           <span class="c"># print the app version</span></code></pre>
+                             <span class="c"># ……对比磁盘上的另一个文件</span>
+pullmark -h, --help          <span class="c"># 内置参考</span>
+pullmark --version           <span class="c"># 打印应用版本</span></code></pre>
 
       <h2 id="semantics">打开时会发生什么</h2>
       <p>规则刻意乏味，好让脚本可以放心依赖：</p>
@@ -127,12 +127,12 @@ pullmark --version           <span class="c"># print the app version</span></cod
       <code>--diff=&lt;ref&gt;</code> 改为对比某个分支、标签或提交 SHA。
       它是通往应用内 Compare（比较）功能（工具栏的时钟加箭头按钮）的
       shell 之门，也是“智能体刚对这份文档做了什么”的最快答案：</p>
-<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
-<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># current file vs main</span>
-<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># between two revisions, both frozen</span>
-<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># two files, old.md the baseline</span>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 最近的编辑改了什么</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># 当前文件对比 main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># 两个修订之间，均已冻结</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># 两个文件，old.md 为基准</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
-                                          <span class="c"># a worktree, plan.md diffed</span></code></pre>
+                                          <span class="c"># 一个工作树，plan.md 以差异显示</span></code></pre>
       <p>一同传入的文件夹照常作为 Location 打开，每种形式在工具栏的
       Compare 菜单里都有应用内的孪生兄弟（包括
       <strong>Compare Revisions…</strong> 和 <strong>Compare with
@@ -149,12 +149,12 @@ pullmark --version           <span class="c"># print the app version</span></cod
       </table>
 
       <h2 id="examples">示例</h2>
-<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># read one file</span>
-<span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
-<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
-<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
-<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># 阅读单个文件</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># 浏览文件夹</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># 一个 Location（位置）外加一份文档</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># 一个工作树，显示一份文档</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 最近的编辑改了什么</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- 结束选项解析</span></code></pre>
 
       <h2 id="agents">给智能体的说明</h2>
       <p>如果你要把 PullMark 接进智能体或脚本：</p>

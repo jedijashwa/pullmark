@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experimentelle Features — PullMark-Doku</title>
+<meta name="description" content="PullMarks experimentelle Features: was die Stufen alpha und beta versprechen, was gerade experimentell ist und wie du dich dazuschaltest.">
+<link rel="canonical" href="https://pullmark.app/de/docs/experimental/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/">
+<meta property="og:title" content="Experimentelle Features — PullMark-Doku">
+<meta property="og:description" content="PullMarks experimentelle Features: was die Stufen alpha und beta versprechen, was gerade experimentell ist und wie du dich dazuschaltest.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/de/docs/experimental/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hauptnavigation">
+    <a class="brand" href="/de/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/de/docs/" aria-current="true">Docs</a>
+      <a href="/de/uses/agents/">Anwendungsfälle</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Doku">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/de/docs/">Überblick</a></li>
+        <li><a href="/de/docs/features/">Features</a></li>
+        <li><a href="/de/docs/sidebar/">Die Seitenleiste</a></li>
+        <li><a href="/de/docs/toolbar/">Die Toolbar</a></li>
+        <li><a href="/de/docs/settings/">Einstellungen</a></li>
+        <li><a href="/de/docs/shortcuts/">Tastaturkürzel</a></li>
+        <li><a href="/de/docs/cli/">Kommandozeile</a></li>
+        <li><a href="/de/docs/troubleshooting/">Fehlerbehebung</a></li>
+        <li><a href="/de/docs/experimental/" aria-current="page">Experimentell</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs / experimentell</p>
+      <h1>Experimentelle Features</h1>
+      <p class="article-lede">Manche Features werden ausgeliefert, bevor ihr
+      Design fertig ist — klar gekennzeichnet, abseits des Trampelpfads und
+      ehrlich darüber, wie fertig sie sind. Sie wohnen in
+      <strong>Settings&nbsp;→&nbsp;Experimental</strong>, jedes mit seiner
+      Stufe am Revers.</p>
+
+      <h2 id="levels">Die zwei Stufen</h2>
+      <table>
+        <tr><th>Stufe</th><th>Der Vertrag</th></tr>
+        <tr><td><span class="beta-badge">beta</span></td>
+        <td>Das Design steht weitgehend. Wir geben uns echte Mühe, Verhalten
+        und Datenformate zwischen Versionen kompatibel zu halten, und das
+        Feature wird wahrscheinlich aus Experimental graduieren — garantiert
+        ist bis dahin allerdings nichts.</td></tr>
+        <tr><td><span class="beta-badge alpha">alpha</span></td>
+        <td>Keine Garantien, Nutzung auf eigene Gefahr. Verhalten und
+        Datenformate können sich zwischen Versionen inkompatibel ändern —
+        vielleicht unterstützen wir den Übergang älterer Formate, vielleicht
+        auch nicht — und das Feature kann ganz verschwinden. Alpha-Features
+        bleiben versteckt, bis du <em>Show alpha features</em> einschaltest;
+        dort steht dieser Vertrag, bevor er greift.</td></tr>
+      </table>
+      <p>Features können aufsteigen (alpha → beta → normales Feature), und
+      jedes experimentelle Feature kann auf jeder Stufe wieder eingestampft
+      werden. Die Release Notes sagen immer, wenn eins von beidem
+      passiert.</p>
+
+      <h2 id="whats-experimental">Gerade experimentell</h2>
+      <p class="table-note">Review Discussion ist in 0.34 graduiert (jetzt ein
+      normales Feature, für alle an, mit seinem Schalter in
+      <a href="/de/docs/settings/#general">Settings ▸ General ▸ Reviewing</a>),
+      und Margin Notes ist in 0.35 von alpha zu beta aufgestiegen — genau so
+      sollen die Stufen wirken.</p>
+      <ul class="doc-cards">
+        <li><a href="/de/docs/experimental/margin-notes/">
+          <p class="card-title">Randnotizen <span class="beta-badge">beta</span></p>
+          <p class="card-sub">Kommentiere jedes lokale Markdown-Dokument so,
+          wie du einen PR kommentierst — gespeichert in der Datei selbst, in
+          einem Format, das Agenten lesen können. Standardmäßig an: Beim ersten
+          Griff danach stellt PullMark das Feature vor und bietet an, es
+          abzuschalten. Mit Format-Spec und einem Schnipsel voller Anweisungen
+          für deinen Agenten.</p>
+        </a></li>
+      </ul>
+
+      <h2 id="opt-in">Ausprobieren</h2>
+      <p>Öffne <strong>Settings&nbsp;→&nbsp;Experimental</strong>.
+      Beta-Features stehen gleich dort; Alpha-Features tauchen auf, sobald du
+      <em>Show alpha features</em> einschaltest und akzeptierst, was alpha
+      heißt (den Schalter gibt es nur, solange tatsächlich etwas auf
+      Alpha-Stufe steht). Jedes Feature hat seinen eigenen Schalter.
+      Alpha-Features sind nie standardmäßig an; ein Beta-Feature kann es sein
+      — Randnotizen ist es — und dann stellt sich das Feature beim ersten
+      Einsatz vor, mit einem Turn-Off-Knopf direkt in der Vorstellung.</p>
+      <p class="table-note">Liest du das auf dem Mac, auf dem PullMark
+      (ab 0.28.1) installiert ist?
+      <a href="pullmark://settings/experimental">Settings&nbsp;→&nbsp;Experimental
+      jetzt öffnen</a>.</p>
+
+      <h2 id="feedback">Rückmeldungen</h2>
+      <p>Experimentelle Features ändern sich <em>genau deswegen</em>, weil
+      frühe Nutzer melden, was ihnen auffällt.
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Mach
+      ein Issue auf</a> — Help&nbsp;→&nbsp;Report&nbsp;a&nbsp;Bug… füllt deine
+      Version schon vor.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-Lizenz</a>
+    <a href="/licenses/">Open-Source-Lizenzen</a>
+    <a href="/privacy/">Datenschutz</a>
+    <a href="https://ko-fi.com/pullmark">PullMark unterstützen&nbsp;♥</a>
+    <span class="note">PullMark steht in keiner Verbindung zu GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Sprache">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Sprache</span>
+    <a href="/docs/experimental/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/experimental/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/experimental/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/" hreflang="de" lang="de" aria-current="true">Deutsch</a>
+    <a href="/nl/docs/experimental/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/experimental/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

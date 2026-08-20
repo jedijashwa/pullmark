@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ツールバー — PullMark ドキュメント</title>
+<meta name="description" content="PullMark のツールバーを解説。ビューの種類ごとに、カスタマイズできるツールバーがひとつずつ——初期状態の中身と、パレットに控えるもの。">
+<link rel="canonical" href="https://pullmark.app/ja/docs/toolbar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/toolbar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/toolbar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/toolbar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/toolbar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/toolbar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/toolbar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/toolbar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/toolbar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/toolbar/">
+<meta property="og:title" content="ツールバー — PullMark ドキュメント">
+<meta property="og:description" content="PullMark のツールバーを解説。ビューの種類ごとに、カスタマイズできるツールバーがひとつずつ——初期状態の中身と、パレットに控えるもの。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/ja/docs/toolbar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="メイン">
+    <a class="brand" href="/ja/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/ja/docs/" aria-current="true">ドキュメント</a>
+      <a href="/ja/uses/agents/">ユースケース</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="ドキュメント">
+      <p class="docs-nav-title">ドキュメント</p>
+      <ul>
+        <li><a href="/ja/docs/">概要</a></li>
+        <li><a href="/ja/docs/features/">機能</a></li>
+        <li><a href="/ja/docs/sidebar/">サイドバー</a></li>
+        <li><a href="/ja/docs/toolbar/" aria-current="page">ツールバー</a></li>
+        <li><a href="/ja/docs/settings/">設定</a></li>
+        <li><a href="/ja/docs/shortcuts/">キーボードショートカット</a></li>
+        <li><a href="/ja/docs/cli/">コマンドライン</a></li>
+        <li><a href="/ja/docs/troubleshooting/">トラブルシューティング</a></li>
+        <li><a href="/ja/docs/experimental/">実験的機能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">ドキュメント</p>
+      <h1>ツールバー</h1>
+      <p class="article-lede">ビューの種類ごとにツールバーがひとつ、そのどれもが思いのままです。
+      右クリック——または View → Customize Toolbar…——で、項目をドラッグして外し、並べ替え、
+      最初は隠れているものを足す。配置はビューごとに、起動をまたいで記憶されます。</p>
+
+      <h2 id="customizing">カスタマイズの仕組み</h2>
+      <p>PullMark にツールバーはひとつではありません——ビューの種類ごとにひとつずつです。メールの
+      作成ウィンドウがメインウィンドウとは別のツールバーを持つのと同じ流儀で、カスタマイズの対象は
+      いま見ているツールバー。プルリクエストのファイルを開けば PR ファイルのツールバーを、ローカルの
+      文書を開けばローカルファイルのツールバーを整えることになります。パレットが差し出すのは、
+      開いたその場所に存在する項目だけです。</p>
+      <p>パレットの中身はすべて自由に扱えます——外す、並べ替える、Flexible Space（可変スペース）を
+      挟んでかたまりを引き離す。下の表で<em>非表示</em>とある項目は、バーではなくパレットから
+      始まります。唯一ものを置けないのは、サイドバートグルの隣にあるサイドバー専用の区画です。
+      あそこはシステムの領分で、そこに落とした項目はメイン区画の先頭に収まります。どのツールバーも、
+      パレット下部のデフォルト一式をドラッグして戻せば元どおりです。</p>
+
+      <h2 id="every-view">すべてのビューで</h2>
+      <table>
+        <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
+        <tr><td>Review</td><td>表示</td>
+          <td>PR のビューにだけ現れる、姿を変えるレビューコントロール——保留中のコメント数、判定、
+          送信。狭いウィンドウでいちばん長く生き残ります。ほかの項目がオーバーフローに畳まれても、
+          レビューの状態は見えたままです。</td></tr>
+        <tr><td>Open File or Folder</td><td>表示</td>
+          <td>ローカルの Markdown、またはフォルダの Location を開きます。</td></tr>
+        <tr><td>Open Pull Request</td><td>表示</td>
+          <td>GitHub のプルリクエストを URL で開きます。</td></tr>
+        <tr><td>Appearance</td><td>表示</td>
+          <td>Light・Dark・System を、アプリ全体に。</td></tr>
+      </table>
+
+      <h2 id="local-files">ローカルファイル</h2>
+      <table>
+        <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
+        <tr><td>Share</td><td>表示</td><td>そのファイルの、標準の共有シート。</td></tr>
+        <tr><td>Edit</td><td>表示</td><td>編集モード——どのブロックもクリックしてその場で編集。</td></tr>
+        <tr><td>Compare</td><td>表示</td>
+          <td>コミットやブランチと比較します（git リポジトリが必要）。小さなドットは、そのファイルに
+          未コミットの変更があるしるしです。</td></tr>
+        <tr><td>Blame</td><td>表示</td>
+          <td>各ブロックを最後に変えたのは誰か。リポジトリの外では無効です。</td></tr>
+        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>Reload</td><td>表示</td><td>ファイルをディスクから読み直します。</td></tr>
+        <tr><td>Source</td><td>非表示</td><td>レンダリングされたページの背後にある、生の Markdown。</td></tr>
+        <tr><td>Zoom In・Actual Size・Zoom Out</td><td>非表示</td>
+          <td>それぞれ独立した項目です——使う組み合わせだけを足せます。</td></tr>
+        <tr><td>Content Width</td><td>非表示</td><td>Standard・Wide・Full Width。</td></tr>
+        <tr><td>Add Margin Note</td><td>非表示</td>
+          <td><a href="/ja/docs/experimental/margin-notes/">マージンノート</a>が有効なあいだだけ、
+          パレットに現れます。</td></tr>
+      </table>
+
+      <h2 id="github-docs">GitHub のドキュメント</h2>
+      <p>リポジトリから直に読む文書です——リンク、⌘K、あるいはブラウズ中のリポジトリ Location から
+      開いたもの。</p>
+      <table>
+        <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
+        <tr><td>Compare</td><td>表示</td><td>同じ文書の別ブランチの姿を、レンダリングされた差分で。</td></tr>
+        <tr><td>Blame</td><td>表示</td><td>GitHub API から取る、ブロックごとの blame。</td></tr>
+        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>Share</td><td>非表示</td>
+          <td>その文書の github.com ページ——人がほんとうに欲しいリンクであって、生の URL では
+          ありません。</td></tr>
+        <tr><td>Reload</td><td>非表示</td>
+          <td>ブランチを現在の先端に解決し直して、取得し直します。特定のコミットで開いた文書は
+          変わりようがないので、理由の表示とともに無効です。</td></tr>
+        <tr><td>Source</td><td>非表示</td><td>生の Markdown。</td></tr>
+        <tr><td>Zoom 系の項目・Content Width</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
+      </table>
+
+      <h2 id="pr-files">プルリクエストのファイル</h2>
+      <table>
+        <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
+        <tr><td>Navigation</td><td>表示</td>
+          <td>概要へ戻る、前後の Markdown ファイル、そして n/m のジャンプメニュー——ひとかたまりで、
+          ひとつのドラッグ単位です。</td></tr>
+        <tr><td>View picker</td><td>表示</td>
+          <td>Rendered Diff・Source Diff・Result を、中央に。</td></tr>
+        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>Layout</td><td>表示</td>
+          <td>インラインか左右並列か——Rendered Diff のビューで有効です（新規ファイルはつねに
+          インラインでレンダリングされます）。</td></tr>
+        <tr><td>Blame</td><td>表示</td>
+          <td>Result のビューで有効。注釈を付けるべき完成した文書があるのは、そこだからです。</td></tr>
+        <tr><td>Comment on File</td><td>表示</td>
+          <td>特定の行ではなく、ファイル全体についてのコメント。</td></tr>
+        <tr><td>Zoom 系の項目・Content Width</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
+      </table>
+
+      <h2 id="other-views">PR の概要と、PR から辿ったリポジトリの文書</h2>
+      <p>概要は最小限を保ちます。<strong>Share</strong>（そのプルリクエストの GitHub ページ）と、
+      すべてのビュー共通の項目だけ。PR の内容から辿って開いたリポジトリの文書は
+      <strong>Blame</strong> と <strong>Outline</strong> を備え、パレットには Zoom 系の項目と
+      Content Width が控えています。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT ライセンス</a>
+    <a href="/licenses/">オープンソースライセンス</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="https://ko-fi.com/pullmark">PullMark を応援する&nbsp;♥</a>
+    <span class="note">PullMark は GitHub とは提携していません。</span>
+  </div>
+  <nav class="lang-switch" aria-label="言語">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>言語</span>
+    <a href="/docs/toolbar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/toolbar/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/toolbar/" hreflang="ja" lang="ja" aria-current="true">日本語</a>
+    <a href="/fr/docs/toolbar/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/toolbar/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/toolbar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/toolbar/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/toolbar/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>
