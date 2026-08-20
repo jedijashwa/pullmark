@@ -58,7 +58,7 @@ final class ShortcutStore: ObservableObject {
             case .notBindable:
                 return "Shortcuts need ⌘ or ⌃ (function keys can stand alone)."
             case .reserved(let combo, let command):
-                return "\(combo.display) is reserved for \(command)."
+                return String(localized: "\(combo.display) is reserved for \(command).")
             case .taken(let combo, let action):
                 return "\(combo.display) is already used by “\(action.title)”."
             }

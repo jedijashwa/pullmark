@@ -251,7 +251,7 @@ struct SidebarView: View {
             // ordered, plus the single italic preview entry last. Trees
             // answer "where does it live"; this section answers "what do
             // I have open" (Sublime's exact label for the same list).
-            CollapsibleSection("Open Files", isExpanded: $filesExpanded,
+            CollapsibleSection(String(localized: "Open Files"), isExpanded: $filesExpanded,
                                headerActions: state.hasOpenFiles ? [
                 SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
                                     help: "Close All") { state.closeAllOpenFiles() }
@@ -294,7 +294,7 @@ struct SidebarView: View {
             // Locations: browsable roots wherever they live — local folders
             // and GitHub repos share one section (Finder's word for exactly
             // this list); the icon and subtitle carry the origin.
-            CollapsibleSection("Locations", isExpanded: $foldersExpanded,
+            CollapsibleSection(String(localized: "Locations"), isExpanded: $foldersExpanded,
                                headerActions: [
                 SectionHeaderAction(id: "add-folder", symbol: "plus",
                                     help: "Open Folder…") { state.openFolderPanel() }
@@ -318,7 +318,7 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
             }
-            CollapsibleSection("Pull Requests", isExpanded: $prsExpanded,
+            CollapsibleSection(String(localized: "Pull Requests"), isExpanded: $prsExpanded,
                                headerActions: [
                 SectionHeaderAction(id: "add-pr", symbol: "plus",
                                     help: "Open Pull Request…") { state.showAddPR = true }
@@ -369,7 +369,7 @@ struct SidebarView: View {
                 }
             }
             if !recentItems.isEmpty {
-                CollapsibleSection("Recents", isExpanded: $recentExpanded) {
+                CollapsibleSection(String(localized: "Recents"), isExpanded: $recentExpanded) {
                     ForEach(recentItems) { item in
                         RecentRow(item: item,
                                   missing: state.missingRecentIDs.contains(item.id),

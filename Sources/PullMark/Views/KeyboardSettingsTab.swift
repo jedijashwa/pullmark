@@ -23,8 +23,7 @@ struct KeyboardSettingsTab: View {
                 Section {
                     // Spelled out, not glyphs: ⌫ and ⎋ are unrecognizable
                     // to plenty of people in running prose.
-                    Text("Click a shortcut, or select a row and press Return, then type "
-                        + "the new keys. Press Delete to remove a shortcut, Esc to cancel.")
+                    Text("Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

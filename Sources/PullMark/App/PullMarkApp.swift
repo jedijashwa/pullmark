@@ -89,7 +89,7 @@ struct PullMarkApp: App {
         .keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
         .disabled(!prFileSelected)
         Button(state?.resolvedConversationsVisible == true
-               ? "Hide Resolved Conversations" : "Show Resolved Conversations") {
+               ? String(localized: "Hide Resolved Conversations") : String(localized: "Show Resolved Conversations")) {
             state?.resolvedConversationsVisible.toggle()
         }
         .keyboardShortcut(shortcuts.keyboardShortcut(for: .showResolvedConversations))
@@ -389,8 +389,7 @@ struct PullMarkApp: App {
                             updates.historyMarkdown = history
                             updates.showHistory = true
                         } else {
-                            state.lastNotice = String(localized: "Release notes couldn't be loaded — ")
-                                + "they're also at github.com/jedijashwa/pullmark/releases."
+                            state.lastNotice = String(localized: "Release notes couldn't be loaded — they're also at github.com/jedijashwa/pullmark/releases.")
                         }
                     }
                 }
@@ -435,13 +434,13 @@ struct PullMarkApp: App {
                     }
                 }
                 Divider()
-                Button(state?.sourceViewVisible == true ? "Hide Markdown Source" : "Show Markdown Source") {
+                Button(state?.sourceViewVisible == true ? String(localized: "Hide Markdown Source") : String(localized: "Show Markdown Source")) {
                     state?.sourceViewVisible.toggle()
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleSource))
                 .disabled(state?.activeDocument == nil)
                 .help("Temporarily show the raw Markdown behind the rendered document")
-                Button(outlineVisible ? "Hide Outline" : "Show Outline") {
+                Button(outlineVisible ? String(localized: "Hide Outline") : String(localized: "Show Outline")) {
                     outlineVisible.toggle()
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleOutline))
@@ -457,12 +456,12 @@ struct PullMarkApp: App {
                 .disabled(activeLocalFileURL == nil
                     || state?.expectedSurfaceToolbar?.compareGitAvailable != true)
                 .help("What changed since the last commit, rendered like a PR diff — the toolbar's Compare button offers older revisions and branches")
-                Button(marginNotesVisible ? "Hide Margin Notes" : "Show Margin Notes") {
+                Button(marginNotesVisible ? String(localized: "Hide Margin Notes") : String(localized: "Show Margin Notes")) {
                     marginNotesVisible.toggle()
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleMarginNotes))
                 .help("Margin-note bubbles (<!-- note --> comments) in rendered documents")
-                Button(showHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                Button(showHiddenFiles ? String(localized: "Hide Hidden Files") : String(localized: "Show Hidden Files")) {
                     showHiddenFiles.toggle()
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .toggleHiddenFiles))

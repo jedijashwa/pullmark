@@ -242,8 +242,7 @@ struct LocalFileView: View {
                     // The @AppStorage flip re-renders every open document
                     // without authoring chrome — existing notes still show.
                     marginNotesEnabled = false
-                    state.lastNotice = String(localized: "Margin notes are off — turn them ")
-                        + "back on in Settings → Experimental."
+                    state.lastNotice = String(localized: "Margin notes are off — turn them back on in Settings → Experimental.")
                 },
                 onKeepUsing: {
                     MarginNotesIntro.markSeen()
@@ -320,8 +319,7 @@ struct LocalFileView: View {
     private func openNoteComposer(fileLevel: Bool) {
         guard compare == nil, !state.sourceViewVisible else { return }
         guard marginNotesEnabled else {
-            state.lastNotice = String(localized: "Margin notes are off — turn them on in ")
-                + "Settings → Experimental."
+            state.lastNotice = String(localized: "Margin notes are off — turn them on in Settings → Experimental.")
             return
         }
         guard marginNotesVisible else {
@@ -563,8 +561,7 @@ struct LocalFileView: View {
         // line range — abort rather than splice into the wrong lines.
         guard TextLines.lines(in: currentText, from: target.lineStart, to: target.lineEnd)
                 == target.seed else {
-            state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were editing ")
-                + "this block — nothing was saved. Re-open the block to edit the current version."
+            state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were editing this block — nothing was saved. Re-open the block to edit the current version.")
             pendingRevealLine = nil  // a refused save must not leave a
             proxy.cancelInlineEdit() // reveal armed for a later reload
             return
@@ -655,8 +652,7 @@ struct LocalFileView: View {
                     .replacingOccurrences(of: "\r\n", with: "\n")
                     .replacingOccurrences(of: "\r", with: "\n")
                 guard var newText = transform(lf) else {
-                    state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were ")
-                        + "annotating — nothing was saved. The current notes are shown now."
+                    state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were annotating — nothing was saved. The current notes are shown now.")
                     return
                 }
                 if wasCRLF {
@@ -853,8 +849,7 @@ struct LocalFileView: View {
             return
         }
         guard LocalGit.repoRoot(for: file.url) != nil else {
-            state.lastError = String(localized: "\(file.url.lastPathComponent) isn't in a git ")
-                + "repository, so there's nothing to compare against."
+            state.lastError = String(localized: "\(file.url.lastPathComponent) isn't in a git repository, so there's nothing to compare against.")
             retirePendingCompare()
             return
         }

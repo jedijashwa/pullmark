@@ -28,8 +28,7 @@ struct ThreadCardActions {
         guard let session else {
             // The page already cleared its composer — never drop the text.
             restoreDraftAfterFailure(key: draftKey, text: body)
-            state.lastError = String(localized: "Could not post the reply — the PR session is ")
-                + "no longer available. Your text was kept as a draft."
+            state.lastError = String(localized: "Could not post the reply — the PR session is no longer available. Your text was kept as a draft.")
             return
         }
         Task {
@@ -146,8 +145,7 @@ struct ThreadCardActions {
     func sendConversationComment(body: String, draftKey: String) {
         guard let session else {
             restoreDraftAfterFailure(key: draftKey, text: body)
-            state.lastError = String(localized: "Could not post the comment — the PR session is ")
-                + "no longer available. Your text was kept as a draft."
+            state.lastError = String(localized: "Could not post the comment — the PR session is no longer available. Your text was kept as a draft.")
             return
         }
         Task {
@@ -232,8 +230,7 @@ struct ThreadCardActions {
             // of silently dropping the sync (empty text is a discard and
             // needs no noise).
             if !text.isEmpty {
-                state.lastError = String(localized: "The PR session is no longer available — ")
-                    + "the draft could not be saved to disk."
+                state.lastError = String(localized: "The PR session is no longer available — the draft could not be saved to disk.")
             }
             return
         }

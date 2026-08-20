@@ -17,9 +17,9 @@ enum ContentWidth: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .standard: return "Standard"
-        case .wide: return "Wide"
-        case .full: return "Full Width"
+        case .standard: return String(localized: "Standard")
+        case .wide: return String(localized: "Wide")
+        case .full: return String(localized: "Full Width")
         }
     }
 

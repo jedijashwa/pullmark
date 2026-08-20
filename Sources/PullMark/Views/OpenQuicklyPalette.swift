@@ -225,8 +225,7 @@ struct OpenQuicklyPalette: View {
                         do {
                             try await state.addPR("\(ref.owner)/\(ref.repo)#\(ref.number)")
                         } catch {
-                            state.lastError = String(localized: "Couldn't open ")
-                                + "\(ref.owner)/\(ref.repo)#\(ref.number): "
+                            state.lastError = String(localized: "Couldn't open \(ref.owner)/\(ref.repo)#\(ref.number): ")
                                 + error.localizedDescription
                         }
                     }
