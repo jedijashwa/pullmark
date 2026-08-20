@@ -259,15 +259,21 @@ struct CommitSheet: View {
                     if !allowed.contains(root.path) { allowed.append(root.path) }
                     UserDefaults.pullmark.set(allowed, forKey: DefaultsKeys.commitToMainAllowed)
                 }
-                let committed = "Committed \(displayCount) file\(displayCount == 1 ? "" : "s")"
-                    + (branchName.isEmpty ? "" : " on new branch “\(branchName)”")
+                let committed = displayCount == 1
+                    ? (branchName.isEmpty
+                        ? String(localized: "Committed 1 file")
+                        : String(localized: "Committed 1 file on new branch “\(branchName)”"))
+                    : (branchName.isEmpty
+                        ? String(localized: "Committed \(displayCount) files")
+                        : String(localized: "Committed \(displayCount) files on new branch “\(branchName)”"))
                 if let pushResult {
                     // The commit landed — a push failure must not read as a
                     // failed commit.
-                    state.lastNotice = committed
-                        + ", but the push failed: \(pushResult)"
+                    state.lastNotice = String(localized: "\(committed), but the push failed: \(pushResult)")
                 } else {
-                    state.lastNotice = committed + (push ? " and pushed to origin." : ".")
+                    state.lastNotice = push
+                        ? String(localized: "\(committed) and pushed to origin.")
+                        : committed + "."
                 }
                 state.gitStateTick += 1
                 dismiss()

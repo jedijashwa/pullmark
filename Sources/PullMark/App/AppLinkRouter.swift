@@ -33,14 +33,14 @@ enum AppLinkRouter {
         let version = Bundle.main.object(
             forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
         let alert = NSAlert()
-        alert.messageText = "That link needs a different version of PullMark"
-        alert.informativeText = "This version (\(version)) doesn't know "
+        alert.messageText = String(localized: "That link needs a different version of PullMark")
+        alert.informativeText = String(localized: "This version (\(version)) doesn't know ")
             + "\(url.absoluteString) — it may point at a feature from a newer "
             + "release, or one that has moved. Checking for updates usually "
             + "resolves it."
-        alert.addButton(withTitle: "Check for Updates…")
-        alert.addButton(withTitle: "Report an Issue…")
-        alert.addButton(withTitle: "Close")
+        alert.addButton(withTitle: String(localized: "Check for Updates…"))
+        alert.addButton(withTitle: String(localized: "Report an Issue…"))
+        alert.addButton(withTitle: String(localized: "Close"))
         NSApp.activate(ignoringOtherApps: true)
         switch alert.runModal() {
         case .alertFirstButtonReturn:

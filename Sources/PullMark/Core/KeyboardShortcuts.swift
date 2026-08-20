@@ -26,11 +26,13 @@ struct KeyCombo: Codable, Equatable, Hashable {
     ]
 
     private static let spokenKeys: [String: String] = [
-        "escape": "Escape", "return": "Return", "tab": "Tab", "space": "Space",
-        "delete": "Delete", "forwarddelete": "Forward Delete",
-        "up": "Up Arrow", "down": "Down Arrow", "left": "Left Arrow",
-        "right": "Right Arrow", "home": "Home", "end": "End",
-        "pageup": "Page Up", "pagedown": "Page Down",
+        "escape": String(localized: "Escape"), "return": String(localized: "Return"),
+        "tab": String(localized: "Tab"), "space": String(localized: "Space"),
+        "delete": String(localized: "Delete"), "forwarddelete": String(localized: "Forward Delete"),
+        "up": String(localized: "Up Arrow"), "down": String(localized: "Down Arrow"),
+        "left": String(localized: "Left Arrow"), "right": String(localized: "Right Arrow"),
+        "home": String(localized: "Home"), "end": String(localized: "End"),
+        "pageup": String(localized: "Page Up"), "pagedown": String(localized: "Page Down"),
     ]
 
     var isFunctionKey: Bool { key.hasPrefix("f") && Int(key.dropFirst()) != nil }
@@ -54,10 +56,10 @@ struct KeyCombo: Codable, Equatable, Hashable {
     /// VoiceOver reads glyph strings unreliably — "Shift Command O".
     var spoken: String {
         var parts: [String] = []
-        if control { parts.append("Control") }
-        if option { parts.append("Option") }
-        if shift { parts.append("Shift") }
-        if command { parts.append("Command") }
+        if control { parts.append(String(localized: "Control")) }
+        if option { parts.append(String(localized: "Option")) }
+        if shift { parts.append(String(localized: "Shift")) }
+        if command { parts.append(String(localized: "Command")) }
         parts.append(Self.spokenKeys[key] ?? (isFunctionKey ? key.uppercased() : key.uppercased()))
         return parts.joined(separator: " ")
     }
@@ -75,26 +77,26 @@ struct KeyCombo: Codable, Equatable, Hashable {
         // right and a key that never fires.
         if command, !option, !control, !shift {
             switch key {
-            case "space": return "Spotlight"
-            case "tab": return "the app switcher"
-            case "`": return "cycling windows"
+            case "space": return String(localized: "Spotlight")
+            case "tab": return String(localized: "the app switcher")
+            case "`": return String(localized: "cycling windows")
             default: break
             }
         }
         if control, !command, !option, ["up", "down", "left", "right"].contains(key) {
-            return "Mission Control"
+            return String(localized: "Mission Control")
         }
         // Fixed keys the app's own sheets and palettes own (Esc to
         // dismiss, ⌘↩ to commit) — they can't be rebound, so nothing
         // else may claim them either.
         if !command, !option, !control, !shift, key == "escape" {
-            return "dismissing sheets"
+            return String(localized: "dismissing sheets")
         }
         if command, !option, !control, !shift, key == "return" {
-            return "confirming sheets"
+            return String(localized: "confirming sheets")
         }
         if command, shift, !option, !control {
-            let shifted = ["z": "Redo", "/": "the Help menu"]
+            let shifted = ["z": String(localized: "Redo"), "/": String(localized: "the Help menu")]
             return shifted[key]
         }
         guard command, !option, !control, !shift else { return nil }
@@ -128,47 +130,47 @@ enum ShortcutAction: String, CaseIterable, Codable {
 
     var title: String {
         switch self {
-        case .openFile: return "Open…"
-        case .openPullRequest: return "Open Pull Request…"
-        case .openQuickly: return "Open Quickly…"
-        case .commitChanges: return "Commit Changes…"
-        case .revertLastEdit: return "Revert Last Edit"
-        case .revealInFinder: return "Reveal in Finder"
-        case .copyPath: return "Copy Path"
-        case .copyGitHubLink: return "Copy GitHub Link"
-        case .refreshFolder: return "Refresh Folder"
-        case .clearRecents: return "Clear Recents"
-        case .closeAllFiles: return "Close All Files"
-        case .pageSetup: return "Page Setup…"
-        case .printDocument: return "Print…"
-        case .exportPDF: return "Export as PDF…"
-        case .exportHTML: return "Export as HTML…"
-        case .editMode: return "Edit Mode"
-        case .copyAsMarkdown: return "Copy as Markdown"
-        case .findInPage: return "Find in Page"
-        case .findNext: return "Find Next"
-        case .findPrevious: return "Find Previous"
-        case .searchAllFiles: return "Search All Files…"
-        case .toggleOutline: return "Show/Hide Outline"
-        case .toggleSource: return "Show/Hide Markdown Source"
-        case .reloadDocument: return "Reload Document"
-        case .zoomIn: return "Zoom In"
-        case .zoomOut: return "Zoom Out"
-        case .actualSize: return "Actual Size"
-        case .goBack: return "Back"
-        case .goForward: return "Forward"
-        case .prRenderedDiff: return "Rendered Diff"
-        case .prSourceDiff: return "Source Diff"
-        case .prResult: return "Result"
-        case .prFlipLayout: return "Flip Diff Layout"
-        case .reviewChanges: return "Review Changes…"
+        case .openFile: return String(localized: "Open…")
+        case .openPullRequest: return String(localized: "Open Pull Request…")
+        case .openQuickly: return String(localized: "Open Quickly…")
+        case .commitChanges: return String(localized: "Commit Changes…")
+        case .revertLastEdit: return String(localized: "Revert Last Edit")
+        case .revealInFinder: return String(localized: "Reveal in Finder")
+        case .copyPath: return String(localized: "Copy Path")
+        case .copyGitHubLink: return String(localized: "Copy GitHub Link")
+        case .refreshFolder: return String(localized: "Refresh Folder")
+        case .clearRecents: return String(localized: "Clear Recents")
+        case .closeAllFiles: return String(localized: "Close All Files")
+        case .pageSetup: return String(localized: "Page Setup…")
+        case .printDocument: return String(localized: "Print…")
+        case .exportPDF: return String(localized: "Export as PDF…")
+        case .exportHTML: return String(localized: "Export as HTML…")
+        case .editMode: return String(localized: "Edit Mode")
+        case .copyAsMarkdown: return String(localized: "Copy as Markdown")
+        case .findInPage: return String(localized: "Find in Page")
+        case .findNext: return String(localized: "Find Next")
+        case .findPrevious: return String(localized: "Find Previous")
+        case .searchAllFiles: return String(localized: "Search All Files…")
+        case .toggleOutline: return String(localized: "Show/Hide Outline")
+        case .toggleSource: return String(localized: "Show/Hide Markdown Source")
+        case .reloadDocument: return String(localized: "Reload Document")
+        case .zoomIn: return String(localized: "Zoom In")
+        case .zoomOut: return String(localized: "Zoom Out")
+        case .actualSize: return String(localized: "Actual Size")
+        case .goBack: return String(localized: "Back")
+        case .goForward: return String(localized: "Forward")
+        case .prRenderedDiff: return String(localized: "Rendered Diff")
+        case .prSourceDiff: return String(localized: "Source Diff")
+        case .prResult: return String(localized: "Result")
+        case .prFlipLayout: return String(localized: "Flip Diff Layout")
+        case .reviewChanges: return String(localized: "Review Changes…")
         // The menu item's title flips Show/Hide with state; the settings
         // row names the toggle itself.
-        case .showResolvedConversations: return "Show/Hide Resolved Conversations"
-        case .addMarginNote: return "Add Margin Note"
-        case .addFileMarginNote: return "File Margin Note…"
-        case .toggleMarginNotes: return "Show/Hide Margin Notes"
-        case .toggleHiddenFiles: return "Show/Hide Hidden Files"
+        case .showResolvedConversations: return String(localized: "Show/Hide Resolved Conversations")
+        case .addMarginNote: return String(localized: "Add Margin Note")
+        case .addFileMarginNote: return String(localized: "File Margin Note…")
+        case .toggleMarginNotes: return String(localized: "Show/Hide Margin Notes")
+        case .toggleHiddenFiles: return String(localized: "Show/Hide Hidden Files")
         }
     }
 
@@ -180,23 +182,23 @@ enum ShortcutAction: String, CaseIterable, Codable {
              .revertLastEdit, .revealInFinder, .copyPath, .copyGitHubLink,
              .refreshFolder, .clearRecents, .closeAllFiles, .pageSetup,
              .printDocument, .exportPDF, .exportHTML:
-            return "File"
+            return String(localized: "File")
         case .editMode, .copyAsMarkdown, .addMarginNote, .addFileMarginNote,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
-            return "Edit"
+            return String(localized: "Edit")
         case .toggleOutline, .toggleSource, .reloadDocument,
              .zoomIn, .zoomOut, .actualSize, .toggleMarginNotes, .toggleHiddenFiles:
-            return "View"
+            return String(localized: "View")
         case .goBack, .goForward:
-            return "Go"
+            return String(localized: "Go")
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout, .reviewChanges,
              .showResolvedConversations:
-            return "Pull Requests"
+            return String(localized: "Pull Requests")
         }
     }
 
     /// Categories in the order the Keyboard settings tab shows them.
-    static let categories = ["File", "Edit", "View", "Go", "Pull Requests"]
+    static let categories = [String(localized: "File"), String(localized: "Edit"), String(localized: "View"), String(localized: "Go"), String(localized: "Pull Requests")]
 
     /// Where the action applies. Every action has a menu item that greys
     /// out when it doesn't apply; this says so in the settings list too,
@@ -204,27 +206,27 @@ enum ShortcutAction: String, CaseIterable, Codable {
     var scopeNote: String? {
         switch self {
         case .toggleOutline, .reloadDocument, .editMode:
-            return "In a local document"
+            return String(localized: "In a local document")
         case .revealInFinder, .copyPath:
-            return "With a local file or folder selected"
+            return String(localized: "With a local file or folder selected")
         case .copyGitHubLink:
-            return "With a local file or folder in a GitHub repository selected"
+            return String(localized: "With a local file or folder in a GitHub repository selected")
         case .closeAllFiles:
-            return "With files in Open Files"
+            return String(localized: "With files in Open Files")
         case .refreshFolder:
-            return "With a folder selected"
+            return String(localized: "With a folder selected")
         case .findNext, .findPrevious:
-            return "While the find bar is open"
+            return String(localized: "While the find bar is open")
         case .goBack, .goForward:
-            return "After navigating between documents"
+            return String(localized: "After navigating between documents")
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
-            return "In a pull request file"
+            return String(localized: "In a pull request file")
         case .reviewChanges:
-            return "In a pull request"
+            return String(localized: "In a pull request")
         case .showResolvedConversations:
-            return "In a pull request file's Result view"
+            return String(localized: "In a pull request file's Result view")
         case .addMarginNote, .addFileMarginNote:
-            return "In a local document"
+            return String(localized: "In a local document")
         default:
             return nil
         }

@@ -641,7 +641,7 @@ enum SidebarActions {
             : LocalGit.repoRoot(for: url)
         guard let root else { return }
         guard let repo = LocalGit.linkableGitHubRepo(in: root) else {
-            state.lastNotice = "This repository has no GitHub remote."
+            state.lastNotice = String(localized: "This repository has no GitHub remote.")
             return
         }
         let ref = permalink
@@ -835,8 +835,7 @@ private struct FolderRootGroup: View {
                 Text("Showing the first \(folder.filePaths.count) Markdown files")
                     .font(fonts.caption)
                     .foregroundStyle(.secondary)
-                    .help("This folder has more Markdown files than PullMark scans — "
-                        + "open a subfolder as its own Location to see the rest")
+                    .help("This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest")
             }
         } label: {
             rootRow

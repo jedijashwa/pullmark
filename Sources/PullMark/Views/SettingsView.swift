@@ -113,8 +113,7 @@ struct GeneralSettingsTab: View {
             // Graduated from Experimental (beta) in the cockpit wave —
             // on by default; stored choices from the beta days stand.
             Toggle("Show review discussion on the PR overview", isOn: $prDiscussionEnabled)
-                .help("Adds a Review discussion section under the PR description "
-                    + "listing every thread, with code excerpts and links")
+                .help("Adds a Review discussion section under the PR description listing every thread, with code excerpts and links")
                 .settingAnchor("pr-discussion")
             }
 
@@ -463,8 +462,7 @@ struct ExperimentalSettingsTab: View {
                 .settingAnchor("margin-notes")
 
             Toggle("Enable margin notes", isOn: $marginNotesEnabled)
-                .help("Adds the authoring tools — hover a block, ⌥⌘M; documents "
-                    + "that already contain notes always show them either way")
+                .help("Adds the authoring tools — hover a block, ⌥⌘M; documents that already contain notes always show them either way")
                 // Flipping the toggle in either direction is an informed
                 // choice — this section says everything the first-use
                 // intro would, so it never needs to interrupt later.
@@ -475,8 +473,7 @@ struct ExperimentalSettingsTab: View {
             if marginNotesEnabled {
                 TextField("Sign notes as:", text: $marginNoteAuthor,
                           prompt: Text(NSUserName()))
-                    .help("The @name your notes carry — empty uses your GitHub "
-                        + "login, or this Mac's account name when signed out")
+                    .help("The @name your notes carry — empty uses your GitHub login, or this Mac's account name when signed out")
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Using it")
@@ -501,8 +498,7 @@ struct ExperimentalSettingsTab: View {
                                 copiedSnippet = false
                             }
                         }
-                        .help("Copies instructions for CLAUDE.md / AGENTS.md — how to "
-                            + "read margin notes and delete them as they're addressed")
+                        .help("Copies instructions for CLAUDE.md / AGENTS.md — how to read margin notes and delete them as they're addressed")
                     }
                     Text("Paste the copied snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in the file\" becomes a complete handoff — the agent deletes each note as it resolves it, and you watch the bubbles disappear.")
                         .font(.callout)
@@ -894,9 +890,7 @@ struct GitHubConnectionSection: View {
                         Task { await GitHubClient.shared.recheck() }
                     }
                     .disabled(connection.status == .checking)
-                    .help("Re-read credentials from the GitHub CLI and git "
-                        + "credential helpers — after gh auth login, this "
-                        + "connects without relaunching")
+                    .help("Re-read credentials from the GitHub CLI and git credential helpers — after gh auth login, this connects without relaunching")
                     Button("Set Up…") { showSetup = true }
                         .help("Walk through connecting PullMark to GitHub")
                 }

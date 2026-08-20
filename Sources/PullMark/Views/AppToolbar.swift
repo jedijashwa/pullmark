@@ -512,7 +512,7 @@ private struct OpenFileToolbarButton: View {
         } label: {
             Label("Open File or Folder", systemImage: "folder")
         }
-        .help("Open local Markdown files or a folder"
+        .help(String(localized: "Open local Markdown files or a folder")
             + shortcuts.hint(.openFile))
     }
 }
@@ -527,7 +527,7 @@ private struct OpenPRToolbarButton: View {
         } label: {
             Label("Open Pull Request", systemImage: "arrow.triangle.pull")
         }
-        .help("Open a GitHub pull request"
+        .help(String(localized: "Open a GitHub pull request")
             + shortcuts.hint(.openPullRequest))
     }
 }
@@ -650,7 +650,7 @@ private struct ZoomToolbarButton: View {
                 Label("Zoom Out", systemImage: "minus.magnifyingglass")
             }
             .disabled(zoom <= DocumentZoom.minimum)
-            .help("Make the document smaller" + shortcuts.hint(.zoomOut))
+            .help(String(localized: "Make the document smaller") + shortcuts.hint(.zoomOut))
         case .actualSize:
             Button {
                 zoom = 1.0
@@ -658,7 +658,7 @@ private struct ZoomToolbarButton: View {
                 Label("Actual Size", systemImage: "1.magnifyingglass")
             }
             .disabled(DocumentZoom.isActualSize(zoom))
-            .help("Reset the zoom to 100%" + shortcuts.hint(.actualSize))
+            .help(String(localized: "Reset the zoom to 100%") + shortcuts.hint(.actualSize))
         case .zoomIn:
             Button {
                 zoom = DocumentZoom.zoomIn(from: zoom)
@@ -666,7 +666,7 @@ private struct ZoomToolbarButton: View {
                 Label("Zoom In", systemImage: "plus.magnifyingglass")
             }
             .disabled(zoom >= DocumentZoom.maximum)
-            .help("Make the document bigger" + shortcuts.hint(.zoomIn))
+            .help(String(localized: "Make the document bigger") + shortcuts.hint(.zoomIn))
         }
     }
 }

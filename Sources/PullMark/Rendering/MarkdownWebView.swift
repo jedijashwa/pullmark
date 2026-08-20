@@ -254,7 +254,7 @@ struct MarkdownWebView: NSViewRepresentable {
             // Our commands ride along when a selection exists (Copy is
             // only offered on selections, so it's the reliable signal).
             if hadCopy {
-                let item = NSMenuItem(title: "Copy as Markdown",
+                let item = NSMenuItem(title: String(localized: "Copy as Markdown"),
                                       action: #selector(copySelectionAsMarkdown),
                                       keyEquivalent: "")
                 item.target = self

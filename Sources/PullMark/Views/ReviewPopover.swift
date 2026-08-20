@@ -500,7 +500,7 @@ struct ReviewPopover: View {
                 reviewSummary = ""
                 summarySeed = nil
                 summaryEdited = false
-                state.lastNotice = "Review submitted."
+                state.lastNotice = String(localized: "Review submitted.")
                 dismiss()
             } catch {
                 state.lastError = error.localizedDescription

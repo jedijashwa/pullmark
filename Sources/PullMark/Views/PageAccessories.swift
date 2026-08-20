@@ -95,11 +95,11 @@ struct FindBar: View {
             Button { step("prev") } label: { Image(systemName: "chevron.up") }
                 .buttonStyle(.borderless)
                 .disabled(total == 0)
-                .help("Previous match" + shortcuts.hint(.findPrevious))
+                .help(String(localized: "Previous match") + shortcuts.hint(.findPrevious))
             Button { step("next") } label: { Image(systemName: "chevron.down") }
                 .buttonStyle(.borderless)
                 .disabled(total == 0)
-                .help("Next match" + shortcuts.hint(.findNext))
+                .help(String(localized: "Next match") + shortcuts.hint(.findNext))
             Button("Done") { close() }
                 .buttonStyle(.borderless)
         }

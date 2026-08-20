@@ -32,11 +32,11 @@ enum DMGGreeter {
 
     private static func offerMove(_ image: DiskImages.MountedImage) {
         let alert = NSAlert()
-        alert.messageText = "Move PullMark to your Applications folder?"
-        alert.informativeText = "PullMark is running from its disk image. "
+        alert.messageText = String(localized: "Move PullMark to your Applications folder?")
+        alert.informativeText = String(localized: "PullMark is running from its disk image. ")
             + "Moving it to Applications installs it properly and enables one-click updates."
-        alert.addButton(withTitle: "Move to Applications")
-        alert.addButton(withTitle: "Not Now")
+        alert.addButton(withTitle: String(localized: "Move to Applications"))
+        alert.addButton(withTitle: String(localized: "Not Now"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
         let destination = "/Applications/PullMark.app"
@@ -48,8 +48,8 @@ enum DMGGreeter {
             try fm.copyItem(atPath: Bundle.main.bundlePath, toPath: destination)
         } catch {
             let failure = NSAlert()
-            failure.messageText = "Couldn't move PullMark"
-            failure.informativeText = "Drag PullMark to Applications in the Finder instead. (\(error.localizedDescription))"
+            failure.messageText = String(localized: "Couldn't move PullMark")
+            failure.informativeText = String(localized: "Drag PullMark to Applications in the Finder instead. (\(error.localizedDescription))")
             failure.runModal()
             return
         }
@@ -67,11 +67,11 @@ enum DMGGreeter {
     private static func offerCleanup(_ image: DiskImages.MountedImage) {
         let file = (image.imagePath as NSString).lastPathComponent
         let alert = NSAlert()
-        alert.messageText = "Remove the PullMark disk image?"
-        alert.informativeText = "PullMark is installed — the disk image is no longer needed. "
+        alert.messageText = String(localized: "Remove the PullMark disk image?")
+        alert.informativeText = String(localized: "PullMark is installed — the disk image is no longer needed. ")
             + "This ejects it and moves “\(file)” to the Trash."
-        alert.addButton(withTitle: "Move to Trash")
-        alert.addButton(withTitle: "Keep")
+        alert.addButton(withTitle: String(localized: "Move to Trash"))
+        alert.addButton(withTitle: String(localized: "Keep"))
         guard alert.runModal() == .alertFirstButtonReturn else {
             var declined = UserDefaults.pullmark.stringArray(forKey: DefaultsKeys.dmgCleanupDeclined) ?? []
             declined.append(image.imagePath)

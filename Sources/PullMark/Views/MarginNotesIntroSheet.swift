@@ -54,8 +54,7 @@ struct MarginNotesIntroSheet: View {
                             copiedSnippet = false
                         }
                     }
-                    .help("Copies instructions for CLAUDE.md / AGENTS.md — how to "
-                        + "read margin notes and delete them as they're addressed")
+                    .help("Copies instructions for CLAUDE.md / AGENTS.md — how to read margin notes and delete them as they're addressed")
                 }
                 Text("Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff.")
                     .font(.callout)

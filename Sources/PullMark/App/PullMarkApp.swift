@@ -296,7 +296,7 @@ struct PullMarkApp: App {
                     if let root = LocalGit.repoRoot(for: url) {
                         state?.commitRequest = CommitRequest(root: root)
                     } else {
-                        state?.lastNotice = "\(url.lastPathComponent) isn't inside a git repository."
+                        state?.lastNotice = String(localized: "\(url.lastPathComponent) isn't inside a git repository.")
                     }
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .commitChanges))
@@ -306,9 +306,9 @@ struct PullMarkApp: App {
                     guard let url = activeLocalFileURL else { return }
                     do {
                         try EditHistory.revertLastEdit(for: url)
-                        state?.lastNotice = "Reverted the last edit to \(url.lastPathComponent)."
+                        state?.lastNotice = String(localized: "Reverted the last edit to \(url.lastPathComponent).")
                     } catch {
-                        state?.lastError = "Couldn't revert: \(error.localizedDescription)"
+                        state?.lastError = String(localized: "Couldn't revert: \(error.localizedDescription)")
                     }
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .revertLastEdit))
@@ -346,8 +346,7 @@ struct PullMarkApp: App {
                 Button("Copy as Markdown") { copyAsMarkdown() }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .copyAsMarkdown))
                     .disabled(state?.activeDocument == nil)
-                    .help("Copies the Markdown source of the selected blocks "
-                        + "(whole blocks — or the whole document when nothing is selected)")
+                    .help("Copies the Markdown source of the selected blocks (whole blocks — or the whole document when nothing is selected)")
             }
             CommandGroup(after: .textEditing) {
                 Button("Find in Page") { state?.findBarVisible = true }
@@ -390,7 +389,7 @@ struct PullMarkApp: App {
                             updates.historyMarkdown = history
                             updates.showHistory = true
                         } else {
-                            state.lastNotice = "Release notes couldn't be loaded — "
+                            state.lastNotice = String(localized: "Release notes couldn't be loaded — ")
                                 + "they're also at github.com/jedijashwa/pullmark/releases."
                         }
                     }
@@ -457,9 +456,7 @@ struct PullMarkApp: App {
                 }
                 .disabled(activeLocalFileURL == nil
                     || state?.expectedSurfaceToolbar?.compareGitAvailable != true)
-                .help("What changed since the last commit, rendered like a PR "
-                    + "diff — the toolbar's Compare button offers older "
-                    + "revisions and branches")
+                .help("What changed since the last commit, rendered like a PR diff — the toolbar's Compare button offers older revisions and branches")
                 Button(marginNotesVisible ? "Hide Margin Notes" : "Show Margin Notes") {
                     marginNotesVisible.toggle()
                 }

@@ -735,7 +735,7 @@ struct PRFileView: View {
             // The page already cleared its composer — never drop the text.
             threadActions.restoreDraftAfterFailure(key: submission.draftKey,
                                                    text: submission.body)
-            state.lastError = "Could not post the comment — the PR session is "
+            state.lastError = String(localized: "Could not post the comment — the PR session is ")
                 + "no longer available. Your text was kept as a draft."
             return
         }
@@ -754,7 +754,7 @@ struct PRFileView: View {
             } catch {
                 threadActions.restoreDraftAfterFailure(key: submission.draftKey,
                                                        text: submission.body)
-                state.lastError = "Could not post the comment: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not post the comment: \(error.localizedDescription)")
             }
         }
     }
