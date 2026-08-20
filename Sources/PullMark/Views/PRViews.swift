@@ -987,8 +987,12 @@ struct PRFileNavigation: View {
     }
 
     private var positionLabel: String {
-        guard let index else { return "\(session.markdownFiles.count) files" }
-        return "\(index + 1) of \(session.markdownFiles.count)"
+        guard let index else {
+            let count = session.markdownFiles.count
+            return count == 1 ? String(localized: "1 file")
+                              : String(localized: "\(count) files")
+        }
+        return String(localized: "\(index + 1) of \(session.markdownFiles.count)")
     }
 }
 

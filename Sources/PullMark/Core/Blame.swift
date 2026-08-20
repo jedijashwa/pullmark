@@ -177,21 +177,26 @@ enum BlameMapper {
     /// "3 weeks ago"-style label, computed in Swift so the page shows plain
     /// strings (no date logic in JS).
     static func relativeLabel(from date: Date, to now: Date = Date()) -> String {
-        func plural(_ n: Int, _ unit: String) -> String {
-            "\(n) \(unit)\(n == 1 ? "" : "s") ago"
+        // Same bucketing as always; the FORMATTING is the system's
+        // relative formatter, so every locale gets its own units and
+        // plural rules (spec: app-i18n).
+        func spell(_ components: DateComponents) -> String {
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .full
+            return formatter.localizedString(from: components)
         }
         let seconds = now.timeIntervalSince(date)
-        if seconds < 45 { return "just now" }
+        if seconds < 45 { return String(localized: "just now") }
         let minutes = max(1, Int((seconds / 60).rounded()))
-        if minutes < 60 { return plural(minutes, "minute") }
+        if minutes < 60 { return spell(DateComponents(minute: -minutes)) }
         let hours = Int((seconds / 3600).rounded())
-        if hours < 24 { return plural(hours, "hour") }
+        if hours < 24 { return spell(DateComponents(hour: -hours)) }
         let days = Int((seconds / 86400).rounded())
-        if days < 7 { return plural(days, "day") }
-        if days < 30 { return plural(days / 7, "week") }
+        if days < 7 { return spell(DateComponents(day: -days)) }
+        if days < 30 { return spell(DateComponents(weekOfMonth: -(days / 7))) }
         let months = Int((Double(days) / 30.44).rounded())
-        if months < 12 { return plural(max(1, months), "month") }
-        return plural(max(1, Int(Double(days) / 365.25)), "year")
+        if months < 12 { return spell(DateComponents(month: -max(1, months))) }
+        return spell(DateComponents(year: -max(1, Int(Double(days) / 365.25))))
     }
 }
 
