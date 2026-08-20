@@ -22,7 +22,7 @@ no paste-back, and no pull request.
 
 ## Docs
 
-- [Review your agent's plans](https://pullmark.app/agents/): the margin-notes
+- [Review your agent's plans](https://pullmark.app/uses/agents/): the margin-notes
   loop for agent-written drafts, including the instructions snippet to give
   an agent
 - [Documentation](https://pullmark.app/docs/): overview of every feature
