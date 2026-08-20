@@ -143,8 +143,8 @@ spinner with "Reopening…":
 |---|---|
 | `.local` | "This file has been moved or deleted." + abbreviated path |
 | `.folder` / `.folderNode` | "This folder has been moved or deleted." + abbreviated root path |
-| `.prOverview` / `.prFile` / `.prDoc` | "This pull request couldn’t be reopened." |
-| `.remoteRepo` / `.remoteDoc` | "This repository couldn’t be reopened." |
+| `.prOverview` / `.prFile` / `.prDoc` | "Couldn’t load this pull request." |
+| `.remoteRepo` / `.remoteDoc` | "Couldn’t load this repository." |
 
 Titles and icons come from the history snapshot when the current
 selection matches an entry, falling back to what the selection itself

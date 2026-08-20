@@ -45,6 +45,13 @@ struct AppToolbar: CustomizableToolbarContent {
         ToolbarItem(id: "nav-history", placement: .navigation) {
             NavHistoryControl(state: state)
         }
+        // Known Tahoe cosmetic: the glass grouping fuses this pair with
+        // the PR surface's navigation cluster into one capsule. Both
+        // split attempts failed live — ToolbarSpacer typechecks as
+        // customizable content but is silently dropped from
+        // `.toolbar(id:)` toolbars, and an empty gap item's width
+        // pushes the whole PR cluster into overflow at the default
+        // window size. Revisit if the toolbar ever gets more room.
         // Declared before the rest: review status must survive the
         // squeeze that rightly claims surface items and the open buttons
         // (spec §3). Placement still renders it in the trailing cluster.

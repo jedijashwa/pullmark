@@ -1515,7 +1515,7 @@ struct DetailView: View {
                     .id(id)
             } else {
                 unavailable(for: .prOverview(id),
-                            reason: "This pull request couldn’t be reopened.")
+                            reason: "Couldn’t load this pull request.")
             }
         case .prFile(let id, let path):
             if state.session(id) != nil {
@@ -1523,7 +1523,7 @@ struct DetailView: View {
                     .id(id + "|" + path)
             } else {
                 unavailable(for: .prFile(id, path),
-                            reason: "This pull request couldn’t be reopened.")
+                            reason: "Couldn’t load this pull request.")
             }
         case .prDoc(let id, let path):
             if state.session(id) != nil {
@@ -1531,7 +1531,7 @@ struct DetailView: View {
                     .id(id + "|doc|" + path)
             } else {
                 unavailable(for: .prDoc(id, path),
-                            reason: "This pull request couldn’t be reopened.")
+                            reason: "Couldn’t load this pull request.")
             }
         case .remoteRepo(let id):
             // A selected repo shows its README when we know of one (from
@@ -1547,7 +1547,7 @@ struct DetailView: View {
                 }
             } else {
                 unavailable(for: .remoteRepo(id),
-                            reason: "This repository couldn’t be reopened.")
+                            reason: "Couldn’t load this repository.")
             }
         case .remoteDoc(let id, let path):
             if state.remoteSession(id) != nil {
@@ -1555,7 +1555,7 @@ struct DetailView: View {
                     .id(id + "|" + path)
             } else {
                 unavailable(for: .remoteDoc(id, path),
-                            reason: "This repository couldn’t be reopened.")
+                            reason: "Couldn’t load this repository.")
             }
         case .folder(let root):
             // A selected place shows its README (then index) when it has
