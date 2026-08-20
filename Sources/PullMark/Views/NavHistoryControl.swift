@@ -16,14 +16,12 @@ struct NavHistoryControl: View {
                 state: state, direction: -1,
                 symbol: "chevron.backward", label: "Back",
                 enabled: state.canGoBack,
-                help: "Show the previous document\(shortcuts.hint(.goBack))"
-                    + " — click and hold to see history")
+                help: String(localized: "Show the previous document\(shortcuts.hint(.goBack)) — click and hold to see history"))
             NavHistoryButton(
                 state: state, direction: 1,
                 symbol: "chevron.forward", label: "Forward",
                 enabled: state.canGoForward,
-                help: "Show the next document\(shortcuts.hint(.goForward))"
-                    + " — click and hold to see history")
+                help: String(localized: "Show the next document\(shortcuts.hint(.goForward)) — click and hold to see history"))
         }
     }
 }

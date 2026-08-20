@@ -82,17 +82,17 @@ struct ContentView: View {
         .sheet(isPresented: $updates.showReleaseNotes) {
             // Version-less on purpose: the notes carry their versions as
             // headings in the content, matching the post-update sheet.
-            ReleaseNotesSheet(title: "What's New in PullMark",
+            ReleaseNotesSheet(title: String(localized: "What's New in PullMark"),
                               markdown: updates.availableNotes,
                               fullHistory: { await updates.releaseNotesHistory() })
         }
         .sheet(isPresented: $updates.showWhatsNew) {
-            ReleaseNotesSheet(title: "What's New in PullMark",
+            ReleaseNotesSheet(title: String(localized: "What's New in PullMark"),
                               markdown: updates.whatsNewMarkdown,
                               fullHistory: { await updates.releaseNotesHistory() })
         }
         .sheet(isPresented: $updates.showHistory) {
-            ReleaseNotesSheet(title: "PullMark Release Notes",
+            ReleaseNotesSheet(title: String(localized: "PullMark Release Notes"),
                               markdown: updates.historyMarkdown)
         }
         .alert("Something went wrong", isPresented: errorPresented) {
@@ -254,7 +254,7 @@ struct SidebarView: View {
             CollapsibleSection(String(localized: "Open Files"), isExpanded: $filesExpanded,
                                headerActions: state.hasOpenFiles ? [
                 SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
-                                    help: "Close All") { state.closeAllOpenFiles() }
+                                    help: String(localized: "Close All")) { state.closeAllOpenFiles() }
             ] : [], headerMenu: {
                 // Close All only — the menu mirrors the header's own
                 // affordances, and this header deliberately has no +
@@ -297,7 +297,7 @@ struct SidebarView: View {
             CollapsibleSection(String(localized: "Locations"), isExpanded: $foldersExpanded,
                                headerActions: [
                 SectionHeaderAction(id: "add-folder", symbol: "plus",
-                                    help: "Open Folder…") { state.openFolderPanel() }
+                                    help: String(localized: "Open Folder…")) { state.openFolderPanel() }
             ], headerMenu: {
                 AnyView(Group {
                     Button("Open Folder…") { state.openFolderPanel() }
@@ -321,7 +321,7 @@ struct SidebarView: View {
             CollapsibleSection(String(localized: "Pull Requests"), isExpanded: $prsExpanded,
                                headerActions: [
                 SectionHeaderAction(id: "add-pr", symbol: "plus",
-                                    help: "Open Pull Request…") { state.showAddPR = true }
+                                    help: String(localized: "Open Pull Request…")) { state.showAddPR = true }
             ], headerMenu: {
                 AnyView(Group {
                     Button("Open Pull Request…") { state.showAddPR = true }
@@ -515,7 +515,7 @@ private struct SidebarFileRow: View {
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        RemovableRow(help: isPreview ? "Dismiss Preview" : "Remove from Sidebar",
+        RemovableRow(help: isPreview ? String(localized: "Dismiss Preview") : String(localized: "Remove from Sidebar"),
                      remove: { isPreview ? state.dismissPreview()
                                          : state.removeLocalFile(file) }) {
             HStack(spacing: 4) {
@@ -550,7 +550,7 @@ private struct SidebarFileRow: View {
                         .font(fonts.caption)
                         .foregroundStyle(.secondary)
                         .labelStyle(.titleAndIcon)
-                        .help(count == 1 ? "1 margin note" : "\(count) margin notes")
+                        .help(count == 1 ? String(localized: "1 margin note") : String(localized: "\(count) margin notes"))
                         .accessibilityLabel("\(count) margin note\(count == 1 ? "" : "s")")
                 }
             }
@@ -588,7 +588,7 @@ private struct RemotePreviewRow: View {
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        RemovableRow(help: "Dismiss Preview",
+        RemovableRow(help: String(localized: "Dismiss Preview"),
                      remove: { state.dismissPreview() }) {
             Label {
                 VStack(alignment: .leading, spacing: 1) {
@@ -875,8 +875,7 @@ private struct FolderRootGroup: View {
         }
         .tag(SidebarSelection.folder(folder.rootURL))
         .help(folder.missing
-            ? "Folder not found — last seen at "
-                + PathAbbreviator.abbreviate(folder.rootURL.path)
+            ? String(localized: "Folder not found — last seen at \(PathAbbreviator.abbreviate(folder.rootURL.path))")
             : PathAbbreviator.abbreviate(folder.rootURL.path))
         .contextMenu {
             Button("Remove from Sidebar") { state.removeFolder(folder.rootURL) }
@@ -1156,7 +1155,7 @@ private struct InboxRow: View {
                     .font(fonts.caption)
                     .foregroundStyle(.secondary)
                     .labelStyle(.titleAndIcon)
-                    .help(count == 1 ? "1 Markdown file" : "\(count) Markdown files")
+                    .help(count == 1 ? String(localized: "1 Markdown file") : String(localized: "\(count) Markdown files"))
             }
         }
         .contentShape(Rectangle())
@@ -1164,7 +1163,7 @@ private struct InboxRow: View {
         // row still highlights and arrow keys merely select.
         .simultaneousGesture(TapGesture().onEnded { state.openInboxItem(item) })
         .help(state.inboxMDCount(item) == 0
-            ? "No Markdown files in this pull request" : item.title)
+            ? String(localized: "No Markdown files in this pull request") : item.title)
         .contextMenu {
             Button("Open") { state.openInboxItem(item) }
             Button("Reveal on GitHub") {
@@ -1190,7 +1189,7 @@ private struct RecentRow: View {
 
     var body: some View {
         let fonts = ChromeFonts(zoom: zoom)
-        RemovableRow(help: "Remove from Recents",
+        RemovableRow(help: String(localized: "Remove from Recents"),
                      remove: { state.removeRecent(id: item.id) }) {
             Label {
                 VStack(alignment: .leading, spacing: 1) {
@@ -1249,7 +1248,7 @@ private struct RecentRow: View {
         switch item.kind {
         case .file, .folder:
             let path = item.path.map { PathAbbreviator.abbreviate($0) } ?? item.title
-            return missing ? "File not found — last seen at \(path)" : path
+            return missing ? String(localized: "File not found — last seen at \(path)") : path
         case .pr:
             let status = item.prStatus.map { " — \($0.label)" } ?? ""
             return "\(item.owner ?? "")/\(item.repo ?? "")#\(item.number ?? 0)\(status)"
@@ -1335,8 +1334,8 @@ private struct PRSidebarGroup: View {
                     .font(fonts.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-                    .help(count == 1 ? "1 changed Markdown file"
-                        : "\(count) changed Markdown files")
+                    .help(count == 1 ? String(localized: "1 changed Markdown file")
+                        : String(localized: "\(count) changed Markdown files"))
             }
             .tag(SidebarSelection.prOverview(session.id))
             .help(status.label)
@@ -1409,8 +1408,8 @@ private struct PRNodeView: View {
                         .font(fonts.caption)
                         .foregroundStyle(.secondary)
                         .labelStyle(.titleAndIcon)
-                        .help(count == 1 ? "1 unresolved review comment"
-                            : "\(count) unresolved review comments")
+                        .help(count == 1 ? String(localized: "1 unresolved review comment")
+                            : String(localized: "\(count) unresolved review comments"))
                         .accessibilityLabel("\(count) unresolved review comment\(count == 1 ? "" : "s")")
                 }
             }

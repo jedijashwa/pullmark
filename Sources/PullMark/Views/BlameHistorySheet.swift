@@ -135,7 +135,7 @@ struct BlameHistorySheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(entry.url != nil ? "Open commit on GitHub" : "Copy full SHA")
+        .help(entry.url != nil ? String(localized: "Open commit on GitHub") : String(localized: "Copy full SHA"))
     }
 
     private func activate(_ entry: HistoryEntry) {

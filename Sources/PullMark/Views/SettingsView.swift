@@ -306,7 +306,7 @@ struct GeneralSettingsTab: View {
             updates.detectUpdateMethodIfNeeded()
         }
         .sheet(isPresented: $showAvailableNotes) {
-            ReleaseNotesSheet(title: "What's New in PullMark",
+            ReleaseNotesSheet(title: String(localized: "What's New in PullMark"),
                               markdown: updates.availableNotes)
         }
     }

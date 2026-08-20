@@ -24,10 +24,10 @@ struct CompareRevisionsSheet: View {
             Text("Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
-            refRow(title: "Old side", text: $oldRef,
-                   placeholder: "branch, tag, or commit")
-            refRow(title: "New side", text: $newRef,
-                   placeholder: "the working file")
+            refRow(title: String(localized: "Old side"), text: $oldRef,
+                   placeholder: String(localized: "branch, tag, or commit"))
+            refRow(title: String(localized: "New side"), text: $newRef,
+                   placeholder: String(localized: "the working file"))
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }

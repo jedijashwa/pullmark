@@ -106,7 +106,7 @@ struct OpenQuicklyPalette: View {
                 items.append(QuickItem(
                     id: "h:" + heading.slug,
                     title: heading.title,
-                    subtitle: "Heading · \(document.exportBaseName)",
+                    subtitle: String(localized: "Heading · \(document.exportBaseName)"),
                     icon: "number",
                     action: { document.proxy.scrollToAnchor(heading.slug) }))
             }
@@ -139,7 +139,7 @@ struct OpenQuicklyPalette: View {
             items.append(QuickItem(
                 id: "pr:" + session.id,
                 title: refTitle,
-                subtitle: "Pull request · \(session.details.title)",
+                subtitle: String(localized: "Pull request · \(session.details.title)"),
                 icon: "arrow.triangle.pull",
                 action: { state.selection = .prOverview(session.id) }))
             for file in session.markdownFiles {
@@ -155,7 +155,7 @@ struct OpenQuicklyPalette: View {
             items.append(QuickItem(
                 id: "in:" + item.id,
                 title: item.title,
-                subtitle: "Review requested · \(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)",
+                subtitle: String(localized: "Review requested · \(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"),
                 icon: "tray",
                 action: { state.openInboxItem(item) }))
         }
@@ -163,7 +163,7 @@ struct OpenQuicklyPalette: View {
             items.append(QuickItem(
                 id: "r:" + recent.id,
                 title: recent.title,
-                subtitle: "Recent",
+                subtitle: String(localized: "Recent"),
                 icon: "clock",
                 action: { state.openRecent(recent) }))
         }
@@ -210,15 +210,15 @@ struct OpenQuicklyPalette: View {
             let url = URL(fileURLWithPath: path)
             return [QuickItem(
                 id: "direct:path:" + path,
-                title: "Open " + url.lastPathComponent,
+                title: String(localized: "Open \(url.lastPathComponent)"),
                 subtitle: PathAbbreviator.abbreviate(path),
                 icon: direct.isDirectory ? "folder" : "doc.text",
                 action: { state.add(url: url) })]
         case .pullRequest(let ref):
             return [QuickItem(
                 id: "direct:pr:\(ref.owner)/\(ref.repo)/\(ref.number)",
-                title: "Open \(ref.owner)/\(ref.repo) #\(ref.number)",
-                subtitle: "Pull request",
+                title: String(localized: "Open \(ref.owner)/\(ref.repo) #\(ref.number)"),
+                subtitle: String(localized: "Pull request"),
                 icon: "arrow.triangle.pull",
                 action: {
                     Task {
@@ -233,14 +233,14 @@ struct OpenQuicklyPalette: View {
         case .remoteDoc(let link):
             return [QuickItem(
                 id: "direct:remote:\(link.owner)/\(link.repo)@\(link.ref)/\(link.path)",
-                title: "Open " + ((link.path as NSString).lastPathComponent),
-                subtitle: "\(link.owner)/\(link.repo) @ \(link.ref) — from GitHub",
+                title: String(localized: "Open \((link.path as NSString).lastPathComponent)"),
+                subtitle: String(localized: "\(link.owner)/\(link.repo) @ \(link.ref) — from GitHub"),
                 icon: "book.closed",
                 action: { state.openGitHubDoc(link, pin: true) })]
         case .remoteRepo(let owner, let repo, let ref):
             return [QuickItem(
                 id: "direct:repo:\(owner)/\(repo)@\(ref ?? "")",
-                title: "Browse \(owner)/\(repo)",
+                title: String(localized: "Browse \(owner)/\(repo)"),
                 subtitle: ref.map { "GitHub repo @ \($0)" } ?? "GitHub repo",
                 icon: "book.closed",
                 action: {

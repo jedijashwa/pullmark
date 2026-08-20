@@ -175,8 +175,8 @@ struct KeyboardSettingsTab: View {
                     .padding(-2)
                     .opacity(recording == action ? 1 : 0))
             .help(recording == action
-                ? "Recording — press the new shortcut"
-                : "Click, then press the new shortcut")
+                ? String(localized: "Recording — press the new shortcut")
+                : String(localized: "Click, then press the new shortcut"))
             .accessibilityHidden(true) // the row carries the label
 
             // Always present so the shortcut column stays flush; only

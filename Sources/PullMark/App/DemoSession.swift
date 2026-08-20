@@ -597,9 +597,11 @@ enum DemoSession {
         ]
         state.checks = [
             CheckItem(name: "build", group: "CI", state: .passed,
-                      detailsUrl: nil, isRequired: true, durationLabel: "1m 32s"),
+                      detailsUrl: nil, isRequired: true,
+                      durationLabel: CheckItem.durationLabel(seconds: 92)),
             CheckItem(name: "docs-links", group: "CI", state: .passed,
-                      detailsUrl: nil, isRequired: false, durationLabel: "48s"),
+                      detailsUrl: nil, isRequired: false,
+                      durationLabel: CheckItem.durationLabel(seconds: 48)),
             CheckItem(name: "spellcheck", group: "CI", state: .skipped,
                       detailsUrl: nil, isRequired: false, durationLabel: nil),
             CheckItem(name: "license/cla", group: nil, state: .passed,

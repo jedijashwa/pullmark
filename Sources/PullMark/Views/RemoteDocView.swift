@@ -203,12 +203,12 @@ struct RemoteDocView: View {
                                                      ref: session.displayRef,
                                                      path: path)
             if RemoteDocLink.isCommitSHA(session.displayRef) {
-                surface.reloadDisabledReason = "This document was opened at a "
-                    + "specific commit — its content can't change"
+                surface.reloadDisabledReason = String(localized:
+                    "This document was opened at a specific commit — its content can't change")
             }
         }
         surface.compareAvailable = !loading && loadError == nil
-        surface.compareUnavailableReason = "The document hasn't finished loading"
+        surface.compareUnavailableReason = String(localized: "The document hasn't finished loading")
         surface.popCompare = { popCompareMenu(from: $0) }
         state.registerSurfaceToolbar(surface)
     }

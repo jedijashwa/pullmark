@@ -97,17 +97,26 @@ struct CheckItem: Equatable, Identifiable {
         }
     }
 
-    /// "58s" / "3m 12s" / "1h 4m" between two ISO-8601 stamps.
+    /// "58s" / "3m 12s" / "1h 4m" between two ISO-8601 stamps —
+    /// abbreviated in the launch language's own units (ja: 3分12秒).
     static func durationLabel(startedAt: String?, completedAt: String?) -> String? {
         guard let startedAt, let completedAt,
               let start = GitHubDate.parse(startedAt),
               let end = GitHubDate.parse(completedAt) else { return nil }
         let seconds = Int(end.timeIntervalSince(start).rounded())
+        return durationLabel(seconds: seconds)
+    }
+
+    /// Seconds-based core (the demo session feeds it directly so demo
+    /// checks render native units too, not baked English strings).
+    static func durationLabel(seconds: Int) -> String? {
         guard seconds >= 0 else { return nil }
-        if seconds < 60 { return "\(seconds)s" }
-        let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m \(seconds % 60)s" }
-        return "\(minutes / 60)h \(minutes % 60)m"
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .abbreviated
+        formatter.allowedUnits = seconds < 60 ? [.second]
+            : seconds < 3600 ? [.minute, .second]
+            : [.hour, .minute]
+        return formatter.string(from: TimeInterval(seconds))
     }
 }
 

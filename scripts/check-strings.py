@@ -96,7 +96,7 @@ def scan_swift_literal(s, start):
 # every interpolated call site when introduced (spec: app-i18n).
 INT_EXPR = re.compile(
     r"^(?:"
-    r"[\w.]*[cC]ount|overflow|minutes|hours|days|line|number|original|index"
+    r"[\w.]*[cC]ount|overflow|minutes|hours|days|line|number|original|index|passed|skipped"
     r"|[\w.]*[cC]ount [-+] \d+|index [-+] \d+|line [-+] \d+"
     r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status|failing|done|total"
     r"|[\w.]+\.(?:minutes|number|status|line|originalLine)"
