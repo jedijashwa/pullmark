@@ -680,3 +680,5 @@
 "Zoom out (-)" = "Zoom uit (-)";
 "branch, tag, or commit" = "branch, tag of commit";
 "the working file" = "het werkbestand";
+"editing" = "wordt bewerkt";
+"pr-status-open" = "Open";

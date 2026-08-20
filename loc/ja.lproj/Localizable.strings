@@ -680,3 +680,5 @@
 "Zoom out (-)" = "縮小 (-)";
 "branch, tag, or commit" = "ブランチ、タグ、コミット";
 "the working file" = "作業中のファイル";
+"editing" = "編集中";
+"pr-status-open" = "オープン";
