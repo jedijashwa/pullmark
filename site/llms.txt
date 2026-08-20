@@ -6,7 +6,7 @@
 > reading and reviewing the Markdown that coding agents and teams produce:
 > plans, specs, design docs, ADRs, runbooks.
 
-Key facts: macOS 13+, signed and notarized, zero telemetry. Installs via
+Key facts: macOS 13+, signed and notarized. Installs via
 Homebrew (`brew tap jedijashwa/tap && brew trust jedijashwa/tap && brew
 install --cask pullmark`) or a DMG from GitHub releases. Authenticates to
 GitHub with the credentials already on the system (`gh auth token`, then
