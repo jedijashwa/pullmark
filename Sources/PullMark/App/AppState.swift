@@ -400,12 +400,28 @@ final class AppState: ObservableObject {
                selection != .prFile(reveal.sessionID, reveal.path) {
                 pendingThreadReveal = nil
             }
+            // The one recording site for back/forward history (spec §3):
+            // every navigation in the app flows through this setter.
+            // Traversal moves the cursor instead of recording, and
+            // selection-only rows are not destinations (snapshot is nil).
+            if !isTraversingHistory, let selection,
+               let snapshot = historySnapshot(for: selection) {
+                navHistory.visit(selection, title: snapshot.title,
+                                 systemImage: snapshot.symbol)
+            }
             let current = selection
             // Deferred: the binding writes during event handling, and this
             // may publish localFiles/previewFile changes in response.
             Task { @MainActor [weak self] in self?.reactToSelection(current) }
         }
     }
+
+    /// Per-window back/forward trail (spec: back-forward-navigation).
+    /// Session-only — it lives and dies with the window's AppState.
+    @Published private(set) var navHistory = NavigationHistory<SidebarSelection>()
+    /// True while goBack/goForward/travelHistory assign `selection`, so
+    /// the didSet above moves the cursor without recording a new visit.
+    private var isTraversingHistory = false
     /// File/folder recents whose paths currently don't resolve — dimmed
     /// in the sidebar, revived automatically when the path returns
     /// (spec §6). Recomputed on app activation and window open.
@@ -1099,6 +1115,148 @@ final class AppState: ObservableObject {
         }
     }
 
+    // MARK: - Back/forward history (spec: back-forward-navigation)
+
+    /// Title + symbol for a history entry, snapshotted at visit time so
+    /// the menus keep naming entries whose resource later disappears.
+    /// nil means "not a destination": the selection-only inbox/recents
+    /// rows, and a PR/repo selection whose session is already gone.
+    func historySnapshot(for selection: SidebarSelection) -> (title: String, symbol: String)? {
+        switch selection {
+        case .local(let url):
+            return (url.lastPathComponent, "doc.text")
+        case .folder(let root):
+            return (root.lastPathComponent, "folder")
+        case .folderNode(let root, let path):
+            let name = (path as NSString).lastPathComponent
+            return (name.isEmpty ? root.lastPathComponent : name, "folder")
+        case .prOverview(let id):
+            guard let session = session(id) else { return nil }
+            return ("\(session.ref.repo) #\(session.ref.number)", "arrow.triangle.pull")
+        case .prFile(_, let path), .prDoc(_, let path):
+            return ((path as NSString).lastPathComponent, "doc.text")
+        case .remoteRepo(let id):
+            guard let session = remoteSession(id) else { return nil }
+            return ("\(session.ref.owner)/\(session.ref.repo)", "book.closed")
+        case .remoteDoc(_, let path):
+            return ((path as NSString).lastPathComponent, "doc.text")
+        case .inboxItem, .recentItem:
+            return nil
+        }
+    }
+
+    /// What the unavailable view (spec §4.1) titles a dead selection:
+    /// live state when it can still name it, else the recorded history
+    /// entry, else what the selection alone carries.
+    func historyDisplay(for selection: SidebarSelection) -> (title: String, symbol: String) {
+        if let live = historySnapshot(for: selection) { return live }
+        if let entry = navHistory.entries.last(where: { $0.destination == selection }) {
+            return (entry.title, entry.systemImage)
+        }
+        switch selection {
+        case .prOverview: return ("Pull request", "arrow.triangle.pull")
+        case .remoteRepo: return ("Repository", "book.closed")
+        default: return ("Document", "doc.text")
+        }
+    }
+
+    var canGoBack: Bool { navHistory.canGoBack }
+    var canGoForward: Bool { navHistory.canGoForward }
+
+    func goBack() { travelHistory(-1) }
+    func goForward() { travelHistory(1) }
+
+    /// The destination a Back/Forward landing is currently re-fetching
+    /// (a closed PR session being reopened) — drives the "Reopening…"
+    /// state in the unavailable view (spec §4.1).
+    @Published var historyRevival: SidebarSelection?
+
+    private func withHistoryTraversal(_ body: () -> Void) {
+        isTraversingHistory = true
+        defer { isTraversingHistory = false }
+        body()
+    }
+
+    /// Move through the trail and land (spec §4) — the trail is never
+    /// skipped or pruned. Landing revives whatever can be revived: a
+    /// closed local file reopens from disk, a closed Location re-adds,
+    /// closed PR/repo sessions re-fetch (their IDs are their refs). Only
+    /// a destination that no longer exists anywhere shows the
+    /// unavailable view (§4.1). Health is judged at each landing, never
+    /// cached, so a restored file or reopened session makes an old
+    /// entry work again.
+    func travelHistory(_ delta: Int) {
+        guard let entry = navHistory.travel(delta) else { return }
+        withHistoryTraversal { selection = entry.destination }
+        revive(entry.destination)
+    }
+
+    /// Reopens a landed-on destination whose backing resource is closed
+    /// but recoverable. Synchronous revivals happen before the next
+    /// render; the PR fetch is async and the detail area shows
+    /// "Reopening…" until it resolves.
+    private func revive(_ destination: SidebarSelection) {
+        switch destination {
+        case .local(let url):
+            guard localFile(for: url) == nil,
+                  FileManager.default.fileExists(atPath: url.path) else { return }
+            withHistoryTraversal { openViaLink(url: url) }
+        case .folder(let root), .folderNode(let root, _):
+            guard folder(for: root) == nil else { return }
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: root.path, isDirectory: &isDirectory),
+                  isDirectory.boolValue else { return }
+            withHistoryTraversal {
+                add(url: root)
+                // addFolder selects the root; a folderNode landing wants
+                // its own row back.
+                selection = destination
+            }
+        case .prOverview(let id), .prFile(let id, _), .prDoc(let id, _):
+            // The session ID is the ref ("owner/repo#123") — enough to
+            // reopen the pull request whole.
+            guard session(id) == nil, PullRequestRef.parse(id) != nil else { return }
+            historyRevival = destination
+            Task {
+                defer { if historyRevival == destination { historyRevival = nil } }
+                do {
+                    try await addPR(id, select: false)
+                    // The published session makes the detail view render
+                    // by itself; only a file that left the PR needs a
+                    // redirect (its entry stays put — landing on it again
+                    // re-judges).
+                    if case .prFile(let sid, let path) = destination,
+                       selection == destination,
+                       let session = session(sid),
+                       !session.markdownFiles.contains(where: { $0.filename == path }) {
+                        withHistoryTraversal { selection = .prOverview(sid) }
+                    }
+                } catch {
+                    lastError = error.localizedDescription
+                }
+            }
+        case .remoteRepo(let id), .remoteDoc(let id, _):
+            // The session ID is "owner/repo@ref" — recreate the session
+            // the way snapshot restores do (unresolved; documents and the
+            // tree fetch lazily when the views ask).
+            guard remoteSession(id) == nil,
+                  let at = id.firstIndex(of: "@") else { return }
+            let parts = id[..<at].split(separator: "/")
+            guard parts.count == 2 else { return }
+            let ref = PullRequestRef(owner: String(parts[0]), repo: String(parts[1]), number: 0)
+            let displayRef = String(id[id.index(after: at)...])
+            withHistoryTraversal {
+                remoteSessions.append(RemoteRepoSession(ref: ref, displayRef: displayRef))
+                selection = destination
+            }
+            if case .remoteRepo = destination {
+                Task { await loadRemoteTree(sessionID: id) }
+            }
+        case .inboxItem, .recentItem:
+            break
+        }
+    }
+
     /// Double-click on a tree row or the preview row: keep the file open.
     func pinFile(at url: URL) {
         if case .local(let p) = preview, p.url == url { preview = nil }
@@ -1475,13 +1633,16 @@ final class AppState: ObservableObject {
         prSessions.first { $0.id == id }
     }
 
-    func addPR(_ input: String) async throws {
+    /// `select: false` loads the session without touching `selection` —
+    /// history revival (spec back-forward-navigation §4) already sits on
+    /// its destination and must not record a detour to the overview.
+    func addPR(_ input: String, select: Bool = true) async throws {
         guard let ref = PullRequestRef.parse(input) else {
             throw MessageError(message: "Could not parse a pull request from “\(input)”. "
                 + "Expected something like https://github.com/owner/repo/pull/123 or owner/repo#123.")
         }
         if let existing = prSessions.first(where: { $0.ref == ref }) {
-            selection = .prOverview(existing.id)
+            if select { selection = .prOverview(existing.id) }
             return
         }
         let details: PullRequestDetails
@@ -1537,11 +1698,11 @@ final class AppState: ObservableObject {
         // and adopt the winner, or the session (and its pending-comment
         // syncing) exists twice.
         if let existing = prSessions.first(where: { $0.ref == ref }) {
-            selection = .prOverview(existing.id)
+            if select { selection = .prOverview(existing.id) }
             return
         }
         prSessions.append(session)
-        selection = .prOverview(session.id)
+        if select { selection = .prOverview(session.id) }
         noteRecent(RecentItem(kind: .pr, owner: ref.owner, repo: ref.repo, number: ref.number,
                               title: details.title, prStatus: PRStatus(details: details),
                               lastOpened: Date()))

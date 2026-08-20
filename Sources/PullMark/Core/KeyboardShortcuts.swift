@@ -119,6 +119,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     case findInPage, findNext, findPrevious, searchAllFiles
     case toggleOutline, toggleSource, reloadDocument
     case zoomIn, zoomOut, actualSize
+    case goBack, goForward
     case prRenderedDiff, prSourceDiff, prResult, prFlipLayout
     case reviewChanges, showResolvedConversations
     case addMarginNote, addFileMarginNote, toggleMarginNotes
@@ -151,6 +152,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .zoomIn: return "Zoom In"
         case .zoomOut: return "Zoom Out"
         case .actualSize: return "Actual Size"
+        case .goBack: return "Back"
+        case .goForward: return "Forward"
         case .prRenderedDiff: return "Rendered Diff"
         case .prSourceDiff: return "Source Diff"
         case .prResult: return "Result"
@@ -180,6 +183,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .toggleOutline, .toggleSource, .reloadDocument,
              .zoomIn, .zoomOut, .actualSize, .toggleMarginNotes, .toggleHiddenFiles:
             return "View"
+        case .goBack, .goForward:
+            return "Go"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout, .reviewChanges,
              .showResolvedConversations:
             return "Pull Requests"
@@ -187,7 +192,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
     }
 
     /// Categories in the order the Keyboard settings tab shows them.
-    static let categories = ["File", "Edit", "View", "Pull Requests"]
+    static let categories = ["File", "Edit", "View", "Go", "Pull Requests"]
 
     /// Where the action applies. Every action has a menu item that greys
     /// out when it doesn't apply; this says so in the settings list too,
@@ -202,6 +207,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
             return "With a folder selected"
         case .findNext, .findPrevious:
             return "While the find bar is open"
+        case .goBack, .goForward:
+            return "After navigating between documents"
         case .prRenderedDiff, .prSourceDiff, .prResult, .prFlipLayout:
             return "In a pull request file"
         case .reviewChanges:
@@ -251,6 +258,10 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .zoomIn: return KeyCombo(key: "=", command: true)
         case .zoomOut: return KeyCombo(key: "-", command: true)
         case .actualSize: return KeyCombo(key: "0", command: true)
+        // The Finder/Safari pair. ⌘←/⌘→ (Safari's alias) stay unbound:
+        // edit mode owns them for text navigation (spec §6).
+        case .goBack: return KeyCombo(key: "[", command: true)
+        case .goForward: return KeyCombo(key: "]", command: true)
         case .prRenderedDiff: return KeyCombo(key: "1", command: true)
         case .prSourceDiff: return KeyCombo(key: "2", command: true)
         case .prResult: return KeyCombo(key: "3", command: true)

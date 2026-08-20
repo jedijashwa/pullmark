@@ -1497,6 +1497,13 @@ struct DetailView: View {
             if let file = state.localFile(for: url) {
                 LocalFileView(file: file)
                     .id(url)
+            } else if !FileManager.default.fileExists(atPath: url.path) {
+                // A dead history landing (spec §4.1): name what was here
+                // instead of skipping past it. On-disk-but-closed files
+                // never reach this — traversal revives them first.
+                unavailable(for: .local(url),
+                            reason: "This file has been moved or deleted.",
+                            detail: PathAbbreviator.abbreviate(url.path))
             } else {
                 placeholder
             }
@@ -1505,21 +1512,24 @@ struct DetailView: View {
                 PROverviewView(sessionID: id)
                     .id(id)
             } else {
-                placeholder
+                unavailable(for: .prOverview(id),
+                            reason: "This pull request couldn’t be reopened.")
             }
         case .prFile(let id, let path):
             if state.session(id) != nil {
                 PRFileView(sessionID: id, path: path)
                     .id(id + "|" + path)
             } else {
-                placeholder
+                unavailable(for: .prFile(id, path),
+                            reason: "This pull request couldn’t be reopened.")
             }
         case .prDoc(let id, let path):
             if state.session(id) != nil {
                 PRDocView(sessionID: id, path: path)
                     .id(id + "|doc|" + path)
             } else {
-                placeholder
+                unavailable(for: .prDoc(id, path),
+                            reason: "This pull request couldn’t be reopened.")
             }
         case .remoteRepo(let id):
             // A selected repo shows its README when we know of one (from
@@ -1534,30 +1544,40 @@ struct DetailView: View {
                     remoteRepoPlaceholder(session)
                 }
             } else {
-                placeholder
+                unavailable(for: .remoteRepo(id),
+                            reason: "This repository couldn’t be reopened.")
             }
         case .remoteDoc(let id, let path):
             if state.remoteSession(id) != nil {
                 RemoteDocView(sessionID: id, path: path)
                     .id(id + "|" + path)
             } else {
-                placeholder
+                unavailable(for: .remoteDoc(id, path),
+                            reason: "This repository couldn’t be reopened.")
             }
         case .folder(let root):
             // A selected place shows its README (then index) when it has
             // one, the count placeholder when it doesn't.
-            if let folder = state.folder(for: root), !folder.missing,
-               let readme = PathTree.readmePath(in: folder.filePaths),
-               let file = state.localFile(for: folder.fileURL(for: readme)) {
+            if state.folder(for: root) == nil {
+                unavailable(for: .folder(root),
+                            reason: "This folder has been moved or deleted.",
+                            detail: PathAbbreviator.abbreviate(root.path))
+            } else if let folder = state.folder(for: root), !folder.missing,
+                      let readme = PathTree.readmePath(in: folder.filePaths),
+                      let file = state.localFile(for: folder.fileURL(for: readme)) {
                 LocalFileView(file: file)
                     .id(folder.fileURL(for: readme))
             } else {
                 folderPlaceholder(root)
             }
         case .folderNode(let root, let path):
-            if let folder = state.folder(for: root),
-               let readme = PathTree.readmePath(in: folder.filePaths, directory: path),
-               let file = state.localFile(for: folder.fileURL(for: readme)) {
+            if state.folder(for: root) == nil {
+                unavailable(for: .folderNode(root, path),
+                            reason: "This folder has been moved or deleted.",
+                            detail: PathAbbreviator.abbreviate(root.path))
+            } else if let folder = state.folder(for: root),
+                      let readme = PathTree.readmePath(in: folder.filePaths, directory: path),
+                      let file = state.localFile(for: folder.fileURL(for: readme)) {
                 LocalFileView(file: file)
                     .id(folder.fileURL(for: readme))
             } else {
@@ -1568,6 +1588,44 @@ struct DetailView: View {
             // keyboard actions; the document area shows the empty state.
             placeholder
         }
+    }
+
+    /// A dead history landing (spec back-forward-navigation §4.1): the
+    /// entry's snapshotted name and symbol over a one-line reason, in the
+    /// placeholder's visual style. Back never silently skips a dead
+    /// entry — at least the reader learns what the document was. While a
+    /// revival fetch is in flight this is the loading state instead.
+    private func unavailable(for selection: SidebarSelection,
+                             reason: String, detail: String? = nil) -> some View {
+        let factor = DocumentZoom.clamped(zoom)
+        let display = state.historyDisplay(for: selection)
+        let reviving = state.historyRevival == selection
+        return VStack(spacing: 12 * factor) {
+            Image(systemName: display.symbol)
+                .font(.system(size: 42 * factor))
+                .foregroundStyle(.secondary)
+            Text(display.title)
+                .font(.system(size: 15 * factor, weight: .semibold))
+            if reviving {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Reopening…")
+                }
+                .font(.system(size: 13 * factor))
+                .foregroundStyle(.secondary)
+            } else {
+                Text(reason)
+                    .font(.system(size: 13 * factor))
+                    .foregroundStyle(.secondary)
+                if let detail {
+                    Text(detail)
+                        .font(.system(size: 13 * factor))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Selecting a folder root shows the place, not a file (spec §8.6):
