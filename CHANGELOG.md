@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Copy GitHub Link.** Any local document, folder, or tree directory
+  in a checkout with a GitHub remote can hand you its github.com URL:
+  right-click it in the sidebar (the item sits under Copy Path), or
+  use File → Copy GitHub Link on the current selection — rebindable
+  like every command. Links point at your current branch by default;
+  hold ⌥ in the menu for a commit permalink, or flip the default in
+  Settings → General → GitHub. A detached HEAD falls back to the
+  commit form on its own, and forks link to origin first.
+
 ## 0.37.0 - 2026-08-20
 
 - **Back and Forward, like a browser.** Every window now keeps its own
