@@ -29,6 +29,11 @@ enum HTMLBuilder {
         /// Remote (PR) documents: rewrite relative images and links to the
         /// pullmark-remote scheme (resolved against resourceDir).
         var remoteResources: Bool?
+        /// Rewrite GitHub attachment image URLs (user-attachments and the
+        /// legacy repo-scoped form) to the pullmark-attachment scheme so
+        /// private attachments render via the user's token. Stamped
+        /// centrally in page(payload:) for every non-preview page.
+        var githubAttachments: Bool?
         /// Repo directory containing the rendered file ("" for repo root).
         var resourceDir: String?
         /// Reading theme ("github", "editorial", "terminal"). app.js mirrors
@@ -298,7 +303,7 @@ enum HTMLBuilder {
     /// resource schemes. No fetch/XHR, frames, objects, or remote fonts.
     static let contentSecurityPolicy = "default-src 'none'; script-src 'self'; "
         + "style-src 'self' 'unsafe-inline'; "
-        + "img-src file: data: https: pullmark-local: pullmark-remote:; "
+        + "img-src file: data: https: pullmark-local: pullmark-remote: pullmark-attachment:; "
         + "font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'"
 
     /// Inline `<style>` block for a user-supplied custom theme. The CSS is a
@@ -337,6 +342,7 @@ enum HTMLBuilder {
                 payload.lineNumbers = LineNumbers.enabled ? true : nil
             }
             payload.remoteLinkPolicy = UserDefaults.pullmark.string(forKey: DefaultsKeys.remoteLinkPolicy) ?? "ask"
+            payload.githubAttachments = true
         }
         return """
         <!DOCTYPE html>

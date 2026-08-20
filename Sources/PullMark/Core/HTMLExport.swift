@@ -83,13 +83,23 @@ enum HTMLExport {
         }
     }
 
-    /// Rewrites pullmark-local:/// and pullmark-remote:/// image sources to
-    /// data: URIs when the bytes are available; images the resolver cannot
-    /// satisfy — and ordinary https images — keep their URLs.
+    /// Rewrites app-scheme image sources to data: URIs when the bytes are
+    /// available; images the resolver cannot satisfy — and ordinary https
+    /// images — keep their URLs.
     static func inliningImages(_ html: String, data: (String) -> (data: Data, mimeType: String)?) -> String {
-        replace("src=\"((?:pullmark-local|pullmark-remote):[^\"]*)\"", in: html) { groups in
+        replace("src=\"((?:pullmark-local|pullmark-remote|pullmark-attachment):[^\"]*)\"", in: html) { groups in
             guard let image = data(groups[1]) else { return nil }
             return "src=\"\(dataURI(image.data, mimeType: image.mimeType))\""
+        }
+    }
+
+    /// Rewrites any pullmark-attachment:/// source that survived image
+    /// inlining back to its original github.com URL, so exports never
+    /// carry dead app-scheme references — a browser with a GitHub session
+    /// can render what the export couldn't embed.
+    static func restoringAttachmentURLs(_ html: String) -> String {
+        replace("src=\"pullmark-attachment:///([^\"]*)\"", in: html) { groups in
+            "src=\"https://github.com/\(groups[1])\""
         }
     }
 
@@ -109,6 +119,7 @@ enum HTMLExport {
         html = strippingCSPMeta(html)
         html = inliningStylesheets(html, css: css)
         html = inliningImages(html, data: imageData)
+        html = restoringAttachmentURLs(html)
         if !html.lowercased().hasPrefix("<!doctype") {
             html = "<!DOCTYPE html>\n" + html
         }

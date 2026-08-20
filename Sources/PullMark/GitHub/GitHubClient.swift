@@ -219,6 +219,35 @@ final class GitHubClient {
                                  accept: "application/vnd.github.raw+json")
     }
 
+    /// Raw bytes of a GitHub attachment (`path` is the URL path under
+    /// github.com, validated by AttachmentSchemeHandler). The attachment
+    /// URL honors API token auth — 302 to a presigned S3 URL — so private
+    /// attachments render for the signed-in user; anonymous covers
+    /// attachments posted in public repos (spec: github-user-attachments).
+    func attachmentData(path: String) async throws -> (data: Data, mimeType: String?) {
+        guard !DemoMode.active else {
+            throw APIError(status: -1, message: "PullMark is in demo mode — network access is disabled.")
+        }
+        guard let url = URL(string: "https://github.com/\(path)") else {
+            throw APIError(status: -1, message: "Invalid attachment path")
+        }
+        // Always GET: the presigned URL is signed for GET only (HEAD is 403).
+        var request = URLRequest(url: url)
+        request.setValue("PullMark", forHTTPHeaderField: "User-Agent")
+        if let token = await authToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (data, response) = try await session.data(for: request,
+                                                      delegate: AttachmentRedirectGuard.shared)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError(status: -1, message: "No HTTP response")
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            throw APIError(status: http.statusCode, message: "Attachment fetch failed")
+        }
+        return (data, http.value(forHTTPHeaderField: "Content-Type"))
+    }
+
     // MARK: - Repo browsing (GitHub Markdown links; ref.number is 0 here)
 
     /// Commit SHA a branch, tag, or SHA-ish string resolves to right now —
@@ -1477,5 +1506,25 @@ final class GitHubClient {
             if !parts.isEmpty { return parts.joined(separator: " — ") }
         }
         return String(data: data.prefix(300), encoding: .utf8) ?? "Unknown error"
+    }
+}
+
+/// Strips the Authorization header the moment an attachment redirect
+/// leaves github.com: the presigned S3 URL is the complete credential,
+/// and S3 rejects a request carrying both it and an Authorization
+/// header (400). The header must survive github.com-internal hops —
+/// legacy repo-scoped attachment URLs 301 through repo renames first.
+private final class AttachmentRedirectGuard: NSObject, URLSessionTaskDelegate {
+    static let shared = AttachmentRedirectGuard()
+
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest,
+                    completionHandler: @escaping (URLRequest?) -> Void) {
+        var request = request
+        if request.url?.host != "github.com" {
+            request.setValue(nil, forHTTPHeaderField: "Authorization")
+        }
+        completionHandler(request)
     }
 }

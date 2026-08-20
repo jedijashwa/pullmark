@@ -107,6 +107,9 @@ final class WebViewProxy: ObservableObject {
                   let path = RemoteResourceSchemeHandler.repoPath(from: url)
             else { return nil }
             return RemoteResourceSchemeHandler.cachedData(context: context, path: path)
+        case AttachmentSchemeHandler.scheme:
+            guard let path = AttachmentSchemeHandler.attachmentPath(from: url) else { return nil }
+            return AttachmentSchemeHandler.cachedAttachment(path: path)?.data
         case "data":
             // data:[<mediatype>][;base64],<payload>
             let string = url.absoluteString

@@ -4,6 +4,19 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Pasted GitHub screenshots finally render.** Images attached to PR
+  descriptions, review comments, and issue comments — the
+  `user-attachments` URLs GitHub mints for every pasted screenshot —
+  now render in the conversation timeline, review threads, browsed
+  remote docs, and local files alike. Private attachments load through
+  your existing GitHub credentials (nothing touches disk, as always);
+  an attachment that truly can't be fetched shows an honest labeled
+  placeholder with an "Open on GitHub" link instead of a broken-image
+  glyph. The older repo-scoped attachment URLs from 2023-era READMEs
+  work too, and HTML exports embed whatever the page already loaded.
+
 ## 0.39.0 - 2026-08-20
 
 - **The sidebar's section headers grew hands.** Hover "Open Files" for
