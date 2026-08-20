@@ -83,7 +83,7 @@ struct PullMarkApp: App {
             .keyboardShortcut(shortcuts.keyboardShortcut(for: .prResult))
             .disabled(!prFileSelected)
         Button(diffLayoutRaw == PRFileView.DiffLayout.inline.rawValue
-               ? "Side-by-Side Diffs" : "Inline Diffs") {
+               ? String(localized: "Side-by-Side Diffs") : String(localized: "Inline Diffs")) {
             state?.send(.flipDiffLayout)
         }
         .keyboardShortcut(shortcuts.keyboardShortcut(for: .prFlipLayout))
@@ -370,16 +370,15 @@ struct PullMarkApp: App {
                     .disabled(!marginNotesEnabled || activeLocalFileURL == nil
                         || state?.sourceViewVisible == true)
                     .help(marginNotesEnabled
-                        ? "Leave a note on the block you're reading — it's saved into the "
-                            + "file as a <!-- note --> comment"
-                        : "Turn on margin notes in Settings → Experimental")
+                        ? String(localized: "Leave a note on the block you're reading — it's saved into the file as a <!-- note --> comment")
+                        : String(localized: "Turn on margin notes in Settings → Experimental"))
                 Button("File Margin Note…") { state?.send(.addFileMarginNote) }
                     .keyboardShortcut(shortcuts.keyboardShortcut(for: .addFileMarginNote))
                     .disabled(!marginNotesEnabled || activeLocalFileURL == nil
                         || state?.sourceViewVisible == true)
                     .help(marginNotesEnabled
-                        ? "Leave a note about the whole document, at the top"
-                        : "Turn on margin notes in Settings → Experimental")
+                        ? String(localized: "Leave a note about the whole document, at the top")
+                        : String(localized: "Turn on margin notes in Settings → Experimental"))
             }
             CommandGroup(replacing: .help) {
                 Button("Release Notes") {

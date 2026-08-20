@@ -5113,6 +5113,28 @@
         var parts = host.getAttribute("data-pm-lines").split("-");
         reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
       });
+
+      // Screenshot-generator hook (pullmark://capture/reveal, gated
+      // Swift-side to capture runs): reveal the block containing a
+      // source line. Blocks aren't individually reachable through the
+      // accessibility tree — the click listener above is delegated —
+      // so scene scripts can't activate one without a real cursor.
+      window.__pmRevealBlock = function (line) {
+        // Mirror the click path: close any open editor first (edit-mode
+        // entry auto-reveals the focused block) or two editors stack.
+        if (revealState) { commitReveal(); }
+        var host = null;
+        content.querySelectorAll(".pm-editable[data-pm-lines]").forEach(function (el) {
+          if (host || el.style.display === "none") { return; }
+          var parts = el.getAttribute("data-pm-lines").split("-");
+          if (parseInt(parts[0], 10) <= line && line <= parseInt(parts[1], 10)) {
+            host = el;
+          }
+        });
+        if (!host) { return; }
+        var parts = host.getAttribute("data-pm-lines").split("-");
+        reveal(host, parseInt(parts[0], 10), parseInt(parts[1], 10));
+      };
     }
 
     var blameAnnotated = payload.blame && payload.blame.length && linesAnnotated;

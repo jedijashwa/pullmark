@@ -1,14 +1,15 @@
 #!/bin/zsh
-# Scene definitions for the screenshot generator (spec: site-dark-mode).
+# Scene definitions for the screenshot generator (spec: site-dark-mode;
+# background/parallel rework: spec follows the localized-screenshots PR).
 #
 # Every scene starts from a FRESH demo launch with ~/Code/meridian-docs
-# opened as a Location (generate.sh passes it as a CLI argument), the
-# sidebar visible, the PR overview selected, and the window pinned at
-# 1052x784 logical points at (160, 60). All coordinates below are
-# GLOBAL screen points derived from that layout — pinned geometry is
-# what makes them replayable. Rows aren't reachable by AXPress and
-# pid-posted clicks are discarded by SwiftUI lists, so scenes use the
-# global-event tier (click.swift): hands off the machine during a run.
+# delivered as a Location (generate.sh sends it by pid-addressed
+# AppleEvent), the sidebar visible, the PR overview selected, and the
+# window pinned by winframe. Scenes drive the app ENTIRELY through
+# pid-targeted channels — AX row selection, AX presses, pid-posted
+# keys, capture URLs — so instances run backgrounded and in parallel
+# without ever taking the cursor, the keyboard focus, or the clipboard.
+# The -pm.captureChrome flag makes windows draw active chrome anyway.
 #
 # Scene inventory mirrors the site: doc notes pr diff blame edit
 # remote themes.
@@ -20,11 +21,6 @@ drive() { swift scripts/drive/"$@"; }
 # sidebar toggle from SwiftUI's own loctable — see loc-lookup.py.
 t() { scripts/screenshots/loc-lookup.py app "$lang" "$1"; }
 t_sys() { scripts/screenshots/loc-lookup.py system "$lang" "$1"; }
-
-activate() {
-  osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" >/dev/null 2>&1 || true
-  sleep 0.5
-}
 
 # Sidebar visibility is not deterministic across launches — force it.
 # State comes from AX (sidebar-state: is there a native list outside
@@ -45,24 +41,22 @@ show_sidebar() { set_sidebar visible; }
 hide_sidebar() { set_sidebar hidden; }
 
 # Folder tree browsing: expanded guides, quick-start as an italic
-# preview entry — "folders come in as living trees".
+# preview entry — "folders come in as living trees". Row titles are
+# fixture filenames (data), so selection is language-independent.
 scene_doc() {
-  activate
-  show_sidebar
-  drive click.swift 199 339   # guides disclosure
+  drive ax.swift $APP_PID disclose guides >/dev/null
   sleep 1
-  drive click.swift 291 371   # quick-start.md → preview
+  drive ax.swift $APP_PID select-row quick-start.md >/dev/null
   sleep 2.5
 }
 
 # The margin-notes fixture: three signed notes rendered in place.
+# ⌘K Open Quickly + typed query — pid-posted keys reach the panel
+# because captureChrome nominates a key window for the instance.
 scene_notes() {
-  activate
-  show_sidebar
   drive pkey.swift $APP_PID 40 cmd            # ⌘K Open Quickly
   sleep 1
-  printf 'wind-gust' | pbcopy
-  drive pkey.swift $APP_PID 9 cmd             # paste query
+  drive ptype.swift $APP_PID wind-gust        # typed, never the clipboard
   sleep 1
   drive pkey.swift $APP_PID 36                # Return
   sleep 2.5
@@ -71,33 +65,31 @@ scene_notes() {
 # PR overview: description, cockpit chrome, conversation with the
 # rendered table. Selected at launch — just focus the content.
 scene_pr() {
-  activate
   hide_sidebar
   drive pkey.swift $APP_PID 121               # Page Down
   sleep 2
 }
 
 # Rendered diff: word-level highlights + the added mermaid flowchart.
+# `2 calibration.md` = second matching row: Open Files has the local
+# calibration.md, the PR file row follows it.
 scene_diff() {
-  activate
   show_sidebar
-  drive click.swift 289 659   # PR file calibration.md
+  drive ax.swift $APP_PID select-row 2 calibration.md >/dev/null
   sleep 3
 }
 
 # Result view with the blame gutter — avatars per run of blocks.
 scene_blame() {
-  activate
   show_sidebar
-  # Toggle blame from the remote doc's toolbar, where the checkbox is
-  # inline at capture width (the PR-file view's mode picker pushes it
-  # into unreachable overflow). The toggle is sticky, so the PR file
-  # picks it up.
-  drive click.swift 308 499   # remote docs/getting-started.md
+  # Toggle blame from the remote doc, where the checkbox is inline at
+  # capture width (the PR-file view's mode picker pushes it into
+  # overflow). The toggle is sticky, so the PR file picks it up.
+  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null
   sleep 2.5
   drive ax.swift $APP_PID press "$(t Blame)" >/dev/null
   sleep 1
-  drive click.swift 289 723   # PR file getting-started.md
+  drive ax.swift $APP_PID select-row 2 getting-started.md >/dev/null
   sleep 2.5
   # menuitem, not `menu View …`: the top-level View menu's own title is
   # system-localized, but the item title is ours to resolve.
@@ -105,32 +97,32 @@ scene_blame() {
   sleep 2.5
 }
 
-# Edit mode: the active block shows its source, the rest stays rendered.
+# Edit mode: the active block shows its source, the rest stays
+# rendered. Block activation goes through the capture URL channel —
+# the page's click targets aren't reachable from the accessibility
+# tree (the listener is delegated), and that channel exists for
+# exactly this. Line 9 = the "When to calibrate" paragraph.
 scene_edit() {
-  activate
-  show_sidebar
-  drive click.swift 280 179   # local calibration.md
+  drive ax.swift $APP_PID select-row calibration.md >/dev/null
   sleep 2
   drive ax.swift $APP_PID menuitem "$(t "Edit Mode")" >/dev/null
-  sleep 1
-  drive click.swift 791 354   # activate the "When to calibrate" paragraph
+  sleep 1.5
+  drive aeurl.swift $APP_PID "pullmark://capture/reveal?line=9" >/dev/null
   sleep 1.5
 }
 
 # Browsed-from-GitHub doc with the provenance bar (demo remote session).
 scene_remote() {
-  activate
-  drive click.swift 308 499   # remote docs/getting-started.md
+  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null
   sleep 2.5
-  drive ax.swift $APP_PID press "Hide Sidebar" >/dev/null
-  sleep 1
+  hide_sidebar
 }
 
 # Settings → Appearance: the three live theme cards. Captures the
-# settings window, not the main one.
+# settings window, not the main one. ⌘, is system-titled — pressed by
+# keyboard equivalent, which no language changes.
 scene_themes() {
-  activate
-  drive ax.swift $APP_PID menukey , cmd >/dev/null   # Settings… (system-titled)
+  drive ax.swift $APP_PID menukey , cmd >/dev/null
   sleep 2
   drive ax.swift $APP_PID press "$(t Appearance)" >/dev/null
   sleep 1.5
