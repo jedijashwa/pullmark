@@ -4,7 +4,7 @@
 
 **[pullmark.app](https://pullmark.app)** · [Download](https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg) · [Releases](https://github.com/jedijashwa/pullmark/releases)
 
-![PullMark rendering an agent-written design spec with three margin notes from the reviewer, shown as signed cards anchored to the passages they challenge, in a window whose sidebar shows local files, a git folder location, and a pull request](https://github.com/user-attachments/assets/8bd5ca7b-cd75-4d0e-9589-35c5ca8e4f93)
+![PullMark rendering an agent-written design spec with three margin notes from the reviewer, shown as signed cards anchored to the passages they challenge, in a window whose sidebar shows local files, a git folder location, and a pull request](https://pullmark.app/img/app-notes.png)
 
 ## Why PullMark exists
 
@@ -12,7 +12,7 @@ More and more of what flows through pull requests isn't code — it's *documents
 
 PullMark shows Markdown changes as **rendered diffs** — formatted output with just the changed words highlighted — and lets you comment, suggest, and submit a review right there. It authenticates with the GitHub credentials already on your system, so private and organization repos just work.
 
-![PullMark's pull-request overview showing the review decision, reviewer verdicts, a checks capsule, and the conversation as a rendered timeline](https://github.com/user-attachments/assets/44e7e047-f4cb-439d-ae9b-ea2cd4df5c45)
+![PullMark's pull-request overview showing the review decision, reviewer verdicts, a checks capsule, and the conversation as a rendered timeline](https://pullmark.app/img/app-pr.png)
 
 And not every document belongs in a pull request. Agents write serious Markdown now — plans, specs, research write-ups — and a working draft needs feedback before it deserves a commit. **Margin notes** put that feedback in the file itself: read the draft rendered, leave signed notes anchored to the exact blocks, and tell your agent to *"address my notes."* The notes are ordinary HTML comments that stay out of the rendered Markdown, so the agent reads each one where you left it — no commit, no paste-back, no PR. On a long review the notes wait for you: revise or delete earlier ones as the document teaches you more, and nothing reaches the agent until the whole pass agrees with itself. [pullmark.app/uses/agents](https://pullmark.app/uses/agents/) walks the whole loop.
 
