@@ -10,3 +10,4 @@ dist/
 !.claude/skills/
 !.claude/settings.json
 CLAUDE.local.md
+scripts/screenshots/out/

@@ -612,6 +612,7 @@ final class AppState: ObservableObject {
         viewerLogin = DemoSession.viewerLogin
         adoptionKnown.insert(session.id)
         prSessions = [session]
+        remoteSessions = [DemoSession.makeRemoteSession()]
         selection = .prOverview(session.id)
     }
 
