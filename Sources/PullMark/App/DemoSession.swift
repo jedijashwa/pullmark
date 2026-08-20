@@ -695,6 +695,18 @@ enum DemoSession {
         return session
     }
 
+    /// A browsed-from-GitHub session, pre-resolved to the head commit so
+    /// nothing ever needs the network: document content comes from the
+    /// demo-guarded fileData path. Gives captures (and demo explorers)
+    /// the provenance bar and branch chip surface.
+    static func makeRemoteSession() -> RemoteRepoSession {
+        var session = RemoteRepoSession(ref: PullRequestRef(owner: owner, repo: repo, number: 0),
+                                        displayRef: "main")
+        session.commitSHA = headSHA
+        session.docs = [gettingStartedPath]
+        return session
+    }
+
     // MARK: - Local documents
 
     /// Writes the head-revision docs into a fresh temp folder and returns

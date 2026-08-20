@@ -22,10 +22,13 @@ good idea so that we don't spend a shit ton of tokens on it each time."
 - `generate.sh <scene|all> [--appearance light|dark|both] [--lang <code>]`
   — builds nothing itself; expects `dist/PullMark.app` (run `make app`
   first). For each requested scene × appearance it: launches the dist
-  app fresh (`PM_DEMO=1`, the published-screenshot accent flags
-  `-AppleAccentColor 4 -AppleHighlightColor "0.698039 0.843137 1.000000
-  Blue"`, `-pm.appearance <mode>`, and `-AppleLanguages (<code>)` when
-  `--lang` is given), drives the scene with the `scripts/drive/` kit,
+  app fresh (`PM_DEMO=1`, `-pm.appearance <mode>`, and
+  `-AppleLanguages (<code>)` when `--lang` is given, plus the standing
+  blue-accent flags `-AppleAccentColor 4 -AppleHighlightColor …Blue`
+  so captures match the published look on any machine — note the
+  launch must be BARE: a document argument makes Launch Services
+  respawn the app and drop the argument domain, so the demo Location
+  is handed to the running instance via `open -a` instead), drives the scene with the `scripts/drive/` kit,
   captures the main window with `screencapture -x -o -l`, and quits the
   instance. Output: `out/app-<scene>[-dark][-<lang>].png`.
 - Scenes are shell functions in `scenes.sh` — each one a deterministic
