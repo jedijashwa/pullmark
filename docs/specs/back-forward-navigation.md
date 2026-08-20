@@ -98,44 +98,60 @@ depends on the entry's health:
 
 - **Live** entries apply by assigning `selection`; the detail area
   shows the document as usual.
-- **Revivable**: a `.local(url)` whose file is closed but still on disk
-  is reopened through `openViaLink(url:)` — selected in its tree or
-  re-pinned. This is a live entry, not a dead one.
-- **Dead** entries (the resource is gone) still apply their
-  `selection`, and the detail area shows the **unavailable view** (§4.1)
-  in place of the anonymous placeholder. The entry stays in history:
-  Back/Forward walk past it normally, it still appears in the pop-up
-  menus, and if the resource returns (file restored, session reopened)
-  the same entry simply works again — health is evaluated at each
-  landing, never cached.
-
-Dead means, per case: `.local` gone from disk; `.folder` /
-`.folderNode` whose Location is closed (`folder(for:)` nil — re-adding
-a whole Location is too big a side effect for a Back press);
-`.prOverview` / `.prFile` / `.prDoc` whose `session(id)` is gone;
-`.remoteRepo` / `.remoteDoc` whose `remoteSession(id)` is gone.
-Closing a session or file does no history bookkeeping — health is
-purely a lazy check.
+- **Closed but recoverable** entries are **revived** — Back means "take
+  me back to what I was seeing", not "back to what happens to still be
+  open". Per case:
+  - `.local(url)` closed but on disk: reopened through
+    `openViaLink(url:)` — selected in its tree or re-pinned.
+  - `.folder` / `.folderNode` whose Location is closed but whose root
+    is on disk: the Location is re-added (`add(url:)`), then the
+    landed row re-selected.
+  - `.prOverview` / `.prFile` / `.prDoc` whose session is closed: the
+    session ID **is** the ref (`owner/repo#123`), so the pull request
+    re-fetches through `addPR(id, select: false)` — `select: false`
+    because the landing already sits on its destination and addPR's
+    own overview-select would record a bogus entry and truncate the
+    forward trail. While the fetch runs the detail area shows the
+    entry's name over "Reopening…" (§4.1); on arrival the published
+    session re-renders the view by itself. A `.prFile` whose file left
+    the PR redirects (untracked) to the overview; its entry stays put.
+  - `.remoteRepo` / `.remoteDoc` whose session is closed: the ID is
+    `owner/repo@ref` — the session is re-appended the way snapshot
+    restores do (unresolved; tree and documents fetch lazily when the
+    views ask).
+- **Dead** entries — nothing left to revive — still apply their
+  `selection`, and the detail area shows the **unavailable view**
+  (§4.1) in place of the anonymous placeholder. Dead means: `.local`
+  gone from disk, `.folder`/`.folderNode` root gone from disk, or a PR
+  revival fetch that failed (deleted on GitHub, no access, offline —
+  the failure also surfaces through the normal error alert). The entry
+  stays in history: Back/Forward walk past it normally, it still
+  appears in the pop-up menus, and if the resource returns the same
+  entry simply works again — health is judged at each landing, never
+  cached. Closing a session or file does no history bookkeeping.
 
 ### §4.1 The unavailable view
 
 The detail area's existing fallback branches (each `case` already
 degrades to `placeholder` when its lookup fails) upgrade to a named
 unavailable view: the entry's snapshotted SF Symbol and title, large
-and centered in the placeholder's visual style, over a one-line reason:
+and centered in the placeholder's visual style, over a one-line reason
+— or, while `AppState.historyRevival` matches the selection, a small
+spinner with "Reopening…":
 
 | Case | Reason line |
 |---|---|
 | `.local` | "This file has been moved or deleted." + abbreviated path |
-| `.folder` / `.folderNode` | "This location is no longer open." + abbreviated root path |
-| `.prOverview` / `.prFile` / `.prDoc` | "This pull request is no longer open in this window." |
-| `.remoteRepo` / `.remoteDoc` | "This repository is no longer open in this window." |
+| `.folder` / `.folderNode` | "This folder has been moved or deleted." + abbreviated root path |
+| `.prOverview` / `.prFile` / `.prDoc` | "This pull request couldn’t be reopened." |
+| `.remoteRepo` / `.remoteDoc` | "This repository couldn’t be reopened." |
 
 Titles and icons come from the history snapshot when the current
 selection matches an entry, falling back to what the selection itself
 carries (path last components) — the view must render even for a dead
 selection reached organically (a file deleted out from under the
-window). Informational only in v1: no reopen actions.
+window). Informational only beyond the automatic revival: no manual
+reopen actions.
 
 ## §5 Toolbar control
 
