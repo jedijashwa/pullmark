@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **The sidebar's section headers grew hands.** Hover "Open Files" for
+  a ✕ that closes everything in the working set (also in the menu bar
+  now: File → Close All Files, rebindable), and hover "Locations" or
+  "Pull Requests" for a + that opens a folder or pull request without
+  hunting through menus — finally there even when the section already
+  has content. Everything sits beside the label the way Mail's
+  mailbox actions do, and nothing asks "are you sure": closed files
+  wait in Recents, and a removed pull request keeps your pending
+  review safe on GitHub.
+
 ## 0.38.0 - 2026-08-20
 
 - **Copy GitHub Link.** Any local document, folder, or tree directory
