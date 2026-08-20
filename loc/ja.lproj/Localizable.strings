@@ -2,6 +2,7 @@
    English is the key; see docs/specs/app-i18n.md. */
 
 " (none)" = " (なし)";
+"%lld Markdown files changed" = "Markdown ファイル %lld 個を変更";
 "%@ and pushed to origin." = "%@。origin にプッシュしました。";
 "%@ approved" = "%@ が承認しました";
 "%@ approved %@" = "%@ が承認しました（%@）";
@@ -10,6 +11,7 @@
 "%@ does not exist at %@." = "%@ は %@ には存在しません。";
 "%lld files" = "%lld 個のファイル";
 "%@ is reserved for %@." = "%@ は「%@」に予約されています。";
+"%@ isn't available" = "%@ は利用できません";
 "%@ isn't available on %@: " = "%@ は %@ にはありません: ";
 "%@ isn't in a git repository, so there's nothing to compare against." = "%@ は git リポジトリの中にないため、比較する相手がありません。";
 "%@ isn't inside a git repository." = "%@ は git リポジトリの中にありません。";
@@ -17,14 +19,18 @@
 "%lld more…" = "他 %lld 件…";
 "%lld not yet on GitHub" = "%lld 件が GitHub に未送信";
 "%lld of %lld" = "%lld / %lld";
+"%lld other files not shown" = "他の %lld 個のファイルは非表示";
 "%@ requested changes" = "%@ が変更をリクエストしました";
 "%@ requested changes %@" = "%@ が変更をリクエストしました（%@）";
-"%@ words · %@ min" = "%@ 語 · %@ 分";
+"%@ words · %lld min" = "%@ 語 · %lld 分";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — プレビュー中。ダブルクリックでリポジトリのもとに残します";
 "%@, but the push failed: %@" = "%@。ただしプッシュに失敗しました: %@";
+"1 Markdown file changed" = "Markdown ファイル 1 個を変更";
 "1 file" = "1 個のファイル";
 "1 more reviewer" = "他 1 名のレビュアー";
+"1 other file not shown" = "他の 1 個のファイルは非表示";
 "Abandon review" = "レビューを破棄";
+"Abandon this review?" = "このレビューを破棄しますか？";
 "About PullMark" = "PullMark について";
 "Actual Size" = "実際のサイズ";
 "Add Margin Note" = "マージンノートを追加";
@@ -39,6 +45,7 @@
 "Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file." = "Git が解決できるものなら何でも使えます。ブランチ、タグ、コミット。新しい側を空のままにすると、作業中のファイルと比較します。";
 "Appearance" = "外観";
 "Applies to the whole file, not a specific line" = "特定の行ではなく、ファイル全体に付きます";
+"Approved" = "承認済み";
 "Ask on first click" = "最初のクリックで確認";
 "Awaiting review from %@" = "%@ のレビュー待ち";
 "Back" = "戻る";
@@ -50,12 +57,17 @@
 "Browse Repo Files…" = "リポジトリのファイルをブラウズ…";
 "Built-In Keys" = "組み込みのキー";
 "Cancel" = "キャンセル";
+"Changes requested" = "変更をリクエスト済み";
 "Check Again" = "再確認";
 "Check for Updates" = "アップデートを確認";
 "Check for Updates…" = "アップデートを確認…";
 "Checking this Mac's credentials…" = "この Mac の認証情報を確認しています…";
 "Checking…" = "確認中…";
 "Checkout of %@/%@" = "%@/%@ のチェックアウト";
+"Checks awaiting approval" = "チェックの承認待ち";
+"Checks failed" = "チェック失敗";
+"Checks passed" = "チェック成功";
+"Checks running" = "チェック実行中";
 "Choose the file to compare with — it becomes the old side." = "比較する相手のファイルを選びます — そちらが古い側になります。";
 "Choose which items the toolbar shows, and their order" = "ツールバーに表示する項目とその順序を選びます";
 "Clear Menu" = "メニューを消去";
@@ -116,7 +128,7 @@
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "保留中のコメント %lld 件を GitHub にアップロードできませんでした — 再試行のためローカルに保持しています。%@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "保留中のコメント 1 件を GitHub にアップロードできませんでした — 再試行のためローカルに保持しています。%@";
 "Couldn't move PullMark" = "PullMark を移動できませんでした";
-"Couldn't open %@/%@#%@: " = "%@/%@#%@ を開けませんでした: ";
+"Couldn't open %@/%@#%lld: " = "%@/%@#%lld を開けませんでした: ";
 "Couldn't open %@: %@" = "%@ を開けませんでした: %@";
 "Couldn't open %@: %@. It may not exist at that ref, or it may be a private repository your GitHub credentials can't access." = "%@ を開けませんでした: %@。その ref には存在しないか、いまの GitHub 認証情報ではアクセスできないプライベートリポジトリかもしれません。";
 "Couldn't revert: %@" = "元に戻せませんでした: %@";
@@ -129,6 +141,7 @@
 "Default diff layout:" = "差分の初期レイアウト:";
 "Delete" = "削除";
 "Delete comment" = "コメントを削除";
+"Delete this comment?" = "このコメントを削除しますか？";
 "Determining how this copy was installed…" = "このコピーのインストール方法を調べています…";
 "Discard the pending review and all its comments, on GitHub too" = "保留中のレビューとそのコメントを、GitHub 上のものも含めて破棄します";
 "Dismiss" = "閉じる";
@@ -173,6 +186,7 @@
 "Full Width" = "Full Width";
 "General" = "一般";
 "GitHub" = "GitHub";
+"GitHub API error (%lld): %@" = "GitHub API エラー（%lld）: %@";
 "GitHub Access" = "GitHub へのアクセス";
 "GitHub Markdown links:" = "GitHub の Markdown リンク:";
 "Go" = "移動";
@@ -302,6 +316,7 @@
 "PullMark borrows the GitHub credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password." = "PullMark は、あなたの道具がすでに持っている GitHub の認証情報を借ります — GitHub CLI か、git の認証情報ヘルパーです。自前のログインは持たず、何も保存せず、パスワードを目にすることもありません。";
 "PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)" = "PullMark は、あなたの道具がすでに持っている認証情報を借ります — GitHub CLI か、git の認証情報ヘルパーです。自前のログインは持たず、何も保存せず、パスワードを目にすることもありません。[GitHub へのアクセスについて](https://pullmark.app/docs/troubleshooting/#github-access)";
 "PullMark can fetch this file and render it in-app, or send it to your browser. Hold ⌘ while clicking a link for the other behavior; the default lives in Settings → General." = "PullMark はこのファイルを取得してアプリ内でレンダリングすることも、ブラウザに渡すこともできます。リンクをクリックするときに ⌘ を押していれば、もう一方のふるまいになります。デフォルトは 設定 → 一般 にあります。";
+"PullMark is in demo mode — network access is disabled." = "PullMark はデモモードです — ネットワークアクセスは無効になっています。";
 "PullMark is installed — the disk image is no longer needed. This ejects it and moves “%@” to the Trash." = "PullMark はインストール済みです — このディスクイメージはもう必要ありません。取り出して、「%@」をゴミ箱に入れます。";
 "PullMark is no longer your default Markdown app." = "PullMark は Markdown のデフォルトアプリではなくなりました。";
 "PullMark is running from its disk image. Moving it to Applications installs it properly and enables one-click updates." = "PullMark はディスクイメージから実行されています。「アプリケーション」に移動すればきちんとインストールされ、ワンクリックのアップデートも使えるようになります。";
@@ -337,6 +352,7 @@
 "Reset the zoom to 100%" = "ズームを 100% に戻します";
 "Restore Defaults" = "デフォルトに戻す";
 "Restore Defaults…" = "デフォルトに戻す…";
+"Restore all keyboard shortcuts to their defaults?" = "すべてのキーボードショートカットをデフォルトに戻しますか？";
 "Restore files and pull requests from the last session" = "前回のセッションのファイルとプルリクエストを復元する";
 "Restore the default" = "デフォルトに戻す";
 "Restore the file as it was before PullMark's last edit" = "PullMark の最後の編集より前の状態にファイルを戻します";
@@ -355,6 +371,7 @@
 "Review changes" = "変更をレビュー";
 "Review comments couldn't be loaded — existing threads may be missing." = "レビューコメントを読み込めませんでした — 既存のスレッドが表示されていない可能性があります。";
 "Review requested from %@" = "%@ にレビューを依頼済み";
+"Review required" = "レビューが必要";
 "Review submitted." = "レビューを送信しました。";
 "Review summary (optional)" = "レビューの要約（任意）";
 "Review verdict" = "レビューの判定";
@@ -381,6 +398,7 @@
 "Show Resolved Conversations" = "解決済みの会話を表示";
 "Show What's New after an update" = "アップデート後に「新機能」を表示する";
 "Show alpha features" = "アルファ機能を表示";
+"Show alpha features?" = "アルファ機能を表示しますか？";
 "Show hidden files" = "隠しファイルを表示";
 "Show or hide the document outline" = "文書のアウトラインを表示／非表示にします";
 "Show review discussion on the PR overview" = "PR の概要にレビューの議論を表示する";
@@ -398,6 +416,7 @@
 "Showing the first %lld Markdown files" = "最初の %lld 個の Markdown ファイルを表示しています";
 "Sign in to GitHub" = "GitHub にサインインする";
 "Sign notes as:" = "ノートの署名:";
+"Something went wrong" = "問題が発生しました";
 "Source" = "ソース";
 "Source Diff" = "ソース差分";
 "Space" = "スペース";
@@ -421,7 +440,7 @@
 "The PR session is no longer available — the draft could not be saved to disk." = "PR セッションはもう利用できません — 下書きをディスクに保存できませんでした。";
 "The comment will be removed from GitHub. Replies from others will stay." = "コメントは GitHub から削除されます。他の人の返信は残ります。";
 "The document's headings, in a sidebar" = "文書の見出しを、サイドバーに";
-"The pull request overview (%@ #%@)" = "プルリクエストの概要 (%@ #%@)";
+"The pull request overview (%@ #%lld)" = "プルリクエストの概要 (%@ #%lld)";
 "The pullmark command is installed" = "pullmark コマンドはインストール済みです";
 "Theme" = "テーマ";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "テーマは、レンダリングされた Markdown と差分の装いを変え、ライト／ダークの外観に従います。Themes フォルダに .css ファイルを入れれば、自分のテーマを追加できます — GitHub の姿の上に重ねて適用されます。Quick Look のプレビューもテーマに従います（そこではカスタムテーマは、土台の GitHub にフォールバックします）。";
@@ -515,6 +534,8 @@
 "Post to the PR conversation right away — not part of a review (⌘↩)" = "PR の会話にすぐ投稿します — レビューには含まれません (⌘↩)";
 "Reply" = "返信";
 "Reply to this thread (⌘↩)" = "このスレッドに返信します (⌘↩)";
+"Resolve" = "解決";
+"Resolved" = "解決済み";
 "Review discussion" = "レビューの議論";
 "Save" = "保存";
 "Save your edit (⌘↩)" = "編集を保存します (⌘↩)";
@@ -527,6 +548,7 @@
 "The targeted lines aren't available to suggest an edit to." = "対象の行には、編集を提案できません。";
 "This block isn't part of the pull request's diff — GitHub can only attach comments to changed lines." = "このブロックはプルリクエストの差分に含まれていません — GitHub は変更された行にしかコメントを付けられません。";
 "This file is empty on both sides of the diff." = "このファイルは差分の両側とも空です。";
+"Unresolve" = "未解決に戻す";
 "View commit on GitHub" = "GitHub でコミットを表示";
 "View in File" = "ファイル内で表示";
 "Write a reply" = "返信を書く";

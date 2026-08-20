@@ -1,15 +1,19 @@
 {
  "added": [
-  "%@ approved",
-  "%@ approved %@",
-  "%@ more reviewers",
-  "%@ requested changes",
-  "%@ requested changes %@",
-  "1 more reviewer",
-  "approved these changes",
-  "dismissed their review",
-  "requested changes",
-  "reviewed"
+  "%@ Markdown files changed",
+  "%@ other files not shown",
+  "1 Markdown file changed",
+  "1 other file not shown",
+  "Approved",
+  "Changes requested",
+  "Checks awaiting approval",
+  "Checks failed",
+  "Checks passed",
+  "Checks running",
+  "Resolve",
+  "Resolved",
+  "Review required",
+  "Unresolve"
  ],
  "removed": []
 }

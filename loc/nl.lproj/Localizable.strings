@@ -2,6 +2,7 @@
 // Sleutels zijn de Engelse strings; zie loc/README.md.
 
 " (none)" = " (geen)";
+"%lld Markdown files changed" = "%lld Markdown-bestanden gewijzigd";
 "%@ and pushed to origin." = "%@ en naar origin gepusht.";
 "%@ approved" = "%@ heeft goedgekeurd";
 "%@ approved %@" = "%@ heeft %@ goedgekeurd";
@@ -10,6 +11,7 @@
 "%@ does not exist at %@." = "%@ bestaat niet op %@.";
 "%lld files" = "%lld bestanden";
 "%@ is reserved for %@." = "%@ is gereserveerd voor %@.";
+"%@ isn't available" = "%@ is niet beschikbaar";
 "%@ isn't available on %@: " = "%@ is niet beschikbaar op %@: ";
 "%@ isn't in a git repository, so there's nothing to compare against." = "%@ zit niet in een git-repository, dus er is niets om mee te vergelijken.";
 "%@ isn't inside a git repository." = "%@ zit niet in een git-repository.";
@@ -17,14 +19,18 @@
 "%lld more…" = "Nog %lld…";
 "%lld not yet on GitHub" = "%lld nog niet op GitHub";
 "%lld of %lld" = "%lld van %lld";
+"%lld other files not shown" = "%lld andere bestanden niet getoond";
 "%@ requested changes" = "%@ heeft wijzigingen gevraagd";
 "%@ requested changes %@" = "%@ heeft %@ wijzigingen gevraagd";
-"%@ words · %@ min" = "%@ woorden · %@ min";
+"%@ words · %lld min" = "%@ woorden · %lld min";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — preview; dubbelklik om het bij zijn repo te houden";
 "%@, but the push failed: %@" = "%@, maar de push is mislukt: %@";
+"1 Markdown file changed" = "1 Markdown-bestand gewijzigd";
 "1 file" = "1 bestand";
 "1 more reviewer" = "nog 1 reviewer";
+"1 other file not shown" = "1 ander bestand niet getoond";
 "Abandon review" = "Verwerp review";
+"Abandon this review?" = "Deze review verwerpen?";
 "About PullMark" = "Over PullMark";
 "Actual Size" = "Werkelijke grootte";
 "Add Margin Note" = "Voeg margin note toe";
@@ -39,6 +45,7 @@
 "Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file." = "Alles wat Git kan herleiden werkt: een branch, een tag of een commit. Laat de nieuwe kant leeg om het werkbestand te vergelijken.";
 "Appearance" = "Weergave";
 "Applies to the whole file, not a specific line" = "Geldt voor het hele bestand, niet voor een specifieke regel";
+"Approved" = "Goedgekeurd";
 "Ask on first click" = "Vraag bij de eerste klik";
 "Awaiting review from %@" = "Wacht op review van %@";
 "Back" = "Terug";
@@ -50,12 +57,17 @@
 "Browse Repo Files…" = "Blader door repo-bestanden…";
 "Built-In Keys" = "Vaste toetsen";
 "Cancel" = "Annuleer";
+"Changes requested" = "Wijzigingen gevraagd";
 "Check Again" = "Controleer opnieuw";
 "Check for Updates" = "Zoek naar updates";
 "Check for Updates…" = "Zoek naar updates…";
 "Checking this Mac's credentials…" = "Credentials van deze Mac controleren…";
 "Checking…" = "Controleren…";
 "Checkout of %@/%@" = "Checkout van %@/%@";
+"Checks awaiting approval" = "Checks wachten op goedkeuring";
+"Checks failed" = "Checks mislukt";
+"Checks passed" = "Checks geslaagd";
+"Checks running" = "Checks lopen";
 "Choose the file to compare with — it becomes the old side." = "Kies het bestand om mee te vergelijken — dat wordt de oude kant.";
 "Choose which items the toolbar shows, and their order" = "Kies welke onderdelen de toolbar toont, en in welke volgorde";
 "Clear Menu" = "Wis menu";
@@ -116,7 +128,7 @@
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "Kon %lld pending comments niet naar GitHub uploaden — lokaal bewaard voor een nieuwe poging. %@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "Kon 1 pending comment niet naar GitHub uploaden — lokaal bewaard voor een nieuwe poging. %@";
 "Couldn't move PullMark" = "Kon PullMark niet verplaatsen";
-"Couldn't open %@/%@#%@: " = "Kon %@/%@#%@ niet openen: ";
+"Couldn't open %@/%@#%lld: " = "Kon %@/%@#%lld niet openen: ";
 "Couldn't open %@: %@" = "Kon %@ niet openen: %@";
 "Couldn't open %@: %@. It may not exist at that ref, or it may be a private repository your GitHub credentials can't access." = "Kon %@ niet openen: %@. Het bestaat mogelijk niet op die ref, of het is een privérepository waar je GitHub-credentials geen toegang toe hebben.";
 "Couldn't revert: %@" = "Kon niet terugdraaien: %@";
@@ -129,6 +141,7 @@
 "Default diff layout:" = "Standaard diff-indeling:";
 "Delete" = "Verwijder";
 "Delete comment" = "Verwijder comment";
+"Delete this comment?" = "Deze comment verwijderen?";
 "Determining how this copy was installed…" = "Bepalen hoe deze kopie is geïnstalleerd…";
 "Discard the pending review and all its comments, on GitHub too" = "Verwerp de pending review en al haar comments, ook op GitHub";
 "Dismiss" = "Negeer";
@@ -173,6 +186,7 @@
 "Full Width" = "Full Width";
 "General" = "Algemeen";
 "GitHub" = "GitHub";
+"GitHub API error (%lld): %@" = "GitHub API-fout (%lld): %@";
 "GitHub Access" = "GitHub-toegang";
 "GitHub Markdown links:" = "GitHub-Markdown-links:";
 "Go" = "Ga";
@@ -302,6 +316,7 @@
 "PullMark borrows the GitHub credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password." = "PullMark leent de GitHub-credentials die je eigen tools al hebben — de GitHub CLI of een git credential helper. Het heeft geen eigen login, bewaart niets en ziet nooit een wachtwoord.";
 "PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)" = "PullMark leent de credentials die je eigen tools al hebben — de GitHub CLI of een git credential helper. Het heeft geen eigen login, bewaart niets en ziet nooit een wachtwoord. [Over GitHub-toegang](https://pullmark.app/docs/troubleshooting/#github-access)";
 "PullMark can fetch this file and render it in-app, or send it to your browser. Hold ⌘ while clicking a link for the other behavior; the default lives in Settings → General." = "PullMark kan dit bestand ophalen en in de app renderen, of het naar je browser sturen. Houd ⌘ ingedrukt bij het klikken op een link voor het andere gedrag; de standaard staat in Instellingen → Algemeen.";
+"PullMark is in demo mode — network access is disabled." = "PullMark staat in demomodus — netwerktoegang is uitgeschakeld.";
 "PullMark is installed — the disk image is no longer needed. This ejects it and moves “%@” to the Trash." = "PullMark is geïnstalleerd — de schijfkopie is niet meer nodig. Dit werpt hem uit en verplaatst “%@” naar de prullenmand.";
 "PullMark is no longer your default Markdown app." = "PullMark is niet langer je standaard-Markdown-app.";
 "PullMark is running from its disk image. Moving it to Applications installs it properly and enables one-click updates." = "PullMark draait vanaf de schijfkopie. Naar Programma's verplaatsen installeert hem netjes en maakt updates met één klik mogelijk.";
@@ -337,6 +352,7 @@
 "Reset the zoom to 100%" = "Zet de zoom terug op 100%";
 "Restore Defaults" = "Herstel standaardwaarden";
 "Restore Defaults…" = "Herstel standaardwaarden…";
+"Restore all keyboard shortcuts to their defaults?" = "Alle sneltoetsen herstellen naar de standaardwaarden?";
 "Restore files and pull requests from the last session" = "Herstel bestanden en pull requests uit de vorige sessie";
 "Restore the default" = "Herstel de standaardwaarde";
 "Restore the file as it was before PullMark's last edit" = "Zet het bestand terug zoals het was vóór PullMarks laatste bewerking";
@@ -355,6 +371,7 @@
 "Review changes" = "Review wijzigingen";
 "Review comments couldn't be loaded — existing threads may be missing." = "Reviewcomments konden niet worden geladen — bestaande threads ontbreken mogelijk.";
 "Review requested from %@" = "Review gevraagd van %@";
+"Review required" = "Review vereist";
 "Review submitted." = "Review ingediend.";
 "Review summary (optional)" = "Samenvatting van de review (optioneel)";
 "Review verdict" = "Reviewoordeel";
@@ -381,6 +398,7 @@
 "Show Resolved Conversations" = "Toon opgeloste conversaties";
 "Show What's New after an update" = "Toon Wat is er nieuw na een update";
 "Show alpha features" = "Toon alpha-functies";
+"Show alpha features?" = "Alpha-functies tonen?";
 "Show hidden files" = "Toon verborgen bestanden";
 "Show or hide the document outline" = "Toon of verberg de outline van het document";
 "Show review discussion on the PR overview" = "Toon reviewdiscussie op het PR-overzicht";
@@ -398,6 +416,7 @@
 "Showing the first %lld Markdown files" = "De eerste %lld Markdown-bestanden worden getoond";
 "Sign in to GitHub" = "Log in bij GitHub";
 "Sign notes as:" = "Onderteken notities als:";
+"Something went wrong" = "Er ging iets mis";
 "Source" = "Bron";
 "Source Diff" = "Bron-diff";
 "Space" = "Spatie";
@@ -421,7 +440,7 @@
 "The PR session is no longer available — the draft could not be saved to disk." = "De PR-sessie is niet meer beschikbaar — het concept kon niet naar schijf worden bewaard.";
 "The comment will be removed from GitHub. Replies from others will stay." = "De comment wordt van GitHub verwijderd. Antwoorden van anderen blijven staan.";
 "The document's headings, in a sidebar" = "De koppen van het document, in een zijbalk";
-"The pull request overview (%@ #%@)" = "Het overzicht van de pull request (%@ #%@)";
+"The pull request overview (%@ #%lld)" = "Het overzicht van de pull request (%@ #%lld)";
 "The pullmark command is installed" = "Het pullmark-commando is geïnstalleerd";
 "Theme" = "Thema";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Thema's restylen gerenderde Markdown en diffs, en volgen de Light/Dark-weergave. Zet .css-bestanden in de Themes-map om je eigen thema toe te voegen — ze werken bovenop de GitHub-look. Quick Look-previews volgen je thema ook (eigen thema's vallen daar terug op hun GitHub-basis).";
@@ -515,6 +534,8 @@
 "Post to the PR conversation right away — not part of a review (⌘↩)" = "Plaats meteen in de PR-conversatie — geen onderdeel van een review (⌘↩)";
 "Reply" = "Antwoord";
 "Reply to this thread (⌘↩)" = "Antwoord in deze thread (⌘↩)";
+"Resolve" = "Markeer als opgelost";
+"Resolved" = "Opgelost";
 "Review discussion" = "Reviewdiscussie";
 "Save" = "Bewaar";
 "Save your edit (⌘↩)" = "Bewaar je bewerking (⌘↩)";
@@ -527,6 +548,7 @@
 "The targeted lines aren't available to suggest an edit to." = "De aangewezen regels zijn niet beschikbaar om een bewerking voor te stellen.";
 "This block isn't part of the pull request's diff — GitHub can only attach comments to changed lines." = "Dit blok maakt geen deel uit van de diff van de pull request — GitHub kan comments alleen aan gewijzigde regels hangen.";
 "This file is empty on both sides of the diff." = "Dit bestand is aan beide kanten van de diff leeg.";
+"Unresolve" = "Markeer als onopgelost";
 "View commit on GitHub" = "Bekijk commit op GitHub";
 "View in File" = "Bekijk in bestand";
 "Write a reply" = "Schrijf een antwoord";
