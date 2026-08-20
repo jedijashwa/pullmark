@@ -40,6 +40,14 @@ if [[ $scene == all ]]; then scenes=($SCENES_ALL); else scenes=($scene); fi
 source scripts/screenshots/scenes.sh
 mkdir -p $OUT
 
+# Launch Services must know this bundle or document delivery (the demo
+# Location via `open -a`) silently routes to Finder — and the standing
+# cleanup rule unregisters dist after every trial, so register fresh
+# per run and unregister again on exit.
+LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+"$LSREGISTER" -f "$PWD/dist/PullMark.app"
+trap '"$LSREGISTER" -u "$PWD/dist/PullMark.app" >/dev/null 2>&1 || true; if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi' EXIT
+
 APP_PID=""
 failures=0
 
@@ -75,11 +83,7 @@ launch() { # $1 = appearance
     sleep 0.2
   done
   open -a "$PWD/dist/PullMark.app" ~/Code/meridian-docs
-  sleep 2
-  # The document open can race the launch and get dropped — deliver it
-  # again; a second delivery of an already-open Location is a no-op.
-  open -a "$PWD/dist/PullMark.app" ~/Code/meridian-docs
-  sleep 2
+  sleep 2.5
   swift $DRIVE/winframe.swift $APP_PID 1052 784 >/dev/null
   sleep 1
 }
@@ -97,7 +101,6 @@ quit_app() {
   kill -0 $APP_PID 2>/dev/null && kill -9 $APP_PID 2>/dev/null || true
   APP_PID=""
 }
-trap 'if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi' EXIT
 
 for mode in $appearances; do
   for name in $scenes; do
