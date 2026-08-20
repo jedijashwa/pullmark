@@ -601,6 +601,7 @@
 "Modified" = "Gewijzigd";
 "Renamed" = "Hernoemd";
 "Shown" = "Zichtbaar";
-"Takes effect the next time PullMark opens." = "Geldt vanaf de volgende keer dat PullMark opent.";
+"Takes effect after PullMark relaunches." = "Geldt nadat PullMark opnieuw is gestart.";
 "Untracked" = "Niet gevolgd";
 "git credential helper" = "git credential helper";
+"Relaunch Now" = "Nu opnieuw starten";

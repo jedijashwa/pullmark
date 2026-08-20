@@ -36,6 +36,11 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The language this process actually launched with — pinned at
+    /// startup (PullMarkApp touches it) so the Settings row can tell a
+    /// pending change from the status quo and offer a relaunch.
+    static let atLaunch: AppLanguage = current
+
     static var current: AppLanguage {
         guard let languages = UserDefaults.pullmark.array(forKey: "AppleLanguages") as? [String],
               let first = languages.first else { return .system }

@@ -73,9 +73,14 @@ struct GeneralSettingsTab: View {
                 (AppLanguage(rawValue: raw) ?? .system).apply()
             }
             .settingAnchor("language")
-            Text("Takes effect the next time PullMark opens.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            if languageRaw != AppLanguage.atLaunch.rawValue {
+                HStack(spacing: 12) {
+                    Text("Takes effect after PullMark relaunches.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Button("Relaunch Now") { AppRelaunch.relaunch() }
+                }
+            }
             }
 
             Section("Reading") {

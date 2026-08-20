@@ -598,6 +598,7 @@
 "Modified" = "Modifié";
 "Renamed" = "Renommé";
 "Shown" = "Affichés";
-"Takes effect the next time PullMark opens." = "Prend effet à la prochaine ouverture de PullMark.";
+"Takes effect after PullMark relaunches." = "Prend effet après le redémarrage de PullMark.";
 "Untracked" = "Non suivi";
 "git credential helper" = "assistant d'identification git";
+"Relaunch Now" = "Relancer maintenant";

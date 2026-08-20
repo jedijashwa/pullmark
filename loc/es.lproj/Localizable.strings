@@ -602,6 +602,7 @@
 "Modified" = "Modificado";
 "Renamed" = "Renombrado";
 "Shown" = "Visibles";
-"Takes effect the next time PullMark opens." = "Se aplica la próxima vez que se abra PullMark.";
+"Takes effect after PullMark relaunches." = "Se aplica cuando PullMark se reinicie.";
 "Untracked" = "Sin seguimiento";
 "git credential helper" = "asistente de credenciales de git";
+"Relaunch Now" = "Reiniciar ahora";

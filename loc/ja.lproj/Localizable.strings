@@ -601,6 +601,7 @@
 "Modified" = "変更";
 "Renamed" = "名称変更";
 "Shown" = "表示中";
-"Takes effect the next time PullMark opens." = "次回 PullMark を開いたときに反映されます。";
+"Takes effect after PullMark relaunches." = "PullMark の再起動後に反映されます。";
 "Untracked" = "未追跡";
 "git credential helper" = "git 認証ヘルパー";
+"Relaunch Now" = "今すぐ再起動";
