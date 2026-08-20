@@ -267,8 +267,8 @@ struct PROverviewView: View {
             if !prDiscussionEnabled, hiddenCommentCount(session) > 0 {
                 let count = hiddenCommentCount(session)
                 Text(count == 1
-                    ? "1 unresolved review comment on files not shown in PullMark"
-                    : "\(count) unresolved review comments on files not shown in PullMark")
+                    ? String(localized: "1 unresolved review comment on files not shown in PullMark")
+                    : String(localized: "\(count) unresolved review comments on files not shown in PullMark"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -439,7 +439,7 @@ struct PRFileView: View {
         // A brand-new file renders inline regardless: split mode would show
         // an all-hatched old column against the untinted document.
         surface.layoutDisabledReason = file?.status == "added"
-            ? "New files always render inline — there is no old side to compare"
+            ? String(localized: "New files always render inline — there is no old side to compare")
             : nil
         surface.blameAvailable = mode == .result
         state.registerSurfaceToolbar(surface)

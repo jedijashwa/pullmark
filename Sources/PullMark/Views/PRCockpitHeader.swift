@@ -136,8 +136,9 @@ private struct ChecksCapsule: View {
         case .awaitingApproval:
             return String(localized: "A workflow is waiting for approval")
         case .passed(let passed, let skipped):
-            return skipped > 0 ? "\(passed) passed, \(skipped) skipped"
-                               : "\(passed) passed"
+            return skipped > 0
+                ? String(localized: "\(passed) passed, \(skipped) skipped")
+                : String(localized: "\(passed) passed")
         }
     }
 
@@ -250,7 +251,7 @@ private struct CheckRow: View {
         .background(hovering && check.detailsUrl != nil
                         ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.clear),
                     in: RoundedRectangle(cornerRadius: 5))
-        .help(check.detailsUrl == nil ? "" : "Open on GitHub")
+        .help(check.detailsUrl == nil ? "" : String(localized: "Open on GitHub"))
     }
 
     @State private var hovering = false

@@ -291,7 +291,7 @@ private struct LocalFileToolbarItems: CustomizableToolbarContent {
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "local-share") {
             ShareSheetButton(mode: .document, state: state, surface: surface,
-                             help: "Share this document")
+                             help: String(localized: "Share this document"))
         }
         ToolbarItem(id: "local-edit") {
             EditToolbarToggle(surface: surface)
@@ -343,7 +343,7 @@ private struct RemoteDocToolbarItems: CustomizableToolbarContent {
         }
         ToolbarItem(id: "remote-share", showsByDefault: false) {
             ShareSheetButton(mode: .link, state: state, surface: surface,
-                             help: "Share a link to this document on GitHub")
+                             help: String(localized: "Share a link to this document on GitHub"))
         }
         ToolbarItem(id: "remote-reload", showsByDefault: false) {
             ReloadToolbarButton(state: state,
@@ -400,9 +400,9 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
             // Mode first: on an added file in Result mode both reasons are
             // true, but the mode is why the picker does nothing HERE.
             .help(surface?.showsLayout != true
-                ? "Inline or side-by-side rendered diff — for the Rendered Diff view"
+                ? String(localized: "Inline or side-by-side rendered diff — for the Rendered Diff view")
                 : (surface?.layoutDisabledReason
-                    ?? "Inline or side-by-side rendered diff"))
+                    ?? String(localized: "Inline or side-by-side rendered diff")))
         }
         // Unconditional (structure never follows the registration);
         // blame annotates the Result view only, other modes disable it.
@@ -445,7 +445,7 @@ private struct PROverviewToolbarItems: CustomizableToolbarContent {
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "overview-share") {
             ShareSheetButton(mode: .link, state: state, surface: surface,
-                             help: "Share a link to this pull request")
+                             help: String(localized: "Share a link to this pull request"))
         }
     }
 }
@@ -548,8 +548,8 @@ private struct EditToolbarToggle: View {
         // The key equivalent lives on Edit → Edit Mode; binding it here too
         // would give one combo two owners.
         .help(surface?.editMode == true
-            ? "Done editing\(shortcuts.hint(.editMode))"
-            : "Edit this document\(shortcuts.hint(.editMode)) — then click any block")
+            ? String(localized: "Done editing\(shortcuts.hint(.editMode))")
+            : String(localized: "Edit this document\(shortcuts.hint(.editMode)) — then click any block"))
         .disabled(surface?.editDisabled ?? true)
     }
 }
@@ -596,10 +596,10 @@ private struct CompareToolbarButton: View {
         .background(MenuAnchorReader(box: anchor))
         .disabled(surface?.compareAvailable != true)
         .help(surface?.compareAvailable != true
-            ? (surface?.compareUnavailableReason ?? "Comparing is unavailable here")
+            ? (surface?.compareUnavailableReason ?? String(localized: "Comparing is unavailable here"))
             : surface?.compareHasChanges == true
-                ? "This file has uncommitted changes — compare with a previous revision or branch"
-                : "Compare with a previous revision or branch")
+                ? String(localized: "This file has uncommitted changes — compare with a previous revision or branch")
+                : String(localized: "Compare with a previous revision or branch"))
     }
 }
 
@@ -614,7 +614,7 @@ private struct ReloadToolbarButton: View {
             Label("Reload", systemImage: "arrow.clockwise")
         }
         .disabled(disabledReason != nil)
-        .help(disabledReason ?? "Reload this document")
+        .help(disabledReason ?? String(localized: "Reload this document"))
     }
 }
 

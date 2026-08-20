@@ -476,20 +476,20 @@ private struct LightboxControls: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            barButton("minus.magnifyingglass", "Zoom out (-)") { model.zoomBy(0.8) }
+            barButton("minus.magnifyingglass", String(localized: "Zoom out (-)")) { model.zoomBy(0.8) }
             percentControl
-            barButton("plus.magnifyingglass", "Zoom in (+)") { model.zoomBy(1.25) }
-            barButton("arrow.up.left.and.arrow.down.right", "Fit (0)") { model.fit() }
-            barButton("1.magnifyingglass", "Actual size (1)") { model.setScale(1) }
+            barButton("plus.magnifyingglass", String(localized: "Zoom in (+)")) { model.zoomBy(1.25) }
+            barButton("arrow.up.left.and.arrow.down.right", String(localized: "Fit (0)")) { model.fit() }
+            barButton("1.magnifyingglass", String(localized: "Actual size (1)")) { model.setScale(1) }
             divider
             if content.kind == .diagram {
-                barButton("square.and.arrow.down", "Save As…") {
+                barButton("square.and.arrow.down", String(localized: "Save As…")) {
                     popFormatMenu(from: saveAnchor.view,
                                   svgTitle: "Save as SVG…", pngTitle: "Save as PNG…",
                                   action: save)
                 }
                 .background(AnchorReader(box: saveAnchor))
-                barButton("square.and.arrow.up", "Share") {
+                barButton("square.and.arrow.up", String(localized: "Share")) {
                     popFormatMenu(from: anchor.view,
                                   svgTitle: "Share as SVG", pngTitle: "Share as PNG",
                                   action: share)

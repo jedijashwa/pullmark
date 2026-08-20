@@ -53,8 +53,10 @@ struct ReviewToolbarButton: View {
         // so the popover arrow can point at the actual button.
         .background(TrackedViewCapture { tracker.buttonView = $0 })
         .help((count == 0
-                ? "Review these changes — summary, verdict, and your pending comments"
-                : "Finish your review — \(count) pending comment\(count == 1 ? "" : "s")")
+                ? String(localized: "Review these changes — summary, verdict, and your pending comments")
+                : count == 1
+                    ? String(localized: "Finish your review — 1 pending comment")
+                    : String(localized: "Finish your review — \(count) pending comments"))
             + shortcuts.hint(.reviewChanges))
     }
 }
@@ -371,8 +373,8 @@ struct ReviewPopover: View {
             // VoiceOver hears which comment dies, not the glyph's name.
             .accessibilityLabel("Discard comment, \(comment.path) \(comment.lineDescription)")
             .help(comment.serverID != nil
-                ? "Discard this comment from the pending review on GitHub"
-                : "Discard this comment")
+                ? String(localized: "Discard this comment from the pending review on GitHub")
+                : String(localized: "Discard this comment"))
         }
         .padding(6)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
