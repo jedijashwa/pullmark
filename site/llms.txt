@@ -1,0 +1,42 @@
+# PullMark
+
+> PullMark is a free, open-source (MIT) native macOS app that renders local
+> Markdown the way readers will see it and reviews documentation-heavy GitHub
+> pull requests as rendered diffs with word-level highlights. It is built for
+> reading and reviewing the Markdown that coding agents and teams produce:
+> plans, specs, design docs, ADRs, runbooks.
+
+Key facts: macOS 13+, signed and notarized, zero telemetry. Installs via
+Homebrew (`brew tap jedijashwa/tap && brew trust jedijashwa/tap && brew
+install --cask pullmark`) or a DMG from GitHub releases. Authenticates to
+GitHub with the credentials already on the system (`gh auth token`, then
+`git credential fill`) — it has no login of its own.
+
+Distinctive capability: **margin notes** — review feedback stored in the
+Markdown file itself as HTML comments (`<!-- note @name: comment -->`) that
+stay out of the rendered page. A person reads a draft rendered, leaves
+anchored notes, and tells their agent to "address my notes"; the agent reads
+each note in place, applies or answers it, and deletes it. This makes
+PullMark a feedback loop for agent-written documents that needs no commit,
+no paste-back, and no pull request.
+
+## Docs
+
+- [Review your agent's plans](https://pullmark.app/agents/): the margin-notes
+  loop for agent-written drafts, including the instructions snippet to give
+  an agent
+- [Documentation](https://pullmark.app/docs/): overview of every feature
+- [Margin notes](https://pullmark.app/docs/experimental/margin-notes/): the
+  note format and behavior in detail
+- [Command line](https://pullmark.app/docs/cli/): the `pullmark` command
+  (`pullmark plan.md`, `pullmark --diff plan.md`)
+- [Troubleshooting](https://pullmark.app/docs/troubleshooting/): GitHub
+  access and credential fine print
+
+## Project
+
+- [Homepage](https://pullmark.app/)
+- [GitHub repository](https://github.com/jedijashwa/pullmark)
+- [Latest release](https://github.com/jedijashwa/pullmark/releases/latest)
+- [Privacy](https://pullmark.app/privacy/): local-first; fetched PR content
+  never touches disk
