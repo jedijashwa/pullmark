@@ -242,7 +242,7 @@ struct LocalFileView: View {
                     // The @AppStorage flip re-renders every open document
                     // without authoring chrome — existing notes still show.
                     marginNotesEnabled = false
-                    state.lastNotice = "Margin notes are off — turn them "
+                    state.lastNotice = String(localized: "Margin notes are off — turn them ")
                         + "back on in Settings → Experimental."
                 },
                 onKeepUsing: {
@@ -320,12 +320,12 @@ struct LocalFileView: View {
     private func openNoteComposer(fileLevel: Bool) {
         guard compare == nil, !state.sourceViewVisible else { return }
         guard marginNotesEnabled else {
-            state.lastNotice = "Margin notes are off — turn them on in "
+            state.lastNotice = String(localized: "Margin notes are off — turn them on in ")
                 + "Settings → Experimental."
             return
         }
         guard marginNotesVisible else {
-            state.lastNotice = "Margin notes are hidden — choose View → Show Margin Notes first."
+            state.lastNotice = String(localized: "Margin notes are hidden — choose View → Show Margin Notes first.")
             return
         }
         guard MarginNotesIntro.seen() else {
@@ -426,8 +426,8 @@ struct LocalFileView: View {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.message = "Choose the file to compare with — it becomes the old side."
-        panel.prompt = "Compare"
+        panel.message = String(localized: "Choose the file to compare with — it becomes the old side.")
+        panel.prompt = String(localized: "Compare")
         guard panel.runModal() == .OK, let other = panel.url else { return }
         startComparingFile(other)
     }
@@ -563,7 +563,7 @@ struct LocalFileView: View {
         // line range — abort rather than splice into the wrong lines.
         guard TextLines.lines(in: currentText, from: target.lineStart, to: target.lineEnd)
                 == target.seed else {
-            state.lastNotice = "\(file.url.lastPathComponent) changed while you were editing "
+            state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were editing ")
                 + "this block — nothing was saved. Re-open the block to edit the current version."
             pendingRevealLine = nil  // a refused save must not leave a
             proxy.cancelInlineEdit() // reveal armed for a later reload
@@ -600,7 +600,7 @@ struct LocalFileView: View {
             }
             try newText.write(to: file.url, atomically: true, encoding: .utf8)
         } catch {
-            state.lastError = "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)"
+            state.lastError = String(localized: "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)")
             proxy.cancelInlineEdit()
         }
     }
@@ -655,7 +655,7 @@ struct LocalFileView: View {
                     .replacingOccurrences(of: "\r\n", with: "\n")
                     .replacingOccurrences(of: "\r", with: "\n")
                 guard var newText = transform(lf) else {
-                    state.lastNotice = "\(file.url.lastPathComponent) changed while you were "
+                    state.lastNotice = String(localized: "\(file.url.lastPathComponent) changed while you were ")
                         + "annotating — nothing was saved. The current notes are shown now."
                     return
                 }
@@ -666,7 +666,7 @@ struct LocalFileView: View {
                     EditHistory.snapshot(file.url)
                     try newText.write(to: file.url, atomically: true, encoding: .utf8)
                 } catch {
-                    state.lastError = "Couldn't save \(file.url.lastPathComponent): "
+                    state.lastError = String(localized: "Couldn't save \(file.url.lastPathComponent): ")
                         + error.localizedDescription
                 }
             }
@@ -853,7 +853,7 @@ struct LocalFileView: View {
             return
         }
         guard LocalGit.repoRoot(for: file.url) != nil else {
-            state.lastError = "\(file.url.lastPathComponent) isn't in a git "
+            state.lastError = String(localized: "\(file.url.lastPathComponent) isn't in a git ")
                 + "repository, so there's nothing to compare against."
             retirePendingCompare()
             return
@@ -891,12 +891,12 @@ struct LocalFileView: View {
                 guard generation == compareGeneration else { return }
                 let name = url.lastPathComponent
                 guard let old else {
-                    state.lastError = "\(name) does not exist at \(oldRef)."
+                    state.lastError = String(localized: "\(name) does not exist at \(oldRef).")
                     stopComparing()
                     return
                 }
                 guard let new else {
-                    state.lastError = "\(name) does not exist at \(newRef)."
+                    state.lastError = String(localized: "\(name) does not exist at \(newRef).")
                     stopComparing()
                     return
                 }
@@ -918,7 +918,7 @@ struct LocalFileView: View {
             await MainActor.run {
                 guard generation == compareGeneration else { return }
                 guard let old else {
-                    state.lastError = "Could not read \(other.lastPathComponent)."
+                    state.lastError = String(localized: "Could not read \(other.lastPathComponent).")
                     stopComparing()
                     return
                 }
@@ -943,7 +943,7 @@ struct LocalFileView: View {
                 // newest request may land, or the page and banner disagree.
                 guard generation == compareGeneration else { return }
                 guard let old else {
-                    state.lastError = "\(url.lastPathComponent) does not exist at \(label)."
+                    state.lastError = String(localized: "\(url.lastPathComponent) does not exist at \(label).")
                     stopComparing()
                     return
                 }

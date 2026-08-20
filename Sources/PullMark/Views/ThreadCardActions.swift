@@ -28,7 +28,7 @@ struct ThreadCardActions {
         guard let session else {
             // The page already cleared its composer — never drop the text.
             restoreDraftAfterFailure(key: draftKey, text: body)
-            state.lastError = "Could not post the reply — the PR session is "
+            state.lastError = String(localized: "Could not post the reply — the PR session is ")
                 + "no longer available. Your text was kept as a draft."
             return
         }
@@ -45,14 +45,14 @@ struct ThreadCardActions {
                 }
             } catch {
                 restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not post the reply: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not post the reply: \(error.localizedDescription)")
             }
         }
     }
 
     func setThreadResolved(rootID: Int, resolved: Bool) {
         guard let session, let meta = session.threadMeta[rootID] else {
-            state.lastError = "Thread state unavailable — try refreshing the PR."
+            state.lastError = String(localized: "Thread state unavailable — try refreshing the PR.")
             return
         }
         Task {
@@ -80,7 +80,7 @@ struct ThreadCardActions {
         guard let nodeID = CommentReactions.commentNodeID(of: commentID,
                                                           in: session.threadMeta) else {
             proxy.revertReaction(commentID: commentID, content: content, attempted: reacted)
-            state.lastError = "Reaction state unavailable — try refreshing the PR."
+            state.lastError = String(localized: "Reaction state unavailable — try refreshing the PR.")
             return
         }
         // Serialized per comment id: a rapid double-toggle's add/remove
@@ -96,7 +96,7 @@ struct ThreadCardActions {
             } catch {
                 proxy.revertReaction(commentID: commentID, content: content,
                                      attempted: reacted)
-                state.lastError = "Could not update the reaction: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not update the reaction: \(error.localizedDescription)")
             }
         }
     }
@@ -116,7 +116,7 @@ struct ThreadCardActions {
                 }
             } catch {
                 restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not save the edit: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not save the edit: \(error.localizedDescription)")
             }
         }
     }
@@ -133,7 +133,7 @@ struct ThreadCardActions {
                     state.applyCommentDelete(sessionID: sessionID, commentID: commentID)
                 }
             } catch {
-                state.lastError = "Could not delete the comment: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not delete the comment: \(error.localizedDescription)")
             }
         }
     }
@@ -146,7 +146,7 @@ struct ThreadCardActions {
     func sendConversationComment(body: String, draftKey: String) {
         guard let session else {
             restoreDraftAfterFailure(key: draftKey, text: body)
-            state.lastError = "Could not post the comment — the PR session is "
+            state.lastError = String(localized: "Could not post the comment — the PR session is ")
                 + "no longer available. Your text was kept as a draft."
             return
         }
@@ -158,7 +158,7 @@ struct ThreadCardActions {
                 }
             } catch {
                 restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not post the comment: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not post the comment: \(error.localizedDescription)")
             }
         }
     }
@@ -172,7 +172,7 @@ struct ThreadCardActions {
                             : session.conversationMeta[commentID]
         guard let nodeID = meta?.nodeID else {
             proxy.revertReaction(commentID: commentID, content: content, attempted: reacted)
-            state.lastError = "Reaction state unavailable — try refreshing the PR."
+            state.lastError = String(localized: "Reaction state unavailable — try refreshing the PR.")
             return
         }
         state.serializeReactionWrite(commentID: commentID) {
@@ -187,7 +187,7 @@ struct ThreadCardActions {
             } catch {
                 proxy.revertReaction(commentID: commentID, content: content,
                                      attempted: reacted)
-                state.lastError = "Could not update the reaction: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not update the reaction: \(error.localizedDescription)")
             }
         }
     }
@@ -204,7 +204,7 @@ struct ThreadCardActions {
                 }
             } catch {
                 restoreDraftAfterFailure(key: draftKey, text: body)
-                state.lastError = "Could not save the edit: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not save the edit: \(error.localizedDescription)")
             }
         }
     }
@@ -219,7 +219,7 @@ struct ThreadCardActions {
                                                          commentID: commentID)
                 }
             } catch {
-                state.lastError = "Could not delete the comment: \(error.localizedDescription)"
+                state.lastError = String(localized: "Could not delete the comment: \(error.localizedDescription)")
             }
         }
     }
@@ -232,7 +232,7 @@ struct ThreadCardActions {
             // of silently dropping the sync (empty text is a discard and
             // needs no noise).
             if !text.isEmpty {
-                state.lastError = "The PR session is no longer available — "
+                state.lastError = String(localized: "The PR session is no longer available — ")
                     + "the draft could not be saved to disk."
             }
             return

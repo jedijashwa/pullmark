@@ -17,7 +17,7 @@ enum DocumentExport {
             case .success(let data):
                 write(data, to: url, onError: onError)
             case .failure(let error):
-                onError("Could not create the PDF: \(error.localizedDescription)")
+                onError(String(localized: "Could not create the PDF: \(error.localizedDescription)"))
             }
         }
     }
@@ -27,7 +27,7 @@ enum DocumentExport {
         else { return }
         document.proxy.pageDOM { dom in
             guard let dom else {
-                onError("Could not read the rendered page.")
+                onError(String(localized: "Could not read the rendered page."))
                 return
             }
             let html = selfContainedHTML(dom: dom, document: document)
@@ -117,7 +117,7 @@ enum DocumentExport {
         do {
             try data.write(to: url)
         } catch {
-            onError("Could not save \(url.lastPathComponent): \(error.localizedDescription)")
+            onError(String(localized: "Could not save \(url.lastPathComponent): \(error.localizedDescription)"))
         }
     }
 }

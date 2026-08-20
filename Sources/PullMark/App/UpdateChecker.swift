@@ -427,7 +427,7 @@ final class UpdateChecker: ObservableObject {
         Task { @MainActor in
             if let message = await checkManually() {
                 let alert = NSAlert()
-                alert.messageText = "Check for Updates"
+                alert.messageText = String(localized: "Check for Updates")
                 alert.informativeText = message
                 NSApp.activate(ignoringOtherApps: true)
                 alert.runModal()

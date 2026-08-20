@@ -301,7 +301,7 @@ struct RemoteDocView: View {
                 compare = RemoteCompare(ref: ref, label: label)
             } catch {
                 guard generation == compareGeneration else { return }
-                state.lastError = "\((path as NSString).lastPathComponent) isn't available on \(label): "
+                state.lastError = String(localized: "\((path as NSString).lastPathComponent) isn't available on \(label): ")
                     + error.localizedDescription
             }
         }
@@ -449,7 +449,7 @@ enum RemoteBranchMenu {
             }
         }
         menu.addItem(.separator())
-        let separately = NSMenuItem(title: "Open Branch Separately", action: nil, keyEquivalent: "")
+        let separately = NSMenuItem(title: String(localized: "Open Branch Separately"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         for branch in shown where branch != session.displayRef {
             item(branch, in: submenu) {

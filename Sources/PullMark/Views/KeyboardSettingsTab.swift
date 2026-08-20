@@ -194,8 +194,8 @@ struct KeyboardSettingsTab: View {
             .allowsHitTesting(shortcuts.isCustomized(action))
             .accessibilityHidden(!shortcuts.isCustomized(action))
             .accessibilityLabel("Restore the default shortcut for \(action.title)")
-            .help("Restore the default"
-                + (action.defaultCombo.map { " (\($0.display))" } ?? " (none)"))
+            .help(String(localized: "Restore the default")
+                + (action.defaultCombo.map { " (\($0.display))" } ?? String(localized: " (none)")))
         }
     }
 

@@ -27,8 +27,7 @@ struct GitHubSetupSheet: View {
             HStack {
                 Button(checking ? "Checking…" : "Check Again") { check() }
                     .disabled(checking)
-                    .help("Re-read credentials from the GitHub CLI and "
-                        + "git credential helpers")
+                    .help("Re-read credentials from the GitHub CLI and git credential helpers")
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)

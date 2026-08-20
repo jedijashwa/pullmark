@@ -951,7 +951,7 @@ final class AppState: ObservableObject {
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
-        panel.message = "Open Markdown files or a folder containing them"
+        panel.message = String(localized: "Open Markdown files or a folder containing them")
         guard panel.runModal() == .OK else { return }
         for url in panel.urls { add(url: url) }
     }
@@ -962,7 +962,7 @@ final class AppState: ObservableObject {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = true
-        panel.message = "Open Markdown files"
+        panel.message = String(localized: "Open Markdown files")
         guard panel.runModal() == .OK else { return }
         for url in panel.urls { add(url: url) }
     }
@@ -972,7 +972,7 @@ final class AppState: ObservableObject {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.message = "Open a folder containing Markdown files"
+        panel.message = String(localized: "Open a folder containing Markdown files")
         guard panel.runModal() == .OK else { return }
         for url in panel.urls { add(url: url) }
     }
@@ -1507,7 +1507,7 @@ final class AppState: ObservableObject {
             folders[index].truncated = truncated
             folders[index].git = git
             if initialScan, filePaths.isEmpty {
-                lastNotice = "No Markdown files found in \(root.lastPathComponent)."
+                lastNotice = String(localized: "No Markdown files found in \(root.lastPathComponent).")
             }
         } else {
             // The root vanished (unmounted volume, deleted
@@ -2004,10 +2004,9 @@ final class AppState: ObservableObject {
     /// client already appends a sign-in hint when no credentials resolved).
     static func remoteFailureMessage(_ error: Error, what: String) -> String {
         if let api = error as? GitHubClient.APIError, api.status == 404 {
-            return "Couldn't open \(what): \(api.message). It may not exist at that ref, "
-                + "or it may be a private repository your GitHub credentials can't access."
+            return String(localized: "Couldn't open \(what): \(api.message). It may not exist at that ref, or it may be a private repository your GitHub credentials can't access.")
         }
-        return "Couldn't open \(what): \(error.localizedDescription)"
+        return String(localized: "Couldn't open \(what): \(error.localizedDescription)")
     }
 
     /// The 60s quiet tick for the frontmost PR (spec: pr-cockpit):
@@ -2161,7 +2160,7 @@ final class AppState: ObservableObject {
             // queue through the stale index (code-review catch).
             await refreshCockpit(sessionID: sessionID)
         } catch {
-            lastError = "Could not refresh \(session.id): \(error.localizedDescription)"
+            lastError = String(localized: "Could not refresh \(session.id): \(error.localizedDescription)")
         }
     }
 
@@ -2381,7 +2380,7 @@ final class AppState: ObservableObject {
         guard let serverID = comment.serverID else {
             // Landed by the atomic create, id not echoed back yet (see
             // stateAfterCreate) — a server-side delete needs the id.
-            lastError = "This comment is still syncing with GitHub — try discarding it again in a moment."
+            lastError = String(localized: "This comment is still syncing with GitHub — try discarding it again in a moment.")
             return
         }
         let ref = prSessions[index].ref
@@ -2390,7 +2389,7 @@ final class AppState: ObservableObject {
                 try await client.deleteReviewComment(ref, commentID: serverID)
                 await adoptPendingReview(sessionID: sessionID)
             } catch {
-                lastError = "Could not discard the pending comment: \(error.localizedDescription)"
+                lastError = String(localized: "Could not discard the pending comment: \(error.localizedDescription)")
             }
         }
     }
@@ -2563,8 +2562,9 @@ final class AppState: ObservableObject {
                 let count = prSessions.first(where: { $0.id == sessionID })?
                     .queuedComments.count ?? 0
                 if count > 0 {
-                    lastError = "Could not upload \(count) pending comment\(count == 1 ? "" : "s") "
-                        + "to GitHub — kept locally for retry. \(error.localizedDescription)"
+                    lastError = count == 1
+                        ? String(localized: "Could not upload 1 pending comment to GitHub — kept locally for retry. \(error.localizedDescription)")
+                        : String(localized: "Could not upload \(count) pending comments to GitHub — kept locally for retry. \(error.localizedDescription)")
                 }
                 return
             }
@@ -2679,7 +2679,7 @@ final class AppState: ObservableObject {
             }
             clearPendingState(sessionID: sessionID)
         } catch {
-            lastError = "Could not abandon the review: \(error.localizedDescription)"
+            lastError = String(localized: "Could not abandon the review: \(error.localizedDescription)")
         }
     }
 

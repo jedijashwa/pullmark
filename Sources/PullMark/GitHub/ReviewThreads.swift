@@ -15,15 +15,16 @@ struct ReviewThread: Equatable {
     var isOutdated: Bool { root.line == nil && !isFileLevel }
 
     var lineLabel: String {
-        if isFileLevel { return "Whole file" }
+        if isFileLevel { return String(localized: "Whole file") }
         if let line = root.line {
-            let which = anchorSide == "LEFT" ? "old" : "new"
-            return "Line \(line) (\(which))"
+            return anchorSide == "LEFT"
+                ? String(localized: "Line \(line) (old)")
+                : String(localized: "Line \(line) (new)")
         }
         if let original = root.originalLine {
-            return "Outdated — was line \(original)"
+            return String(localized: "Outdated — was line \(original)")
         }
-        return "Outdated"
+        return String(localized: "Outdated")
     }
 }
 
