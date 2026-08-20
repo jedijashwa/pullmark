@@ -14,9 +14,18 @@ That is the full site matrix: 8 scenes × light/dark × English + 7
 locales, 128 captures. Languages run in PARALLEL (one instance per
 language on cascaded window frames) and instances stay BACKGROUNDED
 throughout — no focus steal, no cursor, no clipboard — so the whole
-matrix lands in roughly one language's wall clock (~5 minutes) while
+matrix lands in roughly one language's wall clock (~6 minutes) while
 the machine stays usable. Don't minimize or close the capture windows
-while a run is live; occluding them with other windows is fine.
+while a run is live, and don't CLICK INTO them (that activates the
+instance and routes your input inside); occluding them with other
+windows and hovering for tooltips are both fine.
+
+Every capture is machine-verified before it counts: blankcheck.swift
+(content-region stddev — WebKit under eightfold load sometimes hasn't
+painted) and lightcheck.swift (colored traffic lights — a capture can
+race a key-status handoff). capture() retries both in place, and
+combos that still fail re-run SOLO in an automatic fix-up pass at the
+end of the run, where flakes essentially never survive.
 
 Narrower runs compose the same flags: `generate.sh diff --appearance
 dark`, `generate.sh pr --lang ja`, `generate.sh all --appearance both`
@@ -63,8 +72,16 @@ language's screenshots and that all referenced files exist.
   aren't individually pressable): `pullmark://capture/…` URLs, a drive
   channel the app only routes when launched with `-pm.captureChrome`.
 - **Active-looking chrome**: `-pm.captureChrome` draws colored traffic
-  lights and accent selection without focus (CaptureChrome.swift), so
+  lights and accent selection without focus (CaptureChrome.swift —
+  windows get GENUINELY made key/main, which a background app is
+  allowed to do; faked notifications raced AppKit into gray), so
   captures are pixel-identical to a frontmost window's.
+- **Sticky state is PINNED, never toggled**: demo instances each own a
+  per-pid defaults suite (a shared suite meant every fresh launch's
+  startup wipe reset other live instances' state mid-scene), and
+  per-scene flags ride the argument domain (`-pm.blame 1` on the blame
+  scene only). Nothing a capture instance does can leak into another
+  instance or into the human's own app.
 
 ## Prereqs and rules
 
