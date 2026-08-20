@@ -34,6 +34,8 @@
   --blue:       #0969da;
   --shadow-sm:  0 1px 2px rgba(26,33,43,.06), 0 4px 12px rgba(26,33,43,.06);
   --code-bg:    #f2f1ee;
+  --shot-edge:  rgba(26,33,43,.18);
+  --shot-soft:  rgba(26,33,43,.12);
   --serif: "New York", ui-serif, "Iowan Old Style", "Palatino", Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
@@ -55,6 +57,8 @@
     --blue:       #58a6ff;
     --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
     --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
   }
 }
 
@@ -165,7 +169,12 @@ h2 {
 
 /* ============ screenshots ============ */
 .shot { margin: 0; }
-.shot img { width: 100%; height: auto; }
+.shot img {
+  width: 100%; height: auto;
+  filter: drop-shadow(0 0 1px var(--shot-edge))
+          drop-shadow(0 2px 4px var(--shot-edge))
+          drop-shadow(0 18px 44px var(--shot-soft));
+}
 .shot figcaption {
   text-align: center;
   font: 400 13px var(--sans);
@@ -339,6 +348,7 @@ footer .note { margin-left: auto; }
     <a class="brand" href="/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
     <div class="links">
       <a href="/docs/">Docs</a>
+      <a href="/agents/" aria-current="page">Agents</a>
       <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
       <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
     </div>
@@ -453,6 +463,29 @@ A note about one list item sits inside that item — directly after
 the item's last line, indented to the item's content, with no
 blank lines around it. Keep (or delete) the whole indented
 comment; its indentation is what ties it to the item.</pre>
+    </div>
+  </div>
+</section>
+
+<section id="long-reviews">
+  <div class="wrap">
+    <p class="kicker">long documents</p>
+    <h2>Notes that wait for you.</h2>
+    <div class="prose">
+      <p>A thorough review of a long document — a research write-up, a
+      complex design doc — can take an hour. Margin notes are built for
+      that hour. The document holds still while you work: write the
+      thought where it strikes and keep reading. When page thirty
+      changes your mind about the note you left on page three, go back
+      and sharpen it — or delete it. Nothing reaches your agent until
+      the pass is done and your notes agree with each other, so the
+      feedback lands as one coherent set instead of a running stream of
+      corrections.</p>
+      <p>It earns its keep even for documents that will end up
+      committed. Do the rough first pass in margin notes <em>before</em>
+      the first commit, and the pull request opens clean — reviewers see
+      the conversation that matters, not the scaffolding it took to get
+      there.</p>
     </div>
   </div>
 </section>
