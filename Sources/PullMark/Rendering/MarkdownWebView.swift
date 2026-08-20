@@ -314,6 +314,15 @@ struct MarkdownWebView: NSViewRepresentable {
                                           forURLScheme: RemoteResourceSchemeHandler.scheme)
         configuration.setURLSchemeHandler(context.coordinator.attachmentHandler,
                                           forURLScheme: AttachmentSchemeHandler.scheme)
+        // Capture runs only: parallel instances overlap on cascaded
+        // frames, and WebKit suspends a fully occluded window's
+        // WebContent process — sometimes before first paint, which
+        // captured as a permanently blank pane. Keep rendering alive
+        // regardless of visibility while the generator drives us.
+        if CaptureChrome.isActive {
+            configuration.preferences.setValue(
+                false, forKey: "pageVisibilityBasedProcessSuppressionEnabled")
+        }
         let webView = interactive
             ? ZoomableWebView(frame: .zero, configuration: configuration)
             : PassthroughWebView(frame: .zero, configuration: configuration)
