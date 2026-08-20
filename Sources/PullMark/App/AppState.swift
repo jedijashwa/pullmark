@@ -988,6 +988,15 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Whether the sidebar selection names a directory — Copy GitHub
+    /// Link picks tree vs blob URLs by it (spec: copy-github-link §4).
+    var selectionIsDirectory: Bool {
+        switch selection {
+        case .folder, .folderNode: return true
+        default: return false
+        }
+    }
+
     /// The folder root the selection lives in (Refresh Folder's target).
     var selectionFolderRoot: URL? {
         switch selection {

@@ -881,6 +881,8 @@ struct ThemePreviewCard: View {
 struct GitHubConnectionSection: View {
     @ObservedObject private var connection = GitHubClient.shared.connection
     @State private var showSetup = false
+    @AppStorage(DefaultsKeys.githubLinkStyle, store: UserDefaults.pullmark)
+    private var githubLinkStyleRaw = "branch"
 
     var body: some View {
         Section("GitHub") {
@@ -905,6 +907,12 @@ struct GitHubConnectionSection: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            Picker("Copy GitHub links as:", selection: $githubLinkStyleRaw) {
+                Text("Current branch").tag("branch")
+                Text("Exact commit (permalink)").tag("commit")
+            }
+            .help("What Copy GitHub Link copies — hold ⌥ in the menu for the other flavor")
         }
         .sheet(isPresented: $showSetup) { GitHubSetupSheet() }
         .onAppear {

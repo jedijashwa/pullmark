@@ -126,4 +126,7 @@ enum DefaultsKeys {
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
     static let sidebarRecentExpanded = "pm.sidebar.recentExpanded"
+    /// "branch" | "commit" — which flavor Copy GitHub Link copies by
+    /// default (spec: copy-github-link §2). ⌥ in menus copies the other.
+    static let githubLinkStyle = "pm.githubLinkStyle"
 }

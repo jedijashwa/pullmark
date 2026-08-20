@@ -50,6 +50,7 @@ struct PullMarkApp: App {
     @AppStorage(DefaultsKeys.marginNotesVisible, store: UserDefaults.pullmark) private var marginNotesVisible = true
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
+    @AppStorage(DefaultsKeys.githubLinkStyle, store: UserDefaults.pullmark) private var githubLinkStyleRaw = "branch"
 
     /// True when a pull request's file (not the overview) is on screen —
     /// the view-mode commands act on it.
@@ -153,6 +154,41 @@ struct PullMarkApp: App {
         return url
     }
 
+    /// The selection's URL when Copy GitHub Link can act on it: local,
+    /// and inside a git checkout — a pure filesystem walk, cheap at
+    /// menu render (spec: copy-github-link §4).
+    private var selectionGitHubLinkURL: URL? {
+        guard let state, let url = state.selectionLocalURL,
+              GitHubLink.inRepository(url, isDirectory: state.selectionIsDirectory)
+        else { return nil }
+        return url
+    }
+
+    private func copyGitHubLink(permalink: Bool) {
+        guard let state, let url = selectionGitHubLinkURL else { return }
+        SidebarActions.copyGitHubLink(url, isDirectory: state.selectionIsDirectory,
+                                      permalink: permalink, state: state)
+    }
+
+    /// Primary follows the Settings flavor; the ⌥ alternate names the
+    /// other one (spec: copy-github-link §2).
+    private var githubLinkDefaultIsPermalink: Bool { githubLinkStyleRaw == "commit" }
+
+    private var copyGitHubLinkCommand: some View {
+        Button("Copy GitHub Link") {
+            copyGitHubLink(permalink: githubLinkDefaultIsPermalink)
+        }
+        .keyboardShortcut(shortcuts.keyboardShortcut(for: .copyGitHubLink))
+        .disabled(selectionGitHubLinkURL == nil)
+    }
+
+    private var copyGitHubLinkAlternate: some View {
+        Button(githubLinkDefaultIsPermalink ? "Copy GitHub Branch Link" : "Copy GitHub Permalink") {
+            copyGitHubLink(permalink: !githubLinkDefaultIsPermalink)
+        }
+        .disabled(selectionGitHubLinkURL == nil)
+    }
+
     /// Copy as Markdown (⌥⌘C): the page maps the selection to covered
     /// source lines (whole-block granularity via data-pm-lines), Swift
     /// slices the original markdown and puts plain text on the pasteboard.
@@ -230,6 +266,15 @@ struct PullMarkApp: App {
                 }
                 .keyboardShortcut(shortcuts.keyboardShortcut(for: .copyPath))
                 .disabled(state?.selectionLocalURL == nil)
+                // Menu items keep their slot (structure stays put), so
+                // outside a checkout this disables rather than hides —
+                // unlike the context menus, which rebuild per open.
+                if #available(macOS 15.0, *) {
+                    copyGitHubLinkCommand
+                        .modifierKeyAlternate(.option) { copyGitHubLinkAlternate }
+                } else {
+                    copyGitHubLinkCommand
+                }
                 Button("Refresh Folder") {
                     if let root = state?.selectionFolderRoot {
                         state?.rescanFolder(root: root)

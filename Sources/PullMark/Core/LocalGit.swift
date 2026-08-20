@@ -19,6 +19,15 @@ enum LocalGit {
         return path.isEmpty ? nil : URL(fileURLWithPath: path)
     }
 
+    /// Repo toplevel for a DIRECTORY url. `repoRoot(for:)` assumes a
+    /// file and asks the parent — wrong for the checkout root itself,
+    /// whose parent usually isn't a repo (spec: copy-github-link §3).
+    static func repoRoot(forDirectory dir: URL) -> URL? {
+        guard let out = run(["rev-parse", "--show-toplevel"], in: dir.path) else { return nil }
+        let path = out.trimmingCharacters(in: .whitespacesAndNewlines)
+        return path.isEmpty ? nil : URL(fileURLWithPath: path)
+    }
+
     static func relativePath(of url: URL, in root: URL) -> String {
         let rootPath = root.path.hasSuffix("/") ? root.path : root.path + "/"
         return url.path.hasPrefix(rootPath) ? String(url.path.dropFirst(rootPath.count)) : url.lastPathComponent
@@ -180,6 +189,14 @@ enum LocalGit {
     static func githubRemote(in root: URL) -> (owner: String, repo: String)? {
         guard let out = run(["remote", "get-url", "origin"], in: root.path) else { return nil }
         return parseGitHubRemote(out)
+    }
+
+    /// The link target among a checkout's remotes: origin's GitHub repo
+    /// first, else the first GitHub remote in listing order — the same
+    /// preference RepoInfo gives the sidebar (spec: copy-github-link §3).
+    static func linkableGitHubRepo(in root: URL) -> GitHubRepoID? {
+        guard let remotes = run(["remote", "-v"], in: root.path) else { return nil }
+        return parseRemotesOutput(remotes).first
     }
 
     /// Line-level history: the chain of commits that touched a 1-based line
