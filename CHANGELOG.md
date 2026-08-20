@@ -4,6 +4,28 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Back and Forward, like a browser.** Every window now keeps its own
+  trail of the documents it has shown — local files, folders, pull
+  requests, browsed repo docs — and you can walk it: arrow buttons in
+  the toolbar (click to travel, hold or right-click to see the
+  history), a new Go menu with ⌘[ and ⌘], and the back/forward
+  buttons on multi-button mice. Returning to a document restores your
+  reading position, and history is per-window, so two windows keep two
+  trails.
+- **Back reopens what you've since closed.** Landing on a history
+  entry whose file, Location, or pull request is no longer open brings
+  it back: files reopen from disk, folders re-add, pull requests
+  re-fetch. Only something truly gone — a deleted file, an
+  unreachable PR — shows a quiet page that still names what it was,
+  so "wait, what was that doc from two hours ago" always has an
+  answer.
+- **The PR file toolbar's overview button now wears the pull-request
+  glyph.** The back chevron it used to wear belongs to the real Back
+  button now; the overview button was always "up to the pull
+  request," and now it looks like it.
+
 ## 0.36.0 - 2026-08-19
 
 - **PullMark finally says whether it's connected to GitHub — and helps
