@@ -163,6 +163,21 @@ final class HoldMenuNavButton: NSButton {
     var clickAction: () -> Void = {}
     var menuBuilder: () -> NSMenu? = { nil }
 
+    // The custom mouseDown below never reaches NSButton's action
+    // machinery, but accessibility's AXPress does (performClick) — an
+    // unwired button is invisible to VoiceOver and the drive scripts.
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        target = self
+        action = #selector(fireClick)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    @objc private func fireClick() { clickAction() }
+
     override func mouseDown(with event: NSEvent) {
         guard isEnabled else { return }
         highlight(true)
@@ -194,6 +209,9 @@ final class HoldMenuNavButton: NSButton {
 
     private func popHistoryMenu() {
         guard let menu = menuBuilder(), !menu.items.isEmpty else { return }
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: self)
+        // Below the button's bottom edge (this view is in a flipped
+        // hierarchy), so a press-and-hold release over the button lands
+        // outside the menu and leaves it open — the browser feel.
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: bounds.height + 6), in: self)
     }
 }
