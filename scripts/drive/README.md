@@ -48,7 +48,20 @@ step.
   windows for a pressable element whose AXTitle/AXDescription matches
   (exact match preferred, substring accepted) and AXPress it. Reaches
   SwiftUI toolbar buttons and web-content links/checkboxes alike.
-- Both check `AXIsProcessTrusted()` and fail with a one-line error if
+- `ax.swift <pid> menuitem <title>` — like `menu`, but finds the item
+  anywhere in the menu bar (Apple menu excluded). For localized runs:
+  top-level menu names are system-localized, item titles resolve from
+  `loc/` — so the caller passes just the item.
+- `ax.swift <pid> menukey <char> <modifiers>` — AXPress the menu item
+  carrying that keyboard equivalent (`menukey , cmd` = Settings…,
+  `menukey q cmd` = Quit). Language-independent; the way to hit
+  system-titled items no `.strings` file covers.
+- `ax.swift <pid> sidebar-state` — prints `visible` or `hidden`: is
+  there a native list outside the web area? Lets scenes toggle the
+  sidebar deterministically instead of blind-pressing.
+- `ax.swift <pid> menulist` — every menu item with its keyboard
+  equivalent as `[modifier-mask+char]`; discovery for `menukey`.
+- All check `AXIsProcessTrusted()` and fail with a one-line error if
   the Accessibility permission is missing.
 
 ## Pid-targeted raw events
