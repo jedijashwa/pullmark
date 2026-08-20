@@ -256,8 +256,13 @@ struct SidebarView: View {
                 SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
                                     help: "Close All") { state.closeAllOpenFiles() }
             ] : [], headerMenu: {
-                AnyView(Button("Close All") { state.closeAllOpenFiles() }
-                    .disabled(state.localFiles.isEmpty && state.previewFile == nil))
+                // Uniform header menus (Josh's call): the section's open
+                // command, then its Close All.
+                AnyView(Group {
+                    Button("Open File…") { state.openFilesPanel() }
+                    Button("Close All") { state.closeAllOpenFiles() }
+                        .disabled(!state.hasOpenFiles)
+                })
             }) {
                 if state.localFiles.isEmpty, state.preview == nil {
                     Button("Open File…") { state.openFilesPanel() }
@@ -294,7 +299,13 @@ struct SidebarView: View {
                                headerActions: [
                 SectionHeaderAction(id: "add-folder", symbol: "plus",
                                     help: "Open Folder…") { state.openFolderPanel() }
-            ]) {
+            ], headerMenu: {
+                AnyView(Group {
+                    Button("Open Folder…") { state.openFolderPanel() }
+                    Button("Close All") { state.closeAllLocations() }
+                        .disabled(state.folders.isEmpty && state.remoteSessions.isEmpty)
+                })
+            }) {
                 if state.folders.isEmpty, state.remoteSessions.isEmpty {
                     Button("Open Folder…") { state.openFolderPanel() }
                         .font(fonts.callout)
@@ -312,7 +323,13 @@ struct SidebarView: View {
                                headerActions: [
                 SectionHeaderAction(id: "add-pr", symbol: "plus",
                                     help: "Open Pull Request…") { state.showAddPR = true }
-            ]) {
+            ], headerMenu: {
+                AnyView(Group {
+                    Button("Open Pull Request…") { state.showAddPR = true }
+                    Button("Close All") { state.closeAllPRSessions() }
+                        .disabled(state.prSessions.isEmpty)
+                })
+            }) {
                 if state.prSessions.isEmpty {
                     Button("Open Pull Request…") { state.showAddPR = true }
                         .font(fonts.callout)
@@ -1065,6 +1082,10 @@ private struct CollapsibleSection<Content: View>: View {
                     Button(action: item.action) {
                         Image(systemName: item.symbol)
                             .font(fonts.caption)
+                            // Semibold to match the section chevron's
+                            // stroke — at text weight the bare plus reads
+                            // as punctuation, not a button (Josh's call).
+                            .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
