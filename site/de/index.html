@@ -18,6 +18,7 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script src="/theme.js"></script>
 <meta property="og:title" content="PullMark — Markdown auf Lesehöhe">
 <meta property="og:description" content="Eine native macOS-App, die lokales Markdown rendert und dokumentationslastige GitHub-Pull-Requests als gerenderte Diffs reviewt.">
 <meta property="og:type" content="website">
@@ -67,7 +68,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper:      #10151c;
     --panel:      #171e28;
     --ink:        #e9edf3;
@@ -87,6 +88,25 @@
     --shot-soft:  rgba(0,0,0,.45);
   }
 }
+:root[data-theme="dark"] {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
@@ -540,8 +560,11 @@ footer .note { margin-left: auto; }
 
     <div class="hero-shot">
       <figure class="shot">
-        <img src="/img/app-blame.png?v=3" width="1392" height="912"
+        <picture>
+        <source data-pm-dark srcset="/img/app-blame-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-blame.png?v=4" width="1392" height="912"
           alt="PullMark rendert die Dokumentation eines Projekts als formatierte Seite, mit eingeschalteter Blame-Spalte: Autoren-Avatare sitzen am linken Rand, einer pro Folge von Blöcken, die zuletzt derselbe Commit berührt hat">
+      </picture>
         <figcaption>Eine Projekt-Doku, formatiert — mit der Historie am Rand: ein Avatar pro Blockfolge, jeder eine Tür zu seinem Commit.</figcaption>
       </figure>
     </div>
@@ -574,8 +597,11 @@ footer .note { margin-left: auto; }
       Änderungen des Agenten Wort für Wort hervor, live beim Speichern.</p>
     </div>
     <figure class="shot reading-shot">
-      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-notes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-notes.png?v=4" width="1052" height="876" loading="lazy"
         alt="PullMark rendert eine von einem Agenten geschriebene Design-Spec mit dem Titel Wind Gust Alerts, mit drei Randnotizen als signierten Karten des Reviewers — eine Notiz auf Dateiebene, die um eine saubere zweite Revision bittet, eine, die die Sampling-Rate-Annahme der Spec infrage stellt, und eine, die bei einem Feature YAGNI ruft — während die Seitenleiste die Spec in einem docs/superpowers/specs-Ordner eines Git-Repositorys auf dem Branch main zeigt">
+      </picture>
       <figcaption>Die Spec eines Agenten, an Ort und Stelle reviewt: drei signierte
       Notizen, verankert an den Blöcken, die sie infrage stellen, gespeichert in der
       Datei selbst als gewöhnliche HTML-Kommentare — der Agent arbeitet jede ab und
@@ -642,8 +668,11 @@ footer .note { margin-left: auto; }
     Branch, genügt ein Klick zum Aktualisieren — und deine Entwürfe überleben.</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-diff.png?v=5" width="1393" height="903" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-diff-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-diff.png?v=6" width="1393" height="903" loading="lazy"
         alt="PullMark beim Review eines Dokumentations-Pull-Requests: ein gerendertes Diff, in dem ein geänderter Absatz wortgenaue Hervorhebungen trägt, ein hinzugefügtes Mermaid-Flussdiagramm auf grünem Hinzugefügt-Ton rendert, die Seitenleiste eine Kommentarzahl an der Datei zeigt und das Review-Element der Toolbar „Finish your review" mit drei ausstehenden Kommentaren anzeigt">
+      </picture>
       <figcaption>Ein Dokumentations-PR als gerendertes Diff: der eine geänderte Satz
       trägt wortgenaue Hervorhebungen, und das neue Flussdiagramm kommt als
       <em>Diagramm</em> auf grünem Hinzugefügt-Ton an — nicht als achtzig grüne Zeilen
@@ -671,8 +700,11 @@ footer .note { margin-left: auto; }
     </div>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-pr-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-pr.png?v=2" width="1052" height="784" loading="lazy"
         alt="PullMarks Pull-Request-Übersicht: der PR-Titel mit einem Open-Chip, eine Kapsel „Changes requested", eine Kapsel „Checks passed", Reviewer-Avatare mit Urteils-Badges, ein docs-guild-Team-Chip, die gerenderte PR-Beschreibung und die Unterhaltungs-Timeline, deren erster Review-Kommentar eine gerenderte Tabelle zeigt">
+      </picture>
       <figcaption>Die Unterhaltung als Dokument: Review-Kommentare rendern ihre Tabellen
       als Tabellen, und der Avatar jedes Reviewers trägt sein Urteil.</figcaption>
     </figure>
@@ -698,8 +730,11 @@ footer .note { margin-left: auto; }
       <code>[toc]</code> und YAML-Front-Matter, gefaltet in eine aufgeräumte Metadaten-Tabelle.</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-doc.png?v=8" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-doc-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-doc.png?v=9" width="1052" height="784" loading="lazy"
         alt="PullMark rendert eine lokale Markdown-Datei aus einem Docs-Repo: der Bereich Open Files der Seitenleiste listet drei behaltene Dokumente und einen kursiven Vorschau-Eintrag; der Bereich Locations zeigt den Ordner als Baum aus Unterordnern und Markdown-Dateien, mit Git-Branch-Chip und einer GitHub-Repo-Marke; die geänderten Dateien eines offenen Pull Requests bilden einen Baum mit Status-Icons und einem Kommentarzahl-Badge; das gerenderte Dokument zeigt Überschriften, Listen, einen Link und einen Tip-Alert; die Titelleiste zeigt Ordner und Git-Branch der Datei, mit einer Wortzahl-Pille in der Ecke">
+      </picture>
       <figcaption>Ordner kommen als lebende Bäume herein, jeder Ort trägt seinen Git-Branch,
       und beim Stöbern erscheinen Dateien als <em>Vorschau</em> — der kursive Eintrag in Open
       Files, den der nächste Klick ersetzt. Pull Requests sitzen neben deinen lokalen Dateien,
@@ -765,8 +800,11 @@ footer .note { margin-left: auto; }
     bleibt der Standard; die Modusgrenze ist die Speichergeste.</p>
 
     <figure class="shot shot-narrow" style="max-width: 860px;">
-      <img src="/img/app-edit.png?v=2" width="860" height="420" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-edit-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-edit.png?v=3" width="860" height="420" loading="lazy"
         alt="Ein gerendertes Dokument im Edit-Modus: ein Absatz zeigt an Ort und Stelle sein rohes Markdown, umgeben von gerendertem Inhalt">
+      </picture>
       <figcaption>Edit-Modus: der aktive Block zeigt seinen Quelltext; alles andere bleibt gerendert.</figcaption>
     </figure>
 
@@ -784,16 +822,22 @@ footer .note { margin-left: auto; }
     stattdessen deine lokale Datei.</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-remote.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-remote-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-remote.png?v=2" width="1052" height="784" loading="lazy"
         alt="PullMark rendert eine aus einem GitHub-Repository geladene Markdown-Datei: eine Herkunftsleiste über dem Inhalt zeigt den Repository-Namen, einen Branch-Chip, den Dateipfad und den gepinnten Commit, mit einem Open-on-GitHub-Link; der Bereich Locations der Seitenleiste zeigt das Repository mit Buch-Icon und seinem Markdown-Dateibaum">
+      </picture>
       <figcaption>Ein Doc, direkt von GitHub gelesen: die Herkunftsleiste sagt immer, wo du
       bist — Repo, Branch, gepinnter Commit — und der Branch-Chip wechselt oder öffnet
       Branches, ohne die Seite zu verlassen.</figcaption>
     </figure>
 
     <figure class="shot shot-narrow">
-      <img src="/img/app-themes.png?v=3" width="792" height="820" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-themes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-themes.png?v=4" width="792" height="820" loading="lazy"
         alt="PullMarks Settings-Fenster auf dem Appearance-Tab: drei Live-Theme-Vorschaukarten — GitHub, Editorial und Terminal — rendern jeweils dasselbe Beispieldokument durch die echte Pipeline, Editorial ist ausgewählt, darunter Buttons zum Öffnen des eigenen Themes-Ordners">
+      </picture>
       <figcaption>Settings → Appearance: drei Live-Theme-Vorschauen, gerendert von der echten Pipeline — klick eine Karte zum Wechseln.</figcaption>
     </figure>
   </div>

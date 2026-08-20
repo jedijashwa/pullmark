@@ -18,6 +18,7 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script src="/theme.js"></script>
 <meta property="og:title" content="PullMark — Markdown に、読むための高度を">
 <meta property="og:description" content="ローカルの Markdown をレンダリングし、ドキュメント中心の GitHub プルリクエストをレンダリングされた差分としてレビューできるネイティブ macOS アプリ。">
 <meta property="og:type" content="website">
@@ -67,7 +68,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper:      #10151c;
     --panel:      #171e28;
     --ink:        #e9edf3;
@@ -87,6 +88,25 @@
     --shot-soft:  rgba(0,0,0,.45);
   }
 }
+:root[data-theme="dark"] {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
@@ -538,8 +558,11 @@ footer .note { margin-left: auto; }
 
     <div class="hero-shot">
       <figure class="shot">
-        <img src="/img/app-blame.png?v=3" width="1392" height="912"
+        <picture>
+        <source data-pm-dark srcset="/img/app-blame-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-blame.png?v=4" width="1392" height="912"
           alt="プロジェクトのドキュメントを整形されたページとしてレンダリングする PullMark。blame ガターがオンで、左余白には作者のアバターが、同じコミットで最後に変更された連続ブロックのまとまりごとにひとつずつ並んでいる">
+      </picture>
         <figcaption>整形されたプロジェクトドキュメント。余白には履歴——連続するブロックのまとまりごとにアバターがひとつ、それぞれがコミットへの入り口です。</figcaption>
       </figure>
     </div>
@@ -567,8 +590,11 @@ footer .note { margin-left: auto; }
       更新します。</p>
     </div>
     <figure class="shot reading-shot">
-      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-notes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-notes.png?v=4" width="1052" height="876" loading="lazy"
         alt="Wind Gust Alerts と題されたエージェント作の設計仕様書をレンダリングする PullMark。レビュアーの署名付きカードとして 3 件のマージンノートが表示されている——きれいな第 2 稿を求めるファイルレベルのノート、仕様のサンプリングレートの前提に異議を唱えるノート、ある機能に YAGNI を宣告するノート。サイドバーには、ブランチ main の git リポジトリの docs/superpowers/specs フォルダにこの仕様書が見えている">
+      </picture>
       <figcaption>エージェントの仕様書を、その場でレビュー。3 件の署名付きノートが異議のあるブロックに
       固定され、ごく普通の HTML コメントとしてファイルそのものに保存されています——エージェントは
       ひとつずつ対応し、削除していきます。</figcaption>
@@ -626,8 +652,11 @@ footer .note { margin-left: auto; }
     更新——下書きはそのまま残ります。</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-diff.png?v=5" width="1393" height="903" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-diff-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-diff.png?v=6" width="1393" height="903" loading="lazy"
         alt="ドキュメントのプルリクエストをレビューする PullMark。レンダリングされた差分では変更された段落に単語単位のハイライトが乗り、追加された Mermaid フローチャートが緑の追加ブロックの色合いの上にレンダリングされている。サイドバーはファイルのコメント数を示し、ツールバーのレビューコントロールには保留中のコメント 3 件とともに Finish your review と表示されている">
+      </picture>
       <figcaption>レンダリングされた差分としてのドキュメント PR。変わった一文には単語単位のハイライトが
       乗り、新しいフローチャートは追加ブロックの色合いの上に<em>図</em>として届きます——80 行の緑の
       Mermaid ソースとしてではなく。</figcaption>
@@ -653,8 +682,11 @@ footer .note { margin-left: auto; }
     </div>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-pr-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-pr.png?v=2" width="1052" height="784" loading="lazy"
         alt="PullMark のプルリクエスト概要。Open チップ付きの PR タイトル、Changes requested カプセル、Checks passed カプセル、判定バッジをまとったレビュアーのアバター、docs-guild チームのチップ、レンダリングされた PR 説明、そして最初のレビューコメントに表が表として表示されている会話のタイムライン">
+      </picture>
       <figcaption>会話もドキュメントとして。レビューコメントの中の表は表としてレンダリングされ、
       各レビュアーのアバターは自分の判定バッジをまとっています。</figcaption>
     </figure>
@@ -680,8 +712,11 @@ footer .note { margin-left: auto; }
       <code>[toc]</code>、そして整ったメタデータ表に折りたたまれる YAML フロントマター。</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-doc.png?v=8" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-doc-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-doc.png?v=9" width="1052" height="784" loading="lazy"
         alt="docs リポジトリのローカル Markdown ファイルをレンダリングする PullMark。サイドバーの Open Files セクションには確定済みの文書 3 件と斜体のプレビュー 1 件。Locations セクションにはフォルダがサブフォルダと Markdown ファイルのツリーとして表示され、git ブランチのチップと GitHub リポジトリのマークをまとっている。開いているプルリクエストの変更ファイルはステータスアイコンとコメント数バッジ付きのツリーを成し、レンダリングされた文書には見出し・リスト・リンク・Tip アラートが見える。タイトルバーにはファイルのフォルダと git ブランチ、隅には語数のピルが表示されている">
+      </picture>
       <figcaption>フォルダは生きたツリーとして並び、どの場所にも git ブランチが添えられ、ブラウズ中の
       ファイルは<em>プレビュー</em>——Open Files（開いているファイル）に現れる斜体の 1 行で、次の
       クリックで入れ替わります。プルリクエストはローカルファイルの隣に並び、タイトルバーは今いる場所を
@@ -738,8 +773,11 @@ footer .note { margin-left: auto; }
     保存という所作です。</p>
 
     <figure class="shot shot-narrow" style="max-width: 860px;">
-      <img src="/img/app-edit.png?v=2" width="860" height="420" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-edit-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-edit.png?v=3" width="860" height="420" loading="lazy"
         alt="編集モードのレンダリングされた文書。ひとつの段落だけが生の Markdown ソースとしてその場に現れ、まわりはレンダリングされた内容のまま">
+      </picture>
       <figcaption>編集モード。アクティブなブロックはソースを見せ、それ以外はレンダリングされたままです。</figcaption>
     </figure>
 
@@ -755,16 +793,22 @@ footer .note { margin-left: auto; }
     いれば、リンクはローカルファイルの方を開きます。</p>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-remote.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-remote-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-remote.png?v=2" width="1052" height="784" loading="lazy"
         alt="GitHub リポジトリから取得した Markdown ファイルをレンダリングする PullMark。本文の上の出所バーにはリポジトリ名、ブランチのチップ、ファイルパス、固定されたコミットが並び、Open on GitHub リンクがある。サイドバーの Locations セクションには本のアイコン付きのリポジトリとその Markdown ファイルツリーが見えている">
+      </picture>
       <figcaption>GitHub から直接読むドキュメント。出所バーがつねに現在地——リポジトリ、ブランチ、
       固定されたコミット——を告げ、ブランチのチップはページを離れずに切り替えも別ブランチのオープンも
       こなします。</figcaption>
     </figure>
 
     <figure class="shot shot-narrow">
-      <img src="/img/app-themes.png?v=3" width="792" height="820" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-themes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-themes.png?v=4" width="792" height="820" loading="lazy"
         alt="PullMark の設定ウィンドウ、Appearance タブ。GitHub・Editorial・Terminal の 3 枚のライブテーマプレビューカードが同じサンプル文書を実際のパイプラインでレンダリングしており、Editorial が選択されている。下にはカスタムの Themes フォルダを開くボタン">
+      </picture>
       <figcaption>Settings → Appearance（設定 → 外観）。実際のパイプラインでレンダリングされる 3 枚の
       ライブテーマプレビュー——カードをクリックで切り替えです。</figcaption>
     </figure>

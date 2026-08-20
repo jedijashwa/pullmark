@@ -18,6 +18,7 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script src="/theme.js"></script>
 <meta property="og:title" content="Review your AI agent's plans and docs — PullMark">
 <meta property="og:description" content="Read agent-written Markdown rendered, leave margin notes in the file, and hand it back — feedback your agent addresses in place.">
 <meta property="og:type" content="website">
@@ -50,7 +51,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper:      #10151c;
     --panel:      #171e28;
     --ink:        #e9edf3;
@@ -70,6 +71,25 @@
     --shot-soft:  rgba(0,0,0,.45);
   }
 }
+:root[data-theme="dark"] {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
@@ -430,8 +450,11 @@ footer .note { margin-left: auto; }
     </div>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-notes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-notes.png?v=4" width="1052" height="876" loading="lazy"
         alt="PullMark rendering an agent-written design spec titled Wind Gust Alerts with three margin notes shown as signed cards from the reviewer — a file-level note asking for a clean second revision, one challenging the spec's sampling-rate assumption, and one calling YAGNI on a feature — while the sidebar shows the spec in a docs/superpowers/specs folder of a git repository on branch main">
+      </picture>
       <figcaption>An agent's spec, a first review pass: signed notes anchored to
       the exact blocks — no commit, no paste, no pull request.</figcaption>
     </figure>
@@ -532,8 +555,11 @@ comment; its indentation is what ties it to the item.</pre>
       a readable timeline.</p>
     </div>
     <figure class="shot reading-shot">
-      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-pr-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-pr.png?v=2" width="1052" height="784" loading="lazy"
         alt="PullMark's pull-request overview: the PR title with an Open chip, a Changes requested capsule, a Checks passed capsule, reviewer avatars wearing verdict badges, a docs-guild team chip, the PR description rendered, and the conversation timeline whose first review comment shows a rendered table">
+      </picture>
       <figcaption>The same review instincts, pointed at a pull request — the
       <a href="/#reviewing" style="color: inherit;">front page</a> covers the whole
       review story.</figcaption>

@@ -18,6 +18,7 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script src="/theme.js"></script>
 <meta property="og:title" content="审查 AI 智能体写的计划与文档 — PullMark">
 <meta property="og:description" content="把智能体写的 Markdown 渲染出来读，把页边批注留在文件里，再递回去——智能体会就地处理这些反馈。">
 <meta property="og:type" content="website">
@@ -50,7 +51,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper:      #10151c;
     --panel:      #171e28;
     --ink:        #e9edf3;
@@ -70,6 +71,25 @@
     --shot-soft:  rgba(0,0,0,.45);
   }
 }
+:root[data-theme="dark"] {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
@@ -421,8 +441,11 @@ footer .note { margin-left: auto; }
     </div>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-notes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-notes.png?v=4" width="1052" height="876" loading="lazy"
         alt="PullMark 渲染一份由智能体撰写、标题为 Wind Gust Alerts 的设计规格，三条页边批注以审查者的署名卡片呈现——一条文件级批注要求重写一版干净的第二稿，一条质疑规格里的采样率假设，还有一条对某个功能喊了 YAGNI——侧边栏则显示这份规格位于某个 git 仓库 main 分支下的 docs/superpowers/specs 文件夹中">
+      </picture>
       <figcaption>智能体的一份规格，第一遍审查过后：署名批注锚在确切的区块上——不用提交，
       不用粘贴，不用开拉取请求。</figcaption>
     </figure>
@@ -510,8 +533,11 @@ comment; its indentation is what ties it to the item.</pre>
       会话。</p>
     </div>
     <figure class="shot reading-shot">
-      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-pr-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-pr.png?v=2" width="1052" height="784" loading="lazy"
         alt="PullMark 的拉取请求总览：PR 标题旁挂着 Open 标签，一枚 Changes requested 胶囊，一枚 Checks passed 胶囊，审查者头像佩戴着裁定徽章，一枚 docs-guild 团队标签，渲染好的 PR 描述，以及会话时间线——其中第一条审查评论里的表格是渲染过的">
+      </picture>
       <figcaption>同一套审查的本能，对准一个拉取请求——<a href="/zh/#reviewing" style="color: inherit;">首页</a>讲了完整的审查故事。</figcaption>
     </figure>
   </div>
