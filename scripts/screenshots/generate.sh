@@ -76,6 +76,10 @@ launch() { # $1 = appearance
   done
   open -a "$PWD/dist/PullMark.app" ~/Code/meridian-docs
   sleep 2
+  # The document open can race the launch and get dropped — deliver it
+  # again; a second delivery of an already-open Location is a no-op.
+  open -a "$PWD/dist/PullMark.app" ~/Code/meridian-docs
+  sleep 2
   swift $DRIVE/winframe.swift $APP_PID 1052 784 >/dev/null
   sleep 1
 }

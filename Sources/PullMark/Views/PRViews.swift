@@ -303,9 +303,14 @@ struct PROverviewView: View {
 
     private func filesSummary(_ session: PRSession) -> String {
         let md = session.markdownFiles.count
-        var parts = ["\(md) Markdown file\(md == 1 ? "" : "s") changed"]
-        if session.otherFileCount > 0 {
-            parts.append("\(session.otherFileCount) other file\(session.otherFileCount == 1 ? "" : "s") not shown")
+        var parts = [md == 1
+            ? String(localized: "1 Markdown file changed")
+            : String(localized: "\(md) Markdown files changed")]
+        let other = session.otherFileCount
+        if other > 0 {
+            parts.append(other == 1
+                ? String(localized: "1 other file not shown")
+                : String(localized: "\(other) other files not shown"))
         }
         return parts.joined(separator: " · ")
     }

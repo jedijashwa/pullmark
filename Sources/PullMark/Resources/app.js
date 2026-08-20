@@ -1790,7 +1790,7 @@
         summary.type = "button";
         summary.className = "pm-thread-summary";
         var author = (thread.comments && thread.comments[0] && thread.comments[0].author) || "";
-        summary.textContent = (author ? author + " · " : "") + "Resolved";
+        summary.textContent = (author ? author + " · " : "") + pmString("Resolved");
         // A real disclosure chevron that rotates on expand — one icon,
         // one width, no glyph-swap wobble.
         summary.prepend(svgIcon("chevron", "pm-summary-chevron"));
@@ -1820,7 +1820,7 @@
         if (thread.resolved !== null && thread.resolved !== undefined) {
           var resolve = document.createElement("button");
           resolve.type = "button";
-          resolve.textContent = thread.resolved ? "Unresolve" : "Resolve";
+          resolve.textContent = thread.resolved ? pmString("Unresolve") : pmString("Resolve");
           resolve.addEventListener("click", function () {
             post({ type: "threadResolve", rootID: thread.rootID, resolved: !thread.resolved });
           });
