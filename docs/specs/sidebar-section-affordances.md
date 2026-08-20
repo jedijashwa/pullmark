@@ -50,6 +50,14 @@ Full report in the session record (2026-08-20). Load-bearing findings:
   preview slot. No confirmation.
 - Rendered only while the section has content (same condition as the
   existing header context-menu item, which stays).
+- **Header context menus are uniform across the three sections**
+  (added during Josh's trial): right-clicking any header offers the
+  section's open command and its Close All — Open Files gains
+  "Open File…" beside its existing Close All, Locations gets
+  "Open Folder…" + Close All (`closeAllLocations()`: every folder and
+  repo session through the rows' own removal paths), Pull Requests
+  gets "Open Pull Request…" + Close All (`closeAllPRSessions()`).
+  Close All items disable when their section is empty.
 - **Menu parity:** File → Close All Files, a new
   `ShortcutAction.closeAllFiles` ("Close All Files", File category,
   ships unbound — deliberately NOT ⌥⌘W, which is the system's Close
@@ -58,7 +66,9 @@ Full report in the session record (2026-08-20). Load-bearing findings:
 ## §2 "+" — Locations and Pull Requests headers
 
 - A hover-revealed bare `plus` (Mail/Photos' plain glyph, no circle),
-  same sizing recipe, after the label.
+  same sizing recipe, after the label — semibold, matching the collapse
+  chevron's stroke (Josh's trial feedback: at text weight the plus read
+  as punctuation, not a button).
 - Locations: `openFolderPanel()`, `.help("Open Folder…")`.
 - Pull Requests: `showAddPR = true`, `.help("Open Pull Request…")`.
 - The empty-state big buttons stay — a hover-only control can't be a
@@ -100,8 +110,7 @@ Full report in the session record (2026-08-20). Load-bearing findings:
 
 ## §5 Interactions with existing features
 
-- Existing header context menu (Close All) and empty-state buttons:
-  unchanged.
+- Empty-state buttons: unchanged.
 - Per-row hover ✕, ⌫ removal, context menus: untouched.
 - Zoom: buttons scale with ChromeFonts like the header text.
 - VoiceOver / Full Keyboard Access: hover-revealed buttons are

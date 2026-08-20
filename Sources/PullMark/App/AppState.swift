@@ -1333,6 +1333,22 @@ final class AppState: ObservableObject {
         !localFiles.isEmpty || preview != nil
     }
 
+    /// The Locations header's bulk gesture: every folder and repo
+    /// session, through the same non-destructive removal as the rows
+    /// (watchers torn down, nothing touched on disk, everything
+    /// revivable from Recents or by reopening).
+    func closeAllLocations() {
+        for folder in folders { removeFolder(folder.rootURL) }
+        for session in remoteSessions { removeRemoteSession(session.id) }
+    }
+
+    /// The Pull Requests header's bulk gesture: every PR session. The
+    /// per-row semantics hold — pending reviews live on GitHub and
+    /// queued comments persist on disk, so nothing is lost.
+    func closeAllPRSessions() {
+        for session in prSessions { removePR(session.id) }
+    }
+
     /// The Open Files section header's one bulk gesture: pinned local
     /// files plus the preview slot, whatever it holds.
     func closeAllOpenFiles() {
