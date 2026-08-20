@@ -18,6 +18,7 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script src="/theme.js"></script>
 <meta property="og:title" content="Relisez les plans et docs de votre agent IA — PullMark">
 <meta property="og:description" content="Lisez le Markdown écrit par l'agent en page rendue, laissez des notes de marge dans le fichier et rendez-le — un retour que votre agent traite sur place.">
 <meta property="og:type" content="website">
@@ -50,7 +51,7 @@
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper:      #10151c;
     --panel:      #171e28;
     --ink:        #e9edf3;
@@ -70,6 +71,25 @@
     --shot-soft:  rgba(0,0,0,.45);
   }
 }
+:root[data-theme="dark"] {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
 
 /* ============ base ============ */
 * { box-sizing: border-box; }
@@ -430,8 +450,11 @@ footer .note { margin-left: auto; }
     </div>
 
     <figure class="shot reading-shot">
-      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-notes-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-notes.png?v=4" width="1052" height="876" loading="lazy"
         alt="PullMark affichant une spec de conception écrite par un agent, intitulée Wind Gust Alerts, avec trois notes de marge présentées comme des cartes signées du relecteur — une note au niveau du fichier demandant une seconde version propre, une contestant l'hypothèse de fréquence d'échantillonnage de la spec, et une invoquant YAGNI sur une fonctionnalité — tandis que la barre latérale montre la spec dans un dossier docs/superpowers/specs d'un dépôt git sur la branche main">
+      </picture>
       <figcaption>La spec d'un agent, première passe de relecture&nbsp;: des notes signées
       ancrées aux blocs exacts — pas de commit, pas de copier-coller, pas de pull
       request.</figcaption>
@@ -532,8 +555,11 @@ comment; its indentation is what ties it to the item.</pre>
       et la conversation en chronologie lisible.</p>
     </div>
     <figure class="shot reading-shot">
-      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+      <picture>
+        <source data-pm-dark srcset="/img/app-pr-dark.png?v=1" media="(prefers-color-scheme: dark)">
+        <img src="/img/app-pr.png?v=2" width="1052" height="784" loading="lazy"
         alt="La vue d'ensemble de pull request de PullMark&nbsp;: le titre de la PR avec une pastille Open, une capsule Changes requested, une capsule Checks passed, les avatars des réviseurs portant leur badge de verdict, une pastille d'équipe docs-guild, la description de la PR rendue, et la chronologie de conversation dont le premier commentaire de révision montre un tableau rendu">
+      </picture>
       <figcaption>Les mêmes réflexes de révision, tournés vers une pull request — la
       <a href="/fr/#reviewing" style="color: inherit;">page d'accueil</a> raconte toute la
       partie révision.</figcaption>
