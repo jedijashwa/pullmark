@@ -25,6 +25,12 @@ cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # License notices ship with every distribution (MIT/BSD terms).
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 cp ACKNOWLEDGMENTS.md "$APP/Contents/Resources/ACKNOWLEDGMENTS.md"
+# Localizations: hand-authored .lproj folders live at loc/ — outside
+# Sources/ so SwiftPM never buries them in the resource bundle where
+# Bundle.main lookup can't see them (spec: app-i18n).
+if compgen -G "loc/*.lproj" > /dev/null; then
+  cp -R loc/*.lproj "$APP/Contents/Resources/"
+fi
 # The `pullmark` shell command: lives inside the bundle so it ships (and
 # is signed) with the app; the Homebrew cask's binary stanza symlinks it
 # into the brew prefix.
@@ -60,6 +66,19 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+      <string>en</string>
+      <string>zh-Hans</string>
+      <string>ja</string>
+      <string>fr</string>
+      <string>de</string>
+      <string>nl</string>
+      <string>es</string>
+      <string>pt-BR</string>
+    </array>
     <key>CFBundleName</key>
     <string>PullMark</string>
     <key>CFBundleDisplayName</key>
@@ -155,6 +174,10 @@ EOF
 APPEX="$APP/Contents/PlugIns/PullMarkQuickLook.appex"
 mkdir -p "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
 cp .build/release/PullMarkQuickLook "$APPEX/Contents/MacOS/PullMarkQuickLook"
+if compgen -G "loc/*.lproj" > /dev/null; then
+  mkdir -p "$APPEX/Contents/Resources"
+  cp -R loc/*.lproj "$APPEX/Contents/Resources/"
+fi
 cp -R .build/release/PullMark_PullMark.bundle "$APPEX/Contents/Resources/"
 
 cat > "$APPEX/Contents/Info.plist" <<EOF

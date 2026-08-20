@@ -38,6 +38,24 @@
 
   // Parse through a real Marked instance: the UMD namespace's methods are
   // read-only getters, so fixWalkTokens couldn't patch walkTokens on it.
+  // ---- Localized page strings (spec: app-i18n) ----
+  // The render payload carries a strings table resolved Swift-side via
+  // Bundle.main; keys are the English strings. Absent table or key
+  // (previews, missing translation) falls back to the English key —
+  // the same silent-English failure mode .strings files have, which
+  // scripts/check-strings.py exists to catch.
+  function pmString(key) {
+    return (payload.strings && payload.strings[key]) || key;
+  }
+  // Templated variant: pmFormat("Comment on line {n}", {n: 12})
+  function pmFormat(key, subs) {
+    var out = pmString(key);
+    Object.keys(subs).forEach(function (name) {
+      out = out.replace("{" + name + "}", subs[name]);
+    });
+    return out;
+  }
+
   var MarkedCtor = marked.Marked;
   marked = new MarkedCtor();
 
@@ -255,10 +273,10 @@
     }
     var note = document.createElement("span");
     note.className = "pm-attachment-missing-note";
-    note.textContent = "Couldn't load this image from GitHub · ";
+    note.textContent = pmString("Couldn't load this image from GitHub · ");
     var link = document.createElement("a");
     link.href = original;
-    link.textContent = "Open on GitHub";
+    link.textContent = pmString("Open on GitHub");
     note.append(link);
     box.append(note);
     img.replaceWith(box);
@@ -390,7 +408,7 @@
     details.className = "pm-frontmatter";
     if (open) { details.open = true; }
     var summary = document.createElement("summary");
-    summary.textContent = "Front matter";
+    summary.textContent = pmString("Front matter");
     details.append(summary);
     var table = document.createElement("table");
     table.className = "pm-frontmatter-table";
@@ -464,9 +482,9 @@
     function suffixFor(href) {
       var policy = payload.remoteLinkPolicy;
       if (!policy || !isGitHubDocLink(href)) { return ""; }
-      if (policy === "ask") { return "· asks where to open"; }
+      if (policy === "ask") { return pmString("· asks where to open"); }
       var inApp = policy === "pullmark" ? !cmdHeld : cmdHeld;
-      return inApp ? "· opens in PullMark" : "· opens in browser";
+      return inApp ? pmString("· opens in PullMark") : pmString("· opens in browser");
     }
 
     function render() {
@@ -550,7 +568,7 @@
       wrap.className = "pm-suggestion";
       var label = document.createElement("div");
       label.className = "pm-suggestion-label";
-      label.textContent = "Suggested change";
+      label.textContent = pmString("Suggested change");
       if (pre.dataset.pmLines) { wrap.dataset.pmLines = pre.dataset.pmLines; }
       pre.replaceWith(wrap);
       wrap.append(label, pre);
@@ -598,7 +616,7 @@
       if (!items.length) {
         var empty = document.createElement("p");
         empty.className = "pm-toc-empty";
-        empty.textContent = "No headings";
+        empty.textContent = pmString("No headings");
         nav.append(empty);
         return;
       }
@@ -1114,15 +1132,15 @@
       if (run.url) {
         sha = document.createElement("a");
         sha.href = run.url; // opened externally by the navigation delegate
-        sha.title = "View commit on GitHub";
+        sha.title = pmString("View commit on GitHub");
       } else {
         sha = document.createElement("button");
         sha.type = "button";
-        sha.title = "Copy full SHA";
+        sha.title = pmString("Copy full SHA");
         sha.addEventListener("click", function (event) {
           event.stopPropagation();
           post({ type: "copySHA", sha: run.sha });
-          sha.textContent = "copied";
+          sha.textContent = pmString("copied");
           setTimeout(function () { sha.textContent = run.shortSHA; }, 900);
         });
       }
@@ -1157,7 +1175,7 @@
       if (!run.uncommitted) { actions.append(shaChipEl(run)); }
       var hint = document.createElement("span");
       hint.className = "pm-blame-pop-hint";
-      hint.textContent = "Click the gutter for history";
+      hint.textContent = pmString("Click the gutter for history");
       actions.append(hint);
       pop.append(actions);
     }
@@ -1248,7 +1266,8 @@
   // their labels are grid items (see app.css), only nudged here.
 
   function rangeText(start, end) {
-    return start === end ? "Line " + start : "Lines " + start + "–" + end;
+    return start === end ? pmFormat("Line {n}", {n: start})
+                         : pmFormat("Lines {a}–{b}", {a: start, b: end});
   }
 
   // The y of the first line of visible content — not the box top: a
@@ -1582,8 +1601,10 @@
     function updateResolvedControl() {
       if (!resolvedControl) { return; }
       // Symmetric verb labels: both states say what the click will do.
-      resolvedControl.textContent = (resolvedShown ? "Hide " : "Show ")
-        + resolvedCount + " resolved conversation" + (resolvedCount === 1 ? "" : "s");
+      resolvedControl.textContent = pmFormat(resolvedShown
+        ? (resolvedCount === 1 ? "Hide {n} resolved conversation" : "Hide {n} resolved conversations")
+        : (resolvedCount === 1 ? "Show {n} resolved conversation" : "Show {n} resolved conversations"),
+        {n: resolvedCount});
     }
 
     function applyVisibility() {
@@ -1613,8 +1634,9 @@
           cluster.pendingBadge.style.display = hasPending ? "" : "none";
           cluster.pendingBadge.querySelector(".pm-marker-count").textContent =
             cluster.pendings.length;
-          cluster.pendingBadge.title = "Pending comment"
-            + (cluster.pendings.length === 1 ? "" : "s") + " — click to expand";
+          cluster.pendingBadge.title = pmString(cluster.pendings.length === 1
+            ? "Pending comment — click to expand"
+            : "Pending comments — click to expand");
           cluster.pendingBadge.setAttribute("aria-label", cluster.pendingBadge.title);
         }
         if (clusterOpen(cluster)) {
@@ -1720,7 +1742,7 @@
     if (div.querySelector("img, svg, hr, video, iframe, input, object, embed, canvas")) { return; }
     var label = document.createElement("span");
     label.className = "pm-blank-label";
-    label.textContent = "(empty)";
+    label.textContent = pmString("(empty)");
     div.append(label);
   }
 
@@ -1731,8 +1753,9 @@
     btn.className = "pm-comment-btn";
     btn.type = "button";
     btn.innerHTML = COMMENT_ICON;
-    btn.title = "Comment on " + (seg.side === "LEFT" ? "old" : "new") +
-      " lines " + seg.lineStart + "–" + seg.lineEnd;
+    btn.title = pmFormat(seg.side === "LEFT"
+      ? "Comment on old lines {a}–{b}" : "Comment on new lines {a}–{b}",
+      {a: seg.lineStart, b: seg.lineEnd});
     btn.setAttribute("aria-label", btn.title);
     btn.addEventListener("click", function (event) {
       event.stopPropagation();
@@ -1788,7 +1811,7 @@
         actions.className = "pm-thread-actions";
         var reply = document.createElement("button");
         reply.type = "button";
-        reply.textContent = "Reply";
+        reply.textContent = pmString("Reply");
         reply.addEventListener("click", function () {
           toggleReplyComposer(box, thread.rootID, reply);
         });
@@ -1835,14 +1858,14 @@
     if (c.bot) {
       var botTag = document.createElement("span");
       botTag.className = "pm-bot-tag";
-      botTag.textContent = "bot";
+      botTag.textContent = pmString("bot");
       head.append(botTag);
     }
     head.append(document.createTextNode(c.dateLabel ? " · " + c.dateLabel : ""));
     if (c.edited) {
       var edited = document.createElement("span");
       edited.className = "pm-edited";
-      edited.textContent = " · edited";
+      edited.textContent = pmString(" · edited");
       head.append(edited);
     }
     var body = document.createElement("div");
@@ -1991,8 +2014,8 @@
       add.type = "button";
       add.className = "pm-react-add";
       add.innerHTML = SMILEY_ICON;
-      add.title = "Add reaction";
-      add.setAttribute("aria-label", "Add reaction");
+      add.title = pmString("Add reaction");
+      add.setAttribute("aria-label", pmString("Add reaction"));
       add.setAttribute("aria-haspopup", "true");
       add.addEventListener("click", function () {
         if (transientPopup && transientPopup.anchor === add) { closeTransientPopup(); return; }
@@ -2110,8 +2133,8 @@
     btn.type = "button";
     btn.className = "pm-comment-menu-btn";
     btn.textContent = "⋯";
-    btn.title = "Comment actions";
-    btn.setAttribute("aria-label", "Comment actions");
+    btn.title = pmString("Comment actions");
+    btn.setAttribute("aria-label", pmString("Comment actions"));
     btn.setAttribute("aria-haspopup", "menu");
     btn.addEventListener("click", function () {
       if (transientPopup && transientPopup.anchor === btn) { closeTransientPopup(); return; }
@@ -2121,7 +2144,7 @@
       var edit = document.createElement("button");
       edit.type = "button";
       edit.setAttribute("role", "menuitem");
-      edit.textContent = "Edit";
+      edit.textContent = pmString("Edit");
       edit.addEventListener("click", function () {
         closeTransientPopup();
         openEditComposer(c, card, bodyEl);
@@ -2130,7 +2153,7 @@
       del.type = "button";
       del.setAttribute("role", "menuitem");
       del.className = "pm-menu-destructive";
-      del.textContent = "Delete";
+      del.textContent = pmString("Delete");
       del.addEventListener("click", function () {
         closeTransientPopup();
         post({ type: "commentDelete", commentID: c.id, source: c.source });
@@ -2159,12 +2182,12 @@
     actions.className = "pm-composer-actions";
     var cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.textContent = "Cancel";
+    cancel.textContent = pmString("Cancel");
     var save = document.createElement("button");
     save.type = "button";
     save.className = "pm-composer-primary";
-    save.textContent = "Save";
-    save.title = "Save your edit (⌘↩)";
+    save.textContent = pmString("Save");
+    save.title = pmString("Save your edit (⌘↩)");
     actions.append(cancel, save);
     root.append(ta, actions);
 
@@ -2266,12 +2289,12 @@
       tags.className = "pm-pending-tags";
       var tag = document.createElement("span");
       tag.className = "pm-pending-tag";
-      tag.textContent = "Pending";
+      tag.textContent = pmString("Pending");
       tags.append(tag);
       if (item.uploaded === false) {
         var queued = document.createElement("span");
         queued.className = "pm-pending-tag pm-pending-queued";
-        queued.textContent = "Not synced";
+        queued.textContent = pmString("Not synced");
         tags.append(queued);
       }
       header.append(label, tags);
@@ -2493,30 +2516,29 @@
     var suggest = document.createElement("button");
     suggest.type = "button";
     suggest.className = "pm-composer-suggest";
-    suggest.textContent = "Add a suggestion";
+    suggest.textContent = pmString("Add a suggestion");
     var caption = document.createElement("span");
     caption.className = "pm-composer-caption";
     bar.append(suggest, caption);
 
     var ta = document.createElement("textarea");
     ta.className = "pm-composer-text";
-    ta.placeholder = "Leave a comment";
+    ta.placeholder = pmString("Leave a comment");
     ta.rows = 3;
 
     var note = document.createElement("div");
     note.className = "pm-composer-note";
-    note.textContent = "These lines are outside the pull request's diff, "
-      + "so GitHub can't attach a comment to them.";
+    note.textContent = pmString("These lines are outside the pull request's diff, so GitHub can't attach a comment to them.");
 
     var actions = document.createElement("div");
     actions.className = "pm-composer-actions";
     var cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.textContent = "Cancel";
+    cancel.textContent = pmString("Cancel");
     var secondary = document.createElement("button");
     secondary.type = "button";
-    secondary.textContent = "Add single comment";
-    secondary.title = "Post immediately, outside any pending review (⇧⌘↩)";
+    secondary.textContent = pmString("Add single comment");
+    secondary.title = pmString("Post immediately, outside any pending review (⇧⌘↩)");
     var primary = document.createElement("button");
     primary.type = "button";
     primary.className = "pm-composer-primary";
@@ -2558,14 +2580,13 @@
       secondary.disabled = !valid || empty;
       if (opts.side !== "RIGHT") {
         suggest.disabled = true;
-        suggest.title = "Suggestions can only target new-file lines — "
-          + "GitHub applies them in place of the commented lines.";
+        suggest.title = pmString("Suggestions can only target new-file lines — GitHub applies them in place of the commented lines.");
       } else if (seedText() === null || !valid) {
         suggest.disabled = true;
-        suggest.title = "The targeted lines aren't available to suggest an edit to.";
+        suggest.title = pmString("The targeted lines aren't available to suggest an edit to.");
       } else {
         suggest.disabled = false;
-        suggest.title = "Insert a ```suggestion block pre-filled with the current lines";
+        suggest.title = pmString("Insert a ```suggestion block pre-filled with the current lines");
       }
     }
 
@@ -2737,18 +2758,18 @@
     root.className = "pm-reply-composer";
     var ta = document.createElement("textarea");
     ta.className = "pm-composer-text";
-    ta.placeholder = "Write a reply";
+    ta.placeholder = pmString("Write a reply");
     ta.rows = 2;
     var actions = document.createElement("div");
     actions.className = "pm-composer-actions";
     var cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.textContent = "Cancel";
+    cancel.textContent = pmString("Cancel");
     var send = document.createElement("button");
     send.type = "button";
     send.className = "pm-composer-primary";
-    send.textContent = "Reply";
-    send.title = "Reply to this thread (⌘↩)";
+    send.textContent = pmString("Reply");
+    send.title = pmString("Reply to this thread (⌘↩)");
     actions.append(cancel, send);
     root.append(ta, actions);
 
@@ -2935,8 +2956,7 @@
     bubble.innerHTML = COMMENT_ICON;
     if (!mapped) {
       bubble.classList.add("pm-comment-unavailable");
-      bubble.title = "This block isn't part of the pull request's diff — "
-        + "GitHub can only attach comments to changed lines.";
+      bubble.title = pmString("This block isn't part of the pull request's diff — GitHub can only attach comments to changed lines.");
       bubble.setAttribute("aria-disabled", "true");
       bubble.setAttribute("aria-label", bubble.title);
       tools.append(bubble);
@@ -2969,7 +2989,7 @@
         prefillSuggestion: suggest
       });
     }
-    bubble.title = "Comment on lines " + mapped[0] + "–" + mapped[1];
+    bubble.title = pmFormat("Comment on lines {a}–{b}", {a: mapped[0], b: mapped[1]});
     bubble.setAttribute("aria-label", bubble.title);
     bubble.addEventListener("click", function (event) {
       event.stopPropagation();
@@ -3062,7 +3082,7 @@
     actions.className = "pm-composer-actions";
     var cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.textContent = "Cancel";
+    cancel.textContent = pmString("Cancel");
     var primary = document.createElement("button");
     primary.type = "button";
     primary.className = "pm-composer-primary";
@@ -3145,7 +3165,7 @@
     if (note.fileLevel) {
       var scope = document.createElement("span");
       scope.className = "pm-note-scope";
-      scope.textContent = "whole document";
+      scope.textContent = pmString("whole document");
       head.append(scope);
     }
     var body = document.createElement("div");
@@ -3161,7 +3181,7 @@
       actions.className = "pm-note-actions";
       var edit = document.createElement("button");
       edit.type = "button";
-      edit.textContent = "Edit";
+      edit.textContent = pmString("Edit");
       edit.addEventListener("click", function () {
         noteIntroGate(function () {
           card.style.display = "none";
@@ -3178,7 +3198,7 @@
       });
       var del = document.createElement("button");
       del.type = "button";
-      del.textContent = "Delete";
+      del.textContent = pmString("Delete");
       del.addEventListener("click", function () {
         noteIntroGate(function () {
           post({ type: "noteDelete", index: note.index });
@@ -3345,7 +3365,7 @@
     bubble.type = "button";
     bubble.className = "pm-comment-btn";
     bubble.innerHTML = COMMENT_ICON;
-    bubble.title = "Add a margin note";
+    bubble.title = pmString("Add a margin note");
     bubble.setAttribute("aria-label", bubble.title);
     bubble.addEventListener("click", function (event) {
       event.stopPropagation();
@@ -3549,15 +3569,14 @@
     action.type = "button";
     action.className = "pm-discussion-action";
     if (group.isMarkdown) {
-      action.textContent = "View in File";
-      action.title = "Open " + group.path + " and jump to this conversation";
+      action.textContent = pmString("View in File");
+      action.title = pmFormat("Open {path} and jump to this conversation", {path: group.path});
       action.addEventListener("click", function () {
         post({ type: "openPRComment", path: group.path, rootID: item.rootID });
       });
     } else {
-      action.textContent = "Show on GitHub";
-      action.title = "Open this conversation on GitHub — PullMark doesn't "
-        + "render this file";
+      action.textContent = pmString("Show on GitHub");
+      action.title = pmString("Open this conversation on GitHub — PullMark doesn't render this file");
       action.addEventListener("click", function () {
         if (item.htmlUrl) { post({ type: "openExternal", url: item.htmlUrl }); }
       });
@@ -3656,15 +3675,15 @@
     root.className = "pm-reply-composer pm-conversation-composer";
     var ta = document.createElement("textarea");
     ta.className = "pm-composer-text";
-    ta.placeholder = "Comment on the pull request conversation";
+    ta.placeholder = pmString("Comment on the pull request conversation");
     ta.rows = 2;
     var actions = document.createElement("div");
     actions.className = "pm-composer-actions";
     var send = document.createElement("button");
     send.type = "button";
     send.className = "pm-composer-primary";
-    send.textContent = "Comment";
-    send.title = "Post to the PR conversation right away — not part of a review (⌘↩)";
+    send.textContent = pmString("Comment");
+    send.title = pmString("Post to the PR conversation right away — not part of a review (⌘↩)");
     actions.append(send);
     root.append(ta, actions);
 
@@ -3715,7 +3734,7 @@
     section.className = "pm-conversation pm-annotation";
     var heading = document.createElement("h2");
     heading.className = "pm-discussion-heading";
-    heading.textContent = "Conversation";
+    heading.textContent = pmString("Conversation");
     if (entries.length) {
       // The count carries state, not arithmetic — "5 entries" counts
       // what's already visible; reviews vs comments says what kind of
@@ -3734,7 +3753,7 @@
     if (payload.conversationUnavailable) {
       var note = document.createElement("p");
       note.className = "pm-empty-note";
-      note.textContent = "The conversation could not be loaded — retrying.";
+      note.textContent = pmString("The conversation could not be loaded — retrying.");
       section.append(note);
     }
     entries.forEach(function (entry) {
@@ -3801,12 +3820,13 @@
     }, 0);
     var heading = document.createElement("h2");
     heading.className = "pm-discussion-heading";
-    heading.textContent = "Review discussion";
+    heading.textContent = pmString("Review discussion");
     var count = document.createElement("span");
     count.className = "pm-discussion-count";
     count.textContent = unresolved === 0
-      ? "all conversations resolved"
-      : unresolved + " unresolved conversation" + (unresolved === 1 ? "" : "s");
+      ? pmString("all conversations resolved")
+      : pmFormat(unresolved === 1 ? "{n} unresolved conversation"
+                                  : "{n} unresolved conversations", {n: unresolved});
     heading.append(count);
     section.append(heading);
 
@@ -3892,9 +3912,9 @@
   function movedChip(seg) {
     var chip = document.createElement("span");
     chip.className = "pm-moved-chip";
-    chip.textContent = "moved";
+    chip.textContent = pmString("moved");
     if (seg.movedFromLine) {
-      chip.title = "Moved from line " + seg.movedFromLine + " — content unchanged";
+      chip.title = pmFormat("Moved from line {n} — content unchanged", {n: seg.movedFromLine});
     }
     return chip;
   }
@@ -3976,8 +3996,9 @@
     btn.className = "pm-comment-btn";
     btn.type = "button";
     btn.innerHTML = COMMENT_ICON;
-    btn.title = "Comment on new line" + (r[1] === r[0] ? " " + r[0]
-      : "s " + r[0] + "–" + r[1]);
+    btn.title = r[1] === r[0]
+      ? pmFormat("Comment on new line {n}", {n: r[0]})
+      : pmFormat("Comment on new lines {a}–{b}", {a: r[0], b: r[1]});
     btn.setAttribute("aria-label", btn.title);
     btn.style.display = "none";
     btn.addEventListener("click", function (event) {
@@ -4030,11 +4051,13 @@
   function stampSegmentNumber(wrap, seg) {
     var tip = rangeText(seg.lineStart, seg.lineEnd);
     if (seg.kind === "removed") {
-      tip = "Old " + tip.toLowerCase();
+      tip = seg.lineStart === seg.lineEnd
+        ? pmFormat("Old line {n}", {n: seg.lineStart})
+        : pmFormat("Old lines {a}–{b}", {a: seg.lineStart, b: seg.lineEnd});
       wrap.setAttribute("data-pm-num-old", "1");
     } else if (seg.kind === "modified" && seg.oldLineStart) {
-      tip += " · was " + (seg.oldLineStart === seg.oldLineEnd
-        ? seg.oldLineStart : seg.oldLineStart + "–" + seg.oldLineEnd);
+      tip += pmFormat(" · was {r}", {r: seg.oldLineStart === seg.oldLineEnd
+        ? seg.oldLineStart : seg.oldLineStart + "–" + seg.oldLineEnd});
     } else if (seg.kind === "moved" && seg.movedFromLine) {
       tip += " · moved from " + seg.movedFromLine;
     }
@@ -4353,14 +4376,14 @@
     if (fileThreads.length) {
       var fileHeading = document.createElement("h2");
       fileHeading.className = "pm-outdated-heading";
-      fileHeading.textContent = "File comments";
+      fileHeading.textContent = pmString("File comments");
       content.append(fileHeading, threadsEl(fileThreads));
     }
     var threads = payload.outdatedThreads || [];
     if (!threads.length) { return; }
     var heading = document.createElement("h2");
     heading.className = "pm-outdated-heading";
-    heading.textContent = "Outdated review comments";
+    heading.textContent = pmString("Outdated review comments");
     content.append(heading, threadsEl(threads));
   }
 
@@ -4552,8 +4575,9 @@
       lineno.type = "button";
       lineno.className = "pm-patch-lineno pm-annotation";
       lineno.textContent = String(number);
-      lineno.title = "Comment on " + (side === "LEFT" ? "old" : "new")
-        + " line " + number + " — shift-click extends the range";
+      lineno.title = pmFormat(side === "LEFT"
+        ? "Comment on old line {n} — shift-click extends the range"
+        : "Comment on new line {n} — shift-click extends the range", {n: number});
       lineno.setAttribute("aria-label", lineno.title);
       lineno.addEventListener("click", function (event) {
         event.stopPropagation();
@@ -5034,7 +5058,7 @@
       var phantom = document.createElement("div");
       phantom.className = "pm-append";
       phantom.textContent = "+";
-      phantom.title = "Write at the end of the document";
+      phantom.title = pmString("Write at the end of the document");
       content.append(phantom);
       function appendReveal() {
         if (revealState) { commitReveal(); return; }
@@ -5143,7 +5167,7 @@
     if (!segments.length && !payload.allNew) {
       var note = document.createElement("p");
       note.className = "pm-empty-note";
-      note.textContent = "This file is empty on both sides of the diff.";
+      note.textContent = pmString("This file is empty on both sides of the diff.");
       content.append(note);
     }
     if (payload.allNew) {
