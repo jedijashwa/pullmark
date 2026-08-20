@@ -256,13 +256,12 @@ struct SidebarView: View {
                 SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
                                     help: "Close All") { state.closeAllOpenFiles() }
             ] : [], headerMenu: {
-                // Uniform header menus (Josh's call): the section's open
-                // command, then its Close All.
-                AnyView(Group {
-                    Button("Open File…") { state.openFilesPanel() }
-                    Button("Close All") { state.closeAllOpenFiles() }
-                        .disabled(!state.hasOpenFiles)
-                })
+                // Close All only — the menu mirrors the header's own
+                // affordances, and this header deliberately has no +
+                // (Josh: "weird that one would show the open but not
+                // have the plus").
+                AnyView(Button("Close All") { state.closeAllOpenFiles() }
+                    .disabled(!state.hasOpenFiles))
             }) {
                 if state.localFiles.isEmpty, state.preview == nil {
                     Button("Open File…") { state.openFilesPanel() }
