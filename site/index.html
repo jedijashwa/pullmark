@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PullMark — Markdown, at reading altitude</title>
 <meta name="description" content="A native macOS app that renders local Markdown and shows documentation-heavy GitHub pull requests as rendered diffs with word-level highlights.">
+<link rel="canonical" href="https://pullmark.app/">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
@@ -12,7 +13,24 @@
 <meta property="og:description" content="A native macOS app that renders local Markdown and reviews documentation-heavy GitHub pull requests as rendered diffs.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/">
-<meta property="og:image" content="https://pullmark.app/img/app-blame.png?v=3">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PullMark",
+  "operatingSystem": "macOS 13.0 or later",
+  "applicationCategory": "DeveloperApplication",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://github.com/jedijashwa/pullmark/blob/main/LICENSE",
+  "url": "https://pullmark.app/",
+  "downloadUrl": "https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg",
+  "screenshot": "https://pullmark.app/img/app-doc.png",
+  "description": "A native macOS app that renders local Markdown the way readers will see it and reviews documentation-heavy GitHub pull requests as rendered diffs with word-level highlights.",
+  "softwareHelp": { "@type": "CreativeWork", "url": "https://pullmark.app/docs/" }
+}
+</script>
 <style>
 /* ============ tokens ============ */
 :root {
@@ -508,6 +526,42 @@ footer .note { margin-left: auto; }
 
 <main>
 
+<section id="agents">
+  <div class="wrap">
+    <p class="kicker">your agent</p>
+    <h2>Your agent writes plans.<br>Review them like a coworker's.</h2>
+    <div class="prose">
+      <p>Agents produce a lot of Markdown: implementation plans, specs,
+      research write-ups — long documents that need your judgment before
+      anyone acts on them. The existing ways to give it are all wrong for
+      the job. Raw source in an editor hides what a reader would see,
+      pasting chunks into a chat divorces the feedback from its place,
+      and committing a working draft just to get PR comment boxes is
+      ceremony — not every document belongs in a pull request.</p>
+      <p><strong>Margin notes</strong> put the feedback in the document
+      itself. Read the draft rendered, click where it's wrong, and leave
+      a signed note anchored to that block. Notes are ordinary HTML
+      comments that stay out of the rendered page — so <em>"address my
+      notes in the plan"</em> is the whole handoff: your agent reads each
+      note exactly where you left it. No commit, no paste, no pull
+      request. Then watch the revision land — Compare highlights the
+      agent's edits word by word, live as it saves.</p>
+    </div>
+    <figure class="shot reading-shot">
+      <img src="img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+        alt="PullMark rendering an agent-written design spec titled Wind Gust Alerts with three margin notes shown as signed cards from the reviewer — a file-level note asking for a clean second revision, one challenging the spec's sampling-rate assumption, and one calling YAGNI on a feature — while the sidebar shows the spec in a docs/superpowers/specs folder of a git repository on branch main">
+      <figcaption>An agent's spec, reviewed in place: three signed notes anchored
+      to the blocks they challenge, stored in the file itself as ordinary HTML
+      comments — the agent addresses each one and deletes it.</figcaption>
+    </figure>
+    <p class="prose">The whole loop — including the instructions to hand
+    your agent — is worked through on <a href="agents/">the agents
+    page</a>. Margin notes are in beta and on by default; the
+    <a href="docs/experimental/margin-notes/">docs</a> cover the
+    mechanics.</p>
+  </div>
+</section>
+
 <section id="why">
   <div class="wrap">
     <p class="kicker">why</p>
@@ -558,9 +612,10 @@ footer .note { margin-left: auto; }
     <figure class="shot reading-shot">
       <img src="img/app-diff.png?v=5" width="1393" height="903" loading="lazy"
         alt="PullMark reviewing a documentation pull request: a rendered diff where a changed paragraph carries word-level highlights, an added Mermaid flowchart renders on a green added-block tint, the sidebar shows a comment count on the file, and the toolbar's review control reads Finish your review with three pending comments">
-      <figcaption>A real patch to <code>github/docs</code>, in PullMark: the rendered diff makes it
-      obvious at a glance that the edit broke the front matter — invisible in a
-      <code>+</code>/<code>−</code> view.</figcaption>
+      <figcaption>A documentation PR as a rendered diff: the one changed sentence
+      carries word-level highlights, and the new flowchart arrives as a
+      <em>diagram</em> on an added-block tint — not eighty green lines of Mermaid
+      source.</figcaption>
     </figure>
 
     <div class="trio">
@@ -580,6 +635,13 @@ footer .note { margin-left: auto; }
         <code>```suggestion</code> the author applies in one click.</p>
       </div>
     </div>
+
+    <figure class="shot reading-shot">
+      <img src="img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+        alt="PullMark's pull-request overview: the PR title with an Open chip, a Changes requested capsule, a Checks passed capsule, reviewer avatars wearing verdict badges, a docs-guild team chip, the PR description rendered, and the conversation timeline whose first review comment shows a rendered table">
+      <figcaption>The conversation as a document: review comments render their
+      tables as tables, and each reviewer's avatar wears their verdict.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -776,6 +838,7 @@ footer .note { margin-left: auto; }
     <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
     <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
     <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT License</a>
+    <a href="/licenses/">Open Source Licenses</a>
     <a href="/privacy/">Privacy</a>
     <a href="https://ko-fi.com/pullmark">Support PullMark&nbsp;♥</a>
     <span class="note">PullMark is not affiliated with GitHub.</span>
