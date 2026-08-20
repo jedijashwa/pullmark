@@ -138,7 +138,7 @@
 "Current branch" = "Rama actual";
 "Custom themes" = "Temas personalizados";
 "Customize Toolbar…" = "Personalizar barra de herramientas…";
-"Dark" = "Dark";
+"Dark" = "Oscuro";
 "Default diff layout:" = "Disposición del diff por defecto:";
 "Delete" = "Eliminar";
 "Delete comment" = "Eliminar comentario";
@@ -218,7 +218,7 @@
 "Last seen at %@. " = "Visto por última vez en %@. ";
 "Layout" = "Disposición";
 "Left Arrow" = "Flecha izquierda";
-"Light" = "Light";
+"Light" = "Claro";
 "Light, Dark, or match the system — the window and every rendered page follow, and each theme brings its own light and dark looks." = "Light, Dark o seguir al sistema — la ventana y todas las páginas renderizadas lo siguen, y cada tema trae su propio aspecto claro y oscuro.";
 "Line %lld (new)" = "Línea %lld (nueva)";
 "Line %lld (old)" = "Línea %lld (antigua)";

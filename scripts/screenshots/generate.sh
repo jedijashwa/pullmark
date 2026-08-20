@@ -85,15 +85,23 @@ restore_blame() {
 # pid-addressed).
 trap 'pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true; restore_blame' EXIT
 
-launch() { # $1 = appearance, $2 = window x, $3 = window y
+launch() { # $1 = appearance, $2 = window x, $3 = window y, $4 = scene
   # Published screenshots wear the classic Mac BLUE accent (Josh's
   # standing rule) — forced via the argument domain so captures are
   # machine-independent. -pm.captureChrome draws active window chrome
   # without focus and suppresses the launch activation; the flags only
   # survive because the launch is BARE (a document argument makes
   # Launch Services respawn the app and drop the argument domain).
+  #
+  # pm.blame is PINNED per scene: the sticky flag lives in a shared
+  # defaults domain and parallel instances' lazily-synced caches lost
+  # every toggle-choreography race (blind press AND ensure-state).
+  # Argument domains are per-process, so each scene simply launches
+  # with the state it wants and nothing ever writes the shared flag.
+  local blame_pin=0
+  [[ ${4:-} == blame ]] && blame_pin=1
   local flags=(-AppleAccentColor 4 -AppleHighlightColor "0.698039 0.843137 1.000000 Blue"
-               -pm.appearance $1 -pm.captureChrome 1)
+               -pm.appearance $1 -pm.captureChrome 1 -pm.blame $blame_pin)
   if [[ -n $lang ]]; then
     # Language AND locale: language alone leaves US date/number formats.
     local region
@@ -147,20 +155,23 @@ location_present() {
 capture() { # $1 = output basename (no extension)
   local id
   id=${CAPTURE_ID:-$(swift $DRIVE/winid.swift $APP_PID | head -1)}
-  # Under parallel load WebKit occasionally hasn't painted a
-  # backgrounded page at capture time — detect a uniform content
-  # region and retry rather than shipping an empty pane.
-  for attempt in 1 2 3; do
+  # Two capture-time verifiers, both retried: a blank content region
+  # (WebKit hasn't painted yet — eight instances rendering mermaid at
+  # once can take a while) and gray traffic lights (the capture raced
+  # a key-status handoff; the blessing timer re-keys within a tick).
+  for attempt in 1 2 3 4 5 6; do
     screencapture -x -o -l $id "$OUT/$1.png"
-    swift $DRIVE/blankcheck.swift "$OUT/$1.png" >/dev/null && break
-    if (( attempt == 3 )); then
-      echo "capture $1: content pane still blank after retries" >&2
-      return 1
+    if ! swift $DRIVE/blankcheck.swift "$OUT/$1.png" >/dev/null; then
+      echo "capture $1: blank content pane — waiting for render" >&2
+    elif ! swift $DRIVE/lightcheck.swift "$OUT/$1.png" >/dev/null; then
+      echo "capture $1: gray traffic lights — waiting for re-key" >&2
+    else
+      echo "captured $OUT/$1.png"
+      return 0
     fi
-    echo "capture $1: blank content pane — waiting for render" >&2
-    sleep 2.5
+    (( attempt == 6 )) && { echo "capture $1: still bad after retries" >&2; return 1; }
+    sleep 3
   done
-  echo "captured $OUT/$1.png"
 }
 
 quit_app() {
@@ -191,7 +202,7 @@ run_language() { # $1 = lang, $2 = worker index
       suffix=""
       [[ $mode == dark ]] && suffix="-dark"
       echo "── scene $name ($mode${lang:+, $lang})"
-      if ! { launch $mode $x $y && scene_$name \
+      if ! { launch $mode $x $y $name && scene_$name \
              && capture "${subdir:+$subdir/}app-$name$suffix"; }; then
         echo "scene $name FAILED${lang:+ ($lang)}" >&2
         failures=$((failures + 1))

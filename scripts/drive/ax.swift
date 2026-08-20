@@ -347,6 +347,15 @@ case "setcheck":
         print("pressed to \(wanted): \"\(checkTitle)\"")
     }
 
+case "titles":
+    // Every window's AXTitle, one per line — scene scripts confirm tab
+    // switches by title (the Settings window is titled after its
+    // current tab).
+    guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
+        fail("error: no windows for pid \(pid)")
+    }
+    for window in windows { print(title(window)) }
+
 case "menulist":
     for item in menuBarItems() {
         let cmdChar = (attribute(item, "AXMenuItemCmdChar") as? String) ?? ""
