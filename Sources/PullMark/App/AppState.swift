@@ -1326,6 +1326,13 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Whether the Open Files section has anything to close — drives the
+    /// header's hover ✕ and File → Close All Files
+    /// (spec: sidebar-section-affordances §1).
+    var hasOpenFiles: Bool {
+        !localFiles.isEmpty || preview != nil
+    }
+
     /// The Open Files section header's one bulk gesture: pinned local
     /// files plus the preview slot, whatever it holds.
     func closeAllOpenFiles() {

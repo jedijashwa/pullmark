@@ -251,7 +251,11 @@ struct SidebarView: View {
             // ordered, plus the single italic preview entry last. Trees
             // answer "where does it live"; this section answers "what do
             // I have open" (Sublime's exact label for the same list).
-            CollapsibleSection("Open Files", isExpanded: $filesExpanded, headerMenu: {
+            CollapsibleSection("Open Files", isExpanded: $filesExpanded,
+                               headerActions: state.hasOpenFiles ? [
+                SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
+                                    help: "Close All") { state.closeAllOpenFiles() }
+            ] : [], headerMenu: {
                 AnyView(Button("Close All") { state.closeAllOpenFiles() }
                     .disabled(state.localFiles.isEmpty && state.previewFile == nil))
             }) {
@@ -286,7 +290,11 @@ struct SidebarView: View {
             // Locations: browsable roots wherever they live — local folders
             // and GitHub repos share one section (Finder's word for exactly
             // this list); the icon and subtitle carry the origin.
-            CollapsibleSection("Locations", isExpanded: $foldersExpanded) {
+            CollapsibleSection("Locations", isExpanded: $foldersExpanded,
+                               headerActions: [
+                SectionHeaderAction(id: "add-folder", symbol: "plus",
+                                    help: "Open Folder…") { state.openFolderPanel() }
+            ]) {
                 if state.folders.isEmpty, state.remoteSessions.isEmpty {
                     Button("Open Folder…") { state.openFolderPanel() }
                         .font(fonts.callout)
@@ -300,7 +308,11 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
             }
-            CollapsibleSection("Pull Requests", isExpanded: $prsExpanded) {
+            CollapsibleSection("Pull Requests", isExpanded: $prsExpanded,
+                               headerActions: [
+                SectionHeaderAction(id: "add-pr", symbol: "plus",
+                                    help: "Open Pull Request…") { state.showAddPR = true }
+            ]) {
                 if state.prSessions.isEmpty {
                     Button("Open Pull Request…") { state.showAddPR = true }
                         .font(fonts.callout)
@@ -995,6 +1007,19 @@ private struct FolderNodeView: View {
     }
 }
 
+/// A hover-revealed section-header action (spec:
+/// sidebar-section-affordances §1–§2). Mail's convention: the glyph
+/// sits BESIDE the label — the trailing edge belongs to the system
+/// collapse chevron and the badge. Hover-only controls are invisible
+/// to keyboard and VoiceOver users, so every action here must also
+/// exist as a menu command.
+private struct SectionHeaderAction: Identifiable {
+    let id: String
+    let symbol: String
+    let help: String
+    let action: () -> Void
+}
+
 /// A sidebar section the user can fold away. Native collapsing (chevron in
 /// the header) needs macOS 14's `Section(isExpanded:)`; on macOS 13 the
 /// section renders permanently expanded. A non-zero `badge` renders a
@@ -1003,18 +1028,27 @@ private struct CollapsibleSection<Content: View>: View {
     let title: String
     @Binding var isExpanded: Bool
     var badge = 0
+    /// Hover-revealed buttons beside the label (see SectionHeaderAction).
+    var headerActions: [SectionHeaderAction] = []
     /// Optional right-click actions on the section header itself (e.g.
     /// Close All on Open Files).
     var headerMenu: (() -> AnyView)?
     @ViewBuilder let content: () -> Content
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    /// Same plain onHover approach as RemovableRow — its stale-latch
+    /// edges are accepted there, and consistency beats new tracking
+    /// machinery. The buttons only exist while hovered, so they can't
+    /// eat clicks meant for the header.
+    @State private var headerHovered = false
 
     init(_ title: String, isExpanded: Binding<Bool>, badge: Int = 0,
+         headerActions: [SectionHeaderAction] = [],
          headerMenu: (() -> AnyView)? = nil,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self._isExpanded = isExpanded
         self.badge = badge
+        self.headerActions = headerActions
         self.headerMenu = headerMenu
         self.content = content
     }
@@ -1026,6 +1060,19 @@ private struct CollapsibleSection<Content: View>: View {
         return HStack {
             Text(title)
                 .font(fonts.sectionHeader)
+            if headerHovered {
+                ForEach(headerActions) { item in
+                    Button(action: item.action) {
+                        Image(systemName: item.symbol)
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .help(item.help)
+                    .accessibilityLabel(item.help)
+                }
+            }
             Spacer()
             if badge > 0 {
                 Text("\(badge)")
@@ -1038,6 +1085,8 @@ private struct CollapsibleSection<Content: View>: View {
                     .accessibilityLabel("\(badge) unread")
             }
         }
+        .contentShape(Rectangle())
+        .onHover { headerHovered = $0 }
     }
 
     var body: some View {

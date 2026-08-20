@@ -114,6 +114,7 @@ struct KeyCombo: Codable, Equatable, Hashable {
 enum ShortcutAction: String, CaseIterable, Codable {
     case openFile, openPullRequest, openQuickly, commitChanges, revertLastEdit
     case revealInFinder, copyPath, copyGitHubLink, refreshFolder, clearRecents
+    case closeAllFiles
     case pageSetup, printDocument, exportPDF, exportHTML
     case editMode, copyAsMarkdown
     case findInPage, findNext, findPrevious, searchAllFiles
@@ -137,6 +138,7 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .copyGitHubLink: return "Copy GitHub Link"
         case .refreshFolder: return "Refresh Folder"
         case .clearRecents: return "Clear Recents"
+        case .closeAllFiles: return "Close All Files"
         case .pageSetup: return "Page Setup…"
         case .printDocument: return "Print…"
         case .exportPDF: return "Export as PDF…"
@@ -176,8 +178,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
         switch self {
         case .openFile, .openPullRequest, .openQuickly, .commitChanges,
              .revertLastEdit, .revealInFinder, .copyPath, .copyGitHubLink,
-             .refreshFolder, .clearRecents, .pageSetup, .printDocument,
-             .exportPDF, .exportHTML:
+             .refreshFolder, .clearRecents, .closeAllFiles, .pageSetup,
+             .printDocument, .exportPDF, .exportHTML:
             return "File"
         case .editMode, .copyAsMarkdown, .addMarginNote, .addFileMarginNote,
              .findInPage, .findNext, .findPrevious, .searchAllFiles:
@@ -207,6 +209,8 @@ enum ShortcutAction: String, CaseIterable, Codable {
             return "With a local file or folder selected"
         case .copyGitHubLink:
             return "With a local file or folder in a GitHub repository selected"
+        case .closeAllFiles:
+            return "With files in Open Files"
         case .refreshFolder:
             return "With a folder selected"
         case .findNext, .findPrevious:
@@ -242,6 +246,9 @@ enum ShortcutAction: String, CaseIterable, Codable {
         case .copyGitHubLink: return nil
         case .refreshFolder: return nil
         case .clearRecents: return nil
+        // Unbound on purpose, and deliberately NOT ⌥⌘W — that's the
+        // system's Close All (windows), which would shadow it.
+        case .closeAllFiles: return nil
         case .pageSetup: return KeyCombo(key: "p", command: true, shift: true)
         case .printDocument: return KeyCombo(key: "p", command: true)
         case .exportPDF: return nil

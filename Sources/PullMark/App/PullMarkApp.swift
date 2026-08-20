@@ -251,6 +251,11 @@ struct PullMarkApp: App {
                             .keyboardShortcut(shortcuts.keyboardShortcut(for: .clearRecents))
                     }
                 }
+                // Keyboard/VoiceOver parity for the Open Files header's
+                // hover ✕ (spec: sidebar-section-affordances §1).
+                Button("Close All Files") { state?.closeAllOpenFiles() }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .closeAllFiles))
+                    .disabled(state?.hasOpenFiles != true)
                 Divider()
                 // Sidebar file commands (sidebar-navigator spec §4) — act
                 // on the selected file, folder root, or tree node.
