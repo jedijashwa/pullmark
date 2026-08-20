@@ -210,6 +210,60 @@
     });
   }
 
+  // ---- GitHub attachment images (spec: github-user-attachments) ----
+  // Attachment URLs are gated behind GitHub's own auth (404 for private
+  // content without it), so the page can't load them directly. Rewrite
+  // them to the pullmark-attachment scheme, whose handler fetches with
+  // the user's token. Images only — links to attachments open in the
+  // browser, which has the session.
+
+  var ATTACHMENT_URL = new RegExp(
+    "^https://github\\.com/(" +
+    "user-attachments/assets/[0-9a-fA-F][0-9a-fA-F-]+" +
+    "|[^/?#]+/[^/?#]+/assets/[0-9]+/[0-9a-fA-F][0-9a-fA-F-]+" +
+    ")$");
+
+  function rewriteAttachmentImages(root) {
+    if (!payload.githubAttachments) { return; }
+    root.querySelectorAll("img[src]").forEach(function (img) {
+      var src = img.getAttribute("src");
+      var match = src && ATTACHMENT_URL.exec(src);
+      if (!match) { return; }
+      img.setAttribute("data-pm-attachment", src);
+      img.setAttribute("src", "pullmark-attachment:///" + match[1]);
+    });
+  }
+
+  // A failed attachment (no token for private content, deleted upload,
+  // offline) turns into a labeled placeholder instead of the broken-image
+  // glyph — with the original URL as an escape hatch, since the browser's
+  // session can render what the app cannot. Image error events don't
+  // bubble; capture phase catches them all.
+  document.addEventListener("error", function (event) {
+    var img = event.target;
+    if (!img || img.tagName !== "IMG") { return; }
+    var original = img.getAttribute("data-pm-attachment");
+    if (!original) { return; }
+    var box = document.createElement("span");
+    box.className = "pm-attachment-missing";
+    var alt = img.getAttribute("alt");
+    if (alt) {
+      var altEl = document.createElement("span");
+      altEl.className = "pm-attachment-missing-alt";
+      altEl.textContent = alt;
+      box.append(altEl);
+    }
+    var note = document.createElement("span");
+    note.className = "pm-attachment-missing-note";
+    note.textContent = "Couldn't load this image from GitHub · ";
+    var link = document.createElement("a");
+    link.href = original;
+    link.textContent = "Open on GitHub";
+    note.append(link);
+    box.append(note);
+    img.replaceWith(box);
+  }, true);
+
   // ---- Word-level diff marks ----
   // Swift wraps changed runs in private-use sentinels (U+E000-U+E003) that
   // survive Markdown rendering as text; convert them to highlight spans.
@@ -3099,6 +3153,7 @@
     body.innerHTML = render(note.body);
     rewriteLocalResources(body);
     rewriteRemoteResources(body);
+    rewriteAttachmentImages(body);
     enhance(body);
     card.append(head, body);
     if (authoring) {
@@ -3689,6 +3744,7 @@
       section.append(conversationComposerEl());
     }
     rewriteRemoteResources(section);
+    rewriteAttachmentImages(section);
     enhance(section);
     content.append(section);
   }
@@ -3778,6 +3834,7 @@
     // highlighting, remote images resolve. The excerpt lines are exempt
     // inside enhance() — auto-detection would colorize plain hunks.
     rewriteRemoteResources(section);
+    rewriteAttachmentImages(section);
     enhance(section);
     content.append(section);
   }
@@ -5039,6 +5096,7 @@
     if (payload.blameNote) { content.prepend(blameNoteEl(payload.blameNote)); }
     rewriteLocalResources(content);
     rewriteRemoteResources(content);
+    rewriteAttachmentImages(content);
     setupHeadingAnchors(content);
     populateToc(reportOutline(content));
     enhance(content);
@@ -5107,6 +5165,7 @@
     }
     appendOutdated();
     rewriteRemoteResources(content);
+    rewriteAttachmentImages(content);
     setupHeadingAnchors(content);
     populateToc(reportOutline(content));
     enhance(content);

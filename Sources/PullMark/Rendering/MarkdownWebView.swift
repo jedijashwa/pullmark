@@ -312,6 +312,8 @@ struct MarkdownWebView: NSViewRepresentable {
                                           forURLScheme: LocalResourceSchemeHandler.scheme)
         configuration.setURLSchemeHandler(context.coordinator.remoteHandler,
                                           forURLScheme: RemoteResourceSchemeHandler.scheme)
+        configuration.setURLSchemeHandler(context.coordinator.attachmentHandler,
+                                          forURLScheme: AttachmentSchemeHandler.scheme)
         let webView = interactive
             ? ZoomableWebView(frame: .zero, configuration: configuration)
             : PassthroughWebView(frame: .zero, configuration: configuration)
@@ -375,6 +377,7 @@ struct MarkdownWebView: NSViewRepresentable {
         var lastPageURL: URL?
         let schemeHandler = LocalResourceSchemeHandler()
         let remoteHandler = RemoteResourceSchemeHandler()
+        let attachmentHandler = AttachmentSchemeHandler()
 
         init(_ parent: MarkdownWebView) {
             self.parent = parent

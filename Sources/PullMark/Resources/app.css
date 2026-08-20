@@ -1966,6 +1966,27 @@ mark.pm-find.pm-find-current {
   cursor: auto !important;
 }
 
+/* ---- GitHub attachment placeholder (spec: github-user-attachments) ----
+   Replaces a failed pullmark-attachment image: alt text when the author
+   wrote any, one muted line, and the original URL as the escape hatch. */
+
+.pm-attachment-missing {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px dashed var(--borderColor-muted, rgba(128, 128, 128, 0.4));
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+.pm-attachment-missing-alt {
+  color: var(--fgColor-default, #1f2328);
+  font-style: italic;
+}
+.pm-attachment-missing-note {
+  color: var(--fgColor-muted, #6e7781);
+}
+
 /* ---- Content width: Standard (default cascade above) / Wide / Full ----
    Placed last: the width choice outranks the per-theme measures. Every
    capped measure adds --pm-left-gutter back. Wide stays capped — around the researched ceiling of

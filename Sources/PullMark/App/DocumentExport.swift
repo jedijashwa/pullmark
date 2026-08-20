@@ -84,6 +84,11 @@ enum DocumentExport {
                   let data = RemoteResourceSchemeHandler.cachedData(context: context, path: path)
             else { return nil }
             return (data, mimeType(forExtension: (path as NSString).pathExtension))
+        case AttachmentSchemeHandler.scheme:
+            guard let path = AttachmentSchemeHandler.attachmentPath(from: url),
+                  let cached = AttachmentSchemeHandler.cachedAttachment(path: path)
+            else { return nil }
+            return (cached.data, cached.mimeType ?? "application/octet-stream")
         default:
             return nil
         }
