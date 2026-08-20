@@ -68,6 +68,11 @@ private struct NavHistoryButton: NSViewRepresentable {
         let state = state
         let direction = direction
         button.isEnabled = enabled
+        // Neither isEnabled nor contentTintColor dims the symbol in
+        // this bezel configuration (both verified by pixel sampling) —
+        // alphaValue is the knob that actually renders. A dead arrow
+        // must look dead, Safari-style.
+        button.alphaValue = enabled ? 1.0 : 0.35
         button.toolTip = help
         button.clickAction = { state.travelHistory(direction) }
         button.menuBuilder = { [weak coordinator] in
