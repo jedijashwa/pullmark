@@ -40,13 +40,18 @@ set_sidebar() { # $1 = visible|hidden
 show_sidebar() { set_sidebar visible; }
 hide_sidebar() { set_sidebar hidden; }
 
+# Every drive step that shapes the capture ends with `|| return 1`:
+# `set -e` is suppressed inside functions called in a condition, so
+# without it a missed press (wrong title, user interference) would
+# silently capture the wrong picture.
+
 # Folder tree browsing: expanded guides, quick-start as an italic
 # preview entry — "folders come in as living trees". Row titles are
 # fixture filenames (data), so selection is language-independent.
 scene_doc() {
-  drive ax.swift $APP_PID disclose guides >/dev/null
+  drive ax.swift $APP_PID disclose guides >/dev/null || return 1
   sleep 1
-  drive ax.swift $APP_PID select-row quick-start.md >/dev/null
+  drive ax.swift $APP_PID select-row quick-start.md >/dev/null || return 1
   sleep 2.5
 }
 
@@ -54,19 +59,23 @@ scene_doc() {
 # ⌘K Open Quickly + typed query — pid-posted keys reach the panel
 # because captureChrome nominates a key window for the instance.
 scene_notes() {
-  drive pkey.swift $APP_PID 40 cmd            # ⌘K Open Quickly
+  drive pkey.swift $APP_PID 40 cmd || return 1  # ⌘K Open Quickly
   sleep 1
-  drive ptype.swift $APP_PID wind-gust        # typed, never the clipboard
+  drive ptype.swift $APP_PID wind-gust || return 1  # typed, never the clipboard
   sleep 1
-  drive pkey.swift $APP_PID 36                # Return
+  drive pkey.swift $APP_PID 36 || return 1      # Return
   sleep 2.5
 }
 
 # PR overview: description, cockpit chrome, conversation with the
-# rendered table. Selected at launch — just focus the content.
+# rendered table. Selected EXPLICITLY — the folder delivery can steal
+# the launch selection for the folder's README, and a human clicking
+# around a capture window mid-run can move it anywhere.
 scene_pr() {
-  hide_sidebar
-  drive pkey.swift $APP_PID 121               # Page Down
+  drive ax.swift $APP_PID select-row "meridian-docs #128" >/dev/null || return 1
+  sleep 2
+  hide_sidebar || return 1
+  drive pkey.swift $APP_PID 121 || return 1     # Page Down
   sleep 2
 }
 
@@ -74,26 +83,26 @@ scene_pr() {
 # `2 calibration.md` = second matching row: Open Files has the local
 # calibration.md, the PR file row follows it.
 scene_diff() {
-  show_sidebar
-  drive ax.swift $APP_PID select-row 2 calibration.md >/dev/null
+  show_sidebar || return 1
+  drive ax.swift $APP_PID select-row 2 calibration.md >/dev/null || return 1
   sleep 3
 }
 
 # Result view with the blame gutter — avatars per run of blocks.
 scene_blame() {
-  show_sidebar
+  show_sidebar || return 1
   # Toggle blame from the remote doc, where the checkbox is inline at
   # capture width (the PR-file view's mode picker pushes it into
   # overflow). The toggle is sticky, so the PR file picks it up.
-  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null
+  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null || return 1
   sleep 2.5
-  drive ax.swift $APP_PID press "$(t Blame)" >/dev/null
+  drive ax.swift $APP_PID press "$(t Blame)" >/dev/null || return 1
   sleep 1
-  drive ax.swift $APP_PID select-row 2 getting-started.md >/dev/null
+  drive ax.swift $APP_PID select-row 2 getting-started.md >/dev/null || return 1
   sleep 2.5
   # menuitem, not `menu View …`: the top-level View menu's own title is
   # system-localized, but the item title is ours to resolve.
-  drive ax.swift $APP_PID menuitem "$(t Result)" >/dev/null
+  drive ax.swift $APP_PID menuitem "$(t Result)" >/dev/null || return 1
   sleep 2.5
 }
 
@@ -103,28 +112,29 @@ scene_blame() {
 # tree (the listener is delegated), and that channel exists for
 # exactly this. Line 9 = the "When to calibrate" paragraph.
 scene_edit() {
-  drive ax.swift $APP_PID select-row calibration.md >/dev/null
+  drive ax.swift $APP_PID select-row calibration.md >/dev/null || return 1
   sleep 2
-  drive ax.swift $APP_PID menuitem "$(t "Edit Mode")" >/dev/null
+  drive ax.swift $APP_PID menuitem "$(t "Edit Mode")" >/dev/null || return 1
   sleep 1.5
-  drive aeurl.swift $APP_PID "pullmark://capture/reveal?line=9" >/dev/null
+  drive aeurl.swift $APP_PID "pullmark://capture/reveal?line=9" >/dev/null || return 1
   sleep 1.5
 }
 
 # Browsed-from-GitHub doc with the provenance bar (demo remote session).
 scene_remote() {
-  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null
+  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null || return 1
   sleep 2.5
-  hide_sidebar
+  hide_sidebar || return 1
 }
 
 # Settings → Appearance: the three live theme cards. Captures the
 # settings window, not the main one. ⌘, is system-titled — pressed by
 # keyboard equivalent, which no language changes.
 scene_themes() {
-  drive ax.swift $APP_PID menukey , cmd >/dev/null
+  drive ax.swift $APP_PID menukey , cmd >/dev/null || return 1
   sleep 2
-  drive ax.swift $APP_PID press "$(t Appearance)" >/dev/null
+  drive ax.swift $APP_PID press "$(t Appearance)" >/dev/null || return 1
   sleep 1.5
   CAPTURE_ID=$(drive winlist.swift $APP_PID | awk '$4 != 1052 {print $1}' | head -1)
+  [[ -n $CAPTURE_ID ]] || return 1
 }
