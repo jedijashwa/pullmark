@@ -96,7 +96,10 @@ scene_blame() {
   # overflow). The toggle is sticky, so the PR file picks it up.
   drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null || return 1
   sleep 2.5
-  drive ax.swift $APP_PID press "$(t Blame)" >/dev/null || return 1
+  # ENSURE on, never toggle: the flag is sticky in a defaults domain
+  # shared across instances and runs — blind presses turned blame OFF
+  # for whichever instances launched after another had turned it on.
+  drive ax.swift $APP_PID setcheck 1 "$(t Blame)" >/dev/null || return 1
   sleep 1
   drive ax.swift $APP_PID select-row 2 getting-started.md >/dev/null || return 1
   sleep 2.5
@@ -132,8 +135,16 @@ scene_remote() {
 # keyboard equivalent, which no language changes.
 scene_themes() {
   drive ax.swift $APP_PID menukey , cmd >/dev/null || return 1
-  sleep 2
-  drive ax.swift $APP_PID press "$(t Appearance)" >/dev/null || return 1
+  # WAIT for the Settings window (any non-1052-wide window), then press
+  # the tab in THAT window only — pressing early once matched the main
+  # window's same-titled Appearance toolbar menu and captured General.
+  local waited=0
+  until drive winlist.swift $APP_PID | awk '$4 != 1052 {found=1} END {exit !found}'; do
+    waited=$((waited + 1)); (( waited > 16 )) && return 1
+    sleep 0.5
+  done
+  sleep 1
+  drive ax.swift $APP_PID presswin 1052 "$(t Appearance)" >/dev/null || return 1
   sleep 1.5
   CAPTURE_ID=$(drive winlist.swift $APP_PID | awk '$4 != 1052 {print $1}' | head -1)
   [[ -n $CAPTURE_ID ]] || return 1

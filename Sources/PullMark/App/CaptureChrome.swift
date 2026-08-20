@@ -49,14 +49,17 @@ enum CaptureChrome {
         // The getters alone aren't enough for SwiftUI: controlActiveState
         // caches "inactive" at window creation and only re-reads on the
         // become-key/main notifications, which a background window never
-        // gets. Post them REPEATEDLY (every timer tick, every window):
-        // toolbars rebuild on surface switches and freshly created item
-        // views read activity state at creation — a one-shot blessing
-        // left later toolbars drawing inactive (caught in a blame-scene
-        // capture). Also seed a first responder: key events dispatch to
-        // it, and a background window never ran the makeKey path.
+        // gets. Post them ONCE per window as windows appear — the timer
+        // is only discovery for windows created later (panels, Settings).
+        // Posting REPEATEDLY was tried and regressed the traffic lights
+        // to gray: AppKit reconciles a key-claim it knows is false, and
+        // captures raced the flicker. Also seed a first responder: key
+        // events dispatch to it, and a background window never ran the
+        // makeKey path that sets one.
+        let blessed = NSHashTable<NSWindow>.weakObjects()
         let blessAll = {
-            for window in NSApp.windows where window.isVisible {
+            for window in NSApp.windows where window.isVisible && !blessed.contains(window) {
+                blessed.add(window)
                 if window.firstResponder === window,
                    let responder = window.initialFirstResponder ?? window.contentView {
                     window.makeFirstResponder(responder)

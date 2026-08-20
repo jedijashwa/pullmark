@@ -310,6 +310,43 @@ case "select-row", "disclose", "rows":
         print("selected: \"\(matchedText)\"")
     }
 
+case "setcheck":
+    // Ensure a titled checkbox is in the wanted state, pressing only on
+    // mismatch. Blind presses TOGGLE — and sticky flags live in a
+    // defaults domain shared across capture instances and runs, so half
+    // the parallel fleet was flipping blame OFF for the other half.
+    guard args.count >= 5, let wanted = Int(args[3]), wanted == 0 || wanted == 1 else {
+        fail("usage: swift ax.swift <pid> setcheck <0|1> <title>")
+    }
+    let checkTitle = args.dropFirst(4).joined(separator: " ")
+    guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
+        fail("error: no windows for pid \(pid)")
+    }
+    var queue = windows
+    var visited = 0
+    var found: AXUIElement?
+    while !queue.isEmpty, visited < 20_000, found == nil {
+        let element = queue.removeFirst()
+        visited += 1
+        if actions(element).contains(kAXPressAction),
+           attribute(element, kAXValueAttribute) != nil {
+            for candidate in [title(element), description(element)] where !candidate.isEmpty {
+                if candidate.caseInsensitiveCompare(checkTitle) == .orderedSame { found = element }
+            }
+        }
+        queue.append(contentsOf: children(element))
+    }
+    guard let found else {
+        fail("error: no checkable element titled '\(checkTitle)' (searched \(visited))")
+    }
+    let current = (attribute(found, kAXValueAttribute) as? Int) ?? 0
+    if current == wanted {
+        print("already \(wanted): \"\(checkTitle)\"")
+    } else {
+        press(found)
+        print("pressed to \(wanted): \"\(checkTitle)\"")
+    }
+
 case "menulist":
     for item in menuBarItems() {
         let cmdChar = (attribute(item, "AXMenuItemCmdChar") as? String) ?? ""
@@ -339,11 +376,31 @@ case "sidebar-state":
     }
     print(found ? "visible" : "hidden")
 
-case "press":
-    let name = args.dropFirst(3).joined(separator: " ")
-    guard !name.isEmpty else { fail("usage: swift ax.swift <pid> press <title>") }
-    guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
+case "press", "presswin":
+    // presswin <skipWidth> <title>: like press, but ignores windows of
+    // exactly that width — scene scripts use it to target the Settings
+    // window while the 1052-wide capture window holds a same-titled
+    // control (the Appearance toolbar menu once stole the Settings
+    // tab's press when the Settings window was slow to appear).
+    var rest = Array(args.dropFirst(3))
+    var skipWidth: Double?
+    if args[2] == "presswin" {
+        guard let first = rest.first, let width = Double(first) else {
+            fail("usage: swift ax.swift <pid> presswin <skipWidth> <title>")
+        }
+        skipWidth = width
+        rest.removeFirst()
+    }
+    let name = rest.joined(separator: " ")
+    guard !name.isEmpty else { fail("usage: swift ax.swift <pid> \(args[2]) <title>") }
+    guard var windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
         fail("error: no windows for pid \(pid)")
+    }
+    if let skipWidth {
+        windows = windows.filter { abs(frame($0).width - skipWidth) > 0.5 }
+        guard !windows.isEmpty else {
+            fail("error: no window besides the \(Int(skipWidth))-wide one (Settings not open yet?)")
+        }
     }
     // Breadth-first over every window; collect pressable elements, then prefer
     // an exact (case-insensitive) label match over a substring match.

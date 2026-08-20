@@ -68,9 +68,22 @@ source scripts/screenshots/scenes.sh
 mkdir -p $OUT
 rm -f $OUT/.status-*(N)
 
-# The EXIT trap only needs to reap stray capture instances — no Launch
-# Services registration exists to undo (delivery is pid-addressed).
-trap 'pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true' EXIT
+# dist shares the real defaults domain, and the blame scene writes the
+# sticky pm.blame flag there — snapshot it and put it back so capture
+# runs never change what the human's own app shows next launch.
+blame_before=$(defaults read app.pullmark.PullMark pm.blame 2>/dev/null || echo ABSENT)
+restore_blame() {
+  if [[ $blame_before == ABSENT ]]; then
+    defaults delete app.pullmark.PullMark pm.blame 2>/dev/null || true
+  else
+    defaults write app.pullmark.PullMark pm.blame "$blame_before"
+  fi
+}
+
+# The EXIT trap reaps stray capture instances and restores the shared
+# flag — no Launch Services registration exists to undo (delivery is
+# pid-addressed).
+trap 'pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true; restore_blame' EXIT
 
 launch() { # $1 = appearance, $2 = window x, $3 = window y
   # Published screenshots wear the classic Mac BLUE accent (Josh's
@@ -134,7 +147,19 @@ location_present() {
 capture() { # $1 = output basename (no extension)
   local id
   id=${CAPTURE_ID:-$(swift $DRIVE/winid.swift $APP_PID | head -1)}
-  screencapture -x -o -l $id "$OUT/$1.png"
+  # Under parallel load WebKit occasionally hasn't painted a
+  # backgrounded page at capture time — detect a uniform content
+  # region and retry rather than shipping an empty pane.
+  for attempt in 1 2 3; do
+    screencapture -x -o -l $id "$OUT/$1.png"
+    swift $DRIVE/blankcheck.swift "$OUT/$1.png" >/dev/null && break
+    if (( attempt == 3 )); then
+      echo "capture $1: content pane still blank after retries" >&2
+      return 1
+    fi
+    echo "capture $1: blank content pane — waiting for render" >&2
+    sleep 2.5
+  done
   echo "captured $OUT/$1.png"
 }
 
@@ -166,10 +191,9 @@ run_language() { # $1 = lang, $2 = worker index
       suffix=""
       [[ $mode == dark ]] && suffix="-dark"
       echo "── scene $name ($mode${lang:+, $lang})"
-      if launch $mode $x $y && scene_$name; then
-        capture "${subdir:+$subdir/}app-$name$suffix"
-      else
-        echo "scene $name FAILED${lang:+ ($lang)} — skipping capture" >&2
+      if ! { launch $mode $x $y && scene_$name \
+             && capture "${subdir:+$subdir/}app-$name$suffix"; }; then
+        echo "scene $name FAILED${lang:+ ($lang)}" >&2
         failures=$((failures + 1))
       fi
       quit_app
