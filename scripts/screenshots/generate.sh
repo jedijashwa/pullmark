@@ -206,6 +206,7 @@ run_language() { # $1 = lang, $2 = worker index
              && capture "${subdir:+$subdir/}app-$name$suffix"; }; then
         echo "scene $name FAILED${lang:+ ($lang)}" >&2
         failures=$((failures + 1))
+        echo "$name $mode" >> "$OUT/.retry-${subdir:-en}"
       fi
       quit_app
     done
@@ -230,9 +231,40 @@ failures=0
 for status_file in $OUT/.status-*(N); do
   failures=$((failures + $(cat "$status_file")))
 done
-rm -f $OUT/.status-*
+rm -f $OUT/.status-*(N)
+
+# Fix-up pass: parallel runs flake at ~5% (WebKit under eightfold
+# load); the same combos succeed solo essentially always. Re-run each
+# failure sequentially before declaring defeat. PM_GEN_FIXUP guards
+# recursion — a fix-up run that still fails just reports.
+if (( failures > 0 )) && [[ -z ${PM_GEN_FIXUP:-} ]]; then
+  echo "── fix-up pass: re-running $failures failed capture(s) solo"
+  # Consume the retry files BEFORE re-invoking: each child run clears
+  # $OUT bookkeeping at its own exit and would delete them mid-loop.
+  combos=()
+  for retry_file in $OUT/.retry-*(N); do
+    code=${retry_file##*.retry-}
+    while read -r retry_scene retry_mode; do
+      combos+=("$retry_scene $retry_mode $code")
+    done < "$retry_file"
+  done
+  rm -f $OUT/.retry-*(N)
+  failures=0
+  for combo in "${combos[@]}"; do
+    read -r retry_scene retry_mode code <<< "$combo"
+    case $code in
+      en) retry_lang="" ;; zh) retry_lang=zh-Hans ;; pt) retry_lang=pt-BR ;;
+      *) retry_lang=$code ;;
+    esac
+    if ! PM_GEN_FIXUP=1 "$0" "$retry_scene" --appearance "$retry_mode" \
+         ${retry_lang:+--lang "$retry_lang"}; then
+      failures=$((failures + 1))
+    fi
+  done
+fi
+rm -f $OUT/.retry-*(N)
 if (( failures > 0 )); then
-  echo "done with $failures FAILED scene(s) — fix and rerun those." >&2
+  echo "done with $failures FAILED scene(s) even after solo retries." >&2
   exit 1
 fi
 echo "done — review the results in $OUT before promoting to site/img."
