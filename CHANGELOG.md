@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **PullMark speaks seven languages.** The entire app — menus, settings,
+  alerts, the sidebar, and every rendered-page control — is now
+  available in 中文, 日本語, Français, Deutsch, Nederlands, Español, and
+  Português, alongside English. PullMark follows your system language
+  automatically, or pick one in Settings → General → Language (each
+  language names itself) and relaunch with one click. Dates, counts,
+  and relative times follow your language's own conventions.
+
 ## 0.40.0 - 2026-08-20
 
 - **Pasted GitHub screenshots finally render.** Images attached to PR

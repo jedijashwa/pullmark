@@ -604,6 +604,7 @@
 "Modified" = "Geändert";
 "Renamed" = "Umbenannt";
 "Shown" = "Eingeblendet";
-"Takes effect the next time PullMark opens." = "Gilt ab dem nächsten Öffnen von PullMark.";
+"Takes effect after PullMark relaunches." = "Gilt, sobald PullMark neu startet.";
 "Untracked" = "Nicht versioniert";
 "git credential helper" = "git credential helper";
+"Relaunch Now" = "Jetzt neu starten";

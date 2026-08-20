@@ -582,6 +582,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         Appearance.applyCurrent()
+        // Pin the launch language before any UI (or the user) can
+        // change the stored value — the Settings row compares against it.
+        _ = AppLanguage.atLaunch
         let cliURLs = LaunchArguments.consumeFileURLs()
         if !cliURLs.isEmpty {
             OpenURLRouter.shared.deliver(cliURLs)

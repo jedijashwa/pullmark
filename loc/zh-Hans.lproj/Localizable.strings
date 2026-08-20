@@ -601,6 +601,7 @@
 "Modified" = "已修改";
 "Renamed" = "已重命名";
 "Shown" = "已显示";
-"Takes effect the next time PullMark opens." = "下次打开 PullMark 时生效。";
+"Takes effect after PullMark relaunches." = "PullMark 重新启动后生效。";
 "Untracked" = "未跟踪";
 "git credential helper" = "git 凭证助手";
+"Relaunch Now" = "立即重新启动";
