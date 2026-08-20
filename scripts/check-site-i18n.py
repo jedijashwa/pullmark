@@ -11,6 +11,9 @@ so every invariant the localized site depends on is asserted here:
     and the i18n.css/i18n.js includes
   * locale pages reference shared assets absolutely (no ../ or bare
     relative src/href that would resolve inside the locale dir)
+  * app screenshots are served in the page's own language: localized
+    pages from /img/<code>/, English from /img/ — and every referenced
+    image file exists on disk (a bad path silently 404s to alt text)
   * sitemap.xml covers exactly the shipped URL set
 
 Exit code 0 = clean; 1 = problems (each printed on its own line).
@@ -100,6 +103,18 @@ def check_page(code, base):
             problem(f"{rel}: switcher aria-current is "
                     f"{cur.group(1) if cur else 'missing'}, want {want_lang}")
 
+    # Image references (src, srcset, meta content, JSON-LD — anywhere in
+    # the document; the charset stops before ?v= cache-busters). Every
+    # file must exist, and app screenshots (app-*.png, the generator's
+    # output) must come from the page's own language directory.
+    img_dir = "/img/" if code == "en" else f"/img/{LOCALES[code]}/"
+    for ref in set(re.findall(r'(?:https://pullmark\.app)?(/img/[A-Za-z0-9._/\-]+)', s)):
+        if not (ROOT / ref.lstrip("/")).exists():
+            problem(f"{rel}: referenced image missing on disk: {ref}")
+        name = ref.rsplit("/", 1)[-1]
+        if name.startswith("app-") and ref != f"{img_dir}{name}":
+            problem(f"{rel}: app screenshot {ref} must be {img_dir}{name}")
+
     if code != "en":
         # Locale pages must not fetch assets relative to the locale dir.
         for attr, value in re.findall(r'(src|href)="([^"]+)"', s):
@@ -136,7 +151,8 @@ def main():
         print(f"\n{len(problems)} problem(s).")
         return 1
     total = len(BASES) * (len(LOCALES) + 1)
-    print(f"site i18n OK: {total} pages verified, sitemap consistent.")
+    print(f"site i18n OK: {total} pages verified (incl. per-language "
+          f"screenshot refs), sitemap consistent.")
     return 0
 
 
