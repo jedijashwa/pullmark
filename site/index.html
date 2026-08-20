@@ -50,6 +50,8 @@
   --blue:       #0969da;
   --shadow-sm:  0 1px 2px rgba(26,33,43,.06), 0 4px 12px rgba(26,33,43,.06);
   --code-bg:    #f2f1ee;
+  --shot-edge:  rgba(26,33,43,.18);
+  --shot-soft:  rgba(26,33,43,.12);
   --serif: "New York", ui-serif, "Iowan Old Style", "Palatino", Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
@@ -71,6 +73,8 @@
     --blue:       #58a6ff;
     --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
     --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
   }
 }
 
@@ -241,10 +245,16 @@ h1 mark {
 .either-way { margin: 14px 2px 0; font-size: 13.5px; color: var(--muted); }
 
 /* ============ screenshots ============ */
-/* real window captures: chrome, rounded corners and shadow are baked into the
-   PNGs (transparent margins), so they sit directly on the page background */
+/* real window captures with transparent margins. The window silhouette gets
+   its edge from CSS drop-shadows (they follow the alpha, not the box), so
+   light windows never melt into the light page background */
 .shot { margin: 0; }
-.shot img { width: 100%; height: auto; }
+.shot img {
+  width: 100%; height: auto;
+  filter: drop-shadow(0 0 1px var(--shot-edge))
+          drop-shadow(0 2px 4px var(--shot-edge))
+          drop-shadow(0 18px 44px var(--shot-soft));
+}
 .shot figcaption {
   text-align: center;
   font: 400 13px var(--sans);
@@ -473,6 +483,7 @@ footer .note { margin-left: auto; }
     <a class="brand" href="#"><img src="img/icon.svg" alt="" width="30" height="30">PullMark</a>
     <div class="links">
       <a href="docs/">Docs</a>
+      <a href="agents/">Agents</a>
       <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
       <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
     </div>
