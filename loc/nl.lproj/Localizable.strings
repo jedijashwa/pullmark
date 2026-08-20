@@ -137,7 +137,7 @@
 "Current branch" = "Huidige branch";
 "Custom themes" = "Eigen thema's";
 "Customize Toolbar…" = "Pas toolbar aan…";
-"Dark" = "Dark";
+"Dark" = "Donker";
 "Default diff layout:" = "Standaard diff-indeling:";
 "Delete" = "Verwijder";
 "Delete comment" = "Verwijder comment";
@@ -217,7 +217,7 @@
 "Last seen at %@. " = "Laatst gezien op %@. ";
 "Layout" = "Indeling";
 "Left Arrow" = "Pijl links";
-"Light" = "Light";
+"Light" = "Licht";
 "Light, Dark, or match the system — the window and every rendered page follow, and each theme brings its own light and dark looks." = "Light, Dark of gelijk aan het systeem — het venster en elke gerenderde pagina volgen, en elk thema brengt zijn eigen lichte en donkere gedaante mee.";
 "Line %lld (new)" = "Regel %lld (nieuw)";
 "Line %lld (old)" = "Regel %lld (oud)";

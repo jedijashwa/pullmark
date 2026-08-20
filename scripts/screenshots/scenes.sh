@@ -90,17 +90,13 @@ scene_diff() {
 
 # Result view with the blame gutter — avatars per run of blocks.
 scene_blame() {
+  # Blame is ON via the launch's argument-domain pin (generate.sh
+  # passes -pm.blame 1 for this scene only) — no toggle choreography.
+  # The sticky flag lives in a defaults domain shared across parallel
+  # instances with lazily-synced caches, and BOTH toggle strategies
+  # (blind press, ensure-state) lost races to other instances' stale
+  # views. Argument domains are per-process: deterministic, no writes.
   show_sidebar || return 1
-  # Toggle blame from the remote doc, where the checkbox is inline at
-  # capture width (the PR-file view's mode picker pushes it into
-  # overflow). The toggle is sticky, so the PR file picks it up.
-  drive ax.swift $APP_PID select-row docs/getting-started.md >/dev/null || return 1
-  sleep 2.5
-  # ENSURE on, never toggle: the flag is sticky in a defaults domain
-  # shared across instances and runs — blind presses turned blame OFF
-  # for whichever instances launched after another had turned it on.
-  drive ax.swift $APP_PID setcheck 1 "$(t Blame)" >/dev/null || return 1
-  sleep 1
   drive ax.swift $APP_PID select-row 2 getting-started.md >/dev/null || return 1
   sleep 2.5
   # menuitem, not `menu View …`: the top-level View menu's own title is
@@ -144,8 +140,17 @@ scene_themes() {
     sleep 0.5
   done
   sleep 1
-  drive ax.swift $APP_PID presswin 1052 "$(t Appearance)" >/dev/null || return 1
-  sleep 1.5
+  # CONFIRM the switch by window title (Settings titles itself after
+  # the current tab) and re-press until it lands — a press delivered
+  # while the tab bar was still mounting was silently ignored on some
+  # slower parallel workers, capturing the General tab.
+  local tab_title=$(t Appearance) tries=0
+  until drive ax.swift $APP_PID titles 2>/dev/null | grep -qxF "$tab_title"; do
+    tries=$((tries + 1)); (( tries > 8 )) && return 1
+    drive ax.swift $APP_PID presswin 1052 "$tab_title" >/dev/null 2>&1 || true
+    sleep 1
+  done
+  sleep 2.5   # the theme cards are live previews and render like pages
   CAPTURE_ID=$(drive winlist.swift $APP_PID | awk '$4 != 1052 {print $1}' | head -1)
   [[ -n $CAPTURE_ID ]] || return 1
 }
