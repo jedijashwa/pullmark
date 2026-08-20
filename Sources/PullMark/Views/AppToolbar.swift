@@ -37,8 +37,15 @@ struct AppToolbar: CustomizableToolbarContent {
     @Binding var appearanceRaw: String
 
     var body: some CustomizableToolbarContent {
-        // Declared before everything: declaration order is collapse
-        // priority (later dies first), and review status must survive the
+        // First of all: back/forward is wayfinding and outlives every
+        // squeeze (declaration order is collapse priority — later dies
+        // first). Also the deliberate exception to "new items ship
+        // hidden": the buttons ARE the feature
+        // (spec: back-forward-navigation §5).
+        ToolbarItem(id: "nav-history", placement: .navigation) {
+            NavHistoryControl(state: state)
+        }
+        // Declared before the rest: review status must survive the
         // squeeze that rightly claims surface items and the open buttons
         // (spec §3). Placement still renders it in the trailing cluster.
         if let reviewSessionID {

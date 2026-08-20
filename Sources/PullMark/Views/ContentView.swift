@@ -38,6 +38,8 @@ struct ContentView: View {
         // Moves app toolbar items back out of the sidebar section when a
         // customize-palette drop lands them there (see AppToolbar).
         .background(ToolbarSectionEnforcer())
+        // Mouse buttons 4/5 → back/forward, this window only (spec §7).
+        .background(MouseNavMonitor(state: state))
         // Titlebar proxy icon + ⌘-click path menu for the open local file.
         // macOS 14 gets the real API (navigationDocument); 13 the fallback.
         .modifier(DocumentProxyModifier(url: selectedLocalURL))

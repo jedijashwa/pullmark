@@ -181,14 +181,18 @@ struct PullMarkApp: App {
         // First-launch window size (returning windows restore their own).
         .defaultSize(width: 1317, height: 698)
         .commands {
-            CommandGroup(replacing: .appInfo) {
-                Button("About PullMark") { Self.presentAboutPanel() }
-            }
-            CommandGroup(after: .appInfo) {
-                // An alert, not the focused window's error state: the
-                // result must land even when Settings is key or no window
-                // is open at all.
-                Button("Check for Updates…") { updates.checkManuallyPresentingResult() }
+            // Grouped: the commands builder tops out at ten elements, and
+            // the Go menu made eleven.
+            Group {
+                CommandGroup(replacing: .appInfo) {
+                    Button("About PullMark") { Self.presentAboutPanel() }
+                }
+                CommandGroup(after: .appInfo) {
+                    // An alert, not the focused window's error state: the
+                    // result must land even when Settings is key or no
+                    // window is open at all.
+                    Button("Check for Updates…") { updates.checkManuallyPresentingResult() }
+                }
             }
             CommandGroup(after: .newItem) {
                 Button("Open…") { state?.openFileOrFolder() }
@@ -443,6 +447,19 @@ struct PullMarkApp: App {
                 .help("Choose which items the toolbar shows, and their order")
                 Divider()
                 prViewCommands
+            }
+            // Between View and Window, where Finder and Xcode keep
+            // navigation (spec: back-forward-navigation §6). Disabled
+            // sides mirror the toolbar buttons.
+            CommandMenu("Go") {
+                Button("Back") { state?.goBack() }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .goBack))
+                    .disabled(state?.canGoBack != true)
+                    .help("Show the previous document")
+                Button("Forward") { state?.goForward() }
+                    .keyboardShortcut(shortcuts.keyboardShortcut(for: .goForward))
+                    .disabled(state?.canGoForward != true)
+                    .help("Show the next document")
             }
         }
         Settings {
