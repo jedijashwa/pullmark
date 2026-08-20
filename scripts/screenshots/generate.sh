@@ -1,17 +1,25 @@
 #!/bin/zsh
-# Scene-scripted screenshot generator (spec: site-dark-mode).
+# Scene-scripted screenshot generator (spec: site-dark-mode; background/
+# parallel rework in the localized-screenshots PR).
 #
 #   scripts/screenshots/generate.sh <scene|all> [--appearance light|dark|both] [--lang <code>|all]
 #
 # Replays committed scenes against dist/PullMark.app in demo mode and
-# captures the main window — the replacement for hand-driven capture
-# sessions. Build first: `make app`. See README.md for the runbook,
-# including the mandatory cleanup (`make unregister-dist`).
+# captures the window — the replacement for hand-driven capture
+# sessions. Build first: `make app`. See README.md for the runbook.
 #
-# `all --appearance both --lang all` is the full site matrix: 8 scenes
-# × light/dark × English + 7 locales. English lands in out/ (matching
-# site/img/), localized captures in out/<site-code>/ (zh, ja, fr, de,
-# nl, es, pt — matching site/img/<code>/), same basenames throughout.
+# Instances run BACKGROUNDED and never take focus, the cursor, or the
+# clipboard: scenes drive through pid-targeted channels only, and the
+# -pm.captureChrome flag makes windows draw active chrome (colored
+# traffic lights, accent selection) without being key. Languages run
+# in PARALLEL — one instance per language on cascaded window frames —
+# so `all --appearance both --lang all` (8 scenes × light/dark ×
+# English + 7 locales, 128 captures) fits in roughly one language's
+# wall clock, with the machine usable throughout.
+#
+# English lands in out/ (matching site/img/), localized captures in
+# out/<site-code>/ (zh, ja, fr, de, nl, es, pt — matching
+# site/img/<code>/), same basenames throughout.
 
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -58,27 +66,21 @@ site_dir() { # locale code → site directory name ('' for English)
 
 source scripts/screenshots/scenes.sh
 mkdir -p $OUT
+rm -f $OUT/.status-*(N)
 
-# Launch Services must know this bundle or document delivery (the demo
-# Location via `open -a`) silently routes to Finder — and the standing
-# cleanup rule unregisters dist after every trial, so register fresh
-# per run and unregister again on exit.
-LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-"$LSREGISTER" -f "$PWD/dist/PullMark.app"
-trap '"$LSREGISTER" -u "$PWD/dist/PullMark.app" >/dev/null 2>&1 || true; if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi' EXIT
+# The EXIT trap only needs to reap stray capture instances — no Launch
+# Services registration exists to undo (delivery is pid-addressed).
+trap 'pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true' EXIT
 
-APP_PID=""
-failures=0
-
-launch() { # $1 = appearance
+launch() { # $1 = appearance, $2 = window x, $3 = window y
   # Published screenshots wear the classic Mac BLUE accent (Josh's
   # standing rule) — forced via the argument domain so captures are
-  # machine-independent. These flags only survive because the launch
-  # is BARE (see below): a document argument at launch makes Launch
-  # Services respawn the app and silently drop the argument domain,
-  # which is how a green-accent generation of captures once escaped.
+  # machine-independent. -pm.captureChrome draws active window chrome
+  # without focus and suppresses the launch activation; the flags only
+  # survive because the launch is BARE (a document argument makes
+  # Launch Services respawn the app and drop the argument domain).
   local flags=(-AppleAccentColor 4 -AppleHighlightColor "0.698039 0.843137 1.000000 Blue"
-               -pm.appearance $1)
+               -pm.appearance $1 -pm.captureChrome 1)
   if [[ -n $lang ]]; then
     # Language AND locale: language alone leaves US date/number formats.
     local region
@@ -89,11 +91,6 @@ launch() { # $1 = appearance
     esac
     flags+=(-AppleLanguages "($lang)" -AppleLocale "$region")
   fi
-  # Launch BARE (no document argument): opening a document at launch
-  # makes Launch Services respawn the process, which keeps the
-  # environment but silently drops the argument domain — the
-  # appearance flag never applied that way. The demo Location is
-  # handed to the running instance afterwards instead.
   PM_DEMO=1 $APP $flags &
   APP_PID=$!
   CAPTURE_ID=""
@@ -102,39 +99,21 @@ launch() { # $1 = appearance
     sleep 0.2
   done
   sleep 1
-  # Deliver the demo Location through the app's own Open panel with
-  # pid-targeted keys (⌘O, ⇧⌘G, path, Return, Return) — NEVER
-  # `open -a`: with two same-bundle-id copies alive (/Applications +
-  # dist), Launch Services sometimes spawns a THIRD instance for the
-  # document instead of delivering here, and the scene then captures
-  # a folderless window. Keycodes and the panel flow are
-  # language-independent.
-  osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" >/dev/null 2>&1 || true
-  deliver_location
+  # Deliver the demo Location by pid-addressed AppleEvent — NEVER
+  # `open -a`: with several same-bundle-id copies alive, Launch
+  # Services sometimes spawns yet another instance for the document
+  # and the scene captures a folderless window.
+  swift $DRIVE/aeopen.swift $APP_PID ~/Code/meridian-docs >/dev/null
+  sleep 2.5
   set_sidebar visible   # location_present needs the headings on screen
   if ! location_present; then
     echo "launch: demo Location missing — retrying delivery" >&2
-    deliver_location
+    swift $DRIVE/aeopen.swift $APP_PID ~/Code/meridian-docs >/dev/null
+    sleep 2.5
     location_present || { echo "launch: demo Location never arrived" >&2; return 1; }
   fi
-  swift $DRIVE/winframe.swift $APP_PID 1052 784 >/dev/null
+  swift $DRIVE/winframe.swift $APP_PID 1052 784 $2 $3 >/dev/null
   sleep 1
-}
-
-deliver_location() {
-  swift $DRIVE/pkey.swift $APP_PID 31 cmd       # ⌘O Open…
-  sleep 1.2
-  swift $DRIVE/pkey.swift $APP_PID 5 cmd shift  # ⇧⌘G go-to-path bar
-  sleep 0.8
-  printf '%s' "$HOME/Code/meridian-docs" | pbcopy
-  swift $DRIVE/pkey.swift $APP_PID 9 cmd        # paste path (live-navigates)
-  sleep 0.5
-  swift $DRIVE/pkey.swift $APP_PID 36           # Return — close the bar
-  sleep 0.8
-  # Plain Return never reaches the panel's bridged content — confirm
-  # via the Open button's stable identifier instead.
-  swift $DRIVE/ax.swift $APP_PID id OKButton >/dev/null 2>&1 || true
-  sleep 2
 }
 
 # The folder Location is in place when the sidebar shows TWO plain
@@ -161,28 +140,33 @@ capture() { # $1 = output basename (no extension)
 
 quit_app() {
   # By keyboard equivalent (⌘Q), not menu title — titles are localized
-  # under --lang.
+  # under --lang. Kills only THIS worker's instance: other languages'
+  # instances are alive in parallel.
   if [[ -n $APP_PID ]]; then
     swift $DRIVE/ax.swift $APP_PID menukey q cmd >/dev/null 2>&1 || kill $APP_PID 2>/dev/null || true
     for _ in {1..25}; do kill -0 $APP_PID 2>/dev/null || break; sleep 0.2; done
     kill -0 $APP_PID 2>/dev/null && kill -9 $APP_PID 2>/dev/null || true
   fi
   APP_PID=""
-  # Sweep stray DIST instances (Launch Services has spawned surprise
-  # copies for document opens before). Matches the dist path only —
-  # never the installed /Applications app.
-  pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true
 }
 
-for lang in "${langs[@]}"; do
-  subdir=$(site_dir "$lang")
+# One worker = one language, scenes sequential within it. Runs as a
+# subshell so APP_PID/CAPTURE_ID/lang stay private to the worker.
+run_language() { # $1 = lang, $2 = worker index
+  lang=$1
+  local index=$2 failures=0
+  local subdir=$(site_dir "$lang")
+  # Cascaded frames keep every window fully on screen (occluded is
+  # fine — the window server keeps backing stores current — but
+  # offscreen regions would capture stale).
+  local x=$((120 + index * 56)) y=$((48 + index * 36))
   mkdir -p "$OUT${subdir:+/$subdir}"
   for mode in $appearances; do
     for name in $scenes; do
       suffix=""
       [[ $mode == dark ]] && suffix="-dark"
       echo "── scene $name ($mode${lang:+, $lang})"
-      if launch $mode && scene_$name; then
+      if launch $mode $x $y && scene_$name; then
         capture "${subdir:+$subdir/}app-$name$suffix"
       else
         echo "scene $name FAILED${lang:+ ($lang)} — skipping capture" >&2
@@ -191,7 +175,27 @@ for lang in "${langs[@]}"; do
       quit_app
     done
   done
+  echo $failures > "$OUT/.status-${subdir:-en}"
+}
+
+# Stagger worker starts so eight cold WebKit launches don't collide.
+index=0
+for worker_lang in "${langs[@]}"; do
+  if (( ${#langs[@]} > 1 )); then
+    ( run_language "$worker_lang" $index ) &
+    sleep 2
+  else
+    run_language "$worker_lang" $index
+  fi
+  index=$((index + 1))
 done
+wait
+
+failures=0
+for status_file in $OUT/.status-*(N); do
+  failures=$((failures + $(cat "$status_file")))
+done
+rm -f $OUT/.status-*
 if (( failures > 0 )); then
   echo "done with $failures FAILED scene(s) — fix and rerun those." >&2
   exit 1

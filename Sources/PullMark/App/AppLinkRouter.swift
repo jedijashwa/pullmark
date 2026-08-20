@@ -20,6 +20,10 @@ enum AppLinkRouter {
             SettingsOpener.open(tab: target.tab, anchor: target.anchor)
         } else if let compare = AppLinks.compareTarget(url) {
             AppState.deliverCompareOpen(file: compare.file, request: compare.request)
+        } else if CaptureChrome.isActive, url.host == "capture" {
+            // Screenshot-generator drive channel — only routable in
+            // capture runs, never in a normally launched app.
+            CaptureChrome.handleCaptureURL(url)
         } else {
             presentUnsupported(url)
         }

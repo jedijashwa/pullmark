@@ -210,6 +210,106 @@ case "id":
     press(found)
     print("pressed: id=\(wanted) \"\(foundTitle)\"")
 
+case "select-row", "disclose", "rows":
+    // Sidebar rows: SwiftUI lists discard pid-posted clicks and the
+    // rows carry no AXPress, but the backing outline honors AX
+    // selection — the background-tier replacement for global clicks.
+    // select-row sets the outline's selection to the matching row;
+    // disclose expands it (AXDisclosing). Rows are matched by their
+    // descendant text (file/folder names — data, language-independent).
+    // Optional ordinal for duplicate row texts (`select-row 2 <text>` =
+    // second match in row order): Open Files and a PR can both list a
+    // getting-started.md.
+    var rest = Array(args.dropFirst(3))
+    var wantedIndex = 1
+    if let first = rest.first, let n = Int(first), n >= 1 {
+        wantedIndex = n
+        rest.removeFirst()
+    }
+    let name = rest.joined(separator: " ")
+    guard args[2] == "rows" || !name.isEmpty else {
+        fail("usage: swift ax.swift <pid> \(args[2]) [<nth>] <row text>")
+    }
+    guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
+        fail("error: no windows for pid \(pid)")
+    }
+
+    func rowText(_ row: AXUIElement) -> String {
+        var texts: [String] = []
+        var queue = [row]
+        var visited = 0
+        while !queue.isEmpty, visited < 200 {
+            let element = queue.removeFirst()
+            visited += 1
+            // Labels hide in different places per row kind: static-text
+            // values on file rows, heading values on section/repo rows,
+            // titles/descriptions elsewhere. Take everything non-empty.
+            if let value = attribute(element, kAXValueAttribute) as? String, !value.isEmpty {
+                texts.append(value)
+            }
+            for candidate in [title(element), description(element)] where !candidate.isEmpty {
+                texts.append(candidate)
+            }
+            queue.append(contentsOf: children(element))
+        }
+        return texts.joined(separator: " ")
+    }
+
+    var tables: [AXUIElement] = []
+    var queue = windows
+    var visited = 0
+    while !queue.isEmpty, visited < 20_000 {
+        let element = queue.removeFirst()
+        visited += 1
+        let elementRole = role(element)
+        if elementRole == "AXWebArea" { continue }  // content tables aren't the sidebar
+        if elementRole == "AXOutline" || elementRole == "AXTable" { tables.append(element) }
+        queue.append(contentsOf: children(element))
+    }
+    if args[2] == "rows" {  // discovery: dump every row's text and child roles
+        for (t, table) in tables.enumerated() {
+            let rows = (attribute(table, "AXRows") as? [AXUIElement]) ?? []
+            print("table \(t): \(rows.count) rows")
+            for row in rows {
+                let kids = children(row).map { "\(role($0))\(title($0).isEmpty ? "" : "(\(title($0)))")" }
+                print("  [\(rowText(row))] kids: \(kids.joined(separator: " "))")
+            }
+        }
+        exit(0)
+    }
+    var exactMatches: [(AXUIElement, AXUIElement)] = []
+    var looseMatches: [(AXUIElement, AXUIElement)] = []
+    for table in tables {
+        guard let rows = attribute(table, "AXRows") as? [AXUIElement] else { continue }
+        for row in rows {
+            let text = rowText(row)
+            if text.caseInsensitiveCompare(name) == .orderedSame { exactMatches.append((table, row)) }
+            else if text.range(of: name, options: .caseInsensitive) != nil {
+                looseMatches.append((table, row))
+            }
+        }
+    }
+    // Exact matches first, then substring matches, both in row order —
+    // `select-row 2 calibration.md` can name a row whose text carries a
+    // localized suffix (comment counts) past a bare exact match.
+    let matches = exactMatches + looseMatches
+    guard matches.count >= wantedIndex else {
+        fail("error: no sidebar row matching '\(name)'"
+            + (wantedIndex > 1 ? " (wanted match #\(wantedIndex), found \(matches.count))" : "")
+            + " (\(tables.count) tables searched)")
+    }
+    let (table, row) = matches[wantedIndex - 1]
+    let matchedText = rowText(row)
+    if args[2] == "disclose" {
+        let error = AXUIElementSetAttributeValue(row, "AXDisclosing" as CFString, kCFBooleanTrue)
+        guard error == .success else { fail("error: AXDisclosing set failed (AXError \(error.rawValue))") }
+        print("disclosed: \"\(matchedText)\"")
+    } else {
+        let error = AXUIElementSetAttributeValue(table, "AXSelectedRows" as CFString, [row] as CFArray)
+        guard error == .success else { fail("error: AXSelectedRows set failed (AXError \(error.rawValue))") }
+        print("selected: \"\(matchedText)\"")
+    }
+
 case "menulist":
     for item in menuBarItems() {
         let cmdChar = (attribute(item, "AXMenuItemCmdChar") as? String) ?? ""

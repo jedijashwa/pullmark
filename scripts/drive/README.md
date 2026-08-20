@@ -13,12 +13,16 @@ step.
    focus. Use it for menus, buttons, checkboxes, links: anything with a
    name and an AXPress action. This is the default for everything it
    can express.
-2. **Pid-targeted raw events (`pclick.swift`, `pkey.swift`)** — CGEvents
+2. **Pid-targeted raw events (`pkey.swift`, `ptype.swift`)** — CGEvents
    delivered straight to a pid with `CGEvent.postToPid`. The visible
-   cursor never moves, but see the residue below: a fully inactive app
-   discards them, so they only help when the target app is already
-   active and you need a raw event AX can't express (exact-coordinate
-   clicks, key events with modifiers).
+   cursor never moves. A fully inactive app normally DISCARDS key
+   events (no key window to route to); PullMark's `-pm.captureChrome`
+   flag nominates one, which is how the screenshot generator types
+   into backgrounded instances. Pid-posted MOUSE events go nowhere
+   useful in this app — SwiftUI rows and WKWebView content both drop
+   them (a `pclick.swift` existed briefly and was removed for lying
+   about that) — use `ax.swift select-row` or the app's
+   `pullmark://capture/…` channel instead.
 3. **Global HID events (`click.swift`, `key.swift`, `drag.swift`,
    `hover.swift`, `gscroll.swift`) — last resort.** They move the real
    cursor and land on whatever is frontmost, locking the human out
@@ -61,16 +65,39 @@ step.
   sidebar deterministically instead of blind-pressing.
 - `ax.swift <pid> menulist` — every menu item with its keyboard
   equivalent as `[modifier-mask+char]`; discovery for `menukey`.
+- `ax.swift <pid> select-row [<nth>] <text>` — select a sidebar row by
+  its text via AX selection on the backing outline. SwiftUI rows
+  discard posted clicks and carry no AXPress; this is the background-
+  tier replacement for clicking them. Exact matches rank before
+  substring matches; `<nth>` picks among duplicates.
+- `ax.swift <pid> disclose <text>` — expand the matching row
+  (AXDisclosing).
+- `ax.swift <pid> rows` — dump every sidebar row's text; discovery for
+  select-row.
+- `ax.swift <pid> id <identifier>` — press by AXIdentifier, for system
+  chrome with stable ids (the Open panel's OKButton) whose titles are
+  localized.
 - All check `AXIsProcessTrusted()` and fail with a one-line error if
   the Accessibility permission is missing.
 
+## Pid-addressed AppleEvents (no Launch Services)
+
+- `aeopen.swift <pid> <path>` — deliver an open-document ('odoc')
+  event straight to the pid. `open -a` resolves through Launch
+  Services by bundle id and, with /Applications and dist both alive,
+  has spawned a THIRD instance for the document instead of delivering;
+  pid addressing can't miss.
+- `aeurl.swift <pid> <url>` — same for GetURL ('GURL'): pullmark://
+  links, including the screenshot generator's `pullmark://capture/…`
+  drive channel (routed only under `-pm.captureChrome`).
+
 ## Pid-targeted raw events
 
-- `pclick.swift <pid> <x> <y>` — mouse down/up posted to the pid. The
-  location is still a global screen point (the app resolves which of
-  its windows is hit) but the visible cursor does not move.
-- `pkey.swift <pid> <keycode> [cmd]` — key press posted to the pid,
-  flags cleared unless `cmd` is given.
+- `pkey.swift <pid> <keycode> [cmd] [shift] [opt] [ctrl]` — key press
+  posted to the pid; modifier args combine (`5 cmd shift` = ⇧⌘G).
+- `ptype.swift <pid> <text>` — type text as unicode key events. Never
+  touches the shared clipboard, so parallel instances (and the
+  human's copy buffer) stay unmolested.
 
 ## Global HID events (real cursor)
 
