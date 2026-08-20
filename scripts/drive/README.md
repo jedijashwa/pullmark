@@ -67,6 +67,11 @@ step.
 - `drag.swift <x1> <y1> <x2> <y2>` — press-drag-release across apps.
 - `gscroll.swift <x> <y> <dy> [cmd]` — scroll-wheel events at a point,
   optionally with ⌘ held (the app treats ⌘-scroll as zoom).
+- `gmouse.swift <x> <y> <right|hold|button4|button5>` — the gestures
+  the plain click can't express: right-click, press-and-hold (0.6 s,
+  e.g. the back/forward history menus), and mouse buttons 4/5. Global
+  by necessity: pid-targeted mouse events never reach NSToolbar
+  buttons even in the active app (verified live).
 
 ## Honest residue — what backgrounding cannot fake
 
