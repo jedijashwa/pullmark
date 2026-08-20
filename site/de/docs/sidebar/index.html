@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Die Seitenleiste — PullMark-Doku</title>
-<meta name="description" content="PullMarks Seitenleiste erklärt: Open Files und Vorschauen, Locations, Pull Requests, Recents — und was jedes Icon bedeutet.">
+<meta name="description" content="PullMarks Seitenleiste erklärt: Geöffnete Dateien und Vorschauen, Orte, Pull Requests, Zuletzt benutzt — und was jedes Icon bedeutet.">
 <link rel="canonical" href="https://pullmark.app/de/docs/sidebar/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
 <link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
@@ -16,7 +16,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
 <meta property="og:title" content="Die Seitenleiste — PullMark-Doku">
-<meta property="og:description" content="PullMarks Seitenleiste erklärt: Open Files und Vorschauen, Locations, Pull Requests, Recents — und was jedes Icon bedeutet.">
+<meta property="og:description" content="PullMarks Seitenleiste erklärt: Geöffnete Dateien und Vorschauen, Orte, Pull Requests, Zuletzt benutzt — und was jedes Icon bedeutet.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/de/docs/sidebar/">
 <meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
@@ -62,22 +62,22 @@
       <p class="kicker">docs</p>
       <h1>Die Seitenleiste</h1>
       <p class="article-lede">Vier Bereiche, geordnet danach, was Dinge
-      <em>bedeuten</em>, nicht woher sie kommen: was du offen hast (Open
-      Files), die Orte, die du durchstöberst (Locations), die Pull Requests,
-      die du reviewst — und wo du gewesen bist (Recents).</p>
+      <em>bedeuten</em>, nicht woher sie kommen: was du offen hast (Geöffnete
+      Dateien), die Ordner und Repos, die du durchstöberst (Orte), die Pull
+      Requests, die du reviewst — und wo du gewesen bist (Zuletzt benutzt).</p>
 
-      <h2 id="open-files">Open Files</h2>
+      <h2 id="open-files">Geöffnete Dateien</h2>
       <p>Das Arbeitsset: jedes Dokument, das du ausdrücklich geöffnet hast — aus
       dem Finder, per Drag &amp; Drop, mit ⌘O, über die
       <a href="/de/docs/cli/">Kommandozeile</a> oder indem du eine Datei aus
-      einer Location behalten hast. Flach, per Ziehen umsortierbar, jede Zeile
+      einem Ort behalten hast. Flach, per Ziehen umsortierbar, jede Zeile
       mit dem Hover-✕ entfernbar (oder ⌫ auf der ausgewählten Zeile).
       Rechtsklick auf die Bereichsüberschrift für <strong>Close All</strong>.</p>
 
       <h3 id="previews">Vorschauen</h3>
-      <p>Ein Einzelklick auf eine Datei in einer Location rendert sie sofort —
-      und sie erscheint in Open Files als <em>Vorschau</em>: ein kursiver
-      Eintrag, immer zuletzt im Bereich. Klick eine andere Datei und der
+      <p>Ein Einzelklick auf eine Datei in einem Ort rendert sie sofort —
+      und sie erscheint in „Geöffnete Dateien" als <em>Vorschau</em>: ein
+      kursiver Eintrag, immer zuletzt im Bereich. Klick eine andere Datei und der
       Vorschau-Eintrag wird ersetzt — Stöbern durch einen großen Baum stapelt
       also nie Zeilen auf. Es ist dieselbe Idee wie die Vorschau-Tabs in VS
       Code oder Xcodes temporärer Editor, mit derselben Kursivschrift.</p>
@@ -97,19 +97,20 @@
       in den Einstellungen um.</p>
       <p><strong>Remote-Repos previewen genauso, am selben Ort.</strong> Beim
       Stöbern durch den Baum eines GitHub-Repos, oder beim Folgen von Links in
-      einem Remote-Dokument, landet derselbe eine kursive Eintrag in Open
-      Files — mit Buch-Icon und einer <code>owner/repo @ ref</code>-Zweitzeile,
-      weil die Datei nicht auf deinem Mac liegt. Es gibt immer nur
+      einem Remote-Dokument, landet derselbe eine kursive Eintrag in
+      „Geöffnete Dateien" — mit Buch-Icon und einer
+      <code>owner/repo @ ref</code>-Zweitzeile, weil die Datei nicht auf
+      deinem Mac liegt. Es gibt immer nur
       <em>eine</em> Vorschau pro Fenster, lokal oder remote: Etwas anderes zu
       previewen ersetzt, was du davor angesehen hast. Ein Remote-Doc zu
       behalten (Doppelklick oder Keep Open) heftet es bei seinem Repo ab — es
-      wandert in die feste Liste des Repos unter Locations. ⌘K öffnet direkt
+      wandert in die feste Liste des Repos unter „Orte". ⌘K öffnet direkt
       fest, denn eine URL einzufügen ist ausdrückliche Absicht.</p>
-      <p>Jede Open-Files-Zeile, die in einer offenen Location liegt, bekommt
-      <strong>Reveal in Location</strong> ins Rechtsklick-Menü — der Sprung
-      zurück von „was ich lese" zu „wo es wohnt".</p>
+      <p>Jede Zeile unter „Geöffnete Dateien", die in einem offenen Ort liegt,
+      bekommt <strong>Reveal in Location</strong> ins Rechtsklick-Menü — der
+      Sprung zurück von „was ich lese" zu „wo es wohnt".</p>
 
-      <h2 id="locations">Locations</h2>
+      <h2 id="locations">Orte</h2>
       <p>Durchstöberbare Wurzeln, wo immer sie liegen. Zwei Arten teilen sich
       den Bereich, unterschieden per Icon:</p>
       <table>
@@ -126,8 +127,8 @@
       Branches-und-Worktrees-Menü:</p>
       <ul>
         <li><strong>Worktrees</strong> — jeder Worktree des Repos, mit Häkchen
-        auf dem, der diese Zeile ist; wähl einen anderen, um ihn als eigene
-        Location zu öffnen. Worktrees werden von PullMark nie ausgecheckt oder
+        auf dem, der diese Zeile ist; wähl einen anderen, um ihn als eigenen
+        Ort zu öffnen. Worktrees werden von PullMark nie ausgecheckt oder
         gewechselt — es öffnet den Ordner, der schon da ist.</li>
         <li><strong>View Branch from GitHub</strong> — lies die Dateien eines
         anderen Branches remote, ohne deinen Checkout anzufassen. Ein Branch,
@@ -143,8 +144,8 @@
       Markdown-Baum des Repos. Die behaltenen Docs des Repos sitzen über dem
       Baum, damit sie in einem großen Repo nie untergehen; ein behaltenes Doc,
       das im Baum sichtbar ist, wird einfach dort dargestellt. (Ein Doc, das du
-      nur previewst, erscheint in <a href="#previews">Open Files</a>, nicht
-      hier.)</p>
+      nur previewst, erscheint unter <a href="#previews">Geöffnete Dateien</a>,
+      nicht hier.)</p>
       <p>Ein Ordner, dessen Pfad nicht mehr auflöst (ein ausgeworfenes Volume,
       ein gelöschter Worktree), wird mit Fragezeichen-Badge gedimmt, statt zu
       verschwinden — er erwacht von selbst wieder, wenn der Pfad
@@ -172,10 +173,10 @@
       hinzugefügt, <strong>−</strong>-Kreis (rot) für entfernt,
       <strong>→</strong>-Kreis für umbenannt, Stift-Kreis für geändert.</p>
 
-      <h2 id="recents">Recents</h2>
+      <h2 id="recents">Zuletzt benutzt</h2>
       <p>Kürzlich geöffnete Dateien, Ordner und Pull Requests, die oben nicht
       schon sichtbar sind. PR-Einträge tragen ihr Live-Status-Icon; ein
-      Recent, dessen Datei verschwunden ist, wird gedimmt (Uhr-Badge), statt
+      Eintrag, dessen Datei verschwunden ist, wird gedimmt (Uhr-Badge), statt
       zu verschwinden, und erwacht wieder, wenn der Pfad zurückkommt — gebaut
       für Branch-Wechsel und ausgeworfene Volumes. Rechtsklick auf die
       Überschrift für <strong>Clear Recents</strong>.</p>
@@ -184,7 +185,7 @@
       <p>Fahr über eine beliebige Zeile der obersten Ebene für das ✕ — es
       entfernt die Zeile aus der Seitenleiste, nie etwas von der Platte oder
       von GitHub. ⌫ auf einer ausgewählten Zeile tut dasselbe. Dateien im Baum
-      einer Location haben kein ✕: Sie sind Inhalt eines Ortes, keine
+      eines Ortes haben kein ✕: Sie sind sein Inhalt, keine
       Seitenleisten-Einträge.</p>
 
       <h2 id="icon-glossary">Icon-Glossar</h2>
@@ -194,14 +195,14 @@
         <tr><td>Dokument, kursiver Name</td><td>Die Vorschau — ersetzt durch deinen nächsten Einzelklick</td></tr>
         <tr><td>Ordner</td><td>Ein lokaler Ordner</td></tr>
         <tr><td>Ordner + ?</td><td>Ordner gerade nicht auffindbar — gedimmt, erwacht wieder</td></tr>
-        <tr><td>Dokument + Uhr</td><td>Ein Recent, dessen Datei fehlt</td></tr>
+        <tr><td>Dokument + Uhr</td><td>Ein Eintrag unter „Zuletzt benutzt", dessen Datei fehlt</td></tr>
         <tr><td>Geschlossenes Buch</td><td>Ein GitHub-Repository (als Zeilen-Icon: remote durchstöbert;
           als kleine nachgestellte Marke: dieser lokale Ordner ist ein Checkout davon)</td></tr>
         <tr><td>Branch-Glyphe + Name</td><td>Der Branch-Chip — Klick für Branches und Worktrees</td></tr>
         <tr><td>Pull-Request-Pfeile</td><td>Ein Pull Request</td></tr>
         <tr><td>Ablagefach</td><td>Review Requests — PRs, die auf dein Review warten</td></tr>
         <tr><td>Sprechblase + Zahl</td><td>An einer PR-Datei: unaufgelöste Review-Kommentare. An einer
-          Open-Files-Zeile: <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
+          Zeile unter „Geöffnete Dateien": <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
         <tr><td>Farbiger Punkt (linke Kante)</td><td>Eine ungelesene Review-Anfrage</td></tr>
         <tr><td>✕ im Kreis (bei Hover)</td><td>Aus der Seitenleiste entfernen / Vorschau verwerfen</td></tr>
       </table>

@@ -100,10 +100,10 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
       verlassen kann:</p>
       <ul>
         <li><strong>Dateien</strong> landen als feste Einträge im Bereich
-        <a href="/de/docs/sidebar/#open-files">Open Files</a> der Seitenleiste,
-        und angezeigt wird die zuletzt übergebene.</li>
+        <a href="/de/docs/sidebar/#open-files">Geöffnete Dateien</a> der
+        Seitenleiste, und angezeigt wird die zuletzt übergebene.</li>
         <li><strong>Ordner</strong> — Git-Worktrees eingeschlossen — werden zu
-        <a href="/de/docs/sidebar/#locations">Locations</a>: durchstöberbare
+        <a href="/de/docs/sidebar/#locations">Orten</a>: durchstöberbare
         Bäume der Markdown-Dateien darin.</li>
         <li><strong>Läuft schon?</strong> Alles öffnet im vordersten Fenster.
         Eine zweite Instanz der App wird nie gestartet.</li>
@@ -115,15 +115,15 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
 
       <h2 id="worktrees">Worktrees — und auf eine Datei zeigen</h2>
       <p>Übergib einen Ordner und eine Datei zusammen und du bekommst beides
-      auf einmal: Der Ordner öffnet als Location, die Datei öffnet fest und
+      auf einmal: Der Ordner öffnet als Ort, die Datei öffnet fest und
       wird angezeigt. Das ist das ganze Rezept für „öffne diesen Worktree und
       zeig mir dieses Doc":</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>Der Baum des Worktrees landet in Locations (mit seinem Branch-Chip,
+      <p>Der Baum des Worktrees landet unter „Orte" (mit seinem Branch-Chip,
       denn ein Worktree ist einfach ein Git-Checkout), <code>plan.md</code>
-      sitzt fest in Open Files und ist gerendert. Rechtsklick darauf und
+      sitzt fest in „Geöffnete Dateien" und ist gerendert. Rechtsklick darauf und
       <strong>Reveal in Location</strong> springt dahin, wo sie im Baum wohnt.
-      Das läuft genauso, wenn die Location schon offen war — eine Datei zu
+      Das läuft genauso, wenn der Ort schon offen war — eine Datei zu
       öffnen, die darin liegt, erzeugt nie eine zweite Welt, nur einen Eintrag
       im Arbeitsset.</p>
       <p>Fürs Ordner-Datei-Paar ist die Reihenfolge egal, angezeigt wird aber
@@ -144,7 +144,7 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># zwei Dateien, old.md die Basis</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># ein Worktree, plan.md als Diff</span></code></pre>
-      <p>Ordner, die du danebenstellst, öffnen weiterhin als Locations, und
+      <p>Ordner, die du danebenstellst, öffnen weiterhin als Orte, und
       jede Form hat ihren Zwilling in der App, im Compare-Menü der Toolbar
       (samt <strong>Compare Revisions…</strong> und <strong>Compare with
       File…</strong>). Weil <code>--diff</code> und <code>--diff-with</code>
@@ -162,7 +162,7 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
       <h2 id="examples">Beispiele</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># eine Datei lesen</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># einen Ordner durchstöbern</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># eine Location plus ein Dokument</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># ein Ort plus ein Dokument</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># ein Worktree, ein Doc im Bild</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># was die letzten Edits geändert haben</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- beendet das Parsen von Optionen</span></code></pre>

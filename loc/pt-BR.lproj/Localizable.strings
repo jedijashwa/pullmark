@@ -70,10 +70,10 @@
 "Choose the file to compare with — it becomes the old side." = "Escolha o arquivo com que comparar — ele vira o lado antigo.";
 "Choose which items the toolbar shows, and their order" = "Escolha quais itens a barra de ferramentas mostra, e em que ordem";
 "Clear Menu" = "Limpar Menu";
-"Clear Recents" = "Limpar Recents";
+"Clear Recents" = "Limpar Recentes";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "Clique num atalho, ou selecione uma linha e pressione Return, depois digite as teclas novas. Pressione Apagar para remover um atalho, Escape para cancelar.";
 "Click to type a zoom level" = "Clique para digitar um nível de zoom";
-"Clicking files in Locations:" = "Clicar em arquivos em Locations:";
+"Clicking files in Locations:" = "Clicar em arquivos em Localizações:";
 "Close" = "Fechar";
 "Close All" = "Fechar Tudo";
 "Close All Files" = "Fechar Todos os Arquivos";
@@ -149,8 +149,8 @@
 "Dismiss — this version won't be suggested again" = "Dispensar — esta versão não será sugerida de novo";
 "Don't ask again for this repository" = "Não perguntar de novo para este repositório";
 "Done" = "Concluído";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles e pastas ocultas em Locations — como ⇧⌘. no Finder";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles e pastas ocultas em Locations — ⇧⌘. também alterna isto, como no Finder";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles e pastas ocultas em Localizações — como ⇧⌘. no Finder";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles e pastas ocultas em Localizações — ⇧⌘. também alterna isto, como no Finder";
 "Down Arrow" = "Seta para baixo";
 "Download" = "Baixar";
 "Downloads the update, verifies its signature, and installs it in place" = "Baixa a atualização, verifica sua assinatura e a instala no lugar";
@@ -197,7 +197,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Esconde solicitações de revisão sem arquivos Markdown — o PullMark não tem nada a mostrar para elas";
 "History" = "Histórico";
 "Home" = "Início";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Passe o mouse sobre qualquer bloco para ver o balão de nota (selecione texto antes para citá-lo), ou pressione ⌥⌘M. Edite e apague a partir de cada balão; apagar uma nota é como ela se resolve. As linhas de Open Files mostram um chip com a contagem enquanto um documento ainda carrega notas, e Visualizar → Ocultar Notas de Margem limpa a página para uma leitura sem nada.";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Passe o mouse sobre qualquer bloco para ver o balão de nota (selecione texto antes para citá-lo), ou pressione ⌥⌘M. Edite e apague a partir de cada balão; apagar uma nota é como ela se resolve. As linhas de Arquivos Abertos mostram um chip com a contagem enquanto um documento ainda carrega notas, e Visualizar → Ocultar Notas de Margem limpa a página para uma leitura sem nada.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "O quanto o texto pode se esticar antes de quebrar. Standard mantém a clássica medida de livro; Wide cabe mais na tela e ainda limita o comprimento da linha; Full Width dá ao documento a janela inteira — útil em tela cheia. Vale em todo lugar, ao vivo, e combina com qualquer tema.";
 "How wide the rendered text column runs" = "A largura da coluna de texto renderizado";
 "In a local document" = "Num documento local";
@@ -222,7 +222,7 @@
 "Line %lld (old)" = "Linha %lld (antiga)";
 "Line numbers" = "Números de linha";
 "Loading repo files…" = "Carregando os arquivos do repositório…";
-"Locations" = "Locations";
+"Locations" = "Localizações";
 "Make Default Again" = "Tornar Padrão de Novo";
 "Make PullMark the Default" = "Tornar o PullMark o Padrão";
 "Make the document bigger" = "Aumentar o documento";
@@ -260,7 +260,7 @@
 "Open" = "Abrir";
 "Open Branch Separately" = "Abrir a Branch Separadamente";
 "Open File or Folder" = "Abrir Arquivo ou Pasta";
-"Open Files" = "Open Files";
+"Open Files" = "Arquivos Abertos";
 "Open File…" = "Abrir Arquivo…";
 "Open Folder…" = "Abrir Pasta…";
 "Open Fully" = "Abrir por Completo";
@@ -302,7 +302,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "Fixado no commit %@ — a ponta do ref no último fetch desta sessão.";
 "Posts immediately — file comments can't join a pending review." = "Publica imediatamente — comentários de arquivo não entram numa revisão pendente.";
 "Preview First" = "Prévia Primeiro";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Prévia Primeiro mostra um arquivo com um clique sem mantê-lo — uma única entrada em itálico (em Open Files, ou sob o repositório do GitHub dele) que a próxima prévia substitui. Dê um duplo clique num arquivo, ou simplesmente comece a editar, para mantê-lo aberto. Abrir por Completo mantém cada arquivo em que você clica.";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Prévia Primeiro mostra um arquivo com um clique sem mantê-lo — uma única entrada em itálico (em Arquivos Abertos, ou sob o repositório do GitHub dele) que a próxima prévia substitui. Dê um duplo clique num arquivo, ou simplesmente comece a editar, para mantê-lo aberto. Abrir por Completo mantém cada arquivo em que você clica.";
 "Previous File" = "Arquivo Anterior";
 "Previous Markdown file in this pull request" = "Arquivo Markdown anterior neste pull request";
 "Previous match" = "Ocorrência anterior";
@@ -327,7 +327,7 @@
 "Re-read this file from disk" = "Reler este arquivo do disco";
 "Reaction state unavailable — try refreshing the PR." = "Estado da reação indisponível — tente atualizar o PR.";
 "Reading" = "Leitura";
-"Recents" = "Recents";
+"Recents" = "Recentes";
 "Redo" = "Refazer";
 "Refresh" = "Atualizar";
 "Refresh Folder" = "Atualizar Pasta";
@@ -337,7 +337,7 @@
 "Reload Document" = "Recarregar Documento";
 "Remember my selection" = "Lembrar minha escolha";
 "Remote Branches" = "Branches Remotas";
-"Remove from Recents" = "Remover de Recents";
+"Remove from Recents" = "Remover dos Recentes";
 "Remove from Sidebar" = "Remover da Barra Lateral";
 "Remove the PullMark disk image?" = "Remover a imagem de disco do PullMark?";
 "Rendered" = "Renderizado";
@@ -360,7 +360,7 @@
 "Retry Upload" = "Reenviar";
 "Return" = "Return";
 "Reveal in Finder" = "Mostrar no Finder";
-"Reveal in Location" = "Mostrar no Location";
+"Reveal in Location" = "Mostrar na Localização";
 "Reveal on GitHub" = "Mostrar no GitHub";
 "Reveal resolved review conversations in the Result view" = "Mostra as conversas de revisão resolvidas na visão Resultado";
 "Revert Last Edit" = "Reverter Última Edição";
@@ -445,7 +445,7 @@
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Os temas reestilizam o Markdown e os diffs renderizados, e seguem a aparência Light/Dark. Solte arquivos .css na pasta Themes para adicionar os seus — eles se aplicam por cima do visual do GitHub. As prévias do Quick Look também seguem seu tema (temas personalizados voltam para a base GitHub por lá).";
 "These keys are fixed and can't be changed." = "Estas teclas são fixas e não podem ser mudadas.";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "Este comentário ainda está sincronizando com o GitHub — tente descartá-lo de novo daqui a pouco.";
-"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Esta pasta tem mais arquivos Markdown do que o PullMark escaneia — abra uma subpasta como seu próprio Location para ver o resto";
+"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Esta pasta tem mais arquivos Markdown do que o PullMark escaneia — abra uma subpasta como sua própria Localização para ver o resto";
 "This pull request was updated on GitHub." = "Este pull request foi atualizado no GitHub.";
 "This repository has no GitHub remote." = "Este repositório não tem um remote do GitHub.";
 "This version (%@) doesn't know %@ — it may point at a feature from a newer release, or one that has moved. Checking for updates usually resolves it." = "Esta versão (%@) não conhece %@ — pode ser que aponte para um recurso de uma release mais nova, ou para um que mudou de lugar. Buscar atualizações costuma resolver.";
@@ -476,7 +476,7 @@
 "With a folder selected" = "Com uma pasta selecionada";
 "With a local file or folder in a GitHub repository selected" = "Com um arquivo ou pasta local num repositório do GitHub selecionado";
 "With a local file or folder selected" = "Com um arquivo ou pasta local selecionado";
-"With files in Open Files" = "Com arquivos em Open Files";
+"With files in Open Files" = "Com arquivos em Arquivos Abertos";
 "Works with private repos using your existing gh or git credentials." = "Funciona com repositórios privados usando suas credenciais existentes do gh ou do git.";
 "You're on %@." = "Você está em %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Seus atalhos personalizados serão removidos. Isto não pode ser desfeito.";

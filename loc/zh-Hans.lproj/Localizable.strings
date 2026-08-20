@@ -74,7 +74,7 @@
 "Clear Recents" = "清除最近使用";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "点击某条快捷键，或选中一行按 Return，然后按下新的按键。按删除键可移除快捷键，按 Escape 取消。";
 "Click to type a zoom level" = "点击可输入缩放比例";
-"Clicking files in Locations:" = "点击 Locations 中的文件：";
+"Clicking files in Locations:" = "点击“位置”中的文件：";
 "Close" = "关闭";
 "Close All" = "全部关闭";
 "Close All Files" = "关闭所有文件";
@@ -150,8 +150,8 @@
 "Dismiss — this version won't be suggested again" = "忽略——不会再推荐这个版本";
 "Don't ask again for this repository" = "不再为此仓库询问";
 "Done" = "完成";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Locations 中的点文件和隐藏文件夹——与访达里的 ⇧⌘. 相同";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Locations 中的点文件和隐藏文件夹——⇧⌘. 同样可以切换，和访达一样";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "“位置”中的点文件和隐藏文件夹——与访达里的 ⇧⌘. 相同";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "“位置”中的点文件和隐藏文件夹——⇧⌘. 同样可以切换，和访达一样";
 "Down Arrow" = "下箭头";
 "Download" = "下载";
 "Downloads the update, verifies its signature, and installs it in place" = "下载更新、校验签名，并就地安装";
@@ -198,7 +198,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "隐藏不含 Markdown 文件的审查请求——PullMark 对它们无可展示";
 "History" = "历史";
 "Home" = "Home";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "悬停任意区块即可看到批注气泡（先选中文字即可引用它），也可以按 ⌥⌘M。在每个气泡上编辑和删除；删除一条批注就是解决它。文档还带着批注时，Open Files 中的行会显示一枚计数标签；想清净阅读时，用“显示”菜单里的 隐藏页边批注 清屏。";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "悬停任意区块即可看到批注气泡（先选中文字即可引用它），也可以按 ⌥⌘M。在每个气泡上编辑和删除；删除一条批注就是解决它。文档还带着批注时，“打开的文件”中的行会显示一枚计数标签；想清净阅读时，用“显示”菜单里的 隐藏页边批注 清屏。";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "文字在折行前可以伸展多远。Standard 保持经典的书本式行长；Wide 在屏幕上容纳更多内容，同时仍为行长设上限；Full Width 把整个窗口都交给文档——全屏时很好用。处处生效、即时生效，也与任何主题相处融洽。";
 "How wide the rendered text column runs" = "渲染文本栏的宽度";
 "In a local document" = "在本地文档中";
@@ -223,7 +223,7 @@
 "Line %lld (old)" = "第 %lld 行（旧）";
 "Line numbers" = "行号";
 "Loading repo files…" = "正在载入仓库文件…";
-"Locations" = "Locations";
+"Locations" = "位置";
 "Make Default Again" = "重新设为默认";
 "Make PullMark the Default" = "把 PullMark 设为默认";
 "Make the document bigger" = "放大文档";
@@ -261,7 +261,7 @@
 "Open" = "打开";
 "Open Branch Separately" = "单独打开分支";
 "Open File or Folder" = "打开文件或文件夹";
-"Open Files" = "Open Files";
+"Open Files" = "打开的文件";
 "Open File…" = "打开文件…";
 "Open Folder…" = "打开文件夹…";
 "Open Fully" = "完整打开";
@@ -303,7 +303,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "已钉在提交 %@ 上——即本次会话最后一次抓取时该 ref 的顶端。";
 "Posts immediately — file comments can't join a pending review." = "立即发表——文件评论无法加入待提交审查。";
 "Preview First" = "先预览";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "“先预览”让单击即可查看文件而不保留它——只有一条斜体条目（在 Open Files 中，或在它所属的 GitHub 仓库下），下一次预览会把它替换掉。双击文件，或者直接开始编辑，就能把它保持打开。“完整打开”则会保留你点击的每一个文件。";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "“先预览”让单击即可查看文件而不保留它——只有一条斜体条目（在“打开的文件”中，或在它所属的 GitHub 仓库下），下一次预览会把它替换掉。双击文件，或者直接开始编辑，就能把它保持打开。“完整打开”则会保留你点击的每一个文件。";
 "Previous File" = "上一个文件";
 "Previous Markdown file in this pull request" = "此拉取请求中的上一个 Markdown 文件";
 "Previous match" = "上一个匹配项";
@@ -361,7 +361,7 @@
 "Retry Upload" = "重试上传";
 "Return" = "Return";
 "Reveal in Finder" = "在访达中显示";
-"Reveal in Location" = "在 Locations 中显示";
+"Reveal in Location" = "在“位置”中显示";
 "Reveal on GitHub" = "在 GitHub 上显示";
 "Reveal resolved review conversations in the Result view" = "在“结果”视图中显示已解决的审查会话";
 "Revert Last Edit" = "还原上次编辑";
@@ -446,7 +446,7 @@
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "主题会重新装点渲染后的 Markdown 和差异，并跟随浅色/深色外观。把 .css 文件放进 Themes 文件夹即可添加自己的主题——它们叠加在 GitHub 外观之上。快速查看预览也跟随你的主题（自定义主题在那里回落到它们的 GitHub 基底）。";
 "These keys are fixed and can't be changed." = "这些按键是固定的，无法更改。";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "该评论仍在与 GitHub 同步——请稍后再试着丢弃它。";
-"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "这个文件夹的 Markdown 文件多于 PullMark 扫描的上限——把子文件夹作为独立的 Location 打开即可看到其余部分";
+"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "这个文件夹的 Markdown 文件多于 PullMark 扫描的上限——把子文件夹作为独立的“位置”打开即可看到其余部分";
 "This pull request was updated on GitHub." = "此拉取请求在 GitHub 上有更新。";
 "This repository has no GitHub remote." = "此仓库没有 GitHub 远端。";
 "This version (%@) doesn't know %@ — it may point at a feature from a newer release, or one that has moved. Checking for updates usually resolves it." = "此版本（%@）不认识 %@——它可能指向某个更新版本中的功能，或指向已经挪走的功能。检查更新通常就能解决。";
@@ -477,7 +477,7 @@
 "With a folder selected" = "选中文件夹时";
 "With a local file or folder in a GitHub repository selected" = "选中位于 GitHub 仓库中的本地文件或文件夹时";
 "With a local file or folder selected" = "选中本地文件或文件夹时";
-"With files in Open Files" = "Open Files 中有文件时";
+"With files in Open Files" = "“打开的文件”中有文件时";
 "Works with private repos using your existing gh or git credentials." = "使用你现有的 gh 或 git 凭据即可处理私有仓库。";
 "You're on %@." = "你当前在 %@ 上。";
 "Your custom shortcuts will be removed. This can't be undone." = "你自定的快捷键将被移除。此操作无法撤销。";

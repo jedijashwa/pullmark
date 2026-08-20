@@ -580,7 +580,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Needed when launched via `swift run` (no bundle): become a regular,
         // focusable app with a menu bar.
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        // Capture instances draw active chrome without focus and must
+        // NOT activate — the whole point is not stealing the user's
+        // input while the generator drives many instances at once.
+        CaptureChrome.installIfRequested()
+        if !CaptureChrome.isActive {
+            NSApp.activate(ignoringOtherApps: true)
+        }
         Appearance.applyCurrent()
         // Pin the launch language before any UI (or the user) can
         // change the stored value — the Settings row compares against it.

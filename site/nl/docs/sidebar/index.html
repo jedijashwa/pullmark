@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>De zijbalk — PullMark Docs</title>
-<meta name="description" content="PullMarks zijbalk uitgelegd: Open Files en previews, Locations, Pull Requests, Recents — en wat elk icoon betekent.">
+<meta name="description" content="PullMarks zijbalk uitgelegd: Geopende bestanden en previews, Locaties, Pull Requests, Recent — en wat elk icoon betekent.">
 <link rel="canonical" href="https://pullmark.app/nl/docs/sidebar/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
 <link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
@@ -16,7 +16,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
 <meta property="og:title" content="De zijbalk — PullMark Docs">
-<meta property="og:description" content="PullMarks zijbalk uitgelegd: Open Files en previews, Locations, Pull Requests, Recents — en wat elk icoon betekent.">
+<meta property="og:description" content="PullMarks zijbalk uitgelegd: Geopende bestanden en previews, Locaties, Pull Requests, Recent — en wat elk icoon betekent.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/nl/docs/sidebar/">
 <meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
@@ -66,17 +66,17 @@
       hebt, de plekken waar je bladert, de pull requests die je reviewt, en
       waar je bent geweest.</p>
 
-      <h2 id="open-files">Open Files</h2>
+      <h2 id="open-files">Geopende bestanden</h2>
       <p>De werkset: elk document dat je expliciet hebt geopend — vanuit de
       Finder, met slepen &amp; neerzetten, ⌘O, de
       <a href="/nl/docs/cli/">command line</a>, of door een bestand uit een
-      Location vast te houden. Plat, herordenbaar door te slepen, elke rij
+      Locatie vast te houden. Plat, herordenbaar door te slepen, elke rij
       te verwijderen met de ✕ bij hover (of ⌫ op de geselecteerde rij).
       Rechtsklik op de sectiekop voor <strong>Close All</strong>.</p>
 
       <h3 id="previews">Previews</h3>
-      <p>Eén klik op een bestand binnen een Location en het rendert direct —
-      en verschijnt in Open Files als <em>preview</em>: één cursieve regel,
+      <p>Eén klik op een bestand binnen een Locatie en het rendert direct —
+      en verschijnt in Geopende bestanden als <em>preview</em>: één cursieve regel,
       altijd als laatste in de sectie. Klik op een ander bestand en de
       preview-regel wordt vervangen, dus bladeren door een grote boom
       stapelt nooit rijen op. Het is hetzelfde idee als de preview-tabs van
@@ -98,19 +98,19 @@
       <p><strong>Remote repo's previewen op dezelfde manier, op dezelfde
       plek.</strong> Bladeren door de boom van een GitHub-repo, of links
       volgen binnen een remote document, zet dezelfde ene cursieve regel in
-      Open Files — met een boekicoon en een tweede regel
+      Geopende bestanden — met een boekicoon en een tweede regel
       <code>owner/repo @ ref</code>, omdat het bestand niet op je Mac
       staat. Er is altijd maar <em>één</em> preview per venster, lokaal of
       remote: iets previewen vervangt wat je daarvoor aan het previewen
       was. Een remote doc vasthouden (dubbelklik of Keep Open) is wat hem
       bij zijn repo archiveert — hij verhuist naar de vastgezette lijst van
-      de repo onder Locations. ⌘K opent direct vastgezet, want een URL
+      de repo onder Locaties. ⌘K opent direct vastgezet, want een URL
       plakken is expliciete intentie.</p>
-      <p>Elke rij in Open Files die binnen een open Location woont krijgt
+      <p>Elke rij in Geopende bestanden die binnen een open Locatie woont krijgt
       <strong>Reveal in Location</strong> in zijn rechtsklikmenu — de sprong
       terug van "wat ik aan het lezen ben" naar "waar het woont".</p>
 
-      <h2 id="locations">Locations</h2>
+      <h2 id="locations">Locaties</h2>
       <p>Doorbladerbare startpunten, waar ze ook wonen. Twee soorten delen
       de sectie, te onderscheiden aan het icoon:</p>
       <table>
@@ -128,7 +128,7 @@
       <ul>
         <li><strong>Worktrees</strong> — elke worktree van de repo, met een
         vinkje op degene die deze rij is; kies een andere om die als eigen
-        Location te openen. Worktrees worden vanuit PullMark nooit
+        Locatie te openen. Worktrees worden vanuit PullMark nooit
         uitgecheckt of omgeschakeld — de app opent de map die er al
         staat.</li>
         <li><strong>View Branch from GitHub</strong> — lees de bestanden van
@@ -146,7 +146,7 @@
       vastgehouden docs van de repo staan boven de boom, zodat ze nooit
       verdrinken onder een grote repo; een vastgehouden doc die in de boom
       zichtbaar is wordt daar gewoon weergegeven. (Een doc die je alleen
-      aan het previewen bent staat in <a href="#previews">Open Files</a>,
+      aan het previewen bent staat in <a href="#previews">Geopende bestanden</a>,
       niet hier.)</p>
       <p>Een map waarvan het pad niet meer oplost (een niet-geactiveerd
       volume, een verwijderde worktree) dimt met een vraagtekenbadge in
@@ -176,7 +176,7 @@
       voor verwijderd, <strong>→</strong> in cirkel voor hernoemd, potlood
       in cirkel voor gewijzigd.</p>
 
-      <h2 id="recents">Recents</h2>
+      <h2 id="recents">Recent</h2>
       <p>Recent geopende bestanden, mappen en pull requests die hierboven
       niet al zichtbaar zijn. PR-regels dragen hun live statusicoon; een
       recent item waarvan het bestand zoek is dimt (klokbadge) in plaats
@@ -188,7 +188,7 @@
       <p>Hover over een rij op het hoogste niveau voor de ✕ — die haalt de
       rij uit de zijbalk, nooit iets van schijf of van GitHub. ⌫ op een
       geselecteerde rij doet hetzelfde. Bestanden binnen de boom van een
-      Location hebben geen ✕: ze zijn de inhoud van een plek, geen
+      Locatie hebben geen ✕: ze zijn de inhoud van een plek, geen
       zijbalkitems.</p>
 
       <h2 id="icon-glossary">Icoonoverzicht</h2>

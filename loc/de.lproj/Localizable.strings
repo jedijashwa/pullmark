@@ -1,8 +1,10 @@
 // PullMark — German (de) app strings. Spec: docs/specs/app-i18n.md.
 // Keys are the English source strings; see loc/_inventory.json.
 // Register: du-form; macOS menu names per Apple (Ablage/Bearbeiten/
-// Darstellung/Gehe zu); sidebar section names (Open Files, Locations,
-// Recents) stay English because they are not localizable in the app.
+// Darstellung/Gehe zu); sidebar section names follow Finder's German
+// (Locations = Orte, Recents = Zuletzt benutzt), with Open Files as
+// Geöffnete Dateien — only Pull Requests stays English, as in German
+// developer usage.
 
 " (none)" = " (ohne)";
 "%lld Markdown files changed" = "%lld Markdown-Dateien geändert";
@@ -74,10 +76,10 @@
 "Choose the file to compare with — it becomes the old side." = "Wähl die Datei zum Vergleichen — sie wird die alte Seite.";
 "Choose which items the toolbar shows, and their order" = "Wähle, welche Elemente die Symbolleiste zeigt, und in welcher Reihenfolge";
 "Clear Menu" = "Menü löschen";
-"Clear Recents" = "Recents leeren";
+"Clear Recents" = "„Zuletzt benutzt“ leeren";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "Klick ein Kürzel an oder wähl eine Zeile und drück Return, dann tipp die neuen Tasten. Löschen entfernt ein Kürzel, Escape bricht ab.";
 "Click to type a zoom level" = "Klicken, um eine Zoomstufe einzutippen";
-"Clicking files in Locations:" = "Klick auf Dateien in Locations:";
+"Clicking files in Locations:" = "Klick auf Dateien in „Orte“:";
 "Close" = "Schließen";
 "Close All" = "Alle schließen";
 "Close All Files" = "Alle Dateien schließen";
@@ -153,8 +155,8 @@
 "Dismiss — this version won't be suggested again" = "Ausblenden — diese Version wird nicht wieder vorgeschlagen";
 "Don't ask again for this repository" = "Für dieses Repository nicht mehr fragen";
 "Done" = "Fertig";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles und versteckte Ordner in Locations — wie ⇧⌘. im Finder";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles und versteckte Ordner in Locations — ⇧⌘. schaltet das auch um, wie im Finder";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles und versteckte Ordner in „Orte“ — wie ⇧⌘. im Finder";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles und versteckte Ordner in „Orte“ — ⇧⌘. schaltet das auch um, wie im Finder";
 "Down Arrow" = "Pfeil nach unten";
 "Download" = "Herunterladen";
 "Downloads the update, verifies its signature, and installs it in place" = "Lädt das Update, prüft seine Signatur und installiert es an Ort und Stelle";
@@ -201,7 +203,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Blendet Review-Anfragen ohne Markdown-Dateien aus — PullMark hat dazu nichts zu zeigen";
 "History" = "Historie";
 "Home" = "Pos1";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Fahr über einen beliebigen Block für die Notizblase (markier vorher Text, um ihn zu zitieren), oder drück ⌥⌘M. Bearbeiten und Löschen geht an jeder Blase; eine Notiz zu löschen ist, wie sie aufgelöst wird. Open-Files-Zeilen zeigen einen Chip mit der Zahl, solange ein Dokument noch Notizen trägt, und Darstellung → Randnotizen ausblenden räumt die Seite fürs saubere Lesen frei.";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Fahr über einen beliebigen Block für die Notizblase (markier vorher Text, um ihn zu zitieren), oder drück ⌥⌘M. Bearbeiten und Löschen geht an jeder Blase; eine Notiz zu löschen ist, wie sie aufgelöst wird. Zeilen in „Geöffnete Dateien“ zeigen einen Chip mit der Zahl, solange ein Dokument noch Notizen trägt, und Darstellung → Randnotizen ausblenden räumt die Seite fürs saubere Lesen frei.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "Wie weit Text sich strecken darf, bevor er umbricht. Standard hält das klassische, buchähnliche Lesemaß; Wide bringt mehr auf den Schirm und deckelt die Zeilenlänge trotzdem; Full Width gibt dem Dokument das ganze Fenster — praktisch im Vollbild. Gilt überall, sofort, und verträgt sich mit jedem Theme.";
 "How wide the rendered text column runs" = "Wie breit die gerenderte Textspalte läuft";
 "In a local document" = "In einem lokalen Dokument";
@@ -226,7 +228,7 @@
 "Line %lld (old)" = "Zeile %lld (alt)";
 "Line numbers" = "Zeilennummern";
 "Loading repo files…" = "Repo-Dateien werden geladen…";
-"Locations" = "Locations";
+"Locations" = "Orte";
 "Make Default Again" = "Wieder zum Standard machen";
 "Make PullMark the Default" = "PullMark zum Standard machen";
 "Make the document bigger" = "Das Dokument größer machen";
@@ -264,7 +266,7 @@
 "Open" = "Öffnen";
 "Open Branch Separately" = "Branch separat öffnen";
 "Open File or Folder" = "Datei oder Ordner öffnen";
-"Open Files" = "Open Files";
+"Open Files" = "Geöffnete Dateien";
 "Open File…" = "Datei öffnen…";
 "Open Folder…" = "Ordner öffnen…";
 "Open Fully" = "Ganz öffnen";
@@ -306,7 +308,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "Auf Commit %@ festgesetzt — die Spitze des Refs beim letzten Abruf dieser Session.";
 "Posts immediately — file comments can't join a pending review." = "Wird sofort gesendet — Dateikommentare können nicht Teil eines ausstehenden Reviews sein.";
 "Preview First" = "Erst Vorschau";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Erst Vorschau zeigt eine Datei mit einem Klick, ohne sie zu behalten — ein kursiver Eintrag (in Open Files oder unter seinem GitHub-Repository), den die nächste Vorschau ersetzt. Doppelklick auf eine Datei, oder fang einfach an zu tippen, und sie bleibt offen. Ganz öffnen behält jede Datei, die du anklickst.";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Erst Vorschau zeigt eine Datei mit einem Klick, ohne sie zu behalten — ein kursiver Eintrag (in „Geöffnete Dateien“ oder unter seinem GitHub-Repository), den die nächste Vorschau ersetzt. Doppelklick auf eine Datei, oder fang einfach an zu tippen, und sie bleibt offen. Ganz öffnen behält jede Datei, die du anklickst.";
 "Previous File" = "Vorherige Datei";
 "Previous Markdown file in this pull request" = "Vorherige Markdown-Datei in diesem Pull Request";
 "Previous match" = "Vorheriger Treffer";
@@ -331,7 +333,7 @@
 "Re-read this file from disk" = "Diese Datei neu von der Platte lesen";
 "Reaction state unavailable — try refreshing the PR." = "Reaktionsstatus nicht verfügbar — aktualisier den PR.";
 "Reading" = "Lesen";
-"Recents" = "Recents";
+"Recents" = "Zuletzt benutzt";
 "Redo" = "Wiederholen";
 "Refresh" = "Aktualisieren";
 "Refresh Folder" = "Ordner aktualisieren";
@@ -341,7 +343,7 @@
 "Reload Document" = "Dokument neu laden";
 "Remember my selection" = "Meine Auswahl merken";
 "Remote Branches" = "Remote-Branches";
-"Remove from Recents" = "Aus Recents entfernen";
+"Remove from Recents" = "Aus „Zuletzt benutzt“ entfernen";
 "Remove from Sidebar" = "Aus der Seitenleiste entfernen";
 "Remove the PullMark disk image?" = "Das PullMark-Disk-Image entfernen?";
 "Rendered" = "Gerendert";
@@ -364,7 +366,7 @@
 "Retry Upload" = "Upload erneut versuchen";
 "Return" = "Return";
 "Reveal in Finder" = "Im Finder zeigen";
-"Reveal in Location" = "In Location zeigen";
+"Reveal in Location" = "Im Ort zeigen";
 "Reveal on GitHub" = "Auf GitHub zeigen";
 "Reveal resolved review conversations in the Result view" = "Aufgelöste Review-Unterhaltungen in der Ergebnis-Ansicht zeigen";
 "Revert Last Edit" = "Letzte Änderung zurücknehmen";
@@ -449,7 +451,7 @@
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Themes gestalten gerendertes Markdown und Diffs um und folgen der Hell/Dunkel-Einstellung. Leg .css-Dateien in den Themes-Ordner, um eigene hinzuzufügen — sie legen sich über den GitHub-Look. Quick-Look-Vorschauen folgen deinem Theme auch (eigene Themes fallen dort auf ihre GitHub-Basis zurück).";
 "These keys are fixed and can't be changed." = "Diese Tasten sind fest und lassen sich nicht ändern.";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "Dieser Kommentar synchronisiert noch mit GitHub — versuch es gleich noch einmal zu verwerfen.";
-"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Dieser Ordner hat mehr Markdown-Dateien, als PullMark scannt — öffne einen Unterordner als eigene Location, um den Rest zu sehen";
+"This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Dieser Ordner hat mehr Markdown-Dateien, als PullMark scannt — öffne einen Unterordner als eigenen Ort, um den Rest zu sehen";
 "This pull request was updated on GitHub." = "Dieser Pull Request wurde auf GitHub aktualisiert.";
 "This repository has no GitHub remote." = "Dieses Repository hat kein GitHub-Remote.";
 "This version (%@) doesn't know %@ — it may point at a feature from a newer release, or one that has moved. Checking for updates usually resolves it." = "Diese Version (%@) kennt %@ nicht — es zeigt vielleicht auf ein Feature aus einer neueren Version oder auf eines, das umgezogen ist. Nach Updates suchen löst das meistens.";
@@ -480,7 +482,7 @@
 "With a folder selected" = "Mit einem ausgewählten Ordner";
 "With a local file or folder in a GitHub repository selected" = "Mit einer lokalen Datei oder einem Ordner aus einem GitHub-Repository ausgewählt";
 "With a local file or folder selected" = "Mit einer lokalen Datei oder einem Ordner ausgewählt";
-"With files in Open Files" = "Mit Dateien in Open Files";
+"With files in Open Files" = "Mit Dateien in „Geöffnete Dateien“";
 "Works with private repos using your existing gh or git credentials." = "Funktioniert mit privaten Repos über deine vorhandenen gh- oder git-Zugangsdaten.";
 "You're on %@." = "Du bist auf %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Deine eigenen Kürzel werden entfernt. Das lässt sich nicht widerrufen.";

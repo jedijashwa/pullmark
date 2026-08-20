@@ -97,10 +97,10 @@ pullmark --version           <span class="c"># アプリのバージョンを表
       <p>ルールはあえて退屈にしてあります。スクリプトが安心して頼れるように。</p>
       <ul>
         <li><strong>ファイル</strong>は、サイドバーの
-        <a href="/ja/docs/sidebar/#open-files">Open Files</a> セクションにピン留めされた項目として
+        「<a href="/ja/docs/sidebar/#open-files">開いているファイル</a>」セクションにピン留めされた項目として
         並び、最後に渡したファイルが表示されます。</li>
         <li><strong>フォルダ</strong>は——git のワークツリーも含めて——
-        <a href="/ja/docs/sidebar/#locations">Locations</a> になります。中の Markdown ファイルを
+        「<a href="/ja/docs/sidebar/#locations">場所</a>」になります。中の Markdown ファイルを
         ブラウズできるツリーです。</li>
         <li><strong>すでに起動している？</strong> すべては最前面のウィンドウで開きます。アプリの
         2 つ目のインスタンスが立ち上がることはありません。</li>
@@ -111,14 +111,14 @@ pullmark --version           <span class="c"># アプリのバージョンを表
       </ul>
 
       <h2 id="worktrees">ワークツリーと、ひとつのファイルを指し示すこと</h2>
-      <p>フォルダとファイルを一緒に渡せば、両方のふるまいが同時に起きます。フォルダは Location として
+      <p>フォルダとファイルを一緒に渡せば、両方のふるまいが同時に起きます。フォルダは「場所」として
       開き、ファイルはピン留めされて表示される。「このワークツリーを開いて、このドキュメントを見せて」
       のレシピは、これで全部です。</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>ワークツリーのツリーは Locations に着地し（ワークツリーもただの git チェックアウトなので、
-      ブランチチップ付きで）、<code>plan.md</code> は Open Files にピン留めされてレンダリングされます。
+      <p>ワークツリーのツリーは「場所」に着地し（ワークツリーもただの git チェックアウトなので、
+      ブランチチップ付きで）、<code>plan.md</code> は「開いているファイル」にピン留めされてレンダリングされます。
       右クリックして <strong>Reveal in Location</strong> を選べば、ツリーの中のその居場所へ飛べます。
-      Location がすでに開いていたときも同じです——その中にあるファイルを開いても、世界がもうひとつ
+      「場所」がすでに開いていたときも同じです——その中にあるファイルを開いても、世界がもうひとつ
       できることはなく、作業セットに 1 行が増えるだけです。</p>
       <p>フォルダとファイルの組み合わせに順番は関係ありませんが、表示されるのは<em>最後に渡した
       ファイル</em>です。画面に出したい文書は、最後に置いてください。</p>
@@ -135,7 +135,7 @@ pullmark --version           <span class="c"># アプリのバージョンを表
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># 2 つのファイル、old.md が基準</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># ワークツリーと、差分の plan.md</span></code></pre>
-      <p>一緒に渡したフォルダは変わらず Location として開きますし、どの形にも、ツールバーの
+      <p>一緒に渡したフォルダは変わらず「場所」として開きますし、どの形にも、ツールバーの
       Compare メニューにアプリ内の双子がいます（<strong>Compare Revisions…</strong> と
       <strong>Compare with File…</strong> を含めて）。<code>--diff</code> と
       <code>--diff-with</code> はあくまでフラグであってサブコマンドではないので、たまたま
@@ -152,7 +152,7 @@ pullmark --version           <span class="c"># アプリのバージョンを表
       <h2 id="examples">例</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># ファイルをひとつ読む</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># フォルダをブラウズする</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># Location ひとつと文書ひとつ</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># 「場所」ひとつと文書ひとつ</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># ワークツリーと、見せたい文書</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 直近の編集が変えたもの</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- でオプション解析を終える</span></code></pre>

@@ -100,11 +100,11 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
       bouwen:</p>
       <ul>
         <li><strong>Bestanden</strong> landen in de sectie
-        <a href="/nl/docs/sidebar/#open-files">Open Files</a> van de zijbalk
+        <a href="/nl/docs/sidebar/#open-files">Geopende bestanden</a> van de zijbalk
         als vastgezette regels, en het laatst doorgegeven bestand wordt
         getoond.</li>
         <li><strong>Mappen</strong> — inclusief git-worktrees — worden
-        <a href="/nl/docs/sidebar/#locations">Locations</a>: doorbladerbare
+        <a href="/nl/docs/sidebar/#locations">Locaties</a>: doorbladerbare
         bomen van de Markdown-bestanden erin.</li>
         <li><strong>Draait de app al?</strong> Alles opent in het voorste
         venster. Er wordt nooit een tweede app-instantie gestart.</li>
@@ -117,15 +117,15 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
 
       <h2 id="worktrees">Worktrees, en naar één bestand wijzen</h2>
       <p>Geef een map en een bestand samen door en je krijgt beide
-      gedragingen tegelijk: de map opent als Location, het bestand opent
+      gedragingen tegelijk: de map opent als Locatie, het bestand opent
       vastgezet en wordt getoond. Dat is het hele recept voor "open deze
       worktree en laat me dit doc zien":</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>De boom van de worktree landt in Locations (met zijn branch-chip,
+      <p>De boom van de worktree landt in Locaties (met zijn branch-chip,
       want een worktree is gewoon een git-checkout), <code>plan.md</code>
-      wordt vastgezet in Open Files en gerenderd. Rechtsklik erop en kies
+      wordt vastgezet in Geopende bestanden en gerenderd. Rechtsklik erop en kies
       <strong>Reveal in Location</strong> om te springen naar waar het in
-      de boom zit. Dit werkt hetzelfde wanneer de Location al open was —
+      de boom zit. Dit werkt hetzelfde wanneer de Locatie al open was —
       een bestand openen dat erin woont maakt nooit een dubbele wereld,
       alleen een regel in de werkset.</p>
       <p>De volgorde maakt niet uit voor het map/bestand-paar, maar het
@@ -148,7 +148,7 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># twee bestanden, old.md als basis</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># een worktree, plan.md als diff</span></code></pre>
-      <p>Mappen die je erbij doorgeeft openen nog steeds als Locations, en
+      <p>Mappen die je erbij doorgeeft openen nog steeds als Locaties, en
       elke vorm heeft een tweelingbroer in de app, in het Compare-menu van
       de toolbar (inclusief <strong>Compare Revisions…</strong> en
       <strong>Compare with File…</strong>). Omdat <code>--diff</code> en
@@ -166,7 +166,7 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
       <h2 id="examples">Voorbeelden</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># één bestand lezen</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># een map doorbladeren</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># een Location plus één document</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># een Locatie plus één document</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># een worktree met één document</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># wat de laatste bewerkingen veranderden</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- beëindigt de optieverwerking</span></code></pre>
