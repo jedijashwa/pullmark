@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tastaturkürzel — PullMark-Doku</title>
+<meta name="description" content="PullMarks komplette Tastaturbelegung — jedes Standardkürzel und wie du sie neu belegst.">
+<link rel="canonical" href="https://pullmark.app/de/docs/shortcuts/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/shortcuts/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/shortcuts/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/shortcuts/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/shortcuts/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/shortcuts/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/shortcuts/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/shortcuts/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/shortcuts/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/shortcuts/">
+<meta property="og:title" content="Tastaturkürzel — PullMark-Doku">
+<meta property="og:description" content="PullMarks komplette Tastaturbelegung — jedes Standardkürzel und wie du sie neu belegst.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/de/docs/shortcuts/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hauptnavigation">
+    <a class="brand" href="/de/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/de/docs/" aria-current="true">Docs</a>
+      <a href="/de/uses/agents/">Anwendungsfälle</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Doku">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/de/docs/">Überblick</a></li>
+        <li><a href="/de/docs/features/">Features</a></li>
+        <li><a href="/de/docs/sidebar/">Die Seitenleiste</a></li>
+        <li><a href="/de/docs/toolbar/">Die Toolbar</a></li>
+        <li><a href="/de/docs/settings/">Einstellungen</a></li>
+        <li><a href="/de/docs/shortcuts/" aria-current="page">Tastaturkürzel</a></li>
+        <li><a href="/de/docs/cli/">Kommandozeile</a></li>
+        <li><a href="/de/docs/troubleshooting/">Fehlerbehebung</a></li>
+        <li><a href="/de/docs/experimental/">Experimentell</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Tastaturkürzel</h1>
+      <p class="article-lede">Die volle Belegung. Jedes davon lässt sich in
+      <strong>Settings → Keyboard</strong> neu belegen; Zeilen ohne Taste
+      kommen absichtlich unbelegt — gib ihnen eine, wenn du sie oft
+      brauchst.</p>
+
+      <h2 id="file">File</h2>
+      <table>
+        <tr><th>Aktion</th><th>Standard</th><th>Hinweise</th></tr>
+        <tr><td>Open…</td><td><kbd>⌘O</kbd></td><td>Dateien oder Ordner</td></tr>
+        <tr><td>Open Pull Request…</td><td><kbd>⇧⌘O</kbd></td><td></td></tr>
+        <tr><td>Open Quickly…</td><td><kbd>⌘K</kbd></td><td>Überschriften, Dateien, PRs, zuletzt Geöffnetes — oder füg einen Pfad, einen PR oder eine GitHub-URL ein</td></tr>
+        <tr><td>Commit Changes…</td><td><kbd>⌃⌘K</kbd></td><td>Fürs Repo der ausgewählten Datei</td></tr>
+        <tr><td>Revert Last Edit</td><td>—</td><td></td></tr>
+        <tr><td>Reveal in Finder</td><td>—</td><td>Mit einer lokalen Datei oder einem Ordner ausgewählt</td></tr>
+        <tr><td>Copy Path</td><td>—</td><td>Mit einer lokalen Datei oder einem Ordner ausgewählt</td></tr>
+        <tr><td>Refresh Folder</td><td>—</td><td>Mit einem Ordner ausgewählt</td></tr>
+        <tr><td>Clear Recents</td><td>—</td><td></td></tr>
+        <tr><td>Page Setup…</td><td><kbd>⇧⌘P</kbd></td><td></td></tr>
+        <tr><td>Print…</td><td><kbd>⌘P</kbd></td><td></td></tr>
+        <tr><td>Export as PDF… / as HTML…</td><td>—</td><td></td></tr>
+      </table>
+
+      <h2 id="edit">Edit</h2>
+      <table>
+        <tr><th>Aktion</th><th>Standard</th><th>Hinweise</th></tr>
+        <tr><td>Edit Mode</td><td><kbd>⌘E</kbd></td><td>In einem lokalen Dokument</td></tr>
+        <tr><td>Copy as Markdown</td><td><kbd>⌥⌘C</kbd></td><td>Der Quelltext hinter der Auswahl (das ganze Dokument, wenn nichts ausgewählt ist)</td></tr>
+        <tr><td>Find in Page</td><td><kbd>⌘F</kbd></td><td></td></tr>
+        <tr><td>Find Next / Previous</td><td><kbd>⌘G</kbd> / <kbd>⇧⌘G</kbd></td><td>Solange die Suchleiste offen ist</td></tr>
+        <tr><td>Search All Files…</td><td><kbd>⇧⌘F</kbd></td><td>Über alles in der Seitenleiste</td></tr>
+        <tr><td>Add Margin Note</td><td><kbd>⌥⌘M</kbd></td><td>Eine Notiz am Block hinterlassen, den du gerade liest — <a href="/de/docs/experimental/margin-notes/">Randnotizen</a> (Beta, standardmäßig an)</td></tr>
+        <tr><td>File Margin Note…</td><td>—</td><td>Eine Notiz zum ganzen Dokument</td></tr>
+      </table>
+
+      <h2 id="view">View</h2>
+      <table>
+        <tr><th>Aktion</th><th>Standard</th><th>Hinweise</th></tr>
+        <tr><td>Show/Hide Outline</td><td><kbd>⌥⌘O</kbd></td><td>In einem lokalen Dokument</td></tr>
+        <tr><td>Show/Hide Markdown Source</td><td><kbd>⌥⌘U</kbd></td><td></td></tr>
+        <tr><td>Reload Document</td><td><kbd>⌘R</kbd></td><td>In einem lokalen Dokument</td></tr>
+        <tr><td>Show/Hide Hidden Files</td><td><kbd>⇧⌘.</kbd></td><td>Dotfiles in Locations — Finders eigener Griff</td></tr>
+        <tr><td>Show/Hide Margin Notes</td><td>—</td><td>Notizblasen in gerenderten Dokumenten</td></tr>
+        <tr><td>Zoom In / Out</td><td><kbd>⌘=</kbd> / <kbd>⌘-</kbd></td><td><kbd>⌘+</kbd> geht auch; auf der Seite außerdem Pinch und ⌘-Scrollen</td></tr>
+        <tr><td>Actual Size</td><td><kbd>⌘0</kbd></td><td></td></tr>
+      </table>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <table>
+        <tr><th>Aktion</th><th>Standard</th><th>Hinweise</th></tr>
+        <tr><td>Rendered Diff / Source Diff / Result</td><td><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></td><td>In einer Pull-Request-Datei</td></tr>
+        <tr><td>Flip Diff Layout</td><td><kbd>⌥⌘L</kbd></td><td>Inline ↔ nebeneinander</td></tr>
+        <tr><td>Review Changes…</td><td><kbd>⇧⌘R</kbd></td><td>Zusammenfassung, Urteil und deine ausstehenden Kommentare</td></tr>
+        <tr><td>Show/Hide Resolved Conversations</td><td><kbd>⌥⌘R</kbd></td><td>In der Result-Ansicht einer PR-Datei</td></tr>
+      </table>
+
+      <h2 id="fixed">Feste Tasten</h2>
+      <p>Die sind eingebaut und lassen sich nicht ändern:</p>
+      <table>
+        <tr><th>Kontext</th><th>Tasten</th></tr>
+        <tr><td>Seitenleiste: ausgewählte Zeile entfernen</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>Seitenleiste: ausgewählte Datei per Quick Look ansehen</td><td><kbd>Space</kbd> (ab macOS 14)</td></tr>
+        <tr><td>Edit Mode: zwischen Blöcken wechseln</td><td><kbd>↑</kbd> <kbd>↓</kbd></td></tr>
+        <tr><td>Edit Mode: mit dem vorherigen Block verschmelzen</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>Edit Mode: Änderungen an diesem Block verwerfen</td><td><kbd>⎋</kbd></td></tr>
+        <tr><td>Paletten: bewegen / öffnen / schließen</td><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>↩</kbd> <kbd>⎋</kbd></td></tr>
+        <tr><td>Commit-Sheet und Eingabefelder: bestätigen</td><td><kbd>⌘↩</kbd></td></tr>
+        <tr><td>Sheets: schließen</td><td><kbd>⎋</kbd></td></tr>
+      </table>
+      <p>Systemübliche Tasten (⌘N neues Fenster, ⌘W, ⌘Q, ⌘C/⌘V, ⌘Z…) verhalten
+      sich so, wie macOS es vorsieht, und bleiben reserviert. Ein ⌘S gibt es
+      bewusst nicht — was du im Edit Mode bestätigst, landet sofort auf der
+      Platte.</p>
+
+      <h2 id="rebinding">Neu belegen</h2>
+      <p class="table-note">Liest du das dort, wo PullMark (ab 0.28.1) installiert ist? <a href="pullmark://settings/keyboard">Den Keyboard-Tab öffnen</a>.</p>
+      <p>In <strong>Settings → Keyboard</strong>: Klick auf ein Kürzel (oder
+      wähl eine Zeile und drück <kbd>↩</kbd>), dann tipp die neuen Tasten.
+      <kbd>⌫</kbd> entfernt eine Belegung, <kbd>⎋</kbd> bricht ab. Kürzel
+      brauchen ⌘ oder ⌃ (Funktionstasten dürfen allein stehen);
+      systemreservierte Kombinationen werden mit Erklärung abgelehnt, und wenn
+      du eine Kombination nimmst, die schon eine andere Aktion hält, gibt es
+      <strong>Use Anyway</strong> — das löst die Belegung des bisherigen
+      Besitzers. <strong>Restore Defaults…</strong> setzt alles zurück; jede
+      angepasste Zeile hat außerdem ihren eigenen Zurück-Pfeil.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-Lizenz</a>
+    <a href="/licenses/">Open-Source-Lizenzen</a>
+    <a href="/privacy/">Datenschutz</a>
+    <a href="https://ko-fi.com/pullmark">PullMark unterstützen&nbsp;♥</a>
+    <span class="note">PullMark steht in keiner Verbindung zu GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Sprache">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Sprache</span>
+    <a href="/docs/shortcuts/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/shortcuts/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/shortcuts/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/shortcuts/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/shortcuts/" hreflang="de" lang="de" aria-current="true">Deutsch</a>
+    <a href="/nl/docs/shortcuts/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/shortcuts/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/shortcuts/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

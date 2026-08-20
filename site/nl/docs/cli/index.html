@@ -82,17 +82,17 @@
       hetzelfde via macOS zelf.</p>
 
       <h2 id="usage">Gebruik</h2>
-<pre><code>pullmark                     <span class="c"># launch (or focus) PullMark</span>
-pullmark &lt;path&gt; ...          <span class="c"># open files and/or folders</span>
-pullmark --diff &lt;path&gt; ...   <span class="c"># open files as rendered diffs vs HEAD</span>
+<pre><code>pullmark                     <span class="c"># PullMark starten (of naar voren halen)</span>
+pullmark &lt;path&gt; ...          <span class="c"># bestanden en/of mappen openen</span>
+pullmark --diff &lt;path&gt; ...   <span class="c"># bestanden openen als gerenderde diffs t.o.v. HEAD</span>
 pullmark --diff=&lt;ref&gt; &lt;path&gt; ...
-                             <span class="c"># … vs a branch, tag, or commit</span>
+                             <span class="c"># … t.o.v. een branch, tag of commit</span>
 pullmark --diff=&lt;r1&gt;..&lt;r2&gt; &lt;path&gt; ...
-                             <span class="c"># the file at two refs, both frozen</span>
+                             <span class="c"># het bestand op twee refs, beide bevroren</span>
 pullmark --diff-with=&lt;file&gt; &lt;path&gt; ...
-                             <span class="c"># … vs another file on disk</span>
-pullmark -h, --help          <span class="c"># the built-in reference</span>
-pullmark --version           <span class="c"># print the app version</span></code></pre>
+                             <span class="c"># … t.o.v. een ander bestand op schijf</span>
+pullmark -h, --help          <span class="c"># de ingebouwde referentie</span>
+pullmark --version           <span class="c"># toont de appversie</span></code></pre>
 
       <h2 id="semantics">Wat openen doet</h2>
       <p>De regels zijn met opzet saai, zodat een script erop kan
@@ -141,12 +141,12 @@ pullmark --version           <span class="c"># print the app version</span></cod
       Compare-functie van de app (de klok-met-chevron-knop in de toolbar),
       en het snelste antwoord op "wat heeft de agent net met dit document
       gedaan":</p>
-<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
-<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># current file vs main</span>
-<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># between two revisions, both frozen</span>
-<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># two files, old.md the baseline</span>
+<pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># wat de laatste bewerkingen veranderden</span>
+<span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># huidig bestand t.o.v. main</span>
+<span class="p">$ </span>pullmark --diff=v1.0..main README.md    <span class="c"># tussen twee revisies, beide bevroren</span>
+<span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># twee bestanden, old.md als basis</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
-                                          <span class="c"># a worktree, plan.md diffed</span></code></pre>
+                                          <span class="c"># een worktree, plan.md als diff</span></code></pre>
       <p>Mappen die je erbij doorgeeft openen nog steeds als Locations, en
       elke vorm heeft een tweelingbroer in de app, in het Compare-menu van
       de toolbar (inclusief <strong>Compare Revisions…</strong> en
@@ -163,12 +163,12 @@ pullmark --version           <span class="c"># print the app version</span></cod
       </table>
 
       <h2 id="examples">Voorbeelden</h2>
-<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># read one file</span>
-<span class="p">$ </span>pullmark ~/notes                        <span class="c"># browse a folder</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># a Location plus one document</span>
-<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># a worktree, showing one doc</span>
-<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># what the last edits changed</span>
-<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- ends option parsing</span></code></pre>
+<pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># één bestand lezen</span>
+<span class="p">$ </span>pullmark ~/notes                        <span class="c"># een map doorbladeren</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># een Location plus één document</span>
+<span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># een worktree met één document</span>
+<span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># wat de laatste bewerkingen veranderden</span>
+<span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- beëindigt de optieverwerking</span></code></pre>
 
       <h2 id="agents">Aantekeningen voor agents</h2>
       <p>Als je PullMark in een agent of script inbouwt:</p>

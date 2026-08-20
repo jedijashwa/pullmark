@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Margin notes — PullMark Docs</title>
+<meta name="description" content="Margin notes: reageer op elk Markdown-bestand zoals je op een PR zou reageren, opgeslagen in het bestand zelf als ondertekende HTML-comments. De volledige formaatspec, plus instructies voor agents.">
+<link rel="canonical" href="https://pullmark.app/nl/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/margin-notes/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/margin-notes/">
+<meta property="og:title" content="Margin notes — PullMark Docs">
+<meta property="og:description" content="Margin notes: reageer op elk Markdown-bestand zoals je op een PR zou reageren, opgeslagen in het bestand zelf als ondertekende HTML-comments. De volledige formaatspec, plus instructies voor agents.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/nl/docs/experimental/margin-notes/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hoofdnavigatie">
+    <a class="brand" href="/nl/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/nl/docs/" aria-current="true">Docs</a>
+      <a href="/nl/uses/agents/">Toepassingen</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/nl/docs/">Overzicht</a></li>
+        <li><a href="/nl/docs/features/">Functies</a></li>
+        <li><a href="/nl/docs/sidebar/">De zijbalk</a></li>
+        <li><a href="/nl/docs/toolbar/">De toolbar</a></li>
+        <li><a href="/nl/docs/settings/">Instellingen</a></li>
+        <li><a href="/nl/docs/shortcuts/">Sneltoetsen</a></li>
+        <li><a href="/nl/docs/cli/">Command line</a></li>
+        <li><a href="/nl/docs/troubleshooting/">Problemen oplossen</a></li>
+        <li><a href="/nl/docs/experimental/" aria-current="page">Experimenteel</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs / beta</p>
+      <h1>Margin notes<span class="beta-badge">beta</span></h1>
+      <p class="article-lede">Reageer op elk lokaal Markdown-document zoals
+      je op een pull request zou reageren — alleen wonen de comments in het
+      bestand zelf, als gewone HTML-comments die buiten de gerenderde pagina
+      blijven. Gebouwd voor één loop in het bijzonder: een agent schrijft een
+      document voor je, jij leest het in PullMark en laat gaandeweg notities
+      achter, en dan geef je het bestand terug met "verwerk de notities en
+      verwijder ze als je ermee klaar bent."
+      <a href="/nl/uses/agents/">De agentspagina</a> loopt die hele loop
+      door, met screenshots en al.</p>
+
+      <h2 id="using">Gebruiken in PullMark</h2>
+      <p class="table-note">Lees je dit op de Mac waar PullMark (0.28.1+)
+      is geïnstalleerd?
+      <a href="pullmark://settings/experimental/margin-notes">Spring direct
+      naar de margin-notes-schakelaar</a>.</p>
+      <ul>
+        <li><strong>Ze staan standaard aan</strong> — margin notes zijn een
+        <a href="/nl/docs/experimental/">experimentele functie in beta</a>
+        die aan wordt geleverd (sinds 0.35). De eerste keer dat je ernaar
+        grijpt — het notitieballonnetje bij hover, <kbd>⌥⌘M</kbd>, of
+        Edit / Delete op een notitie die iemand voor je achterliet —
+        introduceert PullMark de functie: wat notities zijn, een Copy-knop
+        om je agent op te leiden, en een Turn Off-knop als het niets voor je
+        is. De schakelaar staat in
+        <strong>Settings&nbsp;→&nbsp;Experimental</strong> en gaat alleen
+        over het zélf schrijven; een document dat al notities bevat toont
+        zijn ballonnetjes hoe dan ook (alleen-lezen), zodat een bestand met
+        aantekeningen van een teamgenoot of een agent nooit stilzwijgend
+        leeg rendert.</li>
+        <li><strong>Een notitie toevoegen</strong> — hover over een blok in
+        een lokaal document en klik op het ballonnetje in de kantlijn
+        (hetzelfde gebaar als reageren op een PR). In een lijst mikt het
+        ballonnetje op het item dat je aanwijst, in een tabel op de rij —
+        een subtiele tint laat precies zien waar de notitie aan komt te
+        hangen. Selecteer eerst tekst en de notitie opent met de selectie
+        geciteerd — zo wijs je een zin aan in plaats van een alinea.
+        <kbd>⌥⌘M</kbd> noteert bij het blok dat je leest;
+        <strong>Edit&nbsp;→&nbsp;File Margin Note…</strong> laat bovenaan
+        een notitie over het hele document achter.</li>
+        <li><strong>Schrijf Markdown</strong> — vet, code-spans, fenced
+        code, links, lijsten; <kbd>⌘↩</kbd> slaat op. Elke save is één
+        bewerking in het bestand (terug te draaien met
+        File&nbsp;→&nbsp;Revert Last Edit).</li>
+        <li><strong>Edit / Delete</strong> — hover over een ballonnetje voor
+        de bijbehorende acties. Een notitie verwijderen is hoe je haar
+        afhandelt: geen status, geen archief — een verwerkte notitie is een
+        afwezige notitie.</li>
+        <li><strong>De chip</strong> — rijen in Open Files dragen een chip
+        met het aantal notities zolang een document ze nog bevat. Hij leeft
+        mee: terwijl een agent het bestand doorwerkt en notities verwijdert,
+        loopt de teller terug en verdwijnen de ballonnetjes voor je
+        ogen.</li>
+        <li><strong>Overal elders</strong> — notities renderen alleen-lezen
+        in doorbladerde GitHub-bestanden, verschijnen nooit bij afdrukken,
+        in een PDF/HTML-export of in Quick Look, en
+        <strong>View&nbsp;→&nbsp;Hide Margin Notes</strong> maakt de pagina
+        leeg wanneer je schoon wilt lezen.</li>
+        <li><strong>Je ondertekening</strong> — notities worden standaard
+        ondertekend met <code>@je-github-login</code>; je verandert dat
+        onder de schakelaar van de functie zelf in
+        Settings&nbsp;→&nbsp;Experimental.</li>
+      </ul>
+
+      <h2 id="format">Het formaat</h2>
+      <p>Een margin note is een HTML-comment met het sleutelwoord
+      <code>note</code> en een auteurstag, op een eigen regel na het blok
+      waar hij over gaat:</p>
+      <pre><code>Requests retry three times with exponential backoff.
+
+&lt;!-- note @josh: Section 2 says five times. Which is it? --&gt;</code></pre>
+      <p>Een notitie over één lijstitem woont ín het item — ingesprongen tot
+      de inhoud van het item, strak aangesloten, zodat de lijst heel
+      blijft:</p>
+      <pre><code>- First point
+  &lt;!-- note @josh: too vague — name the metric --&gt;
+- Second point</code></pre>
+      <p>Langere notities zetten de sluitmarkering op een eigen regel; de
+      body is volwaardige Markdown, lege regels en fenced code
+      inbegrepen:</p>
+      <pre><code>&lt;!-- note @josh:
+This contradicts the design doc. Either reconcile them or
+drop this section.
+
+```suggestion
+Requests retry five times with exponential backoff.
+```
+--&gt;</code></pre>
+      <p>De volledige grammatica:</p>
+      <table>
+        <tr><th>Regel</th><th>Detail</th></tr>
+        <tr><td>Marker</td><td><code>&lt;!-- note @</code> begint een notitie;
+          gewone HTML-comments (lint-directives, TODO's) blijven met rust.</td></tr>
+        <tr><td>Auteur</td><td>Alles tussen <code>@</code> en de
+          <em>eerste</em> dubbele punt. Spaties mogen; korte handles lezen het prettigst.</td></tr>
+        <tr><td>Body</td><td>Markdown, van de dubbele punt tot <code>--&gt;</code> —
+          dezelfde regel voor korte notities, de volgende regels voor lange.</td></tr>
+        <tr><td>Escapen</td><td>Een letterlijke <code>--&gt;</code> in een body
+          schrijf je als <code>--\&gt;</code> (de enige gereserveerde reeks;
+          PullMark escapet en unescapet hem voor je).</td></tr>
+        <tr><td>Plaatsing</td><td>Op een eigen regel, met lege regels eromheen,
+          direct na het blok dat hij annoteert. Boven de eerste kop =
+          een notitie over het hele document.</td></tr>
+        <tr><td>Lijstitems</td><td>Een notitie over één lijstitem zit
+          <em>in</em> het item: direct na de laatste regel van het item,
+          ingesprongen tot de inhoud van het item (maximaal 3 spaties — dieper
+          leest als code), <em>zonder</em> lege regels eromheen. De
+          inspringing is wat hem aan het item bindt.</td></tr>
+        <tr><td>Threads</td><td>Notities die onder hetzelfde blok op elkaar
+          volgen lezen als een gesprek — antwoord door er een notitie onder te zetten.</td></tr>
+        <tr><td>Gereserveerd</td><td><code>@name (attrs):</code> — het slot
+          tussen haakjes is gereserveerd voor toekomstig gebruik en blijft
+          letterlijk behouden; niets schrijft of leest het vandaag.</td></tr>
+        <tr><td>Codeblokken</td><td>Een comment die op een notitie lijkt maar
+          in een fenced codeblok staat, is code en geen notitie.</td></tr>
+      </table>
+      <p>Omdat Markdown-renderers HTML-comments overslaan, rendert een
+      bestand met notities erin schoon op GitHub, in editors en in elke
+      andere tool — de notities reizen mee in de bron zonder de pagina te
+      vervuilen. PullMark is de mooie client voor een formaat dat overal
+      werkt.</p>
+
+      <h2 id="agents">Voor agents</h2>
+      <p>De overdracht vergt geen protocol: agents lezen bestanden, en de
+      notities staan in het bestand, fysiek naast de tekst waar ze over
+      gaan. Plak dit in je <code>CLAUDE.md</code> / <code>AGENTS.md</code> —
+      Settings&nbsp;→&nbsp;Experimental heeft een Copy-knop met dezelfde
+      tekst (of zeg het gewoon):</p>
+      <pre><code>## Margin notes
+
+Markdown files may contain review notes as HTML comments:
+`&lt;!-- note @name: comment --&gt;` (possibly multi-line, closing
+with `--&gt;` on its own line). Each note sits directly after the
+passage it's about; a note above the first heading is about the
+whole document. `--\&gt;` inside a note means a literal `--&gt;`.
+
+When asked to address notes: work through each one, apply or
+answer it, and DELETE the note (with its surrounding blank line)
+once addressed. To reply or ask instead, leave your own note in
+the same format below the original, signed with your own @name.
+Don't add notes to code examples inside fenced blocks.
+
+A note about one list item sits inside that item — directly after
+the item's last line, indented to the item's content, with no
+blank lines around it. Keep (or delete) the whole indented
+comment; its indentation is what ties it to the item.</code></pre>
+      <p>De convergentieloop volgt uit het formaat: overgebleven
+      ballonnetjes zijn overgebleven werk, en een leeg bestand is een
+      afgeronde review. Mogen notities nooit een pull request bereiken, dan
+      is een CI-check één regel —
+      <code>grep -rn '&lt;!-- note @' docs/ && exit 1</code>.</p>
+
+      <h2 id="why-beta">Waarom het beta is</h2>
+      <p>De mechaniek heeft zich bewezen — het formaat heeft sinds de
+      release geen incompatibele wijziging nodig gehad, en daarom is het uit
+      alpha geslaagd. Volgens het
+      <a href="/nl/docs/experimental/">betacontract</a> doen we nu serieus
+      ons best om de grammatica en het gedrag compatibel te houden tussen
+      versies, en de functie slaagt waarschijnlijk helemaal uit
+      Experimental. Wat nog moet uitkristalliseren is het oppervlak
+      eromheen: namen, affordances, en hoe ver de workflow zich laat
+      uitbreiden buiten de agent-reviewloop waarin hij is ontworpen. De
+      releasenotes melden precies wat er verandert, als er iets verandert.
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">Feedback
+      welkom</a>.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-licentie</a>
+    <a href="/licenses/">Opensourcelicenties</a>
+    <a href="/privacy/">Privacy</a>
+    <a href="https://ko-fi.com/pullmark">Steun PullMark&nbsp;♥</a>
+    <span class="note">PullMark is niet verbonden aan GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Taal">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Taal</span>
+    <a href="/docs/experimental/margin-notes/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/margin-notes/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/experimental/margin-notes/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/experimental/margin-notes/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/margin-notes/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/experimental/margin-notes/" hreflang="nl" lang="nl" aria-current="true">Nederlands</a>
+    <a href="/es/docs/experimental/margin-notes/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/margin-notes/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

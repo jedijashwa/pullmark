@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>トラブルシューティング — PullMark ドキュメント</title>
+<meta name="description" content="PullMark のエラーメッセージの解説と、Gatekeeper、GitHub 認証、Quick Look の直し方。">
+<link rel="canonical" href="https://pullmark.app/ja/docs/troubleshooting/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/troubleshooting/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/troubleshooting/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/troubleshooting/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/troubleshooting/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/troubleshooting/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/troubleshooting/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/troubleshooting/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/troubleshooting/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/troubleshooting/">
+<meta property="og:title" content="トラブルシューティング — PullMark ドキュメント">
+<meta property="og:description" content="PullMark のエラーメッセージの解説と、Gatekeeper、GitHub 認証、Quick Look の直し方。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/ja/docs/troubleshooting/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="メイン">
+    <a class="brand" href="/ja/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/ja/docs/" aria-current="true">ドキュメント</a>
+      <a href="/ja/uses/agents/">ユースケース</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="ドキュメント">
+      <p class="docs-nav-title">ドキュメント</p>
+      <ul>
+        <li><a href="/ja/docs/">概要</a></li>
+        <li><a href="/ja/docs/features/">機能</a></li>
+        <li><a href="/ja/docs/sidebar/">サイドバー</a></li>
+        <li><a href="/ja/docs/toolbar/">ツールバー</a></li>
+        <li><a href="/ja/docs/settings/">設定</a></li>
+        <li><a href="/ja/docs/shortcuts/">キーボードショートカット</a></li>
+        <li><a href="/ja/docs/cli/">コマンドライン</a></li>
+        <li><a href="/ja/docs/troubleshooting/" aria-current="page">トラブルシューティング</a></li>
+        <li><a href="/ja/docs/experimental/">実験的機能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">ドキュメント</p>
+      <h1>トラブルシューティング</h1>
+      <p class="article-lede">うまくいかなくなる数少ないこと、PullMark のメッセージが意味するもの、
+      そして静かな失敗の裏にある設計。ここにある「エラー」のほとんどは、あなたの仕事を失うまいと
+      アプリがあえて拒んでいる場面です。</p>
+
+      <h2 id="github-access">GitHub へのアクセス——どうつながり、どう直すか</h2>
+      <p>PullMark は、あなた自身のツールがすでに持っている GitHub の認証情報を借ります——自前の
+      ログインは持たず、秘密を保存することもありません。
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> が、つながっているか、
+      誰として、どの出どころを通じてかを示します。<em>Set&nbsp;Up…</em> は新しいマシンでの接続を
+      案内し、<em>Check&nbsp;Again</em> は直したその場で拾い上げます——<code>gh auth login</code>
+      のあと、再起動は要りません。</p>
+      <p class="table-note">PullMark（0.36 以降）が入っている Mac でこれを読んでいますか？
+      <a href="pullmark://settings/general/github">いま接続の行を開く</a>。</p>
+      <p>PullMark が試す順に、認証情報の出どころはこうです。</p>
+      <ol>
+        <li><a href="https://cli.github.com">GitHub CLI</a> のトークン。
+        <code>gh auth token</code> が何かを出力する必要があります。出ないなら
+        <code>brew install gh &amp;&amp; gh auth login</code> を——これが推奨の道です。
+        トークンのスコープは確かめられており、ブラウザのフローで SSO も扱え、更新もされます。</li>
+        <li>それ以外なら <code>git credential fill</code>——github.com に対して git 自身が
+        使っているもの（macOS のキーチェーン、Git Credential Manager、昔の HTTPS プッシュが
+        残したトークン）。</li>
+      </ol>
+      <p>中途半端に動いてしまうトークンのための、細かい話。classic トークンには
+      <code>repo</code> スコープが（組織のチーム名まで要るなら <code>read:org</code> も）
+      必要です。<strong>fine-grained トークンはひとつのリソースオーナーに縛られます</strong>——
+      パブリックリポジトリと、そのオーナーのプライベートリポジトリは動き、それ以外は拒まれます。
+      SSO で保護された組織では、組織ごとにトークンを承認する必要があります。そして手作業で
+      作ったトークンには期限があります——「昨日は動いたのに」が診断される場所が、あの設定の
+      行です。</p>
+
+      <h2 id="github-auth">GitHub:「may not exist… or may be a private repository」</h2>
+      <p><em>「Couldn't open … It may not exist at that ref, or it may be a
+      private repository your GitHub credentials can't access.」</em>
+      （…… を開けませんでした。その ref に存在しないか、あなたの GitHub 認証情報では
+      アクセスできないプライベートリポジトリかもしれません。）GitHub の API は「プライベートで
+      権限が無い」と「存在しない」をまったく同じように報告するので、PullMark にもどちらなのかは
+      分かりません。動くはずのリポジトリなら、ほぼ間違いなく認証の問題です——上の
+      <a href="#github-access">GitHub へのアクセス</a>を見るか、
+      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> を開いて
+      <em>Set&nbsp;Up…</em> を押してください。</p>
+
+      <h2 id="gatekeeper">Gatekeeper がアプリを開いてくれない</h2>
+      <p>リリースは Developer ID で署名され、Apple の公証を受けているので、普通にダウンロード
+      したものなら警告は出ません。ソースからビルドした場合（<code>make app</code>）はアドホック
+      署名なので、右クリック →「<strong>開く</strong>」→「<strong>開く</strong>」、または
+      システム設定 → プライバシーとセキュリティ から許可してください。</p>
+
+      <h2 id="quick-look">Quick Look のプレビューがレンダリングされなくなった</h2>
+      <p>Homebrew のアップグレードはアプリバンドルを差し替えるので、Quick Look 拡張の登録が
+      黙って外れることがあります。PullMark は起動のたびに登録し直すので、一度アプリを起動すれば
+      それで済みます。それでも素のテキストが出るなら、Settings → General →「Quick Look previews」
+      が Rendered になっているか確かめてください。</p>
+
+      <h2 id="default-app">「PullMark is no longer your default Markdown app」</h2>
+      <p>原因は同じです。アップグレードがバンドルを差し替え、macOS が <code>.md</code> の
+      関連付けを手放しました。バナーの <strong>Make Default Again</strong> で取り戻せますし、
+      Settings → General からでも同じことができます。</p>
+
+      <h2 id="editing">「… changed while you were editing this block — nothing was saved」</h2>
+      <p>ブロックエディタを開いてから保存するまでのあいだに、ファイルがディスク上で変わりました
+      （別のエディタ、エージェント、git の操作）。PullMark は、動いてしまった行に割り込むことを
+      拒みます——失われるのはその 1 回の編集だけで、ブロックを開き直せば現在のテキストが出ます。
+      同じガードはコミットも守ります。ファイルが存在しない ref と比べたときは、空の差分を見せる
+      代わりに、そうとはっきり伝えます。</p>
+
+      <h2 id="dimmed">淡くなった行——「そこに無い」フォルダと最近の項目</h2>
+      <p>疑問符バッジの付いた Location や、グレーになった最近の項目は、いまそのパスが解決できない
+      という意味です——マウント解除されたボリューム、切り替えた git ブランチ、削除されたワーク
+      ツリー。行が消えずに淡くなるのは、わざとです。パスが戻れば、自動的に復活します。もう生きて
+      いない最近の項目をクリックすると、<strong>Remove from Recents</strong> か
+      <strong>Keep</strong> を選べます。</p>
+
+      <h2 id="pr-sync">プルリクエスト——バナーと保留中のコメント</h2>
+      <ul>
+        <li><em>「This pull request was updated on GitHub.」</em>——読み込んでからブランチが
+        動きました。更新はワンクリックで、下書きのコメントは生き残ります。レビューの途中で
+        PullMark が勝手に読み直すことはありません。</li>
+        <li><em>「Review comments couldn't be loaded…」</em>——そうでなければ、差分がコメントの
+        無い PR のふりをしてしまいます。Retry で取得し直します。</li>
+        <li><em>「Could not upload N pending comment(s)… kept locally for retry.」</em>——
+        オフラインで（あるいは API の不調で）書いたコメントは、PR のヘッドごとにディスクで順番を
+        待ち、可能になり次第アップロードされます。捨てられるものはありません。</li>
+        <li><em>「Committed …, but the push failed」</em>——コミットはローカルの履歴に無事
+        あります。やり直すべきは、プッシュだけです。</li>
+      </ul>
+
+      <h2 id="updates">アップデート</h2>
+      <p>バナーの <strong>Update Now</strong> は brew のアップグレード（DMG でのインストールなら、
+      検証付きのその場での上書きインストール）を実行して、再起動します。失敗したときは、バナーが
+      <code>brew upgrade --cask pullmark</code> というコマンドをそのまま Copy ボタン付きで
+      表示します——ターミナルで走らせても、することは同じです。開発ビルドはアップデートを
+      確認しません。</p>
+
+      <h2 id="cli-troubles">pullmark コマンド</h2>
+      <ul>
+        <li><em>「no such file or folder」</em>——コマンドは何かを開く前に、すべてのパスを検証
+        します。タイプミスひとつでオープン全体が中止され（終了コード 1）、スクリプトは大きな声で
+        失敗します。</li>
+        <li><em>Command not found</em>——<a href="/ja/docs/cli/#install">コマンドのインストール</a>を
+        参照してください。</li>
+        <li><em>「Couldn't install the command」</em>——設定のインストーラは
+        <code>/usr/local/bin</code> に書き込むための認証を必要とします。プロンプトを閉じて
+        しまったなら、キャンセルしてやり直してください。</li>
+      </ul>
+
+      <h2 id="still-stuck">それでも行き詰まったら</h2>
+      <p><a href="https://github.com/jedijashwa/pullmark/issues">issue を立ててください</a>——
+      Help → Report a Bug… なら、アプリの中から下書き済みのものを開けます。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT ライセンス</a>
+    <a href="/licenses/">オープンソースライセンス</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="https://ko-fi.com/pullmark">PullMark を応援する&nbsp;♥</a>
+    <span class="note">PullMark は GitHub とは提携していません。</span>
+  </div>
+  <nav class="lang-switch" aria-label="言語">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>言語</span>
+    <a href="/docs/troubleshooting/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/troubleshooting/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/troubleshooting/" hreflang="ja" lang="ja" aria-current="true">日本語</a>
+    <a href="/fr/docs/troubleshooting/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/troubleshooting/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/troubleshooting/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/troubleshooting/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/troubleshooting/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

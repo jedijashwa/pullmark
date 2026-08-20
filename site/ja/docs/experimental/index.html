@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>実験的機能 — PullMark ドキュメント</title>
+<meta name="description" content="PullMark の実験的機能。アルファとベータのレベルが約束するもの、いま実験的なもの、そして試し方。">
+<link rel="canonical" href="https://pullmark.app/ja/docs/experimental/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/experimental/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/experimental/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/experimental/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/experimental/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/experimental/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/">
+<meta property="og:title" content="実験的機能 — PullMark ドキュメント">
+<meta property="og:description" content="PullMark の実験的機能。アルファとベータのレベルが約束するもの、いま実験的なもの、そして試し方。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/ja/docs/experimental/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="メイン">
+    <a class="brand" href="/ja/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/ja/docs/" aria-current="true">ドキュメント</a>
+      <a href="/ja/uses/agents/">ユースケース</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases">リリース</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="ドキュメント">
+      <p class="docs-nav-title">ドキュメント</p>
+      <ul>
+        <li><a href="/ja/docs/">概要</a></li>
+        <li><a href="/ja/docs/features/">機能</a></li>
+        <li><a href="/ja/docs/sidebar/">サイドバー</a></li>
+        <li><a href="/ja/docs/toolbar/">ツールバー</a></li>
+        <li><a href="/ja/docs/settings/">設定</a></li>
+        <li><a href="/ja/docs/shortcuts/">キーボードショートカット</a></li>
+        <li><a href="/ja/docs/cli/">コマンドライン</a></li>
+        <li><a href="/ja/docs/troubleshooting/">トラブルシューティング</a></li>
+        <li><a href="/ja/docs/experimental/" aria-current="page">実験的機能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">ドキュメント / 実験的機能</p>
+      <h1>実験的機能</h1>
+      <p class="article-lede">設計が固まる前に出荷される機能があります——はっきりラベルを付けて、
+      通り道からは少し外して、どれくらい固まっているかについては正直に。住まいは
+      <strong>Settings&nbsp;→&nbsp;Experimental</strong>。それぞれが、自分のレベルを
+      まとっています。</p>
+
+      <h2 id="levels">2 つのレベル</h2>
+      <table>
+        <tr><th>レベル</th><th>その約束</th></tr>
+        <tr><td><span class="beta-badge">beta</span></td>
+        <td>設計はおおむね固まっています。バージョンをまたいでふるまいとデータ形式の互換性を
+        保つよう本気で努めますし、この機能が実験的機能から卒業する見込みも高い——とはいえ、
+        卒業するまでは何も保証されません。</td></tr>
+        <tr><td><span class="beta-badge alpha">alpha</span></td>
+        <td>保証はありません。自己責任でどうぞ。ふるまいとデータ形式は、バージョンをまたいで
+        互換性なく変わることがあり——古い形式からの移行を用意することもあれば、しないことも
+        あります——機能そのものが取り下げられることもあります。アルファの機能は
+        <em>Show alpha features</em> をオンにするまで隠れていて、そのスイッチは、効き始める前に
+        この取り決めを説明します。</td></tr>
+      </table>
+      <p>機能は上へ進めます（アルファ → ベータ → 通常の機能）し、どのレベルの実験的機能も、
+      いつでも取り下げられることがあります。どちらが起きたときも、リリースノートが必ずそう
+      告げます。</p>
+
+      <h2 id="whats-experimental">いま実験的なもの</h2>
+      <p class="table-note">Review Discussion は 0.34 で卒業し（いまや通常の機能として全員に
+      有効。トグルは <a href="/ja/docs/settings/#general">Settings ▸ General ▸ Reviewing</a> に
+      あります）、Margin Notes は 0.35 でアルファからベータへ上がりました——レベルが意図どおりに
+      働いた形です。</p>
+      <ul class="doc-cards">
+        <li><a href="/ja/docs/experimental/margin-notes/">
+          <p class="card-title">Margin Notes（マージンノート） <span class="beta-badge">beta</span></p>
+          <p class="card-sub">ローカルのどんな Markdown 文書にも、PR にコメントするのと同じ感覚で
+          コメントできます——保存先はファイルそのもの、しかもエージェントが読める形式で。
+          デフォルトで有効です。はじめて手を伸ばしたとき、PullMark が機能を紹介し、オフにする
+          道も差し出します。フォーマット仕様と、エージェントに渡す指示スニペットも収めて
+          います。</p>
+        </a></li>
+      </ul>
+
+      <h2 id="opt-in">試してみる</h2>
+      <p><strong>Settings&nbsp;→&nbsp;Experimental</strong> を開いてください。ベータの機能は
+      そこにそのまま並んでいます。アルファの機能は、<em>Show alpha features</em> をオンにして
+      アルファの意味を受け入れると現れます（このスイッチは、実際にアルファのものが存在する
+      あいだだけ姿を見せます）。機能にはそれぞれ個別の有効化スイッチがあります。アルファの機能が
+      デフォルトで有効になることはありません。ベータの機能ならありえて——Margin Notes が
+      そうです——その場合ははじめて使うときに紹介が入り、その紹介の中に Turn Off ボタンが
+      置かれています。</p>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？
+      <a href="pullmark://settings/experimental">いま
+      Settings&nbsp;→&nbsp;Experimental を開く</a>。</p>
+
+      <h2 id="feedback">フィードバック</h2>
+      <p>実験的機能が変わるのは、早くから使ってくれた人たちの報告が<em>あるからこそ</em>です。
+      <a href="https://github.com/jedijashwa/pullmark/issues/new/choose">issue を
+      立ててください</a>——Help&nbsp;→&nbsp;Report&nbsp;a&nbsp;Bug… なら、バージョンが
+      下書きに入ります。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">リリース</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT ライセンス</a>
+    <a href="/licenses/">オープンソースライセンス</a>
+    <a href="/privacy/">プライバシー</a>
+    <a href="https://ko-fi.com/pullmark">PullMark を応援する&nbsp;♥</a>
+    <span class="note">PullMark は GitHub とは提携していません。</span>
+  </div>
+  <nav class="lang-switch" aria-label="言語">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>言語</span>
+    <a href="/docs/experimental/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/experimental/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/experimental/" hreflang="ja" lang="ja" aria-current="true">日本語</a>
+    <a href="/fr/docs/experimental/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/experimental/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/experimental/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/experimental/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/experimental/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>
