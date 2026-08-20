@@ -435,7 +435,7 @@ struct LocalFileView: View {
     private var subtitle: String {
         var parts = PathAbbreviator.abbreviate(file.url.deletingLastPathComponent().path)
         if let currentBranch { parts += " · \(currentBranch)" }
-        if editMode { parts += " · editing" }
+        if editMode { parts += " · " + String(localized: "editing") }
         return parts
     }
 

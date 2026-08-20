@@ -46,28 +46,26 @@ enum CaptureChrome {
             }
             method_setImplementation(method, imp_implementationWithBlock(nominate))
         }
-        // The getters alone aren't enough for SwiftUI: controlActiveState
-        // caches "inactive" at window creation and only re-reads on the
-        // become-key/main notifications, which a background window never
-        // gets. Post them ONCE per window as windows appear — the timer
-        // is only discovery for windows created later (panels, Settings).
-        // Posting REPEATEDLY was tried and regressed the traffic lights
-        // to gray: AppKit reconciles a key-claim it knows is false, and
-        // captures raced the flicker. Also seed a first responder: key
-        // events dispatch to it, and a background window never ran the
-        // makeKey path that sets one.
+        // Make new windows GENUINELY key and main. A background app's
+        // window can hold real key status without the app activating —
+        // proof: the Open Quickly panel scene always photographed with
+        // colored lights, because closing the panel handed real key
+        // status back to the main window. Faked become-key
+        // notifications were tried twice (once-per-window and repeated)
+        // and both raced AppKit into gray traffic lights the moment
+        // anything re-laid-out the titlebar. Real state is
+        // resize-proof, and it also gives posted keyboard events a real
+        // key window to land in.
         let blessed = NSHashTable<NSWindow>.weakObjects()
         let blessAll = {
             for window in NSApp.windows where window.isVisible && !blessed.contains(window) {
                 blessed.add(window)
+                if window.canBecomeMain { window.makeMain() }
+                if window.canBecomeKey { window.makeKey() }
                 if window.firstResponder === window,
                    let responder = window.initialFirstResponder ?? window.contentView {
                     window.makeFirstResponder(responder)
                 }
-                NotificationCenter.default.post(
-                    name: NSWindow.didBecomeMainNotification, object: window)
-                NotificationCenter.default.post(
-                    name: NSWindow.didBecomeKeyNotification, object: window)
             }
         }
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in blessAll() }

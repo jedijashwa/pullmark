@@ -677,3 +677,5 @@
 "Zoom out (-)" = "Zoom arrière (-)";
 "branch, tag, or commit" = "branche, tag ou commit";
 "the working file" = "le fichier de travail";
+"editing" = "édition";
+"pr-status-open" = "Ouverte";

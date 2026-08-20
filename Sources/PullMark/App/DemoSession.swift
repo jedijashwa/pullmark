@@ -720,6 +720,9 @@ enum DemoSession {
             .appendingPathComponent("PullMark Demo", isDirectory: true)
         try? FileManager.default.removeItem(at: root)
         try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        // Titlebars, tooltips, and Open Quickly rows show the plausible
+        // "~/Documents/PullMark Demo" instead of the raw temp path.
+        PathAbbreviator.demoRoot = root.path
         var docs: [LocalFile] = []
         var texts = [(path: String, text: String)]()
         for path in [gettingStartedPath, calibrationPath, exportFormatsPath] {
