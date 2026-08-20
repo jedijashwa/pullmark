@@ -25,9 +25,9 @@ enum ContentWidth: String, CaseIterable, Identifiable {
 
     var descriptor: String {
         switch self {
-        case .standard: return "A classic reading measure"
-        case .wide: return "Longer lines, more on screen"
-        case .full: return "Text uses the whole window"
+        case .standard: return String(localized: "A classic reading measure")
+        case .wide: return String(localized: "Longer lines, more on screen")
+        case .full: return String(localized: "Text uses the whole window")
         }
     }
 

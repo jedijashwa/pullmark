@@ -605,3 +605,16 @@
 "Untracked" = "未追跡";
 "git credential helper" = "git 認証ヘルパー";
 "Relaunch Now" = "今すぐ再起動";
+"A classic reading measure" = "古典的な行長";
+"Approve" = "承認";
+"Approve merging these changes" = "これらの変更のマージを承認します";
+"Ask for changes before this can merge" = "マージできるようになる前に、変更を求めます";
+"Bookish serif headers on warm paper" = "本のようなセリフ体の見出しと、温かみのある紙";
+"Inline" = "インライン";
+"Longer lines, more on screen" = "行は長く、画面に載る量は多く";
+"Monospace with a phosphor-green accent" = "等幅フォントに、蛍光グリーンのアクセント";
+"Request changes" = "変更をリクエスト";
+"Side by Side" = "並べて表示";
+"Submit general feedback without explicit approval" = "明確な承認はせずに、全体的なフィードバックを送ります";
+"Text uses the whole window" = "テキストがウィンドウいっぱいに";
+"The classic look, exactly as on github.com" = "github.com そのままの、おなじみの見た目";

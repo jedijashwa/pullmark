@@ -336,12 +336,27 @@ struct PRFileView: View {
         case sourceDiff = "Source Diff"
         case result = "Result"
         var id: String { rawValue }
+        // Raw values are selection tokens (SurfaceToolbar round-trips
+        // them); display goes through the localized label.
+        var label: String {
+            switch self {
+            case .renderedDiff: return String(localized: "Rendered Diff")
+            case .sourceDiff: return String(localized: "Source Diff")
+            case .result: return String(localized: "Result")
+            }
+        }
     }
 
     enum DiffLayout: String, CaseIterable, Identifiable {
         case inline = "Inline"
         case split = "Side by Side"
         var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .inline: return String(localized: "Inline")
+            case .split: return String(localized: "Side by Side")
+            }
+        }
     }
 
     @State private var mode: Mode = .renderedDiff

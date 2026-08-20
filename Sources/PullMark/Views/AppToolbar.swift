@@ -372,7 +372,9 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
                 set: { surface?.setMode?($0) }
             )) {
                 ForEach(surface?.modeOptions ?? [], id: \.self) { option in
-                    Text(option).tag(option)
+                    // Options are Mode raw values (selection tokens);
+                    // render the localized label, tag the token.
+                    Text(PRFileView.Mode(rawValue: option)?.label ?? option).tag(option)
                 }
             }
             .pickerStyle(.segmented)
@@ -386,7 +388,7 @@ private struct PRFileToolbarItems: CustomizableToolbarContent {
         ToolbarItem(id: "pr-layout") {
             Picker("Layout", selection: $layoutRaw) {
                 ForEach(PRFileView.DiffLayout.allCases) { layout in
-                    Text(layout.rawValue).tag(layout.rawValue)
+                    Text(layout.label).tag(layout.rawValue)
                 }
             }
             .pickerStyle(.menu)

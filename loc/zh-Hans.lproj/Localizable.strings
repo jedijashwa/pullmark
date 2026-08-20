@@ -605,3 +605,16 @@
 "Untracked" = "未跟踪";
 "git credential helper" = "git 凭证助手";
 "Relaunch Now" = "立即重新启动";
+"A classic reading measure" = "经典的阅读行长";
+"Approve" = "批准";
+"Approve merging these changes" = "批准合并这些更改";
+"Ask for changes before this can merge" = "在能够合并之前先要求做出更改";
+"Bookish serif headers on warm paper" = "书本般的衬线标题，落在暖色纸面上";
+"Inline" = "内联";
+"Longer lines, more on screen" = "行更长，屏幕上容纳更多";
+"Monospace with a phosphor-green accent" = "等宽字体，点缀一抹荧光绿";
+"Request changes" = "请求更改";
+"Side by Side" = "并排";
+"Submit general feedback without explicit approval" = "提交总体反馈，但不做明确批准";
+"Text uses the whole window" = "文字用满整个窗口";
+"The classic look, exactly as on github.com" = "经典外观，与 github.com 上一模一样";
