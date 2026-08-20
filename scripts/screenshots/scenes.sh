@@ -15,22 +15,34 @@
 
 drive() { swift scripts/drive/"$@"; }
 
+# Localized titles for AX driving ($lang comes from generate.sh; empty
+# means English). App-owned controls resolve from loc/, the system
+# sidebar toggle from SwiftUI's own loctable — see loc-lookup.py.
+t() { scripts/screenshots/loc-lookup.py app "$lang" "$1"; }
+t_sys() { scripts/screenshots/loc-lookup.py system "$lang" "$1"; }
+
 activate() {
   osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" >/dev/null 2>&1 || true
   sleep 0.5
 }
 
 # Sidebar visibility is not deterministic across launches — force it.
-# The toggle's title reveals the state: "Show Sidebar" only exists
-# while hidden, "Hide Sidebar" only while visible.
-show_sidebar() {
-  drive ax.swift $APP_PID press "Show Sidebar" >/dev/null 2>&1 || true
-  sleep 1
+# State comes from AX (sidebar-state: is there a native list outside
+# the web area?), the toggle from its localized toolbar title.
+set_sidebar() { # $1 = visible|hidden
+  local want=$1 verb=Show
+  [[ $want == hidden ]] && verb=Hide
+  for _ in 1 2; do
+    [[ $(drive ax.swift $APP_PID sidebar-state) == $want ]] && return 0
+    drive ax.swift $APP_PID press "$(t_sys "$verb Sidebar")" >/dev/null
+    sleep 1
+  done
+  [[ $(drive ax.swift $APP_PID sidebar-state) == $want ]] || {
+    echo "set_sidebar: still not $want" >&2; return 1
+  }
 }
-hide_sidebar() {
-  drive ax.swift $APP_PID press "Hide Sidebar" >/dev/null 2>&1 || true
-  sleep 1
-}
+show_sidebar() { set_sidebar visible; }
+hide_sidebar() { set_sidebar hidden; }
 
 # Folder tree browsing: expanded guides, quick-start as an italic
 # preview entry — "folders come in as living trees".
@@ -83,11 +95,13 @@ scene_blame() {
   # picks it up.
   drive click.swift 308 499   # remote docs/getting-started.md
   sleep 2.5
-  drive ax.swift $APP_PID press "Blame" >/dev/null
+  drive ax.swift $APP_PID press "$(t Blame)" >/dev/null
   sleep 1
   drive click.swift 289 723   # PR file getting-started.md
   sleep 2.5
-  drive ax.swift $APP_PID menu View "Result" >/dev/null
+  # menuitem, not `menu View …`: the top-level View menu's own title is
+  # system-localized, but the item title is ours to resolve.
+  drive ax.swift $APP_PID menuitem "$(t Result)" >/dev/null
   sleep 2.5
 }
 
@@ -97,7 +111,7 @@ scene_edit() {
   show_sidebar
   drive click.swift 280 179   # local calibration.md
   sleep 2
-  drive ax.swift $APP_PID menu Edit "Edit Mode" >/dev/null
+  drive ax.swift $APP_PID menuitem "$(t "Edit Mode")" >/dev/null
   sleep 1
   drive click.swift 791 354   # activate the "When to calibrate" paragraph
   sleep 1.5
@@ -116,9 +130,9 @@ scene_remote() {
 # settings window, not the main one.
 scene_themes() {
   activate
-  drive ax.swift $APP_PID menu PullMark "Settings…" >/dev/null
+  drive ax.swift $APP_PID menukey , cmd >/dev/null   # Settings… (system-titled)
   sleep 2
-  drive ax.swift $APP_PID press "Appearance" >/dev/null
+  drive ax.swift $APP_PID press "$(t Appearance)" >/dev/null
   sleep 1.5
   CAPTURE_ID=$(drive winlist.swift $APP_PID | awk '$4 != 1052 {print $1}' | head -1)
 }
