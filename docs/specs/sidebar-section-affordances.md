@@ -50,13 +50,13 @@ Full report in the session record (2026-08-20). Load-bearing findings:
   preview slot. No confirmation.
 - Rendered only while the section has content (same condition as the
   existing header context-menu item, which stays).
-- **Header context menus are uniform across the three sections**
-  (added during Josh's trial): right-clicking any header offers the
-  section's open command and its Close All — Open Files gains
-  "Open File…" beside its existing Close All, Locations gets
+- **Header context menus mirror each header's own affordances**
+  (shaped during Josh's trial): Locations right-clicks to
   "Open Folder…" + Close All (`closeAllLocations()`: every folder and
-  repo session through the rows' own removal paths), Pull Requests
-  gets "Open Pull Request…" + Close All (`closeAllPRSessions()`).
+  repo session through the rows' own removal paths), Pull Requests to
+  "Open Pull Request…" + Close All (`closeAllPRSessions()`), and Open
+  Files keeps Close All alone — it has no + button, so an open item
+  there would advertise an affordance the header doesn't carry.
   Close All items disable when their section is empty.
 - **Menu parity:** File → Close All Files, a new
   `ShortcutAction.closeAllFiles` ("Close All Files", File category,
