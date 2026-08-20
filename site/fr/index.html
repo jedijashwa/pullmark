@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PullMark — Markdown, à hauteur de lecture</title>
+<meta name="description" content="Une app macOS native qui affiche le Markdown local en page rendue et présente les pull requests GitHub riches en documentation sous forme de diffs rendus, avec les mots modifiés surlignés.">
+<link rel="canonical" href="https://pullmark.app/fr/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<meta property="og:title" content="PullMark — Markdown, à hauteur de lecture">
+<meta property="og:description" content="Une app macOS native qui affiche le Markdown local en page rendue et révise les pull requests GitHub riches en documentation sous forme de diffs rendus.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/fr/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PullMark",
+  "operatingSystem": "macOS 13.0 or later",
+  "applicationCategory": "DeveloperApplication",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://github.com/jedijashwa/pullmark/blob/main/LICENSE",
+  "url": "https://pullmark.app/fr/",
+  "inLanguage": "fr",
+  "downloadUrl": "https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg",
+  "screenshot": "https://pullmark.app/img/app-doc.png",
+  "description": "Une app macOS native qui affiche le Markdown local tel que les lecteurs le verront et révise les pull requests GitHub riches en documentation sous forme de diffs rendus, avec les mots modifiés surlignés.",
+  "softwareHelp": { "@type": "CreativeWork", "url": "https://pullmark.app/docs/" }
+}
+</script>
+<style>
+/* ============ tokens ============ */
+:root {
+  color-scheme: light dark;
+  --paper:      #fbfaf8;
+  --panel:      #ffffff;
+  --ink:        #1a212b;
+  --muted:      #5b6672;
+  --faint:      #98a1ab;
+  --line:       #e4e2dd;
+  --line-soft:  #efede8;
+  --green:      #1a7f37;
+  --green-ink:  #116329;
+  --green-bg:   #d6efdc;
+  --red:        #cf222e;
+  --red-bg:     #ffe3e0;
+  --blue:       #0969da;
+  --shadow-sm:  0 1px 2px rgba(26,33,43,.06), 0 4px 12px rgba(26,33,43,.06);
+  --code-bg:    #f2f1ee;
+  --shot-edge:  rgba(26,33,43,.18);
+  --shot-soft:  rgba(26,33,43,.12);
+  --serif: "New York", ui-serif, "Iowan Old Style", "Palatino", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:      #10151c;
+    --panel:      #171e28;
+    --ink:        #e9edf3;
+    --muted:      #9aa5b1;
+    --faint:      #67717d;
+    --line:       #2a333e;
+    --line-soft:  #202832;
+    --green:      #3fb950;
+    --green-ink:  #56d364;
+    --green-bg:   rgba(63,185,80,.16);
+    --red:        #f85149;
+    --red-bg:     rgba(248,81,73,.13);
+    --blue:       #58a6ff;
+    --shadow-sm:  0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
+    --code-bg:    #1b232e;
+    --shot-edge:  rgba(0,0,0,.6);
+    --shot-soft:  rgba(0,0,0,.45);
+  }
+}
+
+/* ============ base ============ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 3px; }
+::selection { background: var(--green-bg); }
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 0 28px; }
+.wrap-narrow { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+/* ============ nav ============ */
+.nav {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 0 0;
+}
+.nav .brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+}
+.nav .brand img { width: 30px; height: 30px; }
+.nav .links { margin-left: auto; display: flex; gap: 4px; }
+.nav .links a {
+  text-decoration: none; color: var(--muted); font-size: 14px;
+  padding: 6px 12px; border-radius: 7px;
+}
+.nav .links a:hover { color: var(--ink); background: var(--line-soft); }
+
+/* ============ hero ============ */
+.hero { padding: 84px 0 24px; }
+.eyebrow {
+  font: 500 13px/1.6 var(--mono);
+  color: var(--muted);
+  letter-spacing: .02em;
+  margin: 0 0 26px;
+}
+.eyebrow b { color: var(--green); font-weight: 600; }
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(42px, 7vw, 74px);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  margin: 0 0 26px;
+  max-width: 15em;
+  text-wrap: balance;
+}
+/* the hero diff — deletion + insertion, exactly as PullMark marks them */
+h1 del {
+  text-decoration: none;
+  color: var(--red);
+  position: relative;
+  padding: 0 .06em;
+  background: var(--red-bg);
+  border-radius: .08em;
+}
+h1 del::after {
+  content: "";
+  position: absolute; left: -.02em; right: -.02em; top: 54%;
+  height: .055em; min-height: 3px;
+  background: var(--red);
+  border-radius: 2px;
+  transform-origin: left center;
+}
+h1 mark {
+  color: var(--green-ink);
+  background: linear-gradient(var(--green-bg), var(--green-bg)) no-repeat 0 0 / 100% 100%;
+  padding: 0 .08em;
+  border-radius: .08em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+@media (prefers-reduced-motion: no-preference) {
+  h1 del::after { animation: strike .5s cubic-bezier(.7,0,.3,1) .9s backwards; }
+  h1 mark { animation: sweep .6s cubic-bezier(.7,0,.3,1) 1.5s backwards; }
+  @keyframes strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes sweep  { from { background-size: 0 100%; color: inherit; }
+                      to   { background-size: 100% 100%; } }
+}
+.lede {
+  font-size: 19px; line-height: 1.6; color: var(--muted);
+  max-width: 36em; margin: 0 0 40px;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* install card */
+.install {
+  display: inline-block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px 14px;
+  max-width: 100%;
+}
+.install .install-top {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
+}
+.install .install-label {
+  font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--faint);
+}
+.install pre {
+  margin: 0;
+  font: 13.5px/1.85 var(--mono);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.install pre .p { color: var(--faint); user-select: none; }
+.install pre b { font-weight: 500; color: var(--ink); }
+.install pre .arg { color: var(--green); }
+.copy-btn {
+  margin-left: auto;
+  font: 500 12.5px var(--sans);
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.copy-btn:hover { color: var(--ink); border-color: var(--faint); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--green); color: #fff;
+  font: 600 14.5px/1 var(--sans);
+  padding: 12px 20px; border-radius: 9px;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: filter .15s;
+}
+.dl-btn:hover { filter: brightness(1.08); }
+.dl-btn svg { flex: none; }
+.dl-sub { margin: 12px 2px 0; max-width: 24em; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.dl-sub a { color: var(--muted); text-underline-offset: 3px; }
+.dl-sub a:hover { color: var(--ink); }
+.after-install {
+  margin: 14px 2px 0; font-size: 13.5px; color: var(--muted);
+}
+.after-install a { color: var(--muted); text-underline-offset: 3px; }
+.after-install a:hover { color: var(--ink); }
+
+/* two ways in, no favorites */
+.install-row {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch;
+}
+.install-row .install { display: flex; flex-direction: column; }
+.install .dl-body {
+  margin: 0; max-width: 21em;
+  font-size: 14.5px; line-height: 1.7; color: var(--muted);
+}
+.install .dl-body a { color: var(--ink); text-underline-offset: 3px; }
+.install .dl-body code { font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em; }
+.either-way { margin: 14px 2px 0; font-size: 13.5px; color: var(--muted); }
+
+/* ============ screenshots ============ */
+/* real window captures with transparent margins. The window silhouette gets
+   its edge from CSS drop-shadows (they follow the alpha, not the box), so
+   light windows never melt into the light page background */
+.shot { margin: 0; }
+.shot img {
+  width: 100%; height: auto;
+  filter: drop-shadow(0 0 1px var(--shot-edge))
+          drop-shadow(0 2px 4px var(--shot-edge))
+          drop-shadow(0 18px 44px var(--shot-soft));
+}
+.shot figcaption {
+  text-align: center;
+  font: 400 13px var(--sans);
+  color: var(--muted);
+  margin-top: 2px;
+}
+.shot figcaption code { font: 92% var(--mono); }
+
+.hero-shot { padding: 30px 0 0; }
+.hero-shot .shot { max-width: 1150px; margin: 0 auto; }
+/* smaller window captures (the Settings window) sit at their natural scale */
+.shot-narrow { max-width: 660px; margin: 34px auto 0; }
+
+/* ============ sections ============ */
+section { padding: 96px 0 0; }
+.kicker {
+  font: 500 13px/1 var(--mono);
+  color: var(--green);
+  margin: 0 0 14px;
+}
+.kicker::before { content: "## "; color: var(--faint); }
+h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0 0 18px;
+  text-wrap: balance;
+}
+.prose { color: var(--muted); font-size: 16.5px; max-width: 42em; }
+.prose p { margin: 0 0 1.1em; }
+.prose strong, .prose em { color: var(--ink); }
+.prose code {
+  font: 87% var(--mono);
+  background: var(--code-bg);
+  border-radius: 5px;
+  padding: .15em .38em;
+}
+
+/* pull-quote — a real markdown blockquote, change-bar and all */
+.pull {
+  font-family: var(--serif);
+  font-size: clamp(21px, 2.6vw, 27px);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink);
+  border-left: 4px solid var(--green);
+  padding: 4px 0 4px 24px;
+  margin: 36px 0;
+  max-width: 24em;
+}
+
+/* GFM alert — the honest disclaimer */
+.gfm-note {
+  border-left: 4px solid var(--blue);
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 30px 0 0;
+  max-width: 46em;
+  font-size: 15.5px;
+}
+.gfm-note .note-label {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 14px; color: var(--blue);
+  margin-bottom: 6px;
+}
+.gfm-note .note-label svg { flex: none; }
+.gfm-note p { margin: 0; color: var(--muted); }
+.gfm-note p strong { color: var(--ink); }
+
+/* ============ review actions ============ */
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.trio .act {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+.trio .act .act-name {
+  font: 600 13px var(--mono);
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.trio .act .act-name::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); flex: none;
+}
+.trio .act:nth-child(2) .act-name::before { background: #bf8700; }
+.trio .act:nth-child(3) .act-name::before { background: var(--blue); }
+.trio .act p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.trio .act p code {
+  font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em;
+}
+
+/* ============ reading section ============ */
+.reading-shot { max-width: 1150px; margin: 34px auto 0; }
+/* the specimen: constructs shown rendered, because that's the whole point */
+.specimen {
+  margin: 34px 0 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px 26px;
+  font-size: 16px; line-height: 2.05;
+  color: var(--ink);
+}
+.specimen code { font: 86% var(--mono); background: var(--code-bg); border-radius: 5px; padding: .12em .38em; }
+.specimen mark { background: var(--green-bg); color: var(--green-ink); border-radius: .15em; padding: 0 .18em; }
+.specimen del { color: var(--muted); }
+.specimen .link { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.specimen .fn { color: var(--blue); font-size: 68%; }
+.specimen .math { font-family: var(--serif); font-style: italic; }
+.specimen .task { white-space: nowrap; }
+.specimen .task::before {
+  content: "✓"; display: inline-block; width: 1.05em; height: 1.05em;
+  margin-right: .35em; vertical-align: -12%;
+  background: var(--blue); color: #fff; border-radius: 3px;
+  font: 700 10.5px/1.5 var(--sans); text-align: center;
+}
+.readlist {
+  list-style: none; margin: 26px 0 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 56px;
+}
+.readlist li {
+  padding: 13px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 15px; color: var(--muted);
+}
+.readlist li strong { color: var(--ink); font-weight: 600; }
+.readlist li kbd {
+  font: 12px var(--mono); background: var(--code-bg);
+  border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 5px; padding: 1px 6px;
+}
+
+/* ============ mac grid ============ */
+.macgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 34px;
+}
+.macgrid .cell {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+}
+.macgrid .cell h3 {
+  margin: 0 0 7px; font-size: 15px; font-weight: 600; letter-spacing: -0.005em;
+}
+.macgrid .cell p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.macgrid .cell p code {
+  font: 90% var(--mono); background: var(--code-bg);
+  border-radius: 4px; padding: .1em .3em;
+}
+
+/* ============ closing ============ */
+.closing {
+  margin-top: 110px;
+  border-top: 1px solid var(--line);
+  padding: 88px 0 20px;
+  text-align: center;
+}
+.closing img.icon { width: 76px; height: 76px; margin: 0 auto 22px; }
+.closing h2 { margin-bottom: 12px; }
+.closing .prose { margin: 0 auto 34px; }
+.closing .install { text-align: left; }
+.closing .either-way { text-align: center; }
+.closing .also {
+  margin: 26px 0 0; font-size: 14px; color: var(--faint);
+}
+.closing .also a { color: var(--muted); text-underline-offset: 3px; }
+.closing .also a:hover { color: var(--ink); }
+
+/* ============ footer ============ */
+footer {
+  margin-top: 84px;
+  border-top: 1px solid var(--line);
+  padding: 30px 0 46px;
+}
+footer .foot {
+  display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center;
+  color: var(--muted); font-size: 13.5px;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+footer .note { margin-left: auto; }
+
+/* ============ responsive ============ */
+@media (max-width: 880px) {
+  .readlist { grid-template-columns: 1fr; }
+  .trio { grid-template-columns: 1fr; }
+  .macgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .wrap, .wrap-narrow { padding: 0 20px; }
+  .hero { padding-top: 60px; }
+  section { padding-top: 72px; }
+  .macgrid { grid-template-columns: 1fr; }
+  .install { display: block; }
+  .install pre { font-size: 12.5px; }
+  footer .note { margin-left: 0; }
+  .closing { margin-top: 80px; padding-top: 64px; }
+}
+</style>
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principale">
+    <a class="brand" href="#"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/fr/docs/">Docs</a>
+      <a href="/fr/uses/agents/">Cas d'usage</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versions</a>
+    </div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">app macOS native · <b>gratuite &amp; open source</b> · signée &amp; notarisée</p>
+    <h1>La doc est faite pour être <del>diffée</del> <mark>lue</mark>.</h1>
+    <p class="lede">PullMark affiche votre Markdown local tel que les lecteurs le verront — et présente
+    les pull requests GitHub riches en documentation sous forme de <strong>diffs rendus</strong>, où
+    seuls les mots modifiés sont surlignés. Commentez, suggérez et envoyez votre révision sans jamais
+    plisser les yeux devant un mur de prose en <code>+</code>/<code>−</code>.</p>
+
+    <div class="install-row">
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Homebrew</span>
+          <button class="copy-btn" type="button" id="copy1">Copier</button>
+        </div>
+        <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+      </div>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Téléchargement direct</span>
+        </div>
+        <a class="dl-btn" href="https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v6.69l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V1.75ZM2.5 12.25a.75.75 0 0 1 .75.75v.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 12.5 15.5h-9a1.75 1.75 0 0 1-1.75-1.75v-.5a.75.75 0 0 1 .75-.75Z"/></svg>
+          Télécharger PullMark</a>
+        <p class="dl-sub">Le dernier DMG — ouvrez-le, glissez vers Applications (PullMark
+          se charge du nettoyage).
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">Toutes les versions&nbsp;→</a></p>
+      </div>
+    </div>
+    <p class="either-way">Dans les deux cas, PullMark vérifie les mises à jour et les installe en un clic.</p>
+    <p class="after-install">macOS 13+ · signée Developer&nbsp;ID, notarisée par Apple ·
+      ou <a href="https://github.com/jedijashwa/pullmark">compilez depuis les sources</a></p>
+
+    <div class="hero-shot">
+      <figure class="shot">
+        <img src="/img/app-blame.png?v=3" width="1392" height="912"
+          alt="PullMark affichant la documentation d'un projet comme une page mise en forme, gouttière de blame activée&nbsp;: les avatars des auteurs occupent la marge gauche, un par suite de blocs modifiés en dernier par le même commit">
+        <figcaption>La doc d'un projet, mise en forme — avec l'historique dans la marge&nbsp;: un avatar par suite de blocs, chacun ouvrant sur son commit.</figcaption>
+      </figure>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section id="agents">
+  <div class="wrap">
+    <p class="kicker">votre agent</p>
+    <h2>Votre agent écrit des plans.<br>Relisez-les comme ceux d'un collègue.</h2>
+    <div class="prose">
+      <p>Les agents produisent beaucoup de Markdown&nbsp;: plans d'implémentation, specs,
+      synthèses de recherche — de longs documents qui demandent votre jugement avant que
+      quiconque n'agisse dessus. Les moyens existants de le donner conviennent tous mal.
+      La source brute dans un éditeur cache ce qu'un lecteur verrait, coller des extraits
+      dans une conversation coupe le retour de son contexte, et committer un brouillon
+      juste pour obtenir les cadres de commentaire d'une PR relève du cérémonial — tout
+      document n'a pas vocation à finir en pull request.</p>
+      <p>Les <strong>notes de marge</strong> placent le retour dans le document lui-même.
+      Lisez le brouillon en page rendue, cliquez là où ça cloche et laissez une note
+      signée, ancrée à ce bloc. Les notes sont de simples commentaires HTML qui restent
+      hors de la page rendue — si bien que <em>«&nbsp;traite mes notes dans le
+      plan&nbsp;»</em> suffit comme passation&nbsp;: votre agent lit chaque note
+      exactement là où vous l'avez laissée. Pas de commit, pas de copier-coller, pas de
+      pull request. Puis regardez la nouvelle version arriver — Compare (comparer)
+      surligne les modifications de l'agent mot à mot, en direct à chaque
+      enregistrement.</p>
+    </div>
+    <figure class="shot reading-shot">
+      <img src="/img/app-notes.png?v=3" width="1052" height="876" loading="lazy"
+        alt="PullMark affichant une spec de conception écrite par un agent, intitulée Wind Gust Alerts, avec trois notes de marge présentées comme des cartes signées du relecteur — une note au niveau du fichier demandant une seconde version propre, une contestant l'hypothèse de fréquence d'échantillonnage de la spec, et une invoquant YAGNI sur une fonctionnalité — tandis que la barre latérale montre la spec dans un dossier docs/superpowers/specs d'un dépôt git sur la branche main">
+      <figcaption>La spec d'un agent, relue sur place&nbsp;: trois notes signées ancrées
+      aux blocs qu'elles contestent, stockées dans le fichier même comme de simples
+      commentaires HTML — l'agent traite chacune puis la supprime.</figcaption>
+    </figure>
+    <p class="prose">Toute la boucle — instructions à remettre à votre agent comprises —
+    est déroulée sur <a href="/fr/uses/agents/">la page agents</a>. Les notes de marge
+    sont en bêta, activées par défaut&nbsp;; la
+    <a href="/fr/docs/experimental/margin-notes/">doc</a> en couvre la mécanique.</p>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <p class="kicker">pourquoi</p>
+    <h2>La prose n'est pas du code.<br>Arrêtez de la relire comme du code.</h2>
+    <div class="prose">
+      <p>Vous connaissez le moment&nbsp;: un mur vert de quarante lignes dans le diff d'un
+      README, et quelque part dedans, la seule phrase qui a vraiment changé. Docs de
+      conception, décisions d'architecture, runbooks, définitions d'agents — chaque
+      semaine, une part croissante de ce qui traverse votre file de révision est de la
+      prose, et un diff source de prose cache précisément ce que vous êtes venu juger.</p>
+      <p>PullMark vous montre le changement tel que les lecteurs le rencontreront&nbsp;:
+      <strong>rendu, avec seuls les mots modifiés surlignés</strong>. Les tableaux restent
+      des tableaux, les diagrammes des diagrammes, et une retouche d'un mot est un seul
+      mot surligné. Commentez n'importe quel bloc&nbsp;: le commentaire atterrit sur les
+      lignes exactes qu'attend GitHub — approuvez, demandez des modifications ou laissez
+      des suggestions que l'auteur applique en un clic.</p>
+    </div>
+    <blockquote class="pull">«&nbsp;La salle de lecture à côté de&nbsp;l'atelier.&nbsp;»</blockquote>
+    <div class="gfm-note" role="note">
+      <div class="note-label">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+        Note
+      </div>
+      <p><strong>PullMark n'est délibérément pas un client de révision complet.</strong> Il ne
+      montre que les fichiers Markdown d'une PR — pour la partie code d'un changement, vos
+      outils de révision habituels restent les bons.</p>
+    </div>
+  </div>
+</section>
+
+<section id="reviewing">
+  <div class="wrap">
+    <p class="kicker">révision</p>
+    <h2>Toute la révision de la doc, depuis la page rendue.</h2>
+    <p class="prose">Passez de la disposition <strong>inline</strong> à la vue <strong>côte à
+    côte</strong>, descendez au <em>Source Diff</em> (diff source) brut ou prévisualisez le
+    <em>Result</em> (résultat) final — le tout depuis la barre d'outils, qui vous mène aussi de
+    fichier en fichier et vous ramène à la PR sans toucher à la barre latérale. Le front matter
+    YAML devient un <strong>discret tableau de métadonnées</strong>, pas un mur de prose en
+    gras — les docs chargées en configuration se diffent donc proprement aussi. Un document tout
+    neuf se lit comme un document — une seule mention dit qu'il est entièrement nouveau, au lieu
+    de teinter chaque bloc en vert. Les fils de révision existants apparaissent sous les blocs
+    qu'ils discutent. Survolez un bloc, cliquez la bulle, et commentez le bloc entier ou
+    <strong>exactement les lignes de votre choix</strong>. Quand vous avez terminé,
+    <strong>Approve</strong> (approuver), <strong>Request Changes</strong> (demander des
+    modifications) ou <strong>Comment</strong> (commenter), directement depuis la vue
+    d'ensemble — avec ou sans commentaires de ligne — et déposez aussi des commentaires au
+    niveau du fichier ou de simples messages de conversation. La vue d'ensemble montre
+    <strong>où en est la PR</strong>&nbsp;: approuvée ou modifications demandées, le verdict de
+    chaque réviseur, les checks CI avec un lien vers les journaux de chacun, et la conversation
+    complète en chronologie lisible. Les PR ouvertes sont vérifiées chaque minute&nbsp;; si la
+    branche avance, un clic rafraîchit et vos brouillons survivent.</p>
+
+    <figure class="shot reading-shot">
+      <img src="/img/app-diff.png?v=5" width="1393" height="903" loading="lazy"
+        alt="PullMark révisant une pull request de documentation&nbsp;: un diff rendu où un paragraphe modifié porte un surlignage mot à mot, un organigramme Mermaid ajouté s'affiche sur un fond vert de bloc ajouté, la barre latérale montre un compteur de commentaires sur le fichier, et le contrôle de révision de la barre d'outils affiche Finish your review avec trois commentaires en attente">
+      <figcaption>Une PR de documentation en diff rendu&nbsp;: l'unique phrase modifiée porte
+      un surlignage mot à mot, et le nouvel organigramme arrive comme un <em>diagramme</em>
+      sur fond de bloc ajouté — pas quatre-vingts lignes vertes de source
+      Mermaid.</figcaption>
+    </figure>
+
+    <div class="trio">
+      <div class="act">
+        <div class="act-name">Add to Review</div>
+        <p>Le mode par défaut&nbsp;: les brouillons s'accumulent en local. Envoyez-les
+        ensemble — Comment, Approve ou Request Changes — ou enregistrez une révision en
+        attente à terminer sur github.com.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">Comment Now</div>
+        <p>Publie immédiatement un commentaire de révision unique, ancré au bloc — ou
+        restreint aux seules lignes que vous sélectionnez dans l'éditeur.</p>
+      </div>
+      <div class="act">
+        <div class="act-name">Edit as Suggestion</div>
+        <p>Le crayon ouvre la source Markdown d'un bloc dans un éditeur — votre modification
+        part comme un bloc <code>```suggestion</code> que l'auteur applique en un clic.</p>
+      </div>
+    </div>
+
+    <figure class="shot reading-shot">
+      <img src="/img/app-pr.png?v=1" width="1052" height="784" loading="lazy"
+        alt="La vue d'ensemble de pull request de PullMark&nbsp;: le titre de la PR avec une pastille Open, une capsule Changes requested, une capsule Checks passed, les avatars des réviseurs portant leur badge de verdict, une pastille d'équipe docs-guild, la description de la PR rendue, et la chronologie de conversation dont le premier commentaire de révision montre un tableau rendu">
+      <figcaption>La conversation comme un document&nbsp;: les commentaires de révision
+      affichent leurs tableaux comme des tableaux, et l'avatar de chaque réviseur porte son
+      verdict.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="reading">
+  <div class="wrap">
+    <p class="kicker">lecture</p>
+    <h2>Un vrai lecteur pour le Markdown déjà sur votre disque.</h2>
+    <p class="prose">Vos notes, vos README, le dossier de docs de votre équipe — ouvrez un
+    fichier ou un répertoire entier et lisez-le tel qu'il devait apparaître. Tout se réaffiche
+    à l'instant où le fichier change sur le disque, les images et liens relatifs se résolvent
+    tout seuls, et si GitHub le rend, PullMark le rend&nbsp;:</p>
+
+    <p class="specimen" aria-label="Constructions Markdown, affichées rendues">
+      <strong>Gras</strong>, <em>italique</em>, <del>barré</del>, <code>code en ligne</code>,
+      <mark>surlignage</mark>, H<sub>2</sub>O, mc<sup>2</sup>,
+      <span class="math">e<sup>iπ</sup>&hairsp;+&hairsp;1&hairsp;=&hairsp;0</span>,
+      <span class="link">liens avec aperçu au survol</span>, notes de bas de page<span class="fn">[1]</span>,
+      <span class="task">listes de tâches</span> — plus les tableaux, les diagrammes Mermaid,
+      le code coloré, les alertes <code>&gt; [!NOTE]</code>, les maths KaTeX hors ligne,
+      <code>[toc]</code>, et le front matter YAML replié en un tableau de métadonnées soigné.</p>
+
+    <figure class="shot reading-shot">
+      <img src="/img/app-doc.png?v=8" width="1052" height="784" loading="lazy"
+        alt="PullMark affichant un fichier Markdown local d'un dépôt de docs&nbsp;: la section Open Files de la barre latérale liste trois documents conservés et une entrée d'aperçu en italique&nbsp;; la section Locations montre le dossier en arborescence de sous-dossiers et de fichiers Markdown, portant une pastille de branche git et une marque de dépôt GitHub&nbsp;; les fichiers modifiés d'une pull request ouverte forment une arborescence avec icônes d'état et badge de compteur de commentaires&nbsp;; le document rendu montre des titres, des listes, un lien et une alerte Tip&nbsp;; la barre de titre affiche le dossier du fichier et la branche git, avec une pastille de compte de mots dans le coin">
+      <figcaption>Les dossiers arrivent en arborescences vivantes, chaque emplacement porte sa
+      branche git, et la navigation montre les fichiers en <em>aperçus</em> — l'entrée en
+      italique d'Open Files que le clic suivant remplace. Les pull requests voisinent avec vos
+      fichiers locaux, et la barre de titre sait où vous êtes.</figcaption>
+    </figure>
+
+    <ul class="readlist">
+      <li><strong>L'historique dans la marge</strong> — une discrète gouttière de
+        blame&nbsp;: un avatar par suite de blocs&nbsp;; survolez pour l'auteur, la date et
+        le commit&nbsp;; cliquez pour l'historique complet des lignes.</li>
+      <li><strong>Toujours à jour</strong> — enregistrez depuis n'importe quel éditeur&nbsp;:
+        la page s'est déjà réaffichée.</li>
+      <li><strong>Un diff face à l'historique</strong> — un clic compare le fichier de
+        travail à n'importe quel commit ou branche récents, rendu comme un diff de PR, en
+        direct pendant que le fichier continue de changer&nbsp;; <code>pullmark --diff</code>
+        le fait depuis un terminal — le plus court chemin vers «&nbsp;qu'est-ce que l'agent
+        vient de changer dans ma doc&nbsp;».</li>
+      <li><strong>Parcourez sans vous ensevelir</strong> — cliquez de fichier en fichier dans
+        un dossier ou un dépôt&nbsp;: chacun s'affiche en <em>aperçu</em>, une seule entrée
+        en italique dans Open Files (fichiers ouverts) que le clic suivant remplace.
+        Double-cliquez (ou commencez simplement à éditer) pour le garder.</li>
+      <li><strong>Le plan en barre latérale</strong> — une carte de vos titres, façon
+        navigateur, à un bouton de distance.</li>
+      <li><strong>Trouvez tout</strong> — <kbd>⌘F</kbd> parcourt les occurrences de la
+        page&nbsp;; <kbd>⇧⌘F</kbd> cherche d'un coup dans tous les fichiers de la barre
+        latérale.</li>
+      <li><strong>Un zoom qui recompose</strong> — <kbd>⌘+</kbd> et <kbd>⌘−</kbd> (ou un
+        pincement) agrandissent ensemble texte, images et colonne de lecture, mémorisés d'un
+        lancement à l'autre&nbsp;; la navigation grandit avec.</li>
+      <li><strong>Cliquez pour inspecter</strong> — images, diagrammes Mermaid et formules
+        en bloc s'ouvrent dans une vue dédiée avec panoramique et zoom, pour que les
+        diagrammes complexes ne restent pas coincés à la largeur de colonne — et enregistrez
+        ou partagez exactement ce que vous inspectez (les diagrammes en vrais SVG).</li>
+      <li><strong>Emportez-le partout</strong> — export en PDF ou en fichier HTML
+        autonome&nbsp;; <kbd>⌘C</kbd> colle en texte riche dans Docs et Slack,
+        <kbd>⌥⌘C</kbd> restitue le Markdown.</li>
+      <li><strong>Trois thèmes de lecture</strong> — Editorial, GitHub et Terminal, avec
+        aperçus en direct dans Settings (réglages) — ou déposez votre propre CSS. Clair et
+        sombre restylent tout, Mermaid compris, et la longueur de ligne vous
+        appartient&nbsp;: Standard, Wide ou Full Width.</li>
+      <li><strong>Les liens GitHub s'ouvrent dans l'app</strong> — cliquez un lien
+        <code>github.com</code> vers un fichier Markdown et PullMark le rend, avec une barre
+        de provenance dépôt&nbsp;@&nbsp;branche toujours visible&nbsp;; <kbd>⌘</kbd>-clic
+        l'envoie au navigateur.</li>
+      <li><strong>Open Quickly (ouvrir rapidement)</strong> — <kbd>⌘K</kbd> saute vers
+        n'importe quel titre, fichier ou PR, en recherche floue — ou collez l'URL d'une PR,
+        l'URL d'un dépôt ou un chemin de fichier, et il l'ouvre directement.</li>
+      <li><strong>Déplacé veut dire déplacé</strong> — un paragraphe déplacé à l'identique
+        s'affiche une seule fois, avec une discrète pastille violette, pas du bruit
+        rouge-plus-vert.</li>
+      <li><strong>Reprend où vous en étiez</strong> — vos fichiers, vos PR et votre position
+        de lecture se restaurent au lancement.</li>
+    </ul>
+
+    <p class="prose">Voilà l'essentiel. La <a href="/fr/docs/">doc</a> couvre le reste —
+    chaque fonctionnalité, chaque réglage, chaque icône, le plan clavier complet et la
+    commande <code>pullmark</code>.</p>
+
+    <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">Lire par défaut. Éditer sur place.</h3>
+    <p class="prose">Appuyez sur <kbd>⌘E</kbd> et la page devient l'éditeur&nbsp;: le bloc sous
+    votre curseur révèle son Markdown brut sur place — même typographie, même position, rien ne
+    saute — et vous tapez immédiatement. Passez de bloc en bloc aux flèches, fusionnez avec
+    Retour arrière, scindez d'une ligne vide&nbsp;; quitter un bloc l'enregistre par le même
+    chemin protégé et versionné que tout le reste. La lecture reste le mode par défaut&nbsp;;
+    la frontière entre les modes, c'est le geste d'enregistrer.</p>
+
+    <figure class="shot shot-narrow" style="max-width: 860px;">
+      <img src="/img/app-edit.png?v=2" width="860" height="420" loading="lazy"
+        alt="Un document rendu en mode édition&nbsp;: un paragraphe révélé en source Markdown brute sur place, entouré de contenu rendu">
+      <figcaption>Le mode édition&nbsp;: le bloc actif montre sa source&nbsp;; tout le reste demeure rendu.</figcaption>
+    </figure>
+
+    <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">GitHub est un lieu où vivent vos docs. Lisez-le comme tel.</h3>
+    <p class="prose">Cliquez un lien <code>github.com</code> vers un fichier Markdown&nbsp;:
+    PullMark le récupère et le rend dans l'app — le premier clic demande le comportement
+    voulu, et <kbd>⌘</kbd>-clic fait toujours l'inverse. Une barre de provenance au-dessus de
+    la page dit exactement quel dépôt et quelle branche vous lisez, épinglés au commit
+    résolu&nbsp;; les liens relatifs continuent de se résoudre contre le dépôt, toute
+    l'arborescence Markdown est à un clic dans la barre latérale, et les dépôts privés
+    utilisent la connexion GitHub que vos PR utilisent déjà — rien de ce qui est récupéré ne
+    touche jamais le disque. Les branches sont une pastille sur chaque dépôt&nbsp;: changez
+    sur place, ouvrez une autre branche comme entrée à part dans la barre latérale, ou sautez
+    dans un worktree local. Et si le dépôt est déjà cloné sur votre Mac sur cette branche, le
+    lien ouvre votre fichier local à la place.</p>
+
+    <figure class="shot reading-shot">
+      <img src="/img/app-remote.png?v=1" width="1052" height="784" loading="lazy"
+        alt="PullMark affichant un fichier Markdown récupéré d'un dépôt GitHub&nbsp;: une barre de provenance au-dessus du contenu donne le nom du dépôt, une pastille de branche, le chemin du fichier et le commit épinglé, avec un lien Open on GitHub&nbsp;; la section Locations de la barre latérale montre le dépôt avec une icône de livre et son arborescence de fichiers Markdown">
+      <figcaption>Une doc lue directement depuis GitHub&nbsp;: la barre de provenance dit
+      toujours où vous êtes — dépôt, branche, commit épinglé — et la pastille de branche
+      change de branche ou en ouvre d'autres sans quitter la page.</figcaption>
+    </figure>
+
+    <figure class="shot shot-narrow">
+      <img src="/img/app-themes.png?v=3" width="792" height="820" loading="lazy"
+        alt="La fenêtre Settings de PullMark sur l'onglet Appearance&nbsp;: trois cartes d'aperçu de thème en direct — GitHub, Editorial et Terminal — chacune rendant le même document d'exemple via le vrai pipeline, Editorial sélectionné, au-dessus de boutons ouvrant le dossier de thèmes personnalisés">
+      <figcaption>Settings → Appearance (réglages → apparence)&nbsp;: trois aperçus de thème en direct, rendus par le vrai pipeline — cliquez une carte pour changer.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="mac">
+  <div class="wrap">
+    <p class="kicker">natif</p>
+    <h2>Une app Mac digne de ce nom.</h2>
+    <div class="macgrid">
+      <div class="cell">
+        <h3>Quick Look</h3>
+        <p>Appuyez sur Espace sur n'importe quel fichier Markdown dans le Finder et voyez-le
+        rendu dans votre thème de lecture, avant même d'ouvrir une app.</p>
+      </div>
+      <div class="cell">
+        <h3>Une vraie CLI</h3>
+        <p><code>pullmark README.md</code>, <code>pullmark ~/wt docs/plan.md</code> — fichiers,
+        dossiers et worktrees s'ouvrent dans l'app en cours, toujours dans la fenêtre au
+        premier plan. <code>pullmark --help</code> la documente&nbsp;; la
+        <a href="/fr/docs/cli/">doc</a> aussi.</p>
+      </div>
+      <div class="cell">
+        <h3>App par défaut pour .md</h3>
+        <p>Un clic dans Settings (réglages) et le double-clic dans le Finder signifie
+        <em>rendu</em>, partout — et si une mise à jour fait un jour sauter l'association,
+        PullMark s'en aperçoit et propose de la rétablir.</p>
+      </div>
+      <div class="cell">
+        <h3>Vos identifiants existants</h3>
+        <p>Pas de connexion à part. PullMark utilise <code>gh auth token</code> ou votre
+        assistant d'identification git — les dépôts privés et d'organisation fonctionnent,
+        tout simplement.</p>
+      </div>
+      <div class="cell">
+        <h3>Rien ne reste sur le disque</h3>
+        <p>Le contenu de PR récupéré vit dans des sessions éphémères et des caches mémoire
+        bornés — rien de ce qui vient de GitHub n'est écrit en stockage persistant.</p>
+      </div>
+      <div class="cell">
+        <h3>Open source, MIT</h3>
+        <p>Swift, zéro dépendance de paquet, et une <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">licence</a>
+        qui ne se met pas en travers. <a href="https://github.com/jedijashwa/pullmark">Lisez la source</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="closing">
+  <div class="wrap-narrow">
+    <img class="icon" src="/img/icon.svg" alt="" width="76" height="76">
+    <h2>Offrez une salle de lecture à vos docs.</h2>
+    <p class="prose" style="max-width: 30em;">Gratuite, open source, signée et notarisée.
+    Un téléchargement suffit.</p>
+    <div class="install-row" style="justify-content: center;">
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Homebrew</span>
+          <button class="copy-btn" type="button" id="copy2">Copier</button>
+        </div>
+        <pre><code><span class="p">$ </span><b>brew tap</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew trust</b> <span class="arg">jedijashwa/tap</span>
+<span class="p">$ </span><b>brew install --cask</b> <span class="arg">pullmark</span></code></pre>
+      </div>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-label">Téléchargement direct</span>
+        </div>
+        <a class="dl-btn" href="https://github.com/jedijashwa/pullmark/releases/latest/download/PullMark.dmg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v6.69l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22V1.75ZM2.5 12.25a.75.75 0 0 1 .75.75v.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 12.5 15.5h-9a1.75 1.75 0 0 1-1.75-1.75v-.5a.75.75 0 0 1 .75-.75Z"/></svg>
+          Télécharger PullMark</a>
+        <p class="dl-sub">Le dernier DMG — ouvrez-le, glissez vers Applications (PullMark
+          se charge du nettoyage).
+          <a href="https://github.com/jedijashwa/pullmark/releases/latest">Toutes les versions&nbsp;→</a></p>
+      </div>
+    </div>
+    <p class="either-way">Dans les deux cas, PullMark vérifie les mises à jour et les installe en un clic.</p>
+    <p class="also"><a href="https://github.com/jedijashwa/pullmark">ou compilez depuis les sources</a></p>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a href="/fr/docs/">Docs</a>
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versions</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licence MIT</a>
+    <a href="/licenses/">Licences open source</a>
+    <a href="/privacy/">Confidentialité</a>
+    <a href="https://ko-fi.com/pullmark">Soutenir PullMark&nbsp;♥</a>
+    <span class="note">PullMark n'est pas affilié à GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Langue">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Langue</span>
+    <a href="/" hreflang="en" lang="en">English</a>
+    <a href="/zh/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/" hreflang="fr" lang="fr" aria-current="true">Français</a>
+    <a href="/de/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+<script>
+(function () {
+  var cmds = 'brew tap jedijashwa/tap\nbrew trust jedijashwa/tap\nbrew install --cask pullmark';
+  ['copy1', 'copy2'].forEach(function (id) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(cmds).then(function () {
+        btn.textContent = 'Copié';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = 'Copier';
+          btn.classList.remove('copied');
+        }, 1600);
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

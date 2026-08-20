@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>键盘快捷键 — PullMark 文档</title>
+<meta name="description" content="PullMark 完整键位表——每个默认快捷键，以及如何重新绑定。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/shortcuts/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/shortcuts/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/shortcuts/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/shortcuts/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/shortcuts/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/shortcuts/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/shortcuts/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/shortcuts/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/shortcuts/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/shortcuts/">
+<meta property="og:title" content="键盘快捷键 — PullMark 文档">
+<meta property="og:description" content="PullMark 完整键位表——每个默认快捷键，以及如何重新绑定。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/shortcuts/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/" aria-current="page">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>键盘快捷键</h1>
+      <p class="article-lede">完整键位表。每一条都可以在
+      <strong>Settings → Keyboard</strong>（设置 → 键盘）里重新绑定；
+      没有默认键的行是有意留空的——常用就给它配一个。</p>
+
+      <h2 id="file">File（文件）</h2>
+      <table>
+        <tr><th>操作</th><th>默认</th><th>说明</th></tr>
+        <tr><td>Open…</td><td><kbd>⌘O</kbd></td><td>文件或文件夹</td></tr>
+        <tr><td>Open Pull Request…</td><td><kbd>⇧⌘O</kbd></td><td></td></tr>
+        <tr><td>Open Quickly…</td><td><kbd>⌘K</kbd></td><td>标题、文件、PR、最近使用——或粘贴路径、PR 或 GitHub 链接</td></tr>
+        <tr><td>Commit Changes…</td><td><kbd>⌃⌘K</kbd></td><td>针对所选文件的仓库</td></tr>
+        <tr><td>Revert Last Edit</td><td>—</td><td></td></tr>
+        <tr><td>Reveal in Finder</td><td>—</td><td>需选中本地文件或文件夹</td></tr>
+        <tr><td>Copy Path</td><td>—</td><td>需选中本地文件或文件夹</td></tr>
+        <tr><td>Refresh Folder</td><td>—</td><td>需选中文件夹</td></tr>
+        <tr><td>Clear Recents</td><td>—</td><td></td></tr>
+        <tr><td>Page Setup…</td><td><kbd>⇧⌘P</kbd></td><td></td></tr>
+        <tr><td>Print…</td><td><kbd>⌘P</kbd></td><td></td></tr>
+        <tr><td>Export as PDF… / as HTML…</td><td>—</td><td></td></tr>
+      </table>
+
+      <h2 id="edit">Edit（编辑）</h2>
+      <table>
+        <tr><th>操作</th><th>默认</th><th>说明</th></tr>
+        <tr><td>Edit Mode</td><td><kbd>⌘E</kbd></td><td>在本地文档中</td></tr>
+        <tr><td>Copy as Markdown</td><td><kbd>⌥⌘C</kbd></td><td>所选内容背后的源码（未选中时为整篇文档）</td></tr>
+        <tr><td>Find in Page</td><td><kbd>⌘F</kbd></td><td></td></tr>
+        <tr><td>Find Next / Previous</td><td><kbd>⌘G</kbd> / <kbd>⇧⌘G</kbd></td><td>查找栏打开时</td></tr>
+        <tr><td>Search All Files…</td><td><kbd>⇧⌘F</kbd></td><td>搜遍侧边栏里的一切</td></tr>
+        <tr><td>Add Margin Note</td><td><kbd>⌥⌘M</kbd></td><td>在正读的区块上留一条批注——<a href="/zh/docs/experimental/margin-notes/">页边批注</a>（beta，默认开启）</td></tr>
+        <tr><td>File Margin Note…</td><td>—</td><td>关于整份文档的批注</td></tr>
+      </table>
+
+      <h2 id="view">View（显示）</h2>
+      <table>
+        <tr><th>操作</th><th>默认</th><th>说明</th></tr>
+        <tr><td>Show/Hide Outline</td><td><kbd>⌥⌘O</kbd></td><td>在本地文档中</td></tr>
+        <tr><td>Show/Hide Markdown Source</td><td><kbd>⌥⌘U</kbd></td><td></td></tr>
+        <tr><td>Reload Document</td><td><kbd>⌘R</kbd></td><td>在本地文档中</td></tr>
+        <tr><td>Show/Hide Hidden Files</td><td><kbd>⇧⌘.</kbd></td><td>Locations 里的点文件——Finder 同款组合键</td></tr>
+        <tr><td>Show/Hide Margin Notes</td><td>—</td><td>渲染文档中的批注气泡</td></tr>
+        <tr><td>Zoom In / Out</td><td><kbd>⌘=</kbd> / <kbd>⌘-</kbd></td><td><kbd>⌘+</kbd> 也行；页面上的双指捏合和 ⌘-滚轮同样有效</td></tr>
+        <tr><td>Actual Size</td><td><kbd>⌘0</kbd></td><td></td></tr>
+      </table>
+
+      <h2 id="pull-requests">Pull Requests（拉取请求）</h2>
+      <table>
+        <tr><th>操作</th><th>默认</th><th>说明</th></tr>
+        <tr><td>Rendered Diff / Source Diff / Result</td><td><kbd>⌘1</kbd> <kbd>⌘2</kbd> <kbd>⌘3</kbd></td><td>在拉取请求文件中</td></tr>
+        <tr><td>Flip Diff Layout</td><td><kbd>⌥⌘L</kbd></td><td>行内 ↔ 并排</td></tr>
+        <tr><td>Review Changes…</td><td><kbd>⇧⌘R</kbd></td><td>总结、结论和你的待提交评论</td></tr>
+        <tr><td>Show/Hide Resolved Conversations</td><td><kbd>⌥⌘R</kbd></td><td>在 PR 文件的 Result 视图中</td></tr>
+      </table>
+
+      <h2 id="fixed">固定键位</h2>
+      <p>以下是内置的，不能更改：</p>
+      <table>
+        <tr><th>场景</th><th>按键</th></tr>
+        <tr><td>侧边栏：移除选中的行</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>侧边栏：Quick Look 选中的文件</td><td><kbd>Space</kbd>（macOS 14+）</td></tr>
+        <tr><td>编辑模式：在区块间移动</td><td><kbd>↑</kbd> <kbd>↓</kbd></td></tr>
+        <tr><td>编辑模式：与上一区块合并</td><td><kbd>⌫</kbd></td></tr>
+        <tr><td>编辑模式：放弃当前区块的编辑</td><td><kbd>⎋</kbd></td></tr>
+        <tr><td>浮动面板：移动 / 打开 / 关闭</td><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>↩</kbd> <kbd>⎋</kbd></td></tr>
+        <tr><td>提交面板与各类编辑框：确认</td><td><kbd>⌘↩</kbd></td></tr>
+        <tr><td>模态面板：关闭</td><td><kbd>⎋</kbd></td></tr>
+      </table>
+      <p>系统标准按键（⌘N 新窗口、⌘W、⌘Q、⌘C/⌘V、⌘Z……）按 macOS 的
+      本意工作，保持保留。这里特意没有 ⌘S——编辑模式的修改一落地就写入
+      磁盘。</p>
+
+      <h2 id="rebinding">重新绑定</h2>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？<a href="pullmark://settings/keyboard">打开 Keyboard 标签页</a>。</p>
+      <p>在 <strong>Settings → Keyboard</strong> 里：点击某条快捷键（或选中
+      一行按 <kbd>↩</kbd>），然后按下新键。<kbd>⌫</kbd> 移除绑定，
+      <kbd>⎋</kbd> 取消。快捷键需要 ⌘ 或 ⌃（功能键可以单独成键）；系统
+      保留的组合会被拒绝并附上解释；抢占其他动作已持有的组合时会提供
+      <strong>Use Anyway（仍要使用）</strong>，它会解绑原持有者。
+      <strong>Restore Defaults…（恢复默认…）</strong>把一切放回原位；
+      每个改过的行也各有自己的还原箭头。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/shortcuts/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/shortcuts/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/shortcuts/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/shortcuts/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/shortcuts/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/shortcuts/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/shortcuts/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/shortcuts/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

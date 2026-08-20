@@ -103,7 +103,10 @@ def check_page(code, base):
     if code != "en":
         # Locale pages must not fetch assets relative to the locale dir.
         for attr, value in re.findall(r'(src|href)="([^"]+)"', s):
-            if value.startswith(("http", "/", "#", "mailto:", "data:")):
+            # Any URL with a scheme is absolute (https:, mailto:, data:,
+            # pullmark:// deep links in the docs, …), as is any
+            # root-relative path or fragment.
+            if value.startswith(("/", "#")) or re.match(r"[a-z][a-z0-9+.\-]*:", value):
                 continue
             problem(f"{rel}: relative {attr}=\"{value}\" (must be absolute)")
 

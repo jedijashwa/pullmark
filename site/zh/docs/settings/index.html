@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>设置 — PullMark 文档</title>
+<meta name="description" content="PullMark 的每一个设置：General、Appearance 与 Keyboard，附默认值和每个控件的作用。">
+<link rel="canonical" href="https://pullmark.app/zh/docs/settings/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/settings/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/settings/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/settings/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/settings/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/settings/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/settings/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/settings/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/settings/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/settings/">
+<meta property="og:title" content="设置 — PullMark 文档">
+<meta property="og:description" content="PullMark 的每一个设置：General、Appearance 与 Keyboard，附默认值和每个控件的作用。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/zh/docs/settings/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="主导航">
+    <a class="brand" href="/zh/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/zh/docs/" aria-current="true">文档</a>
+      <a href="/zh/uses/agents/">使用场景</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="文档">
+      <p class="docs-nav-title">文档</p>
+      <ul>
+        <li><a href="/zh/docs/">概览</a></li>
+        <li><a href="/zh/docs/features/">功能</a></li>
+        <li><a href="/zh/docs/sidebar/">侧边栏</a></li>
+        <li><a href="/zh/docs/toolbar/">工具栏</a></li>
+        <li><a href="/zh/docs/settings/" aria-current="page">设置</a></li>
+        <li><a href="/zh/docs/shortcuts/">键盘快捷键</a></li>
+        <li><a href="/zh/docs/cli/">命令行</a></li>
+        <li><a href="/zh/docs/troubleshooting/">疑难解答</a></li>
+        <li><a href="/zh/docs/experimental/">实验性功能</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">文档</p>
+      <h1>设置</h1>
+      <p class="article-lede">⌘, 背后的一切——四个标签页：General（通用）管
+      行为，Appearance（外观）管 PullMark 的样子，Keyboard（键盘）管键位表，
+      Experimental（实验性）放尚在打磨的功能。窗口会在你上次用的标签页上
+      重新打开。</p>
+
+      <h2 id="general">General（通用）</h2>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？<a href="pullmark://settings/general">打开 General 标签页</a>。</p>
+
+      <h3>阅读</h3>
+      <table>
+        <tr><th>设置</th><th>选项 · <em>默认</em></th><th>作用</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="在 PullMark 中打开此设置（0.28.3+）">Restore files and pull requests from the last session</a></td>
+          <td>开/关 — <em>开</em></td>
+          <td>重新打开 PullMark 上次退出时侧边栏里的内容——文件、文件夹、
+          PR、浏览中的仓库，以及预览条目（依旧作为预览）。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="在 PullMark 中打开此设置（0.28.3+）">Show hidden files</a></td><td>开/关 — <em>关</em></td>
+          <td>在 Locations 中显示点文件和隐藏文件夹——<code>.github/</code>
+          文档之类。也可用 <kbd>⇧⌘.</kbd>（Finder 同款组合键）或
+          View → Show Hidden Files 切换；每次切换，所有打开的 Location
+          都会重新扫描。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github-links" title="在 PullMark 中打开此设置（0.28.3+）">GitHub Markdown links</a></td>
+          <td>Ask on first click · Open in PullMark · Open in Browser —
+          <em>Ask on first click</em></td>
+          <td>点击指向 GitHub 上 Markdown 文件的链接时会发生什么。按住 ⌘
+          点击执行另一种行为。首次点击对话框里的 “Remember my selection”
+          勾选框会替你设置此项。</td></tr>
+        <tr><td id="clicking-files"><a class="setting-link" href="pullmark://settings/general/clicking-files" title="在 PullMark 中打开此设置（0.28.3+）">Clicking files in Locations</a></td>
+          <td>Preview First · Open Fully — <em>Preview First</em></td>
+          <td>Preview First 让单击即可查看文件而不保留它——一条斜体条目
+          （在 Open Files 中，或在其 GitHub 仓库之下），下一次预览就替换；
+          双击或开始编辑才保留。Open Fully 则保留你点过的每个文件。对本地
+          文件夹和浏览中的 GitHub 仓库一视同仁。见
+          <a href="/zh/docs/sidebar/#previews">预览</a>。</td></tr>
+      </table>
+
+      <h3>审查</h3>
+      <table>
+        <tr><th>设置</th><th>选项 · <em>默认</em></th><th>作用</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="在 PullMark 中打开此设置（0.28.3+）">Default diff layout</a></td><td>Inline · Side by Side — <em>Inline</em></td>
+          <td>PR 渲染差异的打开方式。可用 ⌥⌘L 按文件翻转。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="在 PullMark 中打开此设置（0.28.3+）">Show review requests in the sidebar</a></td><td>开/关 — <em>开</em></td>
+          <td>Review Requests 子分组：请求你审查的开放 PR。未登录时无论
+          如何都不显示。</td></tr>
+        <tr><td>Only requests that change Markdown</td><td>开/关 — <em>开</em></td>
+          <td>隐藏不含 Markdown 文件的审查请求——PullMark 对它们无可
+          展示。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="在 PullMark 中打开此设置（0.28.3+）">Show review discussion on the PR overview</a></td><td>开/关 — <em>开</em></td>
+          <td>在总览的会话里，把行内审查会话嵌在所属审查之下——每条会话
+          都在，包括 PullMark 不渲染的文件，被评论的段落一并显示。关闭则
+          只显示结论与评论。0.34 起从 Experimental 毕业。</td></tr>
+      </table>
+
+      <h3>GitHub</h3>
+      <table>
+        <tr><th>设置</th><th>作用</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github" title="在 PullMark 中打开此设置（0.36+）">Connection</a></td>
+        <td>PullMark 能否连上 GitHub、以谁的身份、经由哪个凭据来源
+        （“Connected as you · GitHub CLI”）。<em>Check Again</em> 重新读取
+        凭据——<code>gh auth login</code> 之后无需重启即可连上——
+        <em>Set&nbsp;Up…</em> 打开一个引导流程，检测这台 Mac 还缺什么。
+        完整的凭据故事见
+        <a href="/zh/docs/troubleshooting/#github-access">GitHub 访问</a>。</td></tr>
+      </table>
+
+      <h3>更新</h3>
+      <table>
+        <tr><th>设置</th><th>作用</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/whats-new" title="在 PullMark 中打开此设置（0.28.3+）">Show What's New after an update</a></td>
+          <td>开启（默认）时，更新落地后展示发行说明；关闭则换成一条安静的
+          “Updated to PullMark X” 横幅，说明一键可达——更新总会以某种方式
+          宣告自己。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/check-updates" title="在 PullMark 中打开此设置（0.28.3+）">Updates</a></td>
+          <td><strong>Check for Updates…</strong> 随时手动检查；PullMark 也
+          会在启动时和定期检查。已知有更新时，这一行直接提供
+          <strong>What's New</strong>、<strong>Update Now</strong> 和一个
+          重新检查按钮。What's New 展示你当前版本到新版本之间每个版本的
+          说明，<strong>Help → Release Notes</strong> 随时可看完整
+          历史。</td></tr>
+      </table>
+
+      <h3>系统</h3>
+      <table>
+        <tr><th>设置</th><th>作用</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/default-app" title="在 PullMark 中打开此设置（0.28.3+）">Default Markdown app</a></td>
+          <td>显示当前由哪个应用打开 <code>.md</code> 文件；
+          <strong>Make PullMark the Default</strong> 一键认领绑定。此后若
+          某次升级让 macOS 丢了它，PullMark 会发现并主动提出拿回来。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/command-line" title="在 PullMark 中打开此设置（0.28.3+）">Command line</a></td>
+          <td>为 DMG 安装把 <a href="/zh/docs/cli/"><code>pullmark</code>
+          命令</a>装进 <code>/usr/local/bin</code>（Homebrew 用户已经有了）。
+          PATH 上已有 <code>pullmark</code> 时显示对勾。</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/quick-look" title="在 PullMark 中打开此设置（0.28.3+）">Quick Look previews</a></td>
+          <td>Rendered（默认）或 Raw Source——在 Finder 里按空格看到的
+          Markdown 是哪一种。</td></tr>
+      </table>
+
+      <h2 id="appearance-tab">Appearance（外观）</h2>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？<a href="pullmark://settings/themes">打开 Appearance 标签页</a>。</p>
+      <p>浅色 · 深色 · 跟随系统的开关在最上面——整个应用一起变，窗口和
+      渲染页面皆然（每套主题自带浅色与深色两副面孔）。往下是视觉选项：</p>
+      <p>这里的每个选择都是一张带实时预览的卡片，由真实渲染管线渲染——
+      你看到的就是文档将得到的。</p>
+
+      <h3>Theme（主题）<a class="setting-jump" href="pullmark://settings/themes/theme" title="在 PullMark 中打开（0.28.3+）">&#8599;</a></h3>
+      <table>
+        <tr><th>主题</th><th>外观</th></tr>
+        <tr><td>GitHub <em>（默认）</em></td><td>经典外观，与 github.com 上一模一样。</td></tr>
+        <tr><td>Editorial</td><td>温暖纸面上的书卷气衬线标题。</td></tr>
+        <tr><td>Terminal</td><td>等宽字体，配一抹磷光绿。</td></tr>
+      </table>
+      <p><strong>自定义主题：</strong>把 <code>.css</code> 文件放进 Themes
+      文件夹（本标签页有按钮），它们就会以卡片出现。自定义主题叠加在
+      GitHub 外观之上，跟随浅色/深色外观，也会重新装点差异。Quick Look
+      预览跟随你的主题（自定义主题在那里回落到它们的 GitHub 基底）。</p>
+
+      <h3>Content width（栏宽）<a class="setting-jump" href="pullmark://settings/themes/content-width" title="在 PullMark 中打开（0.28.3+）">&#8599;</a></h3>
+      <table>
+        <tr><th>选项</th><th>含义</th></tr>
+        <tr><td>Standard <em>（默认）</em></td><td>经典的书本式阅读行长。</td></tr>
+        <tr><td>Wide</td><td>更长的行，屏幕上更多内容——行长仍有上限。</td></tr>
+        <tr><td>Full Width</td><td>文字用满整个窗口——全屏时很好用。</td></tr>
+      </table>
+      <p>处处生效、即时生效，与主题、blame、差异和缩放都能叠加。阅读中
+      也可以从 View → Content Width 切换。</p>
+
+      <h3>Line numbers（行号）<a class="setting-jump" href="pullmark://settings/themes/line-numbers" title="在 PullMark 中打开（0.28.3+）">&#8599;</a></h3>
+      <table>
+        <tr><th>选项</th><th>含义</th></tr>
+        <tr><td>Hidden <em>（默认）</em></td><td>干净的页边；需要时 Source 视图里随时有行号。</td></tr>
+        <tr><td>Shown</td><td>渲染文档与差异的页边显示每个区块起始的源码
+          行号——悬停一个数字可见区块的完整范围。编号按区块而非视觉行
+          （渲染文本自由折行）。原始源码视图始终显示自己的行号。</td></tr>
+      </table>
+
+      <h2 id="keyboard">Keyboard（键盘）</h2>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？<a href="pullmark://settings/keyboard">打开 Keyboard 标签页</a>。</p>
+      <p>每个菜单动作的快捷键都可以重新绑定——完整键位表，以及录制、
+      冲突和 Restore Defaults（恢复默认）的工作方式，见
+      <a href="/zh/docs/shortcuts/">键盘快捷键</a>。</p>
+
+      <h2 id="experimental">Experimental（实验性）</h2>
+      <p class="table-note">正在装有 PullMark（0.28.1+）的 Mac 上读这页？<a href="pullmark://settings/experimental">打开 Experimental 标签页</a>。</p>
+      <p>设计尚未定稿就先行发布的功能，各自标注
+      <span class="beta-badge">beta</span> 或
+      <span class="beta-badge alpha">alpha</span>——
+      <a href="/zh/docs/experimental/">级别契约</a>解释了各自承诺什么。
+      Alpha 功能在你打开 <strong>Show alpha features</strong> 之前保持隐藏
+      （会先有对话框说明 alpha 条款），每个功能都有自己的启用开关。
+      <a href="/zh/docs/experimental/margin-notes/">页边批注</a>就住在这里——
+      0.35 起为 beta 且默认开启，带自己的开关、作者设置，和一枚复制
+      智能体指令片段的 Copy 按钮；第一次使用会介绍这个功能，并提供关闭的
+      选项。</p>
+
+      <h2 id="where-things-are-stored">数据存在哪里</h2>
+      <p>所有偏好设置都存放在 <code>app.pullmark.PullMark</code> 默认值域。
+      会话、阅读位置和草稿都只是元数据——PullMark 从不把你的文档复制到
+      任何地方，从 GitHub 抓取的内容只待在内存里。</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">版本发布</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT 许可证</a>
+    <a href="/licenses/">开源许可</a>
+    <a href="/privacy/">隐私</a>
+    <a href="https://ko-fi.com/pullmark">支持 PullMark&nbsp;♥</a>
+    <span class="note">PullMark 与 GitHub 无隶属关系。</span>
+  </div>
+  <nav class="lang-switch" aria-label="语言">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>语言</span>
+    <a href="/docs/settings/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/settings/" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">中文</a>
+    <a href="/ja/docs/settings/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/settings/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/settings/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/settings/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/settings/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/settings/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die Seitenleiste — PullMark-Doku</title>
+<meta name="description" content="PullMarks Seitenleiste erklärt: Open Files und Vorschauen, Locations, Pull Requests, Recents — und was jedes Icon bedeutet.">
+<link rel="canonical" href="https://pullmark.app/de/docs/sidebar/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/sidebar/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/sidebar/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/sidebar/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/sidebar/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/sidebar/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
+<meta property="og:title" content="Die Seitenleiste — PullMark-Doku">
+<meta property="og:description" content="PullMarks Seitenleiste erklärt: Open Files und Vorschauen, Locations, Pull Requests, Recents — und was jedes Icon bedeutet.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/de/docs/sidebar/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Hauptnavigation">
+    <a class="brand" href="/de/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/de/docs/" aria-current="true">Docs</a>
+      <a href="/de/uses/agents/">Anwendungsfälle</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Doku">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/de/docs/">Überblick</a></li>
+        <li><a href="/de/docs/features/">Features</a></li>
+        <li><a href="/de/docs/sidebar/" aria-current="page">Die Seitenleiste</a></li>
+        <li><a href="/de/docs/toolbar/">Die Toolbar</a></li>
+        <li><a href="/de/docs/settings/">Einstellungen</a></li>
+        <li><a href="/de/docs/shortcuts/">Tastaturkürzel</a></li>
+        <li><a href="/de/docs/cli/">Kommandozeile</a></li>
+        <li><a href="/de/docs/troubleshooting/">Fehlerbehebung</a></li>
+        <li><a href="/de/docs/experimental/">Experimentell</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Die Seitenleiste</h1>
+      <p class="article-lede">Vier Bereiche, geordnet danach, was Dinge
+      <em>bedeuten</em>, nicht woher sie kommen: was du offen hast (Open
+      Files), die Orte, die du durchstöberst (Locations), die Pull Requests,
+      die du reviewst — und wo du gewesen bist (Recents).</p>
+
+      <h2 id="open-files">Open Files</h2>
+      <p>Das Arbeitsset: jedes Dokument, das du ausdrücklich geöffnet hast — aus
+      dem Finder, per Drag &amp; Drop, mit ⌘O, über die
+      <a href="/de/docs/cli/">Kommandozeile</a> oder indem du eine Datei aus
+      einer Location behalten hast. Flach, per Ziehen umsortierbar, jede Zeile
+      mit dem Hover-✕ entfernbar (oder ⌫ auf der ausgewählten Zeile).
+      Rechtsklick auf die Bereichsüberschrift für <strong>Close All</strong>.</p>
+
+      <h3 id="previews">Vorschauen</h3>
+      <p>Ein Einzelklick auf eine Datei in einer Location rendert sie sofort —
+      und sie erscheint in Open Files als <em>Vorschau</em>: ein kursiver
+      Eintrag, immer zuletzt im Bereich. Klick eine andere Datei und der
+      Vorschau-Eintrag wird ersetzt — Stöbern durch einen großen Baum stapelt
+      also nie Zeilen auf. Es ist dieselbe Idee wie die Vorschau-Tabs in VS
+      Code oder Xcodes temporärer Editor, mit derselben Kursivschrift.</p>
+      <p>Eine Vorschau wird zu einem normalen, festen Eintrag, sobald du ihr
+      mehr Verbindlichkeit zeigst als bloßes Lesen:</p>
+      <ul>
+        <li><strong>Doppelklick</strong> auf die Datei im Baum — oder auf den
+        kursiven Eintrag selbst</li>
+        <li><strong>Anfangen zu bearbeiten</strong> — der Edit Mode oder das
+        Speichern einer Blockänderung pinnt sie fest</li>
+        <li><strong>Keep Open</strong> im Rechtsklick-Menü</li>
+      </ul>
+      <p>Lese-Interaktionen — Blame, Zeilenhistorie, ein Bild oder Diagramm
+      inspizieren — befördern eine Vorschau absichtlich nie. Wenn du lieber
+      jeden Klick Dateien voll öffnen lässt, stell
+      <a href="/de/docs/settings/#clicking-files">Clicking files in Locations</a>
+      in den Einstellungen um.</p>
+      <p><strong>Remote-Repos previewen genauso, am selben Ort.</strong> Beim
+      Stöbern durch den Baum eines GitHub-Repos, oder beim Folgen von Links in
+      einem Remote-Dokument, landet derselbe eine kursive Eintrag in Open
+      Files — mit Buch-Icon und einer <code>owner/repo @ ref</code>-Zweitzeile,
+      weil die Datei nicht auf deinem Mac liegt. Es gibt immer nur
+      <em>eine</em> Vorschau pro Fenster, lokal oder remote: Etwas anderes zu
+      previewen ersetzt, was du davor angesehen hast. Ein Remote-Doc zu
+      behalten (Doppelklick oder Keep Open) heftet es bei seinem Repo ab — es
+      wandert in die feste Liste des Repos unter Locations. ⌘K öffnet direkt
+      fest, denn eine URL einzufügen ist ausdrückliche Absicht.</p>
+      <p>Jede Open-Files-Zeile, die in einer offenen Location liegt, bekommt
+      <strong>Reveal in Location</strong> ins Rechtsklick-Menü — der Sprung
+      zurück von „was ich lese" zu „wo es wohnt".</p>
+
+      <h2 id="locations">Locations</h2>
+      <p>Durchstöberbare Wurzeln, wo immer sie liegen. Zwei Arten teilen sich
+      den Bereich, unterschieden per Icon:</p>
+      <table>
+        <tr><th>Zeile</th><th>Bedeutung</th></tr>
+        <tr><td>📁 Ordner-Icon</td><td>Ein lokaler Ordner — seine Markdown-Dateien als Baum (oder
+          flache Liste; Rechtsklick → View as List). Wird auf Änderungen überwacht.</td></tr>
+        <tr><td>📕 Buch-Icon</td><td>Ein GitHub-Repository, zum Stöbern geöffnet — über die
+          API geladen, nichts wird auf die Platte geschrieben.</td></tr>
+      </table>
+      <p>Ein lokaler Ordner, der ein Git-Checkout ist, bekommt einen
+      <strong>Branch-Chip</strong> (Branch-Glyphe + Name); liegt sein Remote
+      auf GitHub, kommt eine kleine Geschlossenes-Buch-Marke dazu — Hover
+      zeigt, welches Repo. Ein Klick auf den Branch-Chip öffnet das
+      Branches-und-Worktrees-Menü:</p>
+      <ul>
+        <li><strong>Worktrees</strong> — jeder Worktree des Repos, mit Häkchen
+        auf dem, der diese Zeile ist; wähl einen anderen, um ihn als eigene
+        Location zu öffnen. Worktrees werden von PullMark nie ausgecheckt oder
+        gewechselt — es öffnet den Ordner, der schon da ist.</li>
+        <li><strong>View Branch from GitHub</strong> — lies die Dateien eines
+        anderen Branches remote, ohne deinen Checkout anzufassen. Ein Branch,
+        der schon einen lokalen Worktree hat, springt stattdessen zum
+        Worktree — lokal schlägt remote.</li>
+        <li><strong>Open on GitHub</strong> — das Repo (auf diesem Branch) in
+        deinem Browser.</li>
+      </ul>
+      <p>Auf einem Remote-Repo (Buch-Icon) listet derselbe Chip Branches:
+      <strong>Switch To</strong> pinnt die Session auf einen anderen Branch um,
+      und mit gehaltenem ⌥ gibt es <strong>Open Branch Separately</strong> fürs
+      Lesen nebeneinander. <strong>Browse Repo Files…</strong> lädt den ganzen
+      Markdown-Baum des Repos. Die behaltenen Docs des Repos sitzen über dem
+      Baum, damit sie in einem großen Repo nie untergehen; ein behaltenes Doc,
+      das im Baum sichtbar ist, wird einfach dort dargestellt. (Ein Doc, das du
+      nur previewst, erscheint in <a href="#previews">Open Files</a>, nicht
+      hier.)</p>
+      <p>Ein Ordner, dessen Pfad nicht mehr auflöst (ein ausgeworfenes Volume,
+      ein gelöschter Worktree), wird mit Fragezeichen-Badge gedimmt, statt zu
+      verschwinden — er erwacht von selbst wieder, wenn der Pfad
+      zurückkommt.</p>
+
+      <h2 id="pull-requests">Pull Requests</h2>
+      <p>Jeder geöffnete PR ist eine Gruppe: die Übersichtszeile (Status-Icon +
+      Zahl geänderter Markdown-Dateien), dann seine geänderten
+      Markdown-Dateien — eine Sprechblase mit Zahl markiert Dateien mit
+      unaufgelösten Review-Threads. Unter deinen geöffneten PRs sammelt
+      <strong>Review Requests</strong> (Review-Anfragen) PRs, die auf dein
+      Review warten, mit einer Ungelesen-Zahl, die auch eingeklappt sichtbar
+      bleibt (in den Einstellungen ausblendbar — und filterbar auf PRs, die
+      Markdown anfassen).</p>
+      <p>Status-Icons auf PR-Zeilen:</p>
+      <table>
+        <tr><th>Status</th><th>Icon</th></tr>
+        <tr><td>Draft (Entwurf)</td><td>Pull-Request-Pfeile, grau</td></tr>
+        <tr><td>Offen</td><td>Pull-Request-Pfeile, grün</td></tr>
+        <tr><td>Gemerged</td><td>Merge-Pfeile, violett</td></tr>
+        <tr><td>Geschlossen</td><td>✕ im Kreis, rot</td></tr>
+        <tr><td>Nicht verfügbar</td><td>Papierkorb, grau — der PR (oder dein Zugriff) ist weg</td></tr>
+      </table>
+      <p>Datei-Marker innerhalb eines PRs: <strong>+</strong>-Kreis (grün) für
+      hinzugefügt, <strong>−</strong>-Kreis (rot) für entfernt,
+      <strong>→</strong>-Kreis für umbenannt, Stift-Kreis für geändert.</p>
+
+      <h2 id="recents">Recents</h2>
+      <p>Kürzlich geöffnete Dateien, Ordner und Pull Requests, die oben nicht
+      schon sichtbar sind. PR-Einträge tragen ihr Live-Status-Icon; ein
+      Recent, dessen Datei verschwunden ist, wird gedimmt (Uhr-Badge), statt
+      zu verschwinden, und erwacht wieder, wenn der Pfad zurückkommt — gebaut
+      für Branch-Wechsel und ausgeworfene Volumes. Rechtsklick auf die
+      Überschrift für <strong>Clear Recents</strong>.</p>
+
+      <h2 id="removal">Dinge entfernen</h2>
+      <p>Fahr über eine beliebige Zeile der obersten Ebene für das ✕ — es
+      entfernt die Zeile aus der Seitenleiste, nie etwas von der Platte oder
+      von GitHub. ⌫ auf einer ausgewählten Zeile tut dasselbe. Dateien im Baum
+      einer Location haben kein ✕: Sie sind Inhalt eines Ortes, keine
+      Seitenleisten-Einträge.</p>
+
+      <h2 id="icon-glossary">Icon-Glossar</h2>
+      <table>
+        <tr><th>Icon</th><th>Bedeutung</th></tr>
+        <tr><td>Dokument</td><td>Eine Markdown-Datei</td></tr>
+        <tr><td>Dokument, kursiver Name</td><td>Die Vorschau — ersetzt durch deinen nächsten Einzelklick</td></tr>
+        <tr><td>Ordner</td><td>Ein lokaler Ordner</td></tr>
+        <tr><td>Ordner + ?</td><td>Ordner gerade nicht auffindbar — gedimmt, erwacht wieder</td></tr>
+        <tr><td>Dokument + Uhr</td><td>Ein Recent, dessen Datei fehlt</td></tr>
+        <tr><td>Geschlossenes Buch</td><td>Ein GitHub-Repository (als Zeilen-Icon: remote durchstöbert;
+          als kleine nachgestellte Marke: dieser lokale Ordner ist ein Checkout davon)</td></tr>
+        <tr><td>Branch-Glyphe + Name</td><td>Der Branch-Chip — Klick für Branches und Worktrees</td></tr>
+        <tr><td>Pull-Request-Pfeile</td><td>Ein Pull Request</td></tr>
+        <tr><td>Ablagefach</td><td>Review Requests — PRs, die auf dein Review warten</td></tr>
+        <tr><td>Sprechblase + Zahl</td><td>An einer PR-Datei: unaufgelöste Review-Kommentare. An einer
+          Open-Files-Zeile: <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
+        <tr><td>Farbiger Punkt (linke Kante)</td><td>Eine ungelesene Review-Anfrage</td></tr>
+        <tr><td>✕ im Kreis (bei Hover)</td><td>Aus der Seitenleiste entfernen / Vorschau verwerfen</td></tr>
+      </table>
+      <p class="table-note">Die Branch-Glyphe erscheint nur an echten Git-Refs
+      (als Chip, nie als Ordner-Icon) — ein Ordner ist ein Ordner, ein Repo
+      ist ein Buch, ein Branch ist ein Branch.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Releases</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">MIT-Lizenz</a>
+    <a href="/licenses/">Open-Source-Lizenzen</a>
+    <a href="/privacy/">Datenschutz</a>
+    <a href="https://ko-fi.com/pullmark">PullMark unterstützen&nbsp;♥</a>
+    <span class="note">PullMark steht in keiner Verbindung zu GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Sprache">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Sprache</span>
+    <a href="/docs/sidebar/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/sidebar/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/sidebar/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/sidebar/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/sidebar/" hreflang="de" lang="de" aria-current="true">Deutsch</a>
+    <a href="/nl/docs/sidebar/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/sidebar/" hreflang="es" lang="es">Español</a>
+    <a href="/pt/docs/sidebar/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>

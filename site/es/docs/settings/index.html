@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajustes — Docs de PullMark</title>
+<meta name="description" content="Cada ajuste de PullMark: General, Appearance y Keyboard, con sus valores por defecto y qué cambia cada control.">
+<link rel="canonical" href="https://pullmark.app/es/docs/settings/">
+<link rel="alternate" hreflang="en" href="https://pullmark.app/docs/settings/">
+<link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/settings/">
+<link rel="alternate" hreflang="ja" href="https://pullmark.app/ja/docs/settings/">
+<link rel="alternate" hreflang="fr" href="https://pullmark.app/fr/docs/settings/">
+<link rel="alternate" hreflang="de" href="https://pullmark.app/de/docs/settings/">
+<link rel="alternate" hreflang="nl" href="https://pullmark.app/nl/docs/settings/">
+<link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/settings/">
+<link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/settings/">
+<link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/settings/">
+<meta property="og:title" content="Ajustes — Docs de PullMark">
+<meta property="og:description" content="Cada ajuste de PullMark: General, Appearance y Keyboard, con sus valores por defecto y qué cambia cada control.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pullmark.app/es/docs/settings/">
+<meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<link rel="stylesheet" href="/docs/docs.css">
+<link rel="stylesheet" href="/i18n.css">
+<script src="/i18n.js" defer></script>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/es/"><img src="/img/icon.svg" alt="" width="30" height="30">PullMark</a>
+    <div class="links">
+      <a href="/es/docs/" aria-current="true">Docs</a>
+      <a href="/es/uses/agents/">Casos de uso</a>
+      <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+      <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versiones</a>
+    </div>
+  </nav>
+
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="docs-nav-title">Docs</p>
+      <ul>
+        <li><a href="/es/docs/">Visión general</a></li>
+        <li><a href="/es/docs/features/">Funciones</a></li>
+        <li><a href="/es/docs/sidebar/">La barra lateral</a></li>
+        <li><a href="/es/docs/toolbar/">La barra de herramientas</a></li>
+        <li><a href="/es/docs/settings/" aria-current="page">Ajustes</a></li>
+        <li><a href="/es/docs/shortcuts/">Atajos de teclado</a></li>
+        <li><a href="/es/docs/cli/">Línea de comandos</a></li>
+        <li><a href="/es/docs/troubleshooting/">Solución de problemas</a></li>
+        <li><a href="/es/docs/experimental/">Experimental</a></li>
+      </ul>
+    </nav>
+
+    <article>
+      <p class="kicker">docs</p>
+      <h1>Ajustes</h1>
+      <p class="article-lede">Todo lo que hay detrás de ⌘, — cuatro pestañas:
+      General para el comportamiento, Appearance (apariencia) para el aspecto
+      de PullMark, Keyboard (teclado) para el mapa de teclas y Experimental
+      para las funciones aún por asentar. La ventana reabre en la última
+      pestaña que usaste.</p>
+
+      <h2 id="general">General</h2>
+      <p class="table-note">¿Lees esto donde PullMark (0.28.1+) está instalado? <a href="pullmark://settings/general">Abre la pestaña General</a>.</p>
+
+      <h3>Lectura</h3>
+      <table>
+        <tr><th>Ajuste</th><th>Opciones · <em>por defecto</em></th><th>Qué hace</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Abre este ajuste en PullMark (0.28.3+)">Restore files and pull requests from the last session</a></td>
+          <td>on/off — <em>on</em></td>
+          <td>Reabre lo que había en la barra lateral la última vez que
+          PullMark se cerró — archivos, carpetas, PRs, repos navegados y la
+          entrada de vista previa (aún como vista previa).</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Abre este ajuste en PullMark (0.28.3+)">Show hidden files</a></td><td>on/off — <em>off</em></td>
+          <td>Los dotfiles y carpetas ocultas en Locations — los docs de
+          <code>.github/</code> y compañía. También se alterna con
+          <kbd>⇧⌘.</kbd> (la combinación del propio Finder) o View → Show
+          Hidden Files; cada Location abierta se reescanea al cambiarlo.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github-links" title="Abre este ajuste en PullMark (0.28.3+)">GitHub Markdown links</a></td>
+          <td>Ask on first click · Open in PullMark · Open in Browser —
+          <em>Ask on first click</em></td>
+          <td>Qué hace clicar un enlace a un archivo Markdown en GitHub.
+          Mantén ⌘ al hacer clic para el otro comportamiento. La casilla
+          «Remember my selection» del diálogo del primer clic te lo deja
+          configurado.</td></tr>
+        <tr><td id="clicking-files"><a class="setting-link" href="pullmark://settings/general/clicking-files" title="Abre este ajuste en PullMark (0.28.3+)">Clicking files in Locations</a></td>
+          <td>Preview First · Open Fully — <em>Preview First</em></td>
+          <td>Preview First muestra un archivo con un clic sin conservarlo —
+          una entrada en cursiva (en Open Files, o bajo su repo de GitHub)
+          que la siguiente vista previa reemplaza; doble clic o empezar a
+          editar la conserva. Open Fully conserva cada archivo que clicas.
+          Vale igual para carpetas locales y repos de GitHub navegados. Ver
+          <a href="/es/docs/sidebar/#previews">Vistas previas</a>.</td></tr>
+      </table>
+
+      <h3>Revisión</h3>
+      <table>
+        <tr><th>Ajuste</th><th>Opciones · <em>por defecto</em></th><th>Qué hace</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Abre este ajuste en PullMark (0.28.3+)">Default diff layout</a></td><td>Inline · Side by Side — <em>Inline</em></td>
+          <td>Cómo se abren los diffs renderizados de PR. Conmutable por
+          archivo con ⌥⌘L.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Abre este ajuste en PullMark (0.28.3+)">Show review requests in the sidebar</a></td><td>on/off — <em>on</em></td>
+          <td>El subgrupo Review Requests: los PR abiertos donde se solicita
+          tu revisión. Oculto en cualquier caso si no has iniciado
+          sesión.</td></tr>
+        <tr><td>Only requests that change Markdown</td><td>on/off — <em>on</em></td>
+          <td>Oculta las solicitudes de revisión sin archivos Markdown —
+          PullMark no tiene nada que mostrar de ellas.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Abre este ajuste en PullMark (0.28.3+)">Show review discussion on the PR overview</a></td><td>on/off — <em>on</em></td>
+          <td>Los hilos de revisión en línea anidados bajo su revisión en la
+          conversación del resumen — todos los hilos, incluidos los de
+          archivos que PullMark no renderiza, con el pasaje comentado al
+          lado. Desactivado muestra solo veredictos y comentarios. Se graduó
+          de Experimental en la 0.34.</td></tr>
+      </table>
+
+      <h3>GitHub</h3>
+      <table>
+        <tr><th>Ajuste</th><th>Qué hace</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github" title="Abre este ajuste en PullMark (0.36+)">Connection</a></td>
+        <td>Si PullMark puede hablar con GitHub, como quién y por qué fuente
+        de credenciales («Connected as you · GitHub CLI»).
+        <em>Check Again</em> vuelve a leer las credenciales — tras
+        <code>gh auth login</code> conecta sin relanzar — y
+        <em>Set&nbsp;Up…</em> abre un asistente que detecta qué le falta a
+        este Mac. Ver
+        <a href="/es/docs/troubleshooting/#github-access">Acceso a GitHub</a>
+        para la historia completa de las credenciales.</td></tr>
+      </table>
+
+      <h3>Actualizaciones</h3>
+      <table>
+        <tr><th>Ajuste</th><th>Qué hace</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/whats-new" title="Abre este ajuste en PullMark (0.28.3+)">Show What's New after an update</a></td>
+          <td>Activado (por defecto) presenta las notas de la versión cuando
+          llega una actualización; desactivado lo sustituye por un discreto
+          aviso «Updated to PullMark X» con las notas a un clic — una
+          actualización siempre se anuncia de algún modo.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/check-updates" title="Abre este ajuste en PullMark (0.28.3+)">Updates</a></td>
+          <td><strong>Check for Updates…</strong> a demanda; PullMark también
+          comprueba al abrir y periódicamente. Cuando ya se conoce una
+          actualización, la fila ofrece <strong>What's New</strong>,
+          <strong>Update Now</strong> y un botón de recomprobar ahí mismo.
+          What's New muestra las notas de cada versión entre la tuya y la
+          nueva, y <strong>Help → Release Notes</strong> guarda el historial
+          completo en todo momento.</td></tr>
+      </table>
+
+      <h3>Sistema</h3>
+      <table>
+        <tr><th>Ajuste</th><th>Qué hace</th></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/default-app" title="Abre este ajuste en PullMark (0.28.3+)">Default Markdown app</a></td>
+          <td>Muestra qué app abre ahora mismo los archivos <code>.md</code>;
+          <strong>Make PullMark the Default</strong> reclama el vínculo con
+          un clic. Si una actualización posterior hace que macOS lo suelte,
+          PullMark lo nota y ofrece recuperarlo.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/command-line" title="Abre este ajuste en PullMark (0.28.3+)">Command line</a></td>
+          <td>Instala el <a href="/es/docs/cli/">comando
+          <code>pullmark</code></a> en <code>/usr/local/bin</code> para las
+          instalaciones por DMG (los usuarios de Homebrew ya lo tienen).
+          Muestra una marca cuando ya hay un <code>pullmark</code> en tu
+          PATH.</td></tr>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/quick-look" title="Abre este ajuste en PullMark (0.28.3+)">Quick Look previews</a></td>
+          <td>Rendered (por defecto) o Raw Source — lo que muestra pulsar
+          espacio en el Finder para archivos Markdown.</td></tr>
+      </table>
+
+      <h2 id="appearance-tab">Appearance (apariencia)</h2>
+      <p class="table-note">¿Lees esto donde PullMark (0.28.1+) está instalado? <a href="pullmark://settings/themes">Abre la pestaña Appearance</a>.</p>
+      <p>El conmutador Light · Dark · System va arriba del todo — toda la app
+      lo sigue, tanto el chrome como las páginas renderizadas (cada tema trae
+      su propio aspecto claro y oscuro). Debajo, las opciones visuales:</p>
+      <p>Cada opción de aquí es una tarjeta con una vista previa en vivo
+      renderizada por el pipeline real — lo que ves es lo que reciben los
+      documentos.</p>
+
+      <h3>Theme (tema) <a class="setting-jump" href="pullmark://settings/themes/theme" title="Abrir en PullMark (0.28.3+)">&#8599;</a></h3>
+      <table>
+        <tr><th>Tema</th><th>Aspecto</th></tr>
+        <tr><td>GitHub <em>(por defecto)</em></td><td>El aspecto clásico, exactamente como en github.com.</td></tr>
+        <tr><td>Editorial</td><td>Encabezados con serifa de libro sobre papel cálido.</td></tr>
+        <tr><td>Terminal</td><td>Monoespaciada con un acento verde fósforo.</td></tr>
+      </table>
+      <p><strong>Temas personalizados:</strong> suelta archivos
+      <code>.css</code> en la carpeta Themes (hay un botón en esta pestaña) y
+      aparecen como tarjetas. Se aplican sobre el aspecto GitHub, siguen la
+      apariencia Light/Dark y reestilizan también los diffs. Las vistas
+      previas de Quick Look siguen tu tema (los temas personalizados recurren
+      ahí a su base GitHub).</p>
+
+      <h3>Content width (ancho del contenido) <a class="setting-jump" href="pullmark://settings/themes/content-width" title="Abrir en PullMark (0.28.3+)">&#8599;</a></h3>
+      <table>
+        <tr><th>Opción</th><th>Significado</th></tr>
+        <tr><td>Standard <em>(por defecto)</em></td><td>La medida de lectura clásica de un libro.</td></tr>
+        <tr><td>Wide</td><td>Líneas más largas, más en pantalla — sigue limitando el largo de línea.</td></tr>
+        <tr><td>Full Width</td><td>El texto usa toda la ventana — útil en pantalla completa.</td></tr>
+      </table>
+      <p>Se aplica en todas partes, en vivo, y se compone con los temas, el
+      blame, los diffs y el zoom. También conmutable en plena lectura desde
+      View → Content Width.</p>
+
+      <h3>Line numbers (números de línea) <a class="setting-jump" href="pullmark://settings/themes/line-numbers" title="Abrir en PullMark (0.28.3+)">&#8599;</a></h3>
+      <table>
+        <tr><th>Opción</th><th>Significado</th></tr>
+        <tr><td>Hidden <em>(por defecto)</em></td><td>Un margen limpio; números a demanda en la vista Source.</td></tr>
+        <tr><td>Shown</td><td>La línea de origen inicial de cada bloque en el margen de los
+          documentos renderizados y los diffs — pasa el cursor por un número
+          para el rango completo del bloque. La numeración es por bloque, no
+          por línea visual (el texto renderizado fluye libre). La vista de
+          código fuente crudo siempre muestra sus propios números de
+          línea.</td></tr>
+      </table>
+
+      <h2 id="keyboard">Keyboard (teclado)</h2>
+      <p class="table-note">¿Lees esto donde PullMark (0.28.1+) está instalado? <a href="pullmark://settings/keyboard">Abre la pestaña Keyboard</a>.</p>
+      <p>El atajo de cada acción de menú es reasignable — ver
+      <a href="/es/docs/shortcuts/">Atajos de teclado</a> para el mapa
+      completo y cómo funcionan la grabación, los conflictos y Restore
+      Defaults.</p>
+
+      <h2 id="experimental">Experimental</h2>
+      <p class="table-note">¿Lees esto donde PullMark (0.28.1+) está instalado? <a href="pullmark://settings/experimental">Abre la pestaña Experimental</a>.</p>
+      <p>Funciones que se publican antes de que su diseño esté asentado, cada
+      una etiquetada <span class="beta-badge">beta</span> o
+      <span class="beta-badge alpha">alfa</span> — el
+      <a href="/es/docs/experimental/">contrato de niveles</a> explica qué
+      promete cada uno. Las funciones alfa permanecen ocultas hasta que
+      activas <strong>Show alpha features</strong> (antes, un diálogo explica
+      las condiciones del alfa), y cada función tiene su propio interruptor.
+      <a href="/es/docs/experimental/margin-notes/">Las notas al margen</a>
+      viven aquí — en beta desde la 0.35 y activadas por defecto, con su
+      interruptor, el ajuste de autor y un botón Copy para el fragmento de
+      instrucciones del agente; el primer uso presenta la función y ofrece
+      desactivarla.</p>
+
+      <h2 id="where-things-are-stored">Dónde se guarda todo</h2>
+      <p>Todas las preferencias viven en el dominio de defaults
+      <code>app.pullmark.PullMark</code>. Las sesiones, las posiciones de
+      lectura y los borradores son solo metadatos — PullMark nunca copia tus
+      documentos a ningún sitio, y el contenido descargado de GitHub se queda
+      en memoria.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <a href="https://github.com/jedijashwa/pullmark">GitHub</a>
+    <a href="https://github.com/jedijashwa/pullmark/releases/latest">Versiones</a>
+    <a href="https://github.com/jedijashwa/pullmark/blob/main/LICENSE">Licencia MIT</a>
+    <a href="/licenses/">Licencias de código abierto</a>
+    <a href="/privacy/">Privacidad</a>
+    <a href="https://ko-fi.com/pullmark">Apoya a PullMark&nbsp;♥</a>
+    <span class="note">PullMark no está afiliado a GitHub.</span>
+  </div>
+  <nav class="lang-switch" aria-label="Idioma">
+    <span class="lang-label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6.4"/><ellipse cx="8" cy="8" rx="2.9" ry="6.4"/><path d="M1.9 5.8h12.2M1.9 10.2h12.2"/></svg>Idioma</span>
+    <a href="/docs/settings/" hreflang="en" lang="en">English</a>
+    <a href="/zh/docs/settings/" hreflang="zh-Hans" lang="zh-Hans">中文</a>
+    <a href="/ja/docs/settings/" hreflang="ja" lang="ja">日本語</a>
+    <a href="/fr/docs/settings/" hreflang="fr" lang="fr">Français</a>
+    <a href="/de/docs/settings/" hreflang="de" lang="de">Deutsch</a>
+    <a href="/nl/docs/settings/" hreflang="nl" lang="nl">Nederlands</a>
+    <a href="/es/docs/settings/" hreflang="es" lang="es" aria-current="true">Español</a>
+    <a href="/pt/docs/settings/" hreflang="pt-BR" lang="pt-BR">Português</a>
+  </nav>
+</footer>
+
+</body>
+</html>
