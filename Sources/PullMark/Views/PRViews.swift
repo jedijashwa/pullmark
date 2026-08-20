@@ -931,13 +931,15 @@ struct PRFileNavigation: View {
             state.selection = .prOverview(sessionID)
         } label: {
             // Icon-only: the toolbar also holds the mode picker, layout,
-            // and comment buttons — a titled back button overflows the
-            // whole strip at the minimum window width.
-            Label("Back to \(session.ref.repo) #\(session.ref.number)",
-                  systemImage: "chevron.backward")
+            // and comment buttons — a titled button overflows the whole
+            // strip at the minimum window width. The PR glyph, not a
+            // chevron: this is UP to the overview, and chevron.backward
+            // now belongs exclusively to global Back
+            // (spec: back-forward-navigation §8).
+            Label("PR Overview", systemImage: "arrow.triangle.pull")
                 .labelStyle(.iconOnly)
         }
-        .help("Back to the pull request overview (\(session.ref.repo) #\(session.ref.number))")
+        .help("The pull request overview (\(session.ref.repo) #\(session.ref.number))")
         if session.markdownFiles.count > 1 {
             Button { step(-1) } label: {
                 Label("Previous File", systemImage: "chevron.up")
