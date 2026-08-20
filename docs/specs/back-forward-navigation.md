@@ -54,10 +54,11 @@ types and the tests can run it over `Int`.
 - API: `visit(_:)` (truncate forward, append, enforce the cap),
   `canGoBack` / `canGoForward`, `goBack()` / `goForward()` (move the
   index, return the new current entry), `backEntries` /
-  `forwardEntries` (nearest first, for the menus), `entry(at:)` +
-  `go(to:)` for menu jumps, and `remove(at:)` for pruning dead entries.
+  `forwardEntries` (nearest first, for the menus), and `entry(at:)` +
+  `go(to:)` for menu jumps. Entries are never removed except by the
+  cap — the trail stays intact (§4).
 - Full Swift Testing coverage: visit truncation, cap enforcement,
-  traversal bounds, nearest-first ordering, pruning around the index.
+  traversal bounds, nearest-first ordering, jump-to-index semantics.
 
 ## §3 Recording
 
@@ -87,30 +88,54 @@ Title and icon snapshots, mirroring the sidebar's own vocabulary:
 Long titles middle-truncate at render time in the menus; the snapshot
 stores the full string.
 
-## §4 Traversal and validation
+## §4 Traversal and dead entries
 
-`AppState.goBack()` / `goForward()` / `go(to:)` walk the list through a
-validation loop — validate the target entry, and if it is dead, prune it
-and continue in the same direction (silently; no error surface):
+`AppState.goBack()` / `goForward()` / `go(to:)` always land on the
+target entry — the trail is never silently skipped or pruned. The move
+is applied inside a synchronous `isTraversingHistory = true` window so
+§3 records nothing and the forward list survives. What landing means
+depends on the entry's health:
 
-- `.local(url)`: valid if the file is currently open
-  (`localFile(for:)`) or still exists on disk — in the latter case the
-  traversal revives it through `openViaLink(url:)`, which selects it in
-  its tree or re-pins it. Gone from disk → prune.
-- `.folder` / `.folderNode`: valid only while the Location is still
-  open (`folder(for:)`). A closed Location is pruned — re-adding a
-  whole Location is too big a side effect for a Back press.
-- `.prOverview` / `.prFile` / `.prDoc`: valid while `session(id)`
-  exists; otherwise pruned.
-- `.remoteRepo` / `.remoteDoc`: valid while `remoteSession(id)` exists;
-  otherwise pruned.
+- **Live** entries apply by assigning `selection`; the detail area
+  shows the document as usual.
+- **Revivable**: a `.local(url)` whose file is closed but still on disk
+  is reopened through `openViaLink(url:)` — selected in its tree or
+  re-pinned. This is a live entry, not a dead one.
+- **Dead** entries (the resource is gone) still apply their
+  `selection`, and the detail area shows the **unavailable view** (§4.1)
+  in place of the anonymous placeholder. The entry stays in history:
+  Back/Forward walk past it normally, it still appears in the pop-up
+  menus, and if the resource returns (file restored, session reopened)
+  the same entry simply works again — health is evaluated at each
+  landing, never cached.
 
-The winning entry is applied by assigning `selection` (or calling
-`openViaLink`) inside a synchronous `isTraversingHistory = true` window
-so §3 records nothing and the forward list survives. The same
-validation runs when building the pop-up menus, so dead entries never
-render. Pruning is lazy only — closing a session or file does no
-history bookkeeping.
+Dead means, per case: `.local` gone from disk; `.folder` /
+`.folderNode` whose Location is closed (`folder(for:)` nil — re-adding
+a whole Location is too big a side effect for a Back press);
+`.prOverview` / `.prFile` / `.prDoc` whose `session(id)` is gone;
+`.remoteRepo` / `.remoteDoc` whose `remoteSession(id)` is gone.
+Closing a session or file does no history bookkeeping — health is
+purely a lazy check.
+
+### §4.1 The unavailable view
+
+The detail area's existing fallback branches (each `case` already
+degrades to `placeholder` when its lookup fails) upgrade to a named
+unavailable view: the entry's snapshotted SF Symbol and title, large
+and centered in the placeholder's visual style, over a one-line reason:
+
+| Case | Reason line |
+|---|---|
+| `.local` | "This file has been moved or deleted." + abbreviated path |
+| `.folder` / `.folderNode` | "This location is no longer open." + abbreviated root path |
+| `.prOverview` / `.prFile` / `.prDoc` | "This pull request is no longer open in this window." |
+| `.remoteRepo` / `.remoteDoc` | "This repository is no longer open in this window." |
+
+Titles and icons come from the history snapshot when the current
+selection matches an entry, falling back to what the selection itself
+carries (path last components) — the view must render even for a dead
+selection reached organically (a file deleted out from under the
+window). Informational only in v1: no reopen actions.
 
 ## §5 Toolbar control
 
@@ -130,7 +155,9 @@ hidden convention, because the buttons are the feature.
   right-click pops a native `NSMenu` built fresh at pop time (the
   SwiftUI-Menu-caches-stale-rows trap is documented in this file) from
   `backEntries` / `forwardEntries` — nearest first, ≤ 20 rows, icon +
-  title per row; choosing a row jumps via §4's validated `go(to:)`.
+  title per row, dead entries included (the menu answers "what was
+  that doc"; choosing one lands on §4.1's unavailable view). Rows jump
+  via §4's `go(to:)`.
   The exact AppKit shape (two NSButtons vs an NSSegmentedControl) is
   an implementation choice.
 - Help tags: "Show the previous document — click and hold to see
