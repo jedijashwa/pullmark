@@ -24,7 +24,7 @@ Scope decided with Josh (2026-08-20): Tracks A (site), B (GitHub surface),
 C (launch material drafts). No standalone essay (D) — the `/agents/` page
 carries the story. Homepage treatment: keep the existing hero; the agent
 story becomes the **first section** beneath it. Use-case page lives at
-**`/agents/`**.
+**`/uses/agents/`** (renamed from `/agents/` at Josh's call after build — nav label "Use cases").
 
 ## Copy rules (project-wide, non-negotiable)
 
@@ -80,7 +80,7 @@ New section `#agents` between the hero and `#why`:
   strengthens the section (design-review call); the existing
   `app-diff.png` stays the primary reviewing figure.
 
-### `/agents/` use-case page
+### `/uses/agents/` use-case page
 
 Standalone marketing page (not under `/docs/`), same visual system as the
 homepage. Structure:
