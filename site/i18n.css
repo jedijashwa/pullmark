@@ -1,0 +1,54 @@
+/* Site localization chrome (spec: site-localization): the footer
+   language switcher and the detected-language suggestion banner.
+   Colors ride each page's own tokens, so both follow the theme. */
+
+.lang-switch {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px;
+  max-width: 1020px; margin: 0 auto; padding: 0 28px 26px;
+  font-size: 13px;
+}
+.lang-switch .lang-label {
+  color: var(--faint);
+  margin-right: 6px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.lang-switch .lang-label svg { display: block; }
+.lang-switch a {
+  color: var(--muted); text-decoration: none;
+  padding: 4px 9px; border-radius: 6px;
+}
+.lang-switch a:hover { color: var(--ink); background: var(--line-soft); }
+.lang-switch a[aria-current="true"] {
+  color: var(--ink); font-weight: 600;
+}
+
+.lang-banner {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 9px 44px 9px 16px; position: relative;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+  font-size: 14px; color: var(--muted);
+}
+.lang-banner a { color: var(--blue); font-weight: 600; text-decoration: none; }
+.lang-banner a:hover { text-decoration: underline; }
+.lang-banner .lang-banner-close {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  border: 0; background: none; color: var(--faint); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 6px; border-radius: 6px;
+}
+.lang-banner .lang-banner-close:hover { color: var(--ink); background: var(--line-soft); }
+
+/* CJK font stacks. The lang attribute (zh-Hans vs ja) also drives
+   Han-unification glyph selection, so these selectors double as a
+   check that pages declare it. Latin-script locales ride the default
+   stacks. CJK gets the native families first, Noto for non-Apple
+   platforms; serif keeps the site's display voice via Mincho/Songti. */
+html[lang="zh-Hans"] {
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "SF Pro Text",
+          "Segoe UI", "Microsoft YaHei", "Noto Sans SC", Helvetica, Arial, sans-serif;
+  --serif: "New York", ui-serif, "Songti SC", "Noto Serif SC", Georgia, serif;
+}
+html[lang="ja"] {
+  --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "SF Pro Text",
+          "Segoe UI", "Yu Gothic UI", Meiryo, "Noto Sans JP", Helvetica, Arial, sans-serif;
+  --serif: "New York", ui-serif, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", Georgia, serif;
+}
