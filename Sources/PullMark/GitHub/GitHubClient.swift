@@ -7,7 +7,7 @@ final class GitHubClient {
     struct APIError: LocalizedError {
         let status: Int
         let message: String
-        var errorDescription: String? { "GitHub API error (\(status)): \(message)" }
+        var errorDescription: String? { String(localized: "GitHub API error (\(status)): \(message)") }
     }
 
     private var cachedToken: String?
@@ -226,7 +226,7 @@ final class GitHubClient {
     /// attachments posted in public repos (spec: github-user-attachments).
     func attachmentData(path: String) async throws -> (data: Data, mimeType: String?) {
         guard !DemoMode.active else {
-            throw APIError(status: -1, message: "PullMark is in demo mode — network access is disabled.")
+            throw APIError(status: -1, message: String(localized: "PullMark is in demo mode — network access is disabled."))
         }
         guard let url = URL(string: "https://github.com/\(path)") else {
             throw APIError(status: -1, message: "Invalid attachment path")
@@ -1424,7 +1424,7 @@ final class GitHubClient {
         // here): demo mode is offline by construction, not by hoping
         // every caller remembered its own guard.
         guard !DemoMode.active else {
-            throw APIError(status: -1, message: "PullMark is in demo mode — network access is disabled.")
+            throw APIError(status: -1, message: String(localized: "PullMark is in demo mode — network access is disabled."))
         }
         var components = URLComponents(string: "https://api.github.com")!
         components.path = path

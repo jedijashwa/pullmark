@@ -142,7 +142,8 @@ def collect_swift_keys():
     keys = {}
     interpolated = set()
     starts = re.compile(
-        r"(?:\b" + SWIFTUI_CALLS + r"\(|\.help\(|String\(localized:|NSLocalizedString\()\s*")
+        r"(?:\b" + SWIFTUI_CALLS + r"\(|\.help\(|\.alert\(|\.confirmationDialog\(|"
+        r"\.navigationTitle\(|String\(localized:|NSLocalizedString\()\s*")
     for path in sorted(SOURCES.rglob("*.swift")):
         s = path.read_text(encoding="utf-8")
         rel = str(path.relative_to(ROOT))

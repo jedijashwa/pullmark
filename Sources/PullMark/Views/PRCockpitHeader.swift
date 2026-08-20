@@ -52,9 +52,9 @@ private struct ReviewDecisionCapsule: View {
 
     private var label: String {
         switch decision {
-        case .approved: return "Approved"
-        case .changesRequested: return "Changes requested"
-        case .reviewRequired: return "Review required"
+        case .approved: return String(localized: "Approved")
+        case .changesRequested: return String(localized: "Changes requested")
+        case .reviewRequired: return String(localized: "Review required")
         }
     }
 
@@ -119,10 +119,10 @@ private struct ChecksCapsule: View {
     private var label: String {
         switch summary {
         case .none: return ""
-        case .failed: return "Checks failed"
-        case .running: return "Checks running"
-        case .awaitingApproval: return "Checks awaiting approval"
-        case .passed: return "Checks passed"
+        case .failed: return String(localized: "Checks failed")
+        case .running: return String(localized: "Checks running")
+        case .awaitingApproval: return String(localized: "Checks awaiting approval")
+        case .passed: return String(localized: "Checks passed")
         }
     }
 
