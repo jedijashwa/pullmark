@@ -96,10 +96,10 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
       <p>规则刻意乏味，好让脚本可以放心依赖：</p>
       <ul>
         <li><strong>文件</strong>落进侧边栏的
-        <a href="/zh/docs/sidebar/#open-files">Open Files</a> 分区，作为固定
+        <a href="/zh/docs/sidebar/#open-files">“打开的文件”</a>分区，作为固定
         条目，最后传入的文件会被显示。</li>
         <li><strong>文件夹</strong>——包括 git 工作树——成为
-        <a href="/zh/docs/sidebar/#locations">Locations</a>：其中 Markdown
+        <a href="/zh/docs/sidebar/#locations">“位置”</a>：其中 Markdown
         文件的可浏览树。</li>
         <li><strong>应用已在运行？</strong>一切都在最前面的窗口打开。绝不会
         启动第二个应用实例。</li>
@@ -110,14 +110,14 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
       </ul>
 
       <h2 id="worktrees">工作树，以及指定单个文件</h2>
-      <p>同时传一个文件夹和一个文件，两种行为一起发生：文件夹作为 Location
+      <p>同时传一个文件夹和一个文件，两种行为一起发生：文件夹作为“位置”
       打开，文件固定并显示。这就是“打开这个工作树、给我看这份文档”的
       完整配方：</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>工作树的文件树进入 Locations（带分支标签，因为工作树就是一个 git
-      检出），<code>plan.md</code> 固定在 Open Files 中并渲染出来。右键它选
-      <strong>Reveal in Location</strong>（在位置中显示）即可跳到它在树中的
-      位置。Location 已经打开时行为完全相同——打开位于其中的文件绝不会
+      <p>工作树的文件树进入“位置”（带分支标签，因为工作树就是一个 git
+      检出），<code>plan.md</code> 固定在“打开的文件”中并渲染出来。右键它选
+      <strong>Reveal in Location</strong>（在“位置”中显示）即可跳到它在树中的
+      落点。若该“位置”早已打开，行为完全相同——打开位于其中的文件绝不会
       造出一个重复的世界，只会多一条工作集条目。</p>
       <p>文件夹/文件的配对不看顺序，但显示的是<em>最后</em>传入的文件，
       所以把你想上屏的文档放在最后。</p>
@@ -134,7 +134,7 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># 两个文件，old.md 为基准</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># 一个工作树，plan.md 以差异显示</span></code></pre>
-      <p>一同传入的文件夹照常作为 Location 打开，每种形式在工具栏的
+      <p>一同传入的文件夹照常作为“位置”打开，每种形式在工具栏的
       Compare 菜单里都有应用内的孪生兄弟（包括
       <strong>Compare Revisions…</strong> 和 <strong>Compare with
       File…</strong>）。因为 <code>--diff</code> 和 <code>--diff-with</code>
@@ -152,7 +152,7 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
       <h2 id="examples">示例</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># 阅读单个文件</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># 浏览文件夹</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># 一个 Location（位置）外加一份文档</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># 一个“位置”外加一份文档</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># 一个工作树，显示一份文档</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 最近的编辑改了什么</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- 结束选项解析</span></code></pre>

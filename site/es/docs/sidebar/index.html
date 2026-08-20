@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La barra lateral — Docs de PullMark</title>
-<meta name="description" content="La barra lateral de PullMark explicada: Open Files y las vistas previas, Locations, Pull Requests, Recents y qué significa cada icono.">
+<meta name="description" content="La barra lateral de PullMark explicada: Archivos abiertos y las vistas previas, Ubicaciones, Pull Requests, Recientes y qué significa cada icono.">
 <link rel="canonical" href="https://pullmark.app/es/docs/sidebar/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
 <link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
@@ -16,7 +16,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
 <meta property="og:title" content="La barra lateral — Docs de PullMark">
-<meta property="og:description" content="La barra lateral de PullMark explicada: Open Files y las vistas previas, Locations, Pull Requests, Recents y qué significa cada icono.">
+<meta property="og:description" content="La barra lateral de PullMark explicada: Archivos abiertos y las vistas previas, Ubicaciones, Pull Requests, Recientes y qué significa cada icono.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/es/docs/sidebar/">
 <meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
@@ -66,18 +66,18 @@
       lugares que navegas, los pull requests que estás revisando y por dónde
       has pasado.</p>
 
-      <h2 id="open-files">Open Files (archivos abiertos)</h2>
+      <h2 id="open-files">Archivos abiertos</h2>
       <p>El conjunto de trabajo: cada documento que has abierto
       explícitamente — desde el Finder, arrastrar y soltar, ⌘O, la
       <a href="/es/docs/cli/">línea de comandos</a> o al conservar un archivo
-      de una Location. Plano, reordenable arrastrando, cada fila eliminable
+      de una Ubicación. Plano, reordenable arrastrando, cada fila eliminable
       con la ✕ que aparece al pasar el cursor (o ⌫ en la fila seleccionada).
       Clic derecho en la cabecera de la sección para <strong>Close All</strong>
       (cerrar todo).</p>
 
       <h3 id="previews">Vistas previas</h3>
-      <p>Un solo clic en un archivo dentro de una Location y se renderiza al
-      instante — y aparece en Open Files como <em>vista previa</em>: una única
+      <p>Un solo clic en un archivo dentro de una Ubicación y se renderiza al
+      instante — y aparece en Archivos abiertos como <em>vista previa</em>: una única
       entrada en cursiva, siempre la última de la sección. Haz clic en otro
       archivo y la entrada de vista previa se reemplaza, así que navegar un
       árbol grande nunca acumula filas. Es la misma idea que las pestañas de
@@ -101,20 +101,20 @@
       <p><strong>Los repos remotos se previsualizan igual, en el mismo
       lugar.</strong> Navegar el árbol de un repo de GitHub, o seguir enlaces
       dentro de un documento remoto, pone la misma entrada única en cursiva
-      en Open Files — con un icono de libro y una segunda línea
+      en Archivos abiertos — con un icono de libro y una segunda línea
       <code>owner/repo @ ref</code>, ya que el archivo no está en tu Mac.
       Solo existe <em>una</em> vista previa por ventana, local o remota:
       previsualizar algo reemplaza lo que estuvieras previsualizando antes.
       Conservar un doc remoto (doble clic o Keep Open) es lo que lo archiva
-      con su repo — pasa a la lista de fijados del repo bajo Locations. ⌘K
+      con su repo — pasa a la lista de fijados del repo bajo Ubicaciones. ⌘K
       abre fijando directamente, porque pegar una URL es intención
       explícita.</p>
-      <p>Cualquier fila de Open Files que viva dentro de una Location abierta
-      tiene <strong>Reveal in Location</strong> (mostrar en su ubicación) en
-      su menú contextual — el salto de vuelta de «lo que estoy leyendo» a
-      «donde vive».</p>
+      <p>Cualquier fila de Archivos abiertos que viva dentro de una Ubicación
+      abierta tiene <strong>Reveal in Location</strong> (mostrar en su
+      ubicación) en su menú contextual — el salto de vuelta de «lo que estoy
+      leyendo» a «donde vive».</p>
 
-      <h2 id="locations">Locations (ubicaciones)</h2>
+      <h2 id="locations">Ubicaciones</h2>
       <p>Raíces navegables, vivan donde vivan. Dos clases comparten la
       sección, distinguidas por el icono:</p>
       <table>
@@ -132,7 +132,7 @@
       <ul>
         <li><strong>Worktrees</strong> — cada worktree del repo, con una marca
         en el que corresponde a esta fila; elige otro para abrirlo como su
-        propia Location. PullMark nunca hace checkout ni cambia de worktree —
+        propia Ubicación. PullMark nunca hace checkout ni cambia de worktree —
         abre la carpeta que ya está ahí.</li>
         <li><strong>View Branch from GitHub</strong> (ver rama desde GitHub) —
         lee los archivos de otra rama en remoto, sin tocar tu checkout. Una
@@ -150,7 +150,7 @@
       del árbol, para que nunca se ahoguen bajo un repo grande; un doc
       conservado que ya es visible en el árbol simplemente se representa ahí.
       (Un doc que solo estás previsualizando aparece en
-      <a href="#previews">Open Files</a>, no aquí.)</p>
+      <a href="#previews">Archivos abiertos</a>, no aquí.)</p>
       <p>Una carpeta cuya ruta deja de resolverse (un volumen desmontado, un
       worktree borrado) se atenúa con una insignia de interrogación en vez de
       desaparecer — revive por sí sola cuando la ruta vuelve.</p>
@@ -178,7 +178,7 @@
       círculo <strong>→</strong> para renombrado, círculo con lápiz para
       modificado.</p>
 
-      <h2 id="recents">Recents (recientes)</h2>
+      <h2 id="recents">Recientes</h2>
       <p>Archivos, carpetas y pull requests abiertos hace poco que no estén
       ya visibles arriba. Las entradas de PR llevan su icono de estado en
       vivo; un reciente cuyo archivo desapareció se atenúa (insignia de
@@ -190,7 +190,7 @@
       <p>Pasa el cursor por cualquier fila de primer nivel para la ✕ — quita
       la fila de la barra lateral, jamás nada del disco ni de GitHub. ⌫ en
       una fila seleccionada hace lo mismo. Los archivos dentro del árbol de
-      una Location no tienen ✕: son contenidos de un lugar, no elementos de
+      una Ubicación no tienen ✕: son contenidos de un lugar, no elementos de
       la barra lateral.</p>
 
       <h2 id="icon-glossary">Glosario de iconos</h2>
@@ -207,7 +207,7 @@
         <tr><td>Flechas de pull request</td><td>Un pull request</td></tr>
         <tr><td>Bandeja</td><td>Review Requests — PRs que esperan tu revisión</td></tr>
         <tr><td>Globo de diálogo + contador</td><td>En un archivo de PR: comentarios de revisión sin
-          resolver. En una fila de Open Files: <a href="/es/docs/experimental/margin-notes/">notas al
+          resolver. En una fila de Archivos abiertos: <a href="/es/docs/experimental/margin-notes/">notas al
           margen</a> aún presentes en el documento</td></tr>
         <tr><td>Punto de color (borde izquierdo)</td><td>Una solicitud de revisión sin leer</td></tr>
         <tr><td>✕ en un círculo (al pasar el cursor)</td><td>Quitar de la barra lateral / descartar la vista previa</td></tr>

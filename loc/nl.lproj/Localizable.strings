@@ -74,7 +74,7 @@
 "Clear Recents" = "Wis recente onderdelen";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "Klik op een sneltoets, of selecteer een rij en druk op Return, en typ de nieuwe toetsen. Druk op Verwijder om een sneltoets te wissen, op Escape om te annuleren.";
 "Click to type a zoom level" = "Klik om een zoomniveau te typen";
-"Clicking files in Locations:" = "Klikken op bestanden in Locations:";
+"Clicking files in Locations:" = "Klikken op bestanden in Locaties:";
 "Close" = "Sluit";
 "Close All" = "Sluit alles";
 "Close All Files" = "Sluit alle bestanden";
@@ -150,8 +150,8 @@
 "Dismiss — this version won't be suggested again" = "Negeer — deze versie wordt niet opnieuw voorgesteld";
 "Don't ask again for this repository" = "Vraag dit niet meer voor deze repository";
 "Done" = "Gereed";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles en verborgen mappen in Locations — net als ⇧⌘. in de Finder";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles en verborgen mappen in Locations — ⇧⌘. schakelt dit ook, net als in de Finder";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Dotfiles en verborgen mappen in Locaties — net als ⇧⌘. in de Finder";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Dotfiles en verborgen mappen in Locaties — ⇧⌘. schakelt dit ook, net als in de Finder";
 "Down Arrow" = "Pijl omlaag";
 "Download" = "Download";
 "Downloads the update, verifies its signature, and installs it in place" = "Downloadt de update, controleert de handtekening en installeert hem ter plekke";
@@ -198,7 +198,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Verbergt reviewverzoeken zonder Markdown-bestanden — PullMark heeft er niets voor te tonen";
 "History" = "Geschiedenis";
 "Home" = "Home";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Hover over een blok voor het notitieballonnetje (selecteer eerst tekst om die te citeren), of druk op ⌥⌘M. Bewerken en verwijderen doe je vanuit elk ballonnetje; een notitie verwijderen is hoe je haar afhandelt. Rijen in Open Files dragen een chip met het aantal notities zolang een document ze nog bevat, en Weergave → Verberg margin notes maakt de pagina leeg om schoon te lezen.";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Hover over een blok voor het notitieballonnetje (selecteer eerst tekst om die te citeren), of druk op ⌥⌘M. Bewerken en verwijderen doe je vanuit elk ballonnetje; een notitie verwijderen is hoe je haar afhandelt. Rijen in Geopende bestanden dragen een chip met het aantal notities zolang een document ze nog bevat, en Weergave → Verberg margin notes maakt de pagina leeg om schoon te lezen.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "Hoe ver tekst mag uitlopen voordat hij afbreekt. Standard houdt de klassieke, boekachtige leesbreedte aan; Wide past meer op het scherm en begrenst de regellengte nog steeds; Full Width geeft het document het hele venster — handig in volledig scherm. Geldt overal, live, en combineert met elk thema.";
 "How wide the rendered text column runs" = "Hoe breed de gerenderde tekstkolom loopt";
 "In a local document" = "In een lokaal document";
@@ -223,7 +223,7 @@
 "Line %lld (old)" = "Regel %lld (oud)";
 "Line numbers" = "Regelnummers";
 "Loading repo files…" = "Repo-bestanden laden…";
-"Locations" = "Locations";
+"Locations" = "Locaties";
 "Make Default Again" = "Maak weer standaard";
 "Make PullMark the Default" = "Maak PullMark de standaard";
 "Make the document bigger" = "Maak het document groter";
@@ -261,7 +261,7 @@
 "Open" = "Open";
 "Open Branch Separately" = "Open branch apart";
 "Open File or Folder" = "Open bestand of map";
-"Open Files" = "Open Files";
+"Open Files" = "Geopende bestanden";
 "Open File…" = "Open bestand…";
 "Open Folder…" = "Open map…";
 "Open Fully" = "Volledig openen";
@@ -303,7 +303,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "Vastgezet op commit %@ — de tip van de ref bij de laatste fetch van deze sessie.";
 "Posts immediately — file comments can't join a pending review." = "Wordt meteen geplaatst — bestandscomments kunnen niet mee in een pending review.";
 "Preview First" = "Eerst previewen";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Eerst previewen toont een bestand met één klik zonder het vast te houden — één cursieve regel (in Open Files, of onder de bijbehorende GitHub-repo) die de volgende preview vervangt. Dubbelklik een bestand, of begin gewoon te typen, om het open te houden. Volledig openen houdt elk bestand dat je aanklikt.";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Eerst previewen toont een bestand met één klik zonder het vast te houden — één cursieve regel (in Geopende bestanden, of onder de bijbehorende GitHub-repo) die de volgende preview vervangt. Dubbelklik een bestand, of begin gewoon te typen, om het open te houden. Volledig openen houdt elk bestand dat je aanklikt.";
 "Previous File" = "Vorig bestand";
 "Previous Markdown file in this pull request" = "Vorig Markdown-bestand in deze pull request";
 "Previous match" = "Vorig resultaat";
@@ -328,7 +328,7 @@
 "Re-read this file from disk" = "Lees dit bestand opnieuw van schijf";
 "Reaction state unavailable — try refreshing the PR." = "Reactiestatus niet beschikbaar — ververs de PR.";
 "Reading" = "Lezen";
-"Recents" = "Recents";
+"Recents" = "Recent";
 "Redo" = "Herhaal";
 "Refresh" = "Ververs";
 "Refresh Folder" = "Ververs map";
@@ -338,7 +338,7 @@
 "Reload Document" = "Herlaad document";
 "Remember my selection" = "Onthoud mijn keuze";
 "Remote Branches" = "Remote branches";
-"Remove from Recents" = "Verwijder uit Recents";
+"Remove from Recents" = "Verwijder uit Recent";
 "Remove from Sidebar" = "Verwijder uit zijbalk";
 "Remove the PullMark disk image?" = "PullMark-schijfkopie verwijderen?";
 "Rendered" = "Gerenderd";
@@ -361,7 +361,7 @@
 "Retry Upload" = "Upload opnieuw";
 "Return" = "Return";
 "Reveal in Finder" = "Toon in Finder";
-"Reveal in Location" = "Toon in Locations";
+"Reveal in Location" = "Toon in Locaties";
 "Reveal on GitHub" = "Toon op GitHub";
 "Reveal resolved review conversations in the Result view" = "Toon opgeloste reviewconversaties in de Resultaat-weergave";
 "Revert Last Edit" = "Draai laatste bewerking terug";
@@ -477,7 +477,7 @@
 "With a folder selected" = "Met een map geselecteerd";
 "With a local file or folder in a GitHub repository selected" = "Met een lokaal bestand of lokale map in een GitHub-repository geselecteerd";
 "With a local file or folder selected" = "Met een lokaal bestand of lokale map geselecteerd";
-"With files in Open Files" = "Met bestanden in Open Files";
+"With files in Open Files" = "Met bestanden onder Geopende bestanden";
 "Works with private repos using your existing gh or git credentials." = "Werkt met privérepo's via je bestaande gh- of git-credentials.";
 "You're on %@." = "Je zit op %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Je eigen sneltoetsen worden verwijderd. Dit kan niet ongedaan worden gemaakt.";

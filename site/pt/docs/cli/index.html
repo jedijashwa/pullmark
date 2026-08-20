@@ -99,11 +99,11 @@ pullmark --version           <span class="c"># imprime a versão do app</span></
       confiar nelas:</p>
       <ul>
         <li><strong>Arquivos</strong> caem na seção
-        <a href="/pt/docs/sidebar/#open-files">Open Files</a> (arquivos
-        abertos) da barra lateral como entradas fixadas, e o último arquivo
-        passado é o exibido.</li>
+        <a href="/pt/docs/sidebar/#open-files">Arquivos Abertos</a> da barra
+        lateral como entradas fixadas, e o último arquivo passado é o
+        exibido.</li>
         <li><strong>Pastas</strong> — incluindo worktrees git — viram
-        <a href="/pt/docs/sidebar/#locations">Locations</a>: árvores
+        <a href="/pt/docs/sidebar/#locations">Localizações</a>: árvores
         navegáveis dos arquivos Markdown lá dentro.</li>
         <li><strong>Já em execução?</strong> Tudo abre na janela da frente.
         Uma segunda instância do app nunca é iniciada.</li>
@@ -115,17 +115,18 @@ pullmark --version           <span class="c"># imprime a versão do app</span></
 
       <h2 id="worktrees">Worktrees, e apontando para um arquivo</h2>
       <p>Passe uma pasta e um arquivo juntos e você ganha os dois
-      comportamentos de uma vez: a pasta abre como Location, o arquivo abre
+      comportamentos de uma vez: a pasta abre como Localização, o arquivo abre
       fixado e exibido. Essa é a receita inteira de “abra esta worktree e me
       mostre este doc”:</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>A árvore da worktree cai em Locations (com seu chip de branch, já
+      <p>A árvore da worktree cai em Localizações (com seu chip de branch, já
       que uma worktree é só um checkout git), <code>plan.md</code> fica
-      fixado em Open Files e renderizado. Clique nele com o botão direito e
-      escolha <strong>Reveal in Location</strong> (revelar no Location) para
-      pular até onde ele está na árvore. Funciona igual quando o Location já
-      estava aberto — abrir um arquivo que mora dentro dele nunca cria um
-      mundo duplicado, só uma entrada no conjunto de trabalho.</p>
+      fixado em Arquivos Abertos e renderizado. Clique nele com o botão
+      direito e escolha <strong>Reveal in Location</strong> (revelar na
+      Localização) para pular até onde ele está na árvore. Funciona igual
+      quando a Localização já estava aberta — abrir um arquivo que mora
+      dentro dela nunca cria um mundo duplicado, só uma entrada no conjunto
+      de trabalho.</p>
       <p>A ordem não importa para o par pasta/arquivo, mas o <em>último
       arquivo</em> passado é o exibido, então deixe por último o documento
       que você quer na tela.</p>
@@ -144,7 +145,7 @@ pullmark --version           <span class="c"># imprime a versão do app</span></
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># dois arquivos, old.md como base</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># uma worktree, plan.md em diff</span></code></pre>
-      <p>Pastas passadas junto ainda abrem como Locations, e cada forma tem
+      <p>Pastas passadas junto ainda abrem como Localizações, e cada forma tem
       um gêmeo dentro do app no menu Compare da barra de ferramentas
       (incluindo <strong>Compare Revisions…</strong> e <strong>Compare with
       File…</strong>). Como <code>--diff</code> e <code>--diff-with</code>
@@ -162,7 +163,7 @@ pullmark --version           <span class="c"># imprime a versão do app</span></
       <h2 id="examples">Exemplos</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># ler um arquivo</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># navegar por uma pasta</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># um Location mais um documento</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># uma Localização mais um documento</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># uma worktree, exibindo um doc</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># o que as últimas edições mudaram</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- encerra a análise de opções</span></code></pre>

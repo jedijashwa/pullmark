@@ -100,10 +100,10 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
       dessus&nbsp;:</p>
       <ul>
         <li><strong>Les fichiers</strong> atterrissent dans la section
-        <a href="/fr/docs/sidebar/#open-files">Open Files</a> de la barre latérale en
+        <a href="/fr/docs/sidebar/#open-files">Fichiers ouverts</a> de la barre latérale en
         entrées épinglées, et le dernier fichier passé est affiché.</li>
         <li><strong>Les dossiers</strong> — worktrees git compris — deviennent des
-        <a href="/fr/docs/sidebar/#locations">Locations</a>&nbsp;: des arborescences
+        <a href="/fr/docs/sidebar/#locations">Emplacements</a>&nbsp;: des arborescences
         navigables des fichiers Markdown qu'ils contiennent.</li>
         <li><strong>Déjà lancée&nbsp;?</strong> Tout s'ouvre dans la fenêtre au premier
         plan. Une seconde instance de l'app n'est jamais démarrée.</li>
@@ -115,16 +115,16 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
 
       <h2 id="worktrees">Les worktrees, et viser un seul fichier</h2>
       <p>Passez un dossier et un fichier ensemble et vous obtenez les deux
-      comportements d'un coup&nbsp;: le dossier s'ouvre en Location, le fichier
+      comportements d'un coup&nbsp;: le dossier s'ouvre en emplacement, le fichier
       s'ouvre épinglé et affiché. C'est toute la recette de «&nbsp;ouvre ce worktree
       et montre-moi cette doc&nbsp;»&nbsp;:</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>L'arborescence du worktree atterrit dans Locations (avec sa pastille de
+      <p>L'arborescence du worktree atterrit dans Emplacements (avec sa pastille de
       branche, un worktree n'étant qu'une copie de travail git),
-      <code>plan.md</code> est épinglé dans Open Files et rendu. Clic droit dessus et
+      <code>plan.md</code> est épinglé dans Fichiers ouverts et rendu. Clic droit dessus et
       <strong>Reveal in Location</strong> (afficher dans l'emplacement) saute vers sa
-      place dans l'arborescence. Cela marche pareil quand la Location était déjà
-      ouverte — ouvrir un fichier qui vit dedans ne crée jamais un monde en double,
+      place dans l'arborescence. Cela marche pareil quand l'emplacement était déjà
+      ouvert — ouvrir un fichier qui vit dedans ne crée jamais un monde en double,
       juste une entrée dans l'ensemble de travail.</p>
       <p>L'ordre n'importe pas pour l'appariement dossier/fichier, mais le
       <em>dernier fichier</em> passé est celui affiché&nbsp;: mettez en dernier le
@@ -144,7 +144,7 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># deux fichiers, old.md comme référence</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># un worktree, plan.md diffé</span></code></pre>
-      <p>Les dossiers passés à côté s'ouvrent toujours en Locations, et chaque forme a
+      <p>Les dossiers passés à côté s'ouvrent toujours en emplacements, et chaque forme a
       son jumeau dans le menu Compare de la barre d'outils (y compris
       <strong>Compare Revisions…</strong> et <strong>Compare with File…</strong>).
       Parce que <code>--diff</code> et <code>--diff-with</code> sont des drapeaux,
@@ -162,7 +162,7 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
       <h2 id="examples">Exemples</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># lire un fichier</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># parcourir un dossier</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># une Location plus un document</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># un emplacement plus un document</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># un worktree, une doc affichée</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># ce que les dernières éditions ont changé</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- termine l'analyse des options</span></code></pre>

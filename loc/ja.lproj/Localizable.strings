@@ -74,7 +74,7 @@
 "Clear Recents" = "最近使った項目を消去";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "ショートカットをクリックするか、行を選んで Return を押してから、新しいキーを入力します。Delete で割り当てを外し、Esc で取り消します。";
 "Click to type a zoom level" = "クリックでズーム率を入力";
-"Clicking files in Locations:" = "Locations 内のファイルをクリックしたとき:";
+"Clicking files in Locations:" = "「場所」内のファイルをクリックしたとき:";
 "Close" = "閉じる";
 "Close All" = "すべて閉じる";
 "Close All Files" = "すべてのファイルを閉じる";
@@ -150,8 +150,8 @@
 "Dismiss — this version won't be suggested again" = "閉じる — このバージョンはもう案内されません";
 "Don't ask again for this repository" = "このリポジトリではもう尋ねない";
 "Done" = "完了";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Locations 内のドットファイルと隠しフォルダ — Finder の ⇧⌘. と同じです";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Locations 内のドットファイルと隠しフォルダ — Finder と同じく ⇧⌘. でも切り替えられます";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "「場所」内のドットファイルと隠しフォルダ — Finder の ⇧⌘. と同じです";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "「場所」内のドットファイルと隠しフォルダ — Finder と同じく ⇧⌘. でも切り替えられます";
 "Down Arrow" = "下矢印";
 "Download" = "ダウンロード";
 "Downloads the update, verifies its signature, and installs it in place" = "アップデートをダウンロードし、署名を検証して、その場にインストールします";
@@ -198,7 +198,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Markdown ファイルを含まないレビューリクエストを隠します — PullMark に見せられるものがないからです";
 "History" = "履歴";
 "Home" = "Home";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "どれかのブロックにホバーするとノートの吹き出しが出ます（先にテキストを選択すれば引用されます）。⌥⌘M でも構いません。編集と削除は各吹き出しから。ノートを削除することが、解決するということです。文書がまだノートを抱えているあいだ、Open Files の行には件数のチップが付き、表示 → マージンノートを非表示 はきれいに読むためにページを片づけます。";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "どれかのブロックにホバーするとノートの吹き出しが出ます（先にテキストを選択すれば引用されます）。⌥⌘M でも構いません。編集と削除は各吹き出しから。ノートを削除することが、解決するということです。文書がまだノートを抱えているあいだ、「開いているファイル」の行には件数のチップが付き、表示 → マージンノートを非表示 はきれいに読むためにページを片づけます。";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "折り返すまでにテキストがどこまで広がるか。Standard は本のような古典的な行長を保ち、Wide は行長に上限を残したまま画面に載る量を増やし、Full Width は文書にウィンドウ全体を与えます — フルスクリーンで重宝します。どこにでもその場で効き、どのテーマとも素直に組み合わさります。";
 "How wide the rendered text column runs" = "レンダリングされたテキスト段の幅";
 "In a local document" = "ローカル文書で";
@@ -223,7 +223,7 @@
 "Line %lld (old)" = "%lld 行目 (旧)";
 "Line numbers" = "行番号";
 "Loading repo files…" = "リポジトリのファイルを読み込んでいます…";
-"Locations" = "Locations";
+"Locations" = "場所";
 "Make Default Again" = "もう一度デフォルトにする";
 "Make PullMark the Default" = "PullMark をデフォルトにする";
 "Make the document bigger" = "文書を大きくします";
@@ -261,7 +261,7 @@
 "Open" = "開く";
 "Open Branch Separately" = "ブランチを別に開く";
 "Open File or Folder" = "ファイルまたはフォルダを開く";
-"Open Files" = "Open Files";
+"Open Files" = "開いているファイル";
 "Open File…" = "ファイルを開く…";
 "Open Folder…" = "フォルダを開く…";
 "Open Fully" = "完全に開く";
@@ -303,7 +303,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "コミット %@ に固定されています — このセッションが最後に取得した時点の ref の先端です。";
 "Posts immediately — file comments can't join a pending review." = "すぐに投稿されます — ファイルへのコメントは保留中のレビューに加えられません。";
 "Preview First" = "プレビュー優先";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "「プレビュー優先」は、クリック 1 回でファイルを見せながら、手元には残しません — 斜体の項目がひとつ（Open Files、またはその GitHub リポジトリの下に）現れ、次のプレビューがそれを置き換えます。ファイルをダブルクリックするか、編集を始めるだけで、開いたままになります。「完全に開く」は、クリックしたファイルをすべて残します。";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "「プレビュー優先」は、クリック 1 回でファイルを見せながら、手元には残しません — 斜体の項目がひとつ（「開いているファイル」、またはその GitHub リポジトリの下に）現れ、次のプレビューがそれを置き換えます。ファイルをダブルクリックするか、編集を始めるだけで、開いたままになります。「完全に開く」は、クリックしたファイルをすべて残します。";
 "Previous File" = "前のファイル";
 "Previous Markdown file in this pull request" = "このプルリクエストの前の Markdown ファイル";
 "Previous match" = "前の一致";
@@ -477,7 +477,7 @@
 "With a folder selected" = "フォルダを選んでいるとき";
 "With a local file or folder in a GitHub repository selected" = "GitHub リポジトリ内のローカルのファイルかフォルダを選んでいるとき";
 "With a local file or folder selected" = "ローカルのファイルかフォルダを選んでいるとき";
-"With files in Open Files" = "Open Files にファイルがあるとき";
+"With files in Open Files" = "「開いているファイル」にファイルがあるとき";
 "Works with private repos using your existing gh or git credentials." = "既存の gh または git の認証情報を使って、プライベートリポジトリでも動きます。";
 "You're on %@." = "現在 %@ にいます。";
 "Your custom shortcuts will be removed. This can't be undone." = "カスタムのショートカットは削除されます。この操作は取り消せません。";

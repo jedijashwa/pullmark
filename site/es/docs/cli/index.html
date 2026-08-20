@@ -101,13 +101,12 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
       confiar en ellas:</p>
       <ul>
         <li>Los <strong>archivos</strong> caen en la sección
-        <a href="/es/docs/sidebar/#open-files">Open Files</a> (archivos
-        abiertos) de la barra lateral como entradas conservadas, y se muestra
-        el último archivo que pasaste.</li>
+        <a href="/es/docs/sidebar/#open-files">Archivos abiertos</a> de la
+        barra lateral como entradas conservadas, y se muestra el último
+        archivo que pasaste.</li>
         <li>Las <strong>carpetas</strong> — worktrees de git incluidos — se
-        convierten en <a href="/es/docs/sidebar/#locations">Locations</a>
-        (ubicaciones): árboles navegables de los archivos Markdown que hay
-        dentro.</li>
+        convierten en <a href="/es/docs/sidebar/#locations">Ubicaciones</a>:
+        árboles navegables de los archivos Markdown que hay dentro.</li>
         <li><strong>¿Ya está abierta?</strong> Todo se abre en la ventana
         frontal. Nunca se lanza una segunda instancia de la app.</li>
         <li>Las <strong>rutas relativas</strong> se resuelven contra tu
@@ -118,18 +117,19 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
 
       <h2 id="worktrees">Worktrees, y apuntar a un archivo</h2>
       <p>Pasa juntos una carpeta y un archivo y tienes los dos
-      comportamientos a la vez: la carpeta se abre como Location, el archivo
+      comportamientos a la vez: la carpeta se abre como Ubicación, el archivo
       se abre conservado y a la vista. Esa es la receta entera de «abre este
       worktree y muéstrame este doc»:</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>El árbol del worktree aterriza en Locations (con su chip de rama,
+      <p>El árbol del worktree aterriza en Ubicaciones (con su chip de rama,
       porque un worktree no es más que un checkout de git),
-      <code>plan.md</code> queda conservado en Open Files y renderizado. Haz
-      clic derecho y elige <strong>Reveal in Location</strong> (mostrar en su
-      ubicación) para saltar al punto del árbol donde vive. Funciona igual
-      cuando la Location ya estaba abierta — abrir un archivo que vive dentro
-      de ella nunca crea un mundo duplicado, solo una entrada en el conjunto
-      de trabajo.</p>
+      <code>plan.md</code> queda conservado en Archivos abiertos y
+      renderizado. Haz clic derecho y elige
+      <strong>Reveal in Location</strong> (mostrar en su ubicación) para
+      saltar al punto del árbol donde vive. Funciona igual cuando la
+      Ubicación ya estaba abierta — abrir un archivo que vive dentro de ella
+      nunca crea un mundo duplicado, solo una entrada en el conjunto de
+      trabajo.</p>
       <p>Para emparejar carpeta y archivo el orden da igual, pero el que se
       muestra es el <em>último archivo</em> que pases, así que deja para el
       final el documento que quieres en pantalla.</p>
@@ -149,7 +149,7 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
 <span class="p">$ </span>pullmark --diff-with=old.md new.md      <span class="c"># dos archivos, old.md como base</span>
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># un worktree, con plan.md en diff</span></code></pre>
-      <p>Las carpetas que pases al lado siguen abriéndose como Locations, y
+      <p>Las carpetas que pases al lado siguen abriéndose como Ubicaciones, y
       cada forma tiene su gemela dentro de la app, en el menú Compare de la
       barra de herramientas (incluidas <strong>Compare Revisions…</strong> y
       <strong>Compare with File…</strong>). Como <code>--diff</code> y
@@ -167,7 +167,7 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
       <h2 id="examples">Ejemplos</h2>
 <pre><code><span class="p">$ </span>pullmark README.md                      <span class="c"># leer un archivo</span>
 <span class="p">$ </span>pullmark ~/notes                        <span class="c"># navegar una carpeta</span>
-<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># una Location más un documento</span>
+<span class="p">$ </span>pullmark docs specs/design.md           <span class="c"># una Ubicación más un documento</span>
 <span class="p">$ </span>pullmark ~/wt/feature docs/plan.md      <span class="c"># un worktree, mostrando un doc</span>
 <span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># qué cambiaron las últimas ediciones</span>
 <span class="p">$ </span>pullmark -- --weird-filename.md         <span class="c"># -- termina el análisis de opciones</span></code></pre>

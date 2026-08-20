@@ -75,7 +75,7 @@
 "Clear Recents" = "Vaciar recientes";
 "Click a shortcut, or select a row and press Return, then type the new keys. Press Delete to remove a shortcut, Esc to cancel." = "Haz clic en un atajo, o selecciona una fila y pulsa Retorno, y luego teclea las teclas nuevas. Pulsa Eliminar para quitar un atajo, Esc para cancelar.";
 "Click to type a zoom level" = "Haz clic para escribir un nivel de zoom";
-"Clicking files in Locations:" = "Al hacer clic en archivos de Locations:";
+"Clicking files in Locations:" = "Al hacer clic en archivos de Ubicaciones:";
 "Close" = "Cerrar";
 "Close All" = "Cerrar todo";
 "Close All Files" = "Cerrar todos los archivos";
@@ -151,8 +151,8 @@
 "Dismiss — this version won't be suggested again" = "Descartar — esta versión no se volverá a sugerir";
 "Don't ask again for this repository" = "No volver a preguntar para este repositorio";
 "Done" = "Listo";
-"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Los dotfiles y las carpetas ocultas en Locations — como ⇧⌘. en el Finder";
-"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Los dotfiles y las carpetas ocultas en Locations — ⇧⌘. también lo alterna, como en el Finder";
+"Dotfiles and hidden folders in Locations — like ⇧⌘. in Finder" = "Los dotfiles y las carpetas ocultas en Ubicaciones — como ⇧⌘. en el Finder";
+"Dotfiles and hidden folders in Locations — ⇧⌘. toggles this too, like Finder" = "Los dotfiles y las carpetas ocultas en Ubicaciones — ⇧⌘. también lo alterna, como en el Finder";
 "Down Arrow" = "Flecha abajo";
 "Download" = "Descargar";
 "Downloads the update, verifies its signature, and installs it in place" = "Descarga la actualización, verifica su firma y la instala en el sitio";
@@ -199,7 +199,7 @@
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Oculta las solicitudes de revisión sin archivos Markdown — PullMark no tiene nada que mostrar de ellas";
 "History" = "Historial";
 "Home" = "Inicio";
-"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Pasa el cursor por cualquier bloque para ver el globo de nota (selecciona texto antes para citarlo), o pulsa ⌥⌘M. Edita y borra desde cada globo; borrar una nota es la forma de darla por resuelta. Las filas de Open Files llevan un chip con la cuenta mientras el documento aún cargue notas, y Visualización → Ocultar las notas al margen despeja la página para leer limpio.";
+"Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Pasa el cursor por cualquier bloque para ver el globo de nota (selecciona texto antes para citarlo), o pulsa ⌥⌘M. Edita y borra desde cada globo; borrar una nota es la forma de darla por resuelta. Las filas de Archivos abiertos llevan un chip con la cuenta mientras el documento aún cargue notas, y Visualización → Ocultar las notas al margen despeja la página para leer limpio.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "Hasta dónde puede estirarse el texto antes de saltar de línea. Standard mantiene la medida clásica de un libro; Wide encaja más en pantalla y sigue limitando el largo de línea; Full Width le da al documento toda la ventana — útil en pantalla completa. Se aplica en todas partes, en vivo, y se lleva bien con cualquier tema.";
 "How wide the rendered text column runs" = "Cuánto se ensancha la columna de texto renderizado";
 "In a local document" = "En un documento local";
@@ -224,7 +224,7 @@
 "Line %lld (old)" = "Línea %lld (antigua)";
 "Line numbers" = "Números de línea";
 "Loading repo files…" = "Cargando los archivos del repo…";
-"Locations" = "Locations";
+"Locations" = "Ubicaciones";
 "Make Default Again" = "Volver a hacerlo la app por defecto";
 "Make PullMark the Default" = "Hacer que PullMark sea la app por defecto";
 "Make the document bigger" = "Amplía el documento";
@@ -262,7 +262,7 @@
 "Open" = "Abrir";
 "Open Branch Separately" = "Abrir la rama por separado";
 "Open File or Folder" = "Abrir archivo o carpeta";
-"Open Files" = "Open Files";
+"Open Files" = "Archivos abiertos";
 "Open File…" = "Abrir archivo…";
 "Open Folder…" = "Abrir carpeta…";
 "Open Fully" = "Abrir del todo";
@@ -304,7 +304,7 @@
 "Pinned to commit %@ — the ref's tip as of this session's last fetch." = "Fijado al commit %@ — la punta de la ref en el último fetch de esta sesión.";
 "Posts immediately — file comments can't join a pending review." = "Se publica al instante — los comentarios de archivo no pueden unirse a una revisión pendiente.";
 "Preview First" = "Vista previa primero";
-"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Vista previa primero muestra un archivo con un clic sin conservarlo — una sola entrada en cursiva (en Open Files, o bajo su repositorio de GitHub) que la siguiente vista previa reemplaza. Haz doble clic en un archivo, o simplemente empieza a editarlo, para dejarlo abierto. Abrir del todo conserva cada archivo en el que haces clic.";
+"Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click." = "Vista previa primero muestra un archivo con un clic sin conservarlo — una sola entrada en cursiva (en Archivos abiertos, o bajo su repositorio de GitHub) que la siguiente vista previa reemplaza. Haz doble clic en un archivo, o simplemente empieza a editarlo, para dejarlo abierto. Abrir del todo conserva cada archivo en el que haces clic.";
 "Previous File" = "Archivo anterior";
 "Previous Markdown file in this pull request" = "Archivo Markdown anterior de este pull request";
 "Previous match" = "Coincidencia anterior";
@@ -478,7 +478,7 @@
 "With a folder selected" = "Con una carpeta seleccionada";
 "With a local file or folder in a GitHub repository selected" = "Con un archivo o carpeta local de un repositorio de GitHub seleccionado";
 "With a local file or folder selected" = "Con un archivo o carpeta local seleccionado";
-"With files in Open Files" = "Con archivos en Open Files";
+"With files in Open Files" = "Cuando hay archivos en Archivos abiertos";
 "Works with private repos using your existing gh or git credentials." = "Funciona con repos privados usando tus credenciales de gh o git existentes.";
 "You're on %@." = "Estás en %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Se eliminarán tus atajos personalizados. Esto no se puede deshacer.";
