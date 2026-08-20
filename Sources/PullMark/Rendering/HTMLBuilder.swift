@@ -109,6 +109,11 @@ enum HTMLBuilder {
         /// the timeline is empty — a PR overview always offers the
         /// comment box; other pages never do.
         var conversationComposer: Bool?
+        /// Localized UI strings for the page (PageStrings.table) —
+        /// keyed by the English string, consumed by app.js's pmString.
+        /// Stamped centrally in page(payload:); previews skip it (they
+        /// render fixed sample content and keep pages byte-stable).
+        var strings: [String: String]?
     }
 
     /// Options for rendering a file that lives in a GitHub repo.
@@ -343,6 +348,7 @@ enum HTMLBuilder {
             }
             payload.remoteLinkPolicy = UserDefaults.pullmark.string(forKey: DefaultsKeys.remoteLinkPolicy) ?? "ask"
             payload.githubAttachments = true
+            payload.strings = PageStrings.table
         }
         return """
         <!DOCTYPE html>
