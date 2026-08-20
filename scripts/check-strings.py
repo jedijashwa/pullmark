@@ -98,7 +98,7 @@ INT_EXPR = re.compile(
     r"^(?:"
     r"[\w.]*[cC]ount|overflow|minutes|hours|days|line|number|original|index"
     r"|[\w.]*[cC]ount [-+] \d+|index [-+] \d+|line [-+] \d+"
-    r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status"
+    r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status|failing|done|total"
     r"|[\w.]+\.(?:minutes|number|status|line|originalLine)"
     r"|\w+\[[01]\]|mapped\[[01]\]"
     r"|session\.markdownFiles\.count"

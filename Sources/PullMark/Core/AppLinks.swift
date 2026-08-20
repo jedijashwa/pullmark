@@ -15,6 +15,7 @@ enum AppLinks {
         "compare",
         "settings",
         "settings/general",
+        "settings/general/language",
         "settings/themes",
         "settings/keyboard",
         "settings/experimental",

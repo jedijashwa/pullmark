@@ -30,6 +30,7 @@ struct SettingsView: View {
 // MARK: - General
 
 struct GeneralSettingsTab: View {
+    @State private var languageRaw = AppLanguage.current.rawValue
     @EnvironmentObject private var updates: UpdateChecker
     @EnvironmentObject private var defaultApp: DefaultAppManager
     @AppStorage(DefaultsKeys.diffLayout, store: UserDefaults.pullmark) private var diffLayoutRaw = PRFileView.DiffLayout.inline.rawValue
@@ -61,6 +62,21 @@ struct GeneralSettingsTab: View {
         ScrollViewReader { scroll in
         Form {
             GitHubNotConnectedAlert()
+
+            Section("Language") {
+            Picker("Language:", selection: $languageRaw) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.label).tag(language.rawValue)
+                }
+            }
+            .onChange(of: languageRaw) { raw in
+                (AppLanguage(rawValue: raw) ?? .system).apply()
+            }
+            .settingAnchor("language")
+            Text("Takes effect the next time PullMark opens.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            }
 
             Section("Reading") {
             Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
@@ -483,7 +499,7 @@ struct ExperimentalSettingsTab: View {
                         Text("Teach your agent")
                             .font(.callout.weight(.semibold))
                         Spacer()
-                        Button(copiedSnippet ? "Copied" : "Copy") {
+                        Button(copiedSnippet ? String(localized: "Copied") : String(localized: "Copy")) {
                             let pasteboard = NSPasteboard.general
                             pasteboard.clearContents()
                             pasteboard.setString(MarginNotes.agentInstructions, forType: .string)
@@ -769,9 +785,9 @@ struct LineNumberPreviewCard: View {
                 }
             }
             .padding(.bottom, 4)
-            Text(showNumbers ? "Shown" : "Hidden")
+            Text(showNumbers ? String(localized: "Shown") : String(localized: "Hidden"))
                 .font(.callout.weight(selected ? .semibold : .medium))
-            Text(showNumbers ? "Each block's source line in the margin" : "A clean margin, numbers on demand in Source")
+            Text(showNumbers ? String(localized: "Each block's source line in the margin") : String(localized: "A clean margin, numbers on demand in Source"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -781,7 +797,7 @@ struct LineNumberPreviewCard: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: select)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(showNumbers ? "Line numbers shown" : "Line numbers hidden")
+        .accessibilityLabel(showNumbers ? Text("Line numbers shown") : Text("Line numbers hidden"))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction(.default, select)
     }

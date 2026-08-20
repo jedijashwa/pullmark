@@ -183,7 +183,7 @@ struct PullMarkApp: App {
     }
 
     private var copyGitHubLinkAlternate: some View {
-        Button(githubLinkDefaultIsPermalink ? "Copy GitHub Branch Link" : "Copy GitHub Permalink") {
+        Button(githubLinkDefaultIsPermalink ? String(localized: "Copy GitHub Branch Link") : String(localized: "Copy GitHub Permalink")) {
             copyGitHubLink(permalink: !githubLinkDefaultIsPermalink)
         }
         .disabled(selectionGitHubLinkURL == nil)

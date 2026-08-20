@@ -151,12 +151,12 @@ struct CommitSheet: View {
     /// anyone who doesn't live in git.
     static func statusLabel(_ code: String) -> String {
         switch code.trimmingCharacters(in: .whitespaces) {
-        case "M", "MM", "AM": return "Modified"
-        case "A": return "Added"
-        case "D": return "Deleted"
-        case "R": return "Renamed"
-        case "??": return "Untracked"
-        default: return "Changed"
+        case "M", "MM", "AM": return String(localized: "Modified")
+        case "A": return String(localized: "Added")
+        case "D": return String(localized: "Deleted")
+        case "R": return String(localized: "Renamed")
+        case "??": return String(localized: "Untracked")
+        default: return String(localized: "Changed")
         }
     }
 
