@@ -24,9 +24,9 @@ enum Theme: String, CaseIterable, Identifiable {
     /// One-line descriptor shown under the theme's preview card.
     var descriptor: String {
         switch self {
-        case .github: return "The classic look, exactly as on github.com"
-        case .editorial: return "Bookish serif headers on warm paper"
-        case .terminal: return "Monospace with a phosphor-green accent"
+        case .github: return String(localized: "The classic look, exactly as on github.com")
+        case .editorial: return String(localized: "Bookish serif headers on warm paper")
+        case .terminal: return String(localized: "Monospace with a phosphor-green accent")
         }
     }
 

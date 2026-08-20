@@ -602,3 +602,16 @@
 "Untracked" = "Non suivi";
 "git credential helper" = "assistant d'identification git";
 "Relaunch Now" = "Relancer maintenant";
+"A classic reading measure" = "Une justification classique";
+"Approve" = "Approuver";
+"Approve merging these changes" = "Approuver la fusion de ces modifications";
+"Ask for changes before this can merge" = "Demander des modifications avant que cela puisse être fusionné";
+"Bookish serif headers on warm paper" = "Des titres à empattements façon livre, sur papier chaud";
+"Inline" = "En ligne";
+"Longer lines, more on screen" = "Des lignes plus longues, plus de texte à l'écran";
+"Monospace with a phosphor-green accent" = "Du monospace avec un accent vert phosphore";
+"Request changes" = "Demander des modifications";
+"Side by Side" = "Côte à côte";
+"Submit general feedback without explicit approval" = "Envoyer un retour général sans approbation explicite";
+"Text uses the whole window" = "Le texte occupe toute la fenêtre";
+"The classic look, exactly as on github.com" = "Le look classique, exactement comme sur github.com";

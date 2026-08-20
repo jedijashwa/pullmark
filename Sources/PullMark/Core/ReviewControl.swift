@@ -12,17 +12,17 @@ enum ReviewVerdict: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .comment: return "Comment"
-        case .approve: return "Approve"
-        case .requestChanges: return "Request changes"
+        case .comment: return String(localized: "Comment")
+        case .approve: return String(localized: "Approve")
+        case .requestChanges: return String(localized: "Request changes")
         }
     }
 
     var help: String {
         switch self {
-        case .comment: return "Submit general feedback without explicit approval"
-        case .approve: return "Approve merging these changes"
-        case .requestChanges: return "Ask for changes before this can merge"
+        case .comment: return String(localized: "Submit general feedback without explicit approval")
+        case .approve: return String(localized: "Approve merging these changes")
+        case .requestChanges: return String(localized: "Ask for changes before this can merge")
         }
     }
 }

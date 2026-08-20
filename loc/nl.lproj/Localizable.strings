@@ -605,3 +605,16 @@
 "Untracked" = "Niet gevolgd";
 "git credential helper" = "git credential helper";
 "Relaunch Now" = "Nu opnieuw starten";
+"A classic reading measure" = "Een klassieke leesbreedte";
+"Approve" = "Keur goed";
+"Approve merging these changes" = "Keur het mergen van deze wijzigingen goed";
+"Ask for changes before this can merge" = "Vraag wijzigingen voordat dit gemerged kan worden";
+"Bookish serif headers on warm paper" = "Boekachtige koppen met schreef, op warm papier";
+"Inline" = "Inline";
+"Longer lines, more on screen" = "Langere regels, meer op het scherm";
+"Monospace with a phosphor-green accent" = "Monospace met een fosforgroen accent";
+"Request changes" = "Vraag wijzigingen";
+"Side by Side" = "Naast elkaar";
+"Submit general feedback without explicit approval" = "Dien algemene feedback in zonder expliciete goedkeuring";
+"Text uses the whole window" = "Tekst gebruikt het hele venster";
+"The classic look, exactly as on github.com" = "De klassieke look, precies als op github.com";

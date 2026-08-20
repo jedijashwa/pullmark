@@ -604,3 +604,16 @@
 "Untracked" = "Não rastreado";
 "git credential helper" = "auxiliar de credenciais do git";
 "Relaunch Now" = "Reiniciar agora";
+"A classic reading measure" = "Uma medida de leitura clássica";
+"Approve" = "Aprovar";
+"Approve merging these changes" = "Aprovar a mesclagem destas alterações";
+"Ask for changes before this can merge" = "Pedir alterações antes que isso possa ser mesclado";
+"Bookish serif headers on warm paper" = "Títulos serifados de livro, sobre papel de tom quente";
+"Inline" = "Em linha";
+"Longer lines, more on screen" = "Linhas mais longas, mais na tela";
+"Monospace with a phosphor-green accent" = "Monoespaçada com um toque de verde fósforo";
+"Request changes" = "Solicitar alterações";
+"Side by Side" = "Lado a lado";
+"Submit general feedback without explicit approval" = "Enviar feedback geral sem aprovação explícita";
+"Text uses the whole window" = "O texto usa a janela inteira";
+"The classic look, exactly as on github.com" = "O visual clássico, exatamente como em github.com";
