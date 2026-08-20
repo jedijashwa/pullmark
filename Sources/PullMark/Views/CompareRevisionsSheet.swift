@@ -21,8 +21,7 @@ struct CompareRevisionsSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Compare Revisions")
                 .font(.headline)
-            Text("Anything Git can resolve works: a branch, a tag, or a "
-                + "commit. Leave the new side empty to compare the working file.")
+            Text("Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             refRow(title: "Old side", text: $oldRef,

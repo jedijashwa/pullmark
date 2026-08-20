@@ -52,12 +52,69 @@ SWIFTUI_CALLS = r"(?:Text|Button|Label|Toggle|Picker|TextField|Menu|Section|Comm
 STRING_LIT = r'"(?:[^"\\\n]|\\.)*"'
 
 
-def swift_literal_to_key(lit, flag_interpolated=None, where=""):
-    body = lit[1:-1]
-    # interpolations → %@ (the LocalizationValue default for CustomStringConvertible)
-    def interp(m):
-        return "%@"
-    key, n = re.subn(r"\\\((?:[^()]|\([^()]*\))*\)", interp, body)
+def scan_swift_literal(s, start):
+    """Scan a Swift string literal beginning at s[start] == '"'. Handles
+    escapes and \\(...) interpolations containing nested strings and
+    parens — the naive regex truncated keys like `\\(branch ?? "main")`.
+    Returns (raw_inner_text, index_after_closing_quote)."""
+    i = start + 1
+    out = []
+    while i < len(s):
+        c = s[i]
+        if c == "\\":
+            if i + 1 < len(s) and s[i + 1] == "(":
+                depth = 1
+                j = i + 2
+                while j < len(s) and depth:
+                    if s[j] == '"':
+                        _, j = scan_swift_literal(s, j)
+                        continue
+                    if s[j] == "(":
+                        depth += 1
+                    elif s[j] == ")":
+                        depth -= 1
+                    j += 1
+                out.append(s[i:j])
+                i = j
+                continue
+            out.append(s[i:i + 2])
+            i += 2
+            continue
+        if c == '"':
+            return "".join(out), i + 1
+        if c == "\n":
+            return "".join(out), i  # unterminated — bail at the line end
+        out.append(c)
+        i += 1
+    return "".join(out), i
+
+
+def swift_literal_to_key(body, flag_interpolated=None, where=""):
+    # interpolations → %@ (the LocalizationValue default), balanced scan
+    # so nested strings/parens inside \(...) survive intact.
+    out = []
+    i = 0
+    n = 0
+    while i < len(body):
+        if body.startswith("\\(", i):
+            depth = 1
+            j = i + 2
+            while j < len(body) and depth:
+                if body[j] == '"':
+                    _, j = scan_swift_literal(body, j)
+                    continue
+                if body[j] == "(":
+                    depth += 1
+                elif body[j] == ")":
+                    depth -= 1
+                j += 1
+            out.append("%@")
+            n += 1
+            i = j
+        else:
+            out.append(body[i])
+            i += 1
+    key = "".join(out)
     if n and flag_interpolated is not None:
         flag_interpolated.add((where, key))
     key = key.replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
@@ -67,22 +124,20 @@ def swift_literal_to_key(lit, flag_interpolated=None, where=""):
 def collect_swift_keys():
     keys = {}
     interpolated = set()
+    starts = re.compile(
+        r"(?:\b" + SWIFTUI_CALLS + r"\(|\.help\(|String\(localized:|NSLocalizedString\()\s*")
     for path in sorted(SOURCES.rglob("*.swift")):
         s = path.read_text(encoding="utf-8")
         rel = str(path.relative_to(ROOT))
-        for m in re.finditer(r"\b" + SWIFTUI_CALLS + r"\(\s*(" + STRING_LIT + ")", s):
-            key = swift_literal_to_key(m.group(1), interpolated, rel)
+        for m in starts.finditer(s):
+            i = m.end()
+            if i >= len(s) or s[i] != '"':
+                continue
+            inner, _ = scan_swift_literal(s, i)
+            key = swift_literal_to_key(inner, interpolated, rel)
+            if key == "%@" and "NSLocalizedString" in m.group(0):
+                continue  # PageStrings' dynamic lookup call
             if re.search(r"[A-Za-z]", key):
-                keys.setdefault(key, rel)
-        for m in re.finditer(r"\.help\(\s*(" + STRING_LIT + ")\s*\)", s):
-            key = swift_literal_to_key(m.group(1), interpolated, rel)
-            if re.search(r"[A-Za-z]", key):
-                keys.setdefault(key, rel)
-        for m in re.finditer(r"String\(localized:\s*(" + STRING_LIT + ")", s):
-            keys.setdefault(swift_literal_to_key(m.group(1), interpolated, rel), rel)
-        for m in re.finditer(r"NSLocalizedString\(\s*(" + STRING_LIT + ")", s):
-            key = swift_literal_to_key(m.group(1), interpolated, rel)
-            if key != "%@":  # PageStrings' dynamic lookup call
                 keys.setdefault(key, rel)
     return keys, interpolated
 

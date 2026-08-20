@@ -33,8 +33,7 @@ enum DMGGreeter {
     private static func offerMove(_ image: DiskImages.MountedImage) {
         let alert = NSAlert()
         alert.messageText = String(localized: "Move PullMark to your Applications folder?")
-        alert.informativeText = String(localized: "PullMark is running from its disk image. ")
-            + "Moving it to Applications installs it properly and enables one-click updates."
+        alert.informativeText = String(localized: "PullMark is running from its disk image. Moving it to Applications installs it properly and enables one-click updates.")
         alert.addButton(withTitle: String(localized: "Move to Applications"))
         alert.addButton(withTitle: String(localized: "Not Now"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
@@ -68,8 +67,7 @@ enum DMGGreeter {
         let file = (image.imagePath as NSString).lastPathComponent
         let alert = NSAlert()
         alert.messageText = String(localized: "Remove the PullMark disk image?")
-        alert.informativeText = String(localized: "PullMark is installed — the disk image is no longer needed. ")
-            + "This ejects it and moves “\(file)” to the Trash."
+        alert.informativeText = String(localized: "PullMark is installed — the disk image is no longer needed. This ejects it and moves “\(file)” to the Trash.")
         alert.addButton(withTitle: String(localized: "Move to Trash"))
         alert.addButton(withTitle: String(localized: "Keep"))
         guard alert.runModal() == .alertFirstButtonReturn else {

@@ -266,7 +266,9 @@ struct PROverviewView: View {
             // surface and this line retires.
             if !prDiscussionEnabled, hiddenCommentCount(session) > 0 {
                 let count = hiddenCommentCount(session)
-                Text("\(count) unresolved review comment\(count == 1 ? "" : "s") on files not shown in PullMark")
+                Text(count == 1
+                    ? "1 unresolved review comment on files not shown in PullMark"
+                    : "\(count) unresolved review comments on files not shown in PullMark")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -735,8 +737,7 @@ struct PRFileView: View {
             // The page already cleared its composer — never drop the text.
             threadActions.restoreDraftAfterFailure(key: submission.draftKey,
                                                    text: submission.body)
-            state.lastError = String(localized: "Could not post the comment — the PR session is ")
-                + "no longer available. Your text was kept as a draft."
+            state.lastError = String(localized: "Could not post the comment — the PR session is no longer available. Your text was kept as a draft.")
             return
         }
         Task {

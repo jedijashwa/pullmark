@@ -566,9 +566,7 @@ struct RemoteLinkPromptSheet: View {
                     .truncationMode(.middle)
             }
             .font(.callout)
-            Text("PullMark can fetch this file and render it in-app, or send it to your "
-                + "browser. Hold ⌘ while clicking a link for the other behavior; the "
-                + "default lives in Settings → General.")
+            Text("PullMark can fetch this file and render it in-app, or send it to your browser. Hold ⌘ while clicking a link for the other behavior; the default lives in Settings → General.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

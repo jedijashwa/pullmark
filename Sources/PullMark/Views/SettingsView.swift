@@ -84,10 +84,7 @@ struct GeneralSettingsTab: View {
                 Text("Open Fully").tag(FolderClickAction.open.rawValue)
             }
             .settingAnchor("clicking-files")
-            Text("Preview First shows a file with one click without keeping it — "
-                + "one italicized entry (in Open Files, or under its GitHub repo) "
-                + "that the next preview replaces. Double-click a file, or just "
-                + "start editing, to keep it open. Open Fully keeps every file you click.")
+            Text("Preview First shows a file with one click without keeping it — one italicized entry (in Open Files, or under its GitHub repo) that the next preview replaces. Double-click a file, or just start editing, to keep it open. Open Fully keeps every file you click.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -414,10 +411,7 @@ struct ExperimentalSettingsTab: View {
             Button("Show Alpha Features") { showAlphaFeatures = true }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Alpha features are the frontier: their behavior and data "
-                + "formats may change incompatibly between versions, "
-                + "transitions may not be supported, and a feature may be "
-                + "removed entirely. Use them at your own risk.")
+            Text("Alpha features are the frontier: their behavior and data formats may change incompatibly between versions, transitions may not be supported, and a feature may be removed entirely. Use them at your own risk.")
         }
     }
 
@@ -963,8 +957,7 @@ struct GitHubNotConnectedAlert: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
-                    Text("Not connected to GitHub — private repositories "
-                        + "and reviewing are unavailable.")
+                    Text("Not connected to GitHub — private repositories and reviewing are unavailable.")
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
                     Button("Show") {
