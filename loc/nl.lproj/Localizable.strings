@@ -574,3 +574,9 @@
 "· opens in browser" = "· opent in browser";
 "{n} comment — click to expand" = "{n} comment — klik om uit te klappen";
 "{n} comments — click to expand" = "{n} comments — klik om uit te klappen";
+"Closed" = "Gesloten";
+"Draft" = "Concept";
+"Merged" = "Gemerged";
+"Unavailable" = "Niet beschikbaar";
+"View on GitHub" = "Bekijk op GitHub";
+"View all checks on GitHub" = "Bekijk alle checks op GitHub";

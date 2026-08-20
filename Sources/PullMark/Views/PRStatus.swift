@@ -23,11 +23,11 @@ enum PRStatus: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .draft: return "Draft"
-        case .open: return "Open"
-        case .closed: return "Closed"
-        case .merged: return "Merged"
-        case .deleted: return "Unavailable"
+        case .draft: return String(localized: "Draft")
+        case .open: return String(localized: "Open")
+        case .closed: return String(localized: "Closed")
+        case .merged: return String(localized: "Merged")
+        case .deleted: return String(localized: "Unavailable")
         }
     }
 
