@@ -3,6 +3,7 @@
    Verified by scripts/check-strings.py. */
 
 " (none)" = " (ninguno)";
+"%lld Markdown files changed" = "%lld archivos Markdown modificados";
 "%@ and pushed to origin." = "%@ y push a origin.";
 "%@ approved" = "%@ aprobó";
 "%@ approved %@" = "%@ aprobó %@";
@@ -11,6 +12,7 @@
 "%@ does not exist at %@." = "%@ no existe en %@.";
 "%lld files" = "%lld archivos";
 "%@ is reserved for %@." = "%@ está reservado para %@.";
+"%@ isn't available" = "%@ no está disponible";
 "%@ isn't available on %@: " = "%@ no está disponible en %@: ";
 "%@ isn't in a git repository, so there's nothing to compare against." = "%@ no está en un repositorio git, así que no hay nada con lo que compararlo.";
 "%@ isn't inside a git repository." = "%@ no está dentro de un repositorio git.";
@@ -18,14 +20,18 @@
 "%lld more…" = "%lld más…";
 "%lld not yet on GitHub" = "%lld aún no están en GitHub";
 "%lld of %lld" = "%lld de %lld";
+"%lld other files not shown" = "%lld archivos más sin mostrar";
 "%@ requested changes" = "%@ solicitó cambios";
 "%@ requested changes %@" = "%@ solicitó cambios %@";
-"%@ words · %@ min" = "%@ palabras · %@ min";
+"%@ words · %lld min" = "%@ palabras · %lld min";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — vista previa; haz doble clic para conservarlo con su repo";
 "%@, but the push failed: %@" = "%@, pero el push falló: %@";
+"1 Markdown file changed" = "1 archivo Markdown modificado";
 "1 file" = "1 archivo";
 "1 more reviewer" = "1 revisor más";
+"1 other file not shown" = "1 archivo más sin mostrar";
 "Abandon review" = "Descartar la revisión";
+"Abandon this review?" = "¿Descartar esta revisión?";
 "About PullMark" = "Acerca de PullMark";
 "Actual Size" = "Tamaño real";
 "Add Margin Note" = "Añadir nota al margen";
@@ -40,6 +46,7 @@
 "Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file." = "Sirve cualquier cosa que Git sepa resolver: una rama, una etiqueta o un commit. Deja vacío el lado nuevo para comparar el archivo de trabajo.";
 "Appearance" = "Apariencia";
 "Applies to the whole file, not a specific line" = "Se aplica a todo el archivo, no a una línea concreta";
+"Approved" = "Aprobado";
 "Ask on first click" = "Preguntar en el primer clic";
 "Awaiting review from %@" = "Esperando la revisión de %@";
 "Back" = "Atrás";
@@ -51,12 +58,17 @@
 "Browse Repo Files…" = "Explorar los archivos del repo…";
 "Built-In Keys" = "Teclas fijas";
 "Cancel" = "Cancelar";
+"Changes requested" = "Cambios solicitados";
 "Check Again" = "Volver a comprobar";
 "Check for Updates" = "Buscar actualizaciones";
 "Check for Updates…" = "Buscar actualizaciones…";
 "Checking this Mac's credentials…" = "Comprobando las credenciales de este Mac…";
 "Checking…" = "Comprobando…";
 "Checkout of %@/%@" = "Checkout de %@/%@";
+"Checks awaiting approval" = "Verificaciones pendientes de aprobación";
+"Checks failed" = "Verificaciones fallidas";
+"Checks passed" = "Verificaciones superadas";
+"Checks running" = "Verificaciones en curso";
 "Choose the file to compare with — it becomes the old side." = "Elige el archivo con el que comparar — será el lado antiguo.";
 "Choose which items the toolbar shows, and their order" = "Elige qué elementos muestra la barra de herramientas y en qué orden";
 "Clear Menu" = "Vaciar menú";
@@ -117,7 +129,7 @@
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "No se pudieron subir %lld comentarios pendientes a GitHub — se conservan en local para reintentarlo. %@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "No se pudo subir 1 comentario pendiente a GitHub — se conserva en local para reintentarlo. %@";
 "Couldn't move PullMark" = "No se pudo mover PullMark";
-"Couldn't open %@/%@#%@: " = "No se pudo abrir %@/%@#%@: ";
+"Couldn't open %@/%@#%lld: " = "No se pudo abrir %@/%@#%lld: ";
 "Couldn't open %@: %@" = "No se pudo abrir %@: %@";
 "Couldn't open %@: %@. It may not exist at that ref, or it may be a private repository your GitHub credentials can't access." = "No se pudo abrir %@: %@. Puede que no exista en esa ref, o que sea un repositorio privado al que tus credenciales de GitHub no tienen acceso.";
 "Couldn't revert: %@" = "No se pudo revertir: %@";
@@ -130,6 +142,7 @@
 "Default diff layout:" = "Disposición del diff por defecto:";
 "Delete" = "Eliminar";
 "Delete comment" = "Eliminar comentario";
+"Delete this comment?" = "¿Eliminar este comentario?";
 "Determining how this copy was installed…" = "Determinando cómo se instaló esta copia…";
 "Discard the pending review and all its comments, on GitHub too" = "Descarta la revisión pendiente y todos sus comentarios, también en GitHub";
 "Dismiss" = "Descartar";
@@ -174,6 +187,7 @@
 "Full Width" = "Full Width";
 "General" = "General";
 "GitHub" = "GitHub";
+"GitHub API error (%lld): %@" = "Error de la API de GitHub (%lld): %@";
 "GitHub Access" = "Acceso a GitHub";
 "GitHub Markdown links:" = "Enlaces Markdown de GitHub:";
 "Go" = "Ir";
@@ -303,6 +317,7 @@
 "PullMark borrows the GitHub credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password." = "PullMark toma prestadas las credenciales de GitHub que ya tienen tus propias herramientas — la CLI de GitHub o un ayudante de credenciales de git. No tiene inicio de sesión propio, no guarda nada y nunca ve una contraseña.";
 "PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)" = "PullMark toma prestadas las credenciales que ya tienen tus propias herramientas — la CLI de GitHub o un ayudante de credenciales de git. No tiene inicio de sesión propio, no guarda nada y nunca ve una contraseña. [Sobre el acceso a GitHub](https://pullmark.app/docs/troubleshooting/#github-access)";
 "PullMark can fetch this file and render it in-app, or send it to your browser. Hold ⌘ while clicking a link for the other behavior; the default lives in Settings → General." = "PullMark puede descargar este archivo y renderizarlo dentro de la app, o mandárselo a tu navegador. Mantén ⌘ al hacer clic en un enlace para el otro comportamiento; el valor por defecto está en Ajustes → General.";
+"PullMark is in demo mode — network access is disabled." = "PullMark está en modo demo — el acceso a la red está desactivado.";
 "PullMark is installed — the disk image is no longer needed. This ejects it and moves “%@” to the Trash." = "PullMark está instalado — la imagen de disco ya no hace falta. Esto la expulsa y mueve “%@” a la papelera.";
 "PullMark is no longer your default Markdown app." = "PullMark ya no es tu app por defecto para Markdown.";
 "PullMark is running from its disk image. Moving it to Applications installs it properly and enables one-click updates." = "PullMark se está ejecutando desde su imagen de disco. Moverlo a Aplicaciones lo instala como toca y habilita las actualizaciones con un clic.";
@@ -338,6 +353,7 @@
 "Reset the zoom to 100%" = "Restablece el zoom al 100%";
 "Restore Defaults" = "Restablecer valores por defecto";
 "Restore Defaults…" = "Restablecer valores por defecto…";
+"Restore all keyboard shortcuts to their defaults?" = "¿Restablecer todos los atajos de teclado a sus valores por defecto?";
 "Restore files and pull requests from the last session" = "Restaurar los archivos y los pull requests de la última sesión";
 "Restore the default" = "Restablecer el valor por defecto";
 "Restore the file as it was before PullMark's last edit" = "Restaura el archivo tal como estaba antes de la última edición de PullMark";
@@ -356,6 +372,7 @@
 "Review changes" = "Revisar cambios";
 "Review comments couldn't be loaded — existing threads may be missing." = "No se pudieron cargar los comentarios de revisión — puede que falten hilos ya existentes.";
 "Review requested from %@" = "Revisión solicitada a %@";
+"Review required" = "Revisión requerida";
 "Review submitted." = "Revisión enviada.";
 "Review summary (optional)" = "Resumen de la revisión (opcional)";
 "Review verdict" = "Veredicto de la revisión";
@@ -382,6 +399,7 @@
 "Show Resolved Conversations" = "Mostrar las conversaciones resueltas";
 "Show What's New after an update" = "Mostrar Novedades después de una actualización";
 "Show alpha features" = "Mostrar las funciones alfa";
+"Show alpha features?" = "¿Mostrar las funciones alfa?";
 "Show hidden files" = "Mostrar los archivos ocultos";
 "Show or hide the document outline" = "Muestra u oculta el esquema del documento";
 "Show review discussion on the PR overview" = "Mostrar la discusión de la revisión en el resumen del PR";
@@ -399,6 +417,7 @@
 "Showing the first %lld Markdown files" = "Se muestran los primeros %lld archivos Markdown";
 "Sign in to GitHub" = "Inicia sesión en GitHub";
 "Sign notes as:" = "Firmar las notas como:";
+"Something went wrong" = "Algo salió mal";
 "Source" = "Código fuente";
 "Source Diff" = "Diff del código fuente";
 "Space" = "Espacio";
@@ -422,7 +441,7 @@
 "The PR session is no longer available — the draft could not be saved to disk." = "La sesión del PR ya no está disponible — el borrador no se pudo guardar en el disco.";
 "The comment will be removed from GitHub. Replies from others will stay." = "El comentario se eliminará de GitHub. Las respuestas de otras personas se quedarán.";
 "The document's headings, in a sidebar" = "Los encabezados del documento, en una barra lateral";
-"The pull request overview (%@ #%@)" = "El resumen del pull request (%@ #%@)";
+"The pull request overview (%@ #%lld)" = "El resumen del pull request (%@ #%lld)";
 "The pullmark command is installed" = "El comando pullmark está instalado";
 "Theme" = "Tema";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Los temas reestilizan el Markdown renderizado y los diffs, y siguen la apariencia Light/Dark. Suelta archivos .css en la carpeta Themes para añadir los tuyos — se aplican sobre el aspecto GitHub. Las vistas previas de Quick Look también siguen tu tema (los temas personalizados recurren ahí a su base GitHub).";
@@ -516,6 +535,8 @@
 "Post to the PR conversation right away — not part of a review (⌘↩)" = "Publica en la conversación del PR al instante — no forma parte de una revisión (⌘↩)";
 "Reply" = "Responder";
 "Reply to this thread (⌘↩)" = "Responder a este hilo (⌘↩)";
+"Resolve" = "Resolver";
+"Resolved" = "Resuelta";
 "Review discussion" = "Discusión de la revisión";
 "Save" = "Guardar";
 "Save your edit (⌘↩)" = "Guarda tu edición (⌘↩)";
@@ -528,6 +549,7 @@
 "The targeted lines aren't available to suggest an edit to." = "Las líneas apuntadas no están disponibles para sugerir una edición.";
 "This block isn't part of the pull request's diff — GitHub can only attach comments to changed lines." = "Este bloque no forma parte del diff del pull request — GitHub solo puede adjuntar comentarios a líneas modificadas.";
 "This file is empty on both sides of the diff." = "Este archivo está vacío en ambos lados del diff.";
+"Unresolve" = "Marcar sin resolver";
 "View commit on GitHub" = "Ver el commit en GitHub";
 "View in File" = "Ver en el archivo";
 "Write a reply" = "Escribe una respuesta";

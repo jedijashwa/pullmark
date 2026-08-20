@@ -2,6 +2,7 @@
    loc/_inventory.json key; see docs/specs/app-i18n.md. */
 
 " (none)" = "（无）";
+"%lld Markdown files changed" = "更改了 %lld 个 Markdown 文件";
 "%@ and pushed to origin." = "%@，并已推送到 origin。";
 "%@ approved" = "%@ 已批准";
 "%@ approved %@" = "%@ 已批准（%@）";
@@ -10,6 +11,7 @@
 "%@ does not exist at %@." = "%@ 在 %@ 上不存在。";
 "%lld files" = "%lld 个文件";
 "%@ is reserved for %@." = "%@ 已保留给%@使用。";
+"%@ isn't available" = "%@ 不可用";
 "%@ isn't available on %@: " = "%@ 在 %@ 上不可用：";
 "%@ isn't in a git repository, so there's nothing to compare against." = "%@ 不在 git 仓库中，因此没有可比较的对象。";
 "%@ isn't inside a git repository." = "%@ 不在 git 仓库中。";
@@ -17,14 +19,18 @@
 "%lld more…" = "还有 %lld 条…";
 "%lld not yet on GitHub" = "%lld 条尚未上传到 GitHub";
 "%lld of %lld" = "第 %lld 个，共 %lld 个";
+"%lld other files not shown" = "另有 %lld 个文件未显示";
 "%@ requested changes" = "%@ 已请求更改";
 "%@ requested changes %@" = "%@ 已请求更改（%@）";
-"%@ words · %@ min" = "%@ 字 · %@ 分钟";
+"%@ words · %lld min" = "%@ 字 · %lld 分钟";
 "%@ — previewing; double-click to keep it with its repo" = "%@ —— 预览中；双击可将它保留在所属仓库下";
 "%@, but the push failed: %@" = "%@，但推送失败：%@";
+"1 Markdown file changed" = "更改了 1 个 Markdown 文件";
 "1 file" = "1 个文件";
 "1 more reviewer" = "另有 1 位审查者";
+"1 other file not shown" = "另有 1 个文件未显示";
 "Abandon review" = "放弃审查";
+"Abandon this review?" = "要放弃这次审查吗？";
 "About PullMark" = "关于 PullMark";
 "Actual Size" = "实际大小";
 "Add Margin Note" = "添加页边批注";
@@ -39,6 +45,7 @@
 "Anything Git can resolve works: a branch, a tag, or a commit. Leave the new side empty to compare the working file." = "Git 能解析的任何写法都可以：分支、标签，或提交。把新的一侧留空即可与工作区文件比较。";
 "Appearance" = "外观";
 "Applies to the whole file, not a specific line" = "针对整个文件，而不是某一行";
+"Approved" = "已批准";
 "Ask on first click" = "首次点击时询问";
 "Awaiting review from %@" = "等待 %@ 审查";
 "Back" = "后退";
@@ -50,12 +57,17 @@
 "Browse Repo Files…" = "浏览仓库文件…";
 "Built-In Keys" = "内置按键";
 "Cancel" = "取消";
+"Changes requested" = "已请求更改";
 "Check Again" = "重新检查";
 "Check for Updates" = "检查更新";
 "Check for Updates…" = "检查更新…";
 "Checking this Mac's credentials…" = "正在检查这台 Mac 的凭据…";
 "Checking…" = "正在检查…";
 "Checkout of %@/%@" = "%@/%@ 的检出";
+"Checks awaiting approval" = "检查等待批准";
+"Checks failed" = "检查失败";
+"Checks passed" = "检查已通过";
+"Checks running" = "检查运行中";
 "Choose the file to compare with — it becomes the old side." = "选择要与之比较的文件——它将作为旧的一侧。";
 "Choose which items the toolbar shows, and their order" = "选择工具栏显示哪些项目，以及它们的顺序";
 "Clear Menu" = "清除菜单";
@@ -116,7 +128,7 @@
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "无法把 %lld 条待提交评论上传到 GitHub——已保留在本地以便重试。%@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "无法把 1 条待提交评论上传到 GitHub——已保留在本地以便重试。%@";
 "Couldn't move PullMark" = "无法移动 PullMark";
-"Couldn't open %@/%@#%@: " = "无法打开 %@/%@#%@：";
+"Couldn't open %@/%@#%lld: " = "无法打开 %@/%@#%lld：";
 "Couldn't open %@: %@" = "无法打开 %@：%@";
 "Couldn't open %@: %@. It may not exist at that ref, or it may be a private repository your GitHub credentials can't access." = "无法打开 %@：%@。它可能在该 ref 上并不存在，也可能属于你的 GitHub 凭据无权访问的私有仓库。";
 "Couldn't revert: %@" = "无法还原：%@";
@@ -129,6 +141,7 @@
 "Default diff layout:" = "默认差异布局：";
 "Delete" = "删除";
 "Delete comment" = "删除评论";
+"Delete this comment?" = "要删除这条评论吗？";
 "Determining how this copy was installed…" = "正在确定这份副本的安装方式…";
 "Discard the pending review and all its comments, on GitHub too" = "丢弃这份待提交审查及其所有评论，GitHub 上也一并丢弃";
 "Dismiss" = "忽略";
@@ -173,6 +186,7 @@
 "Full Width" = "Full Width";
 "General" = "通用";
 "GitHub" = "GitHub";
+"GitHub API error (%lld): %@" = "GitHub API 错误（%lld）：%@";
 "GitHub Access" = "GitHub 访问";
 "GitHub Markdown links:" = "GitHub Markdown 链接：";
 "Go" = "前往";
@@ -302,6 +316,7 @@
 "PullMark borrows the GitHub credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password." = "PullMark 借用你自己的工具已有的 GitHub 凭据——GitHub CLI 或 git 凭据助手。它没有自己的登录，不存储任何东西，也从不接触密码。";
 "PullMark borrows the credentials your own tools already have — the GitHub CLI or a git credential helper. It has no login of its own, stores nothing, and never sees a password. [About GitHub access](https://pullmark.app/docs/troubleshooting/#github-access)" = "PullMark 借用你自己的工具已有的凭据——GitHub CLI 或 git 凭据助手。它没有自己的登录，不存储任何东西，也从不接触密码。[关于 GitHub 访问](https://pullmark.app/docs/troubleshooting/#github-access)";
 "PullMark can fetch this file and render it in-app, or send it to your browser. Hold ⌘ while clicking a link for the other behavior; the default lives in Settings → General." = "PullMark 可以抓取这个文件并在应用内渲染，也可以把它交给你的浏览器。点击链接时按住 ⌘ 可执行另一种行为；默认设置在“设置 → 通用”中。";
+"PullMark is in demo mode — network access is disabled." = "PullMark 处于演示模式——网络访问已停用。";
 "PullMark is installed — the disk image is no longer needed. This ejects it and moves “%@” to the Trash." = "PullMark 已安装——不再需要这个磁盘映像。此操作会推出它，并把“%@”移到废纸篓。";
 "PullMark is no longer your default Markdown app." = "PullMark 已不再是你的默认 Markdown 应用。";
 "PullMark is running from its disk image. Moving it to Applications installs it properly and enables one-click updates." = "PullMark 正在从磁盘映像运行。把它移到“应用程序”文件夹才算正确安装，并可启用一键更新。";
@@ -337,6 +352,7 @@
 "Reset the zoom to 100%" = "把缩放重置为 100%";
 "Restore Defaults" = "恢复默认";
 "Restore Defaults…" = "恢复默认…";
+"Restore all keyboard shortcuts to their defaults?" = "要将所有键盘快捷键恢复为默认吗？";
 "Restore files and pull requests from the last session" = "恢复上次会话中的文件和拉取请求";
 "Restore the default" = "恢复默认";
 "Restore the file as it was before PullMark's last edit" = "把文件恢复到 PullMark 上次编辑之前的样子";
@@ -355,6 +371,7 @@
 "Review changes" = "审查更改";
 "Review comments couldn't be loaded — existing threads may be missing." = "无法载入审查评论——已有的会话可能缺失。";
 "Review requested from %@" = "已请求 %@ 审查";
+"Review required" = "需要审查";
 "Review submitted." = "审查已提交。";
 "Review summary (optional)" = "审查总结（可选）";
 "Review verdict" = "审查结论";
@@ -381,6 +398,7 @@
 "Show Resolved Conversations" = "显示已解决的会话";
 "Show What's New after an update" = "更新后显示“新增功能”";
 "Show alpha features" = "显示 alpha 功能";
+"Show alpha features?" = "要显示 alpha 功能吗？";
 "Show hidden files" = "显示隐藏文件";
 "Show or hide the document outline" = "显示或隐藏文档大纲";
 "Show review discussion on the PR overview" = "在 PR 总览上显示审查讨论";
@@ -398,6 +416,7 @@
 "Showing the first %lld Markdown files" = "仅显示前 %lld 个 Markdown 文件";
 "Sign in to GitHub" = "登录 GitHub";
 "Sign notes as:" = "批注署名为：";
+"Something went wrong" = "出了点问题";
 "Source" = "源码";
 "Source Diff" = "源码差异";
 "Space" = "Space";
@@ -421,7 +440,7 @@
 "The PR session is no longer available — the draft could not be saved to disk." = "此 PR 会话已不再可用——草稿无法存储到磁盘。";
 "The comment will be removed from GitHub. Replies from others will stay." = "该评论会从 GitHub 上移除。其他人的回复会保留。";
 "The document's headings, in a sidebar" = "文档的标题，显示在边栏中";
-"The pull request overview (%@ #%@)" = "拉取请求总览（%@ #%@）";
+"The pull request overview (%@ #%lld)" = "拉取请求总览（%@ #%lld）";
 "The pullmark command is installed" = "pullmark 命令已安装";
 "Theme" = "主题";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "主题会重新装点渲染后的 Markdown 和差异，并跟随浅色/深色外观。把 .css 文件放进 Themes 文件夹即可添加自己的主题——它们叠加在 GitHub 外观之上。快速查看预览也跟随你的主题（自定义主题在那里回落到它们的 GitHub 基底）。";
@@ -515,6 +534,8 @@
 "Post to the PR conversation right away — not part of a review (⌘↩)" = "立即发到 PR 会话中——不属于任何审查（⌘↩）";
 "Reply" = "回复";
 "Reply to this thread (⌘↩)" = "回复这场会话（⌘↩）";
+"Resolve" = "解决";
+"Resolved" = "已解决";
 "Review discussion" = "审查讨论";
 "Save" = "存储";
 "Save your edit (⌘↩)" = "存储你的编辑（⌘↩）";
@@ -527,6 +548,7 @@
 "The targeted lines aren't available to suggest an edit to." = "目标行无法用于提出修改建议。";
 "This block isn't part of the pull request's diff — GitHub can only attach comments to changed lines." = "这个区块不属于此拉取请求的差异——GitHub 只能把评论附到有改动的行上。";
 "This file is empty on both sides of the diff." = "这个文件在差异的两侧都是空的。";
+"Unresolve" = "取消解决";
 "View commit on GitHub" = "在 GitHub 上查看提交";
 "View in File" = "在文件中查看";
 "Write a reply" = "写一条回复";
