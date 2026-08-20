@@ -52,7 +52,16 @@ launch() { # $1 = appearance
   # which is how a green-accent generation of captures once escaped.
   local flags=(-AppleAccentColor 4 -AppleHighlightColor "0.698039 0.843137 1.000000 Blue"
                -pm.appearance $1)
-  [[ -n $lang ]] && flags+=(-AppleLanguages "($lang)")
+  if [[ -n $lang ]]; then
+    # Language AND locale: language alone leaves US date/number formats.
+    local region
+    case $lang in
+      ja) region=ja_JP ;; de) region=de_DE ;; fr) region=fr_FR ;;
+      nl) region=nl_NL ;; es) region=es_ES ;; pt-BR) region=pt_BR ;;
+      zh-Hans) region=zh_CN ;; *) region=en_US ;;
+    esac
+    flags+=(-AppleLanguages "($lang)" -AppleLocale "$region")
+  fi
   # Launch BARE (no document argument): opening a document at launch
   # makes Launch Services respawn the process, which keeps the
   # environment but silently drops the argument domain — the

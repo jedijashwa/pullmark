@@ -323,20 +323,24 @@ private struct ReviewerStrip: View {
                 Text("+\(overflow)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .accessibilityLabel("\(overflow) more reviewer\(overflow == 1 ? "" : "s")")
+                    .accessibilityLabel(overflow == 1
+                        ? Text("1 more reviewer") : Text("\(overflow) more reviewers"))
             }
         }
     }
 
     private func reviewerHelp(_ reviewer: ReviewerState) -> String {
-        let verb = reviewer.approved ? "approved" : "requested changes"
         guard let date = GitHubDate.parse(reviewer.submittedAt) else {
-            return "\(reviewer.login) \(verb)"
+            return reviewer.approved
+                ? String(localized: "\(reviewer.login) approved")
+                : String(localized: "\(reviewer.login) requested changes")
         }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         let when = formatter.localizedString(for: date, relativeTo: Date())
-        return "\(reviewer.login) \(verb) \(when)"
+        return reviewer.approved
+            ? String(localized: "\(reviewer.login) approved \(when)")
+            : String(localized: "\(reviewer.login) requested changes \(when)")
     }
 }
 

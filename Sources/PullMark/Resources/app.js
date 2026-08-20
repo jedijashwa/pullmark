@@ -1626,8 +1626,9 @@
           cluster.badge.querySelector(".pm-marker-count").textContent = count;
           cluster.badge.classList.toggle("pm-marker-resolved",
             visible.every(function (t) { return t.resolved === true; }));
-          cluster.badge.title = count + (count === 1 ? " comment" : " comments")
-            + " — click to expand";
+          cluster.badge.title = pmFormat(count === 1
+            ? "{n} comment — click to expand"
+            : "{n} comments — click to expand", {n: count});
           cluster.badge.setAttribute("aria-label", cluster.badge.title);
         }
         if (cluster.pendingBadge) {
@@ -3602,10 +3603,10 @@
 
   function verdictText(kind) {
     switch (kind) {
-      case "approved": return "approved these changes";
-      case "changes_requested": return "requested changes";
-      case "dismissed": return "dismissed their review";
-      default: return "reviewed";
+      case "approved": return pmString("approved these changes");
+      case "changes_requested": return pmString("requested changes");
+      case "dismissed": return pmString("dismissed their review");
+      default: return pmString("reviewed");
     }
   }
 
@@ -3742,8 +3743,12 @@
       var reviews = entries.filter(function (e) { return e.kind !== "comment"; }).length;
       var comments = entries.length - reviews;
       var parts = [];
-      if (reviews) { parts.push(reviews + " review" + (reviews === 1 ? "" : "s")); }
-      if (comments) { parts.push(comments + " comment" + (comments === 1 ? "" : "s")); }
+      if (reviews) {
+        parts.push(pmFormat(reviews === 1 ? "{n} review" : "{n} reviews", {n: reviews}));
+      }
+      if (comments) {
+        parts.push(pmFormat(comments === 1 ? "{n} comment" : "{n} comments", {n: comments}));
+      }
       var count = document.createElement("span");
       count.className = "pm-discussion-count";
       count.textContent = parts.join(" · ");
@@ -4433,9 +4438,9 @@
       count.className = "pm-marker-count";
       count.textContent = threadTotal + pendingTotal;
       badge.append(count);
-      badge.title = (threadTotal + pendingTotal)
-        + (threadTotal + pendingTotal === 1 ? " comment" : " comments")
-        + " — click to expand";
+      badge.title = pmFormat(threadTotal + pendingTotal === 1
+        ? "{n} comment — click to expand"
+        : "{n} comments — click to expand", {n: threadTotal + pendingTotal});
       badge.setAttribute("aria-label", badge.title);
       badge.setAttribute("aria-expanded", "false");
       badge.addEventListener("click", function (event) {

@@ -33,14 +33,17 @@ enum ReviewControl {
     /// The toolbar control is both the status and the entry point: quiet
     /// when nothing is pending, a call to finish when something is.
     static func buttonLabel(pendingCount: Int) -> String {
-        pendingCount == 0 ? "Review changes" : "Finish your review · \(pendingCount)"
+        pendingCount == 0
+            ? String(localized: "Review changes")
+            : String(localized: "Finish your review · \(pendingCount)")
     }
 
     /// The popover's header, spelling the count out in words.
     static func headerLabel(pendingCount: Int) -> String {
-        pendingCount == 0
-            ? "Review changes"
-            : "Finish your review — \(pendingCount) pending comment\(pendingCount == 1 ? "" : "s")"
+        if pendingCount == 0 { return String(localized: "Review changes") }
+        return pendingCount == 1
+            ? String(localized: "Finish your review — 1 pending comment")
+            : String(localized: "Finish your review — \(pendingCount) pending comments")
     }
 
     /// True only when both logins are known and match. A nil viewer

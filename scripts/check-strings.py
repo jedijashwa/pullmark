@@ -89,9 +89,25 @@ def scan_swift_literal(s, start):
     return "".join(out), i
 
 
+# Int-typed interpolations render as %lld in the runtime lookup key
+# (String.LocalizationValue / LocalizedStringKey overload resolution),
+# NOT %@ — a mismatched specifier silently falls back to English. The
+# repo convention: count-like expressions are Int. Verified against
+# every interpolated call site when introduced (spec: app-i18n).
+INT_EXPR = re.compile(
+    r"^(?:"
+    r"[\w.]*[cC]ount|overflow|minutes|hours|days|line|number|original|index"
+    r"|[\w.]*[cC]ount [-+] \d+|index [-+] \d+|line [-+] \d+"
+    r"|\w+ - [\w.]*[cC]ount|hidden"
+    r"|\w+\[[01]\]|mapped\[[01]\]"
+    r"|session\.markdownFiles\.count"
+    r")$")
+
+
 def swift_literal_to_key(body, flag_interpolated=None, where=""):
-    # interpolations → %@ (the LocalizationValue default), balanced scan
-    # so nested strings/parens inside \(...) survive intact.
+    # interpolations → %lld for Int-like expressions, %@ otherwise,
+    # with a balanced scan so nested strings/parens inside \(...)
+    # survive intact.
     out = []
     i = 0
     n = 0
@@ -108,7 +124,8 @@ def swift_literal_to_key(body, flag_interpolated=None, where=""):
                 elif body[j] == ")":
                     depth -= 1
                 j += 1
-            out.append("%@")
+            expr = body[i + 2:j - 1].strip()
+            out.append("%lld" if INT_EXPR.match(expr) else "%@")
             n += 1
             i = j
         else:
@@ -137,7 +154,9 @@ def collect_swift_keys():
             key = swift_literal_to_key(inner, interpolated, rel)
             if key == "%@" and "NSLocalizedString" in m.group(0):
                 continue  # PageStrings' dynamic lookup call
-            if re.search(r"[A-Za-z]", key):
+            # Localizable content only: a key must contain letters beyond
+            # its specifiers (bare "%lld"/"+%lld" badges aren't language).
+            if re.search(r"[A-Za-z]", re.sub(r"%(?:lld|llu|ld|lu|@|d|u|f)", "", key)):
                 keys.setdefault(key, rel)
     return keys, interpolated
 
