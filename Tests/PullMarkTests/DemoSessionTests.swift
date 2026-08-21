@@ -18,7 +18,11 @@ import Testing
 
     @Test func demoDefaultsSuiteIsNotTheRealDomain() {
         #expect(DemoMode.defaultsSuiteName != "app.pullmark.PullMark")
-        #expect(DemoMode.defaultsSuiteName.hasSuffix(".demo"))
+        // Per-process since the parallel screenshot generator: shared
+        // demo suites let one instance's startup wipe reset another's
+        // live state (see DemoMode.defaultsSuiteName).
+        #expect(DemoMode.defaultsSuiteName.hasPrefix("app.pullmark.PullMark.demo."))
+        #expect(Int32(DemoMode.defaultsSuiteName.split(separator: ".").last ?? "") != nil)
     }
 
     // MARK: - Patch / document consistency
