@@ -68,10 +68,10 @@
       <h2 id="github-access">GitHub 访问：PullMark 怎么连接，怎么修</h2>
       <p>PullMark 借用你自己的工具已经持有的 GitHub 凭据——它没有自己的
       登录，也从不存储任何机密。
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      （设置 → 通用 → GitHub）显示是否已连接、以谁的身份、经由哪个来源；
-      <em>Set&nbsp;Up…</em> 会引导一台新机器完成连接，
-      <em>Check&nbsp;Again</em> 则立刻捕捉到修复——<code>gh auth login</code>
+      <strong>设置&nbsp;→&nbsp;通用&nbsp;→&nbsp;GitHub</strong>
+      显示是否已连接、以谁的身份、经由哪个来源；
+      <em>设置…</em> 会引导一台新机器完成连接，
+      <em>重新检查</em> 则立刻捕捉到修复——<code>gh auth login</code>
       之后无需重启。</p>
       <p class="table-note">正在装有 PullMark（0.36+）的 Mac 上读这页？
       <a href="pullmark://settings/general/github">现在就打开连接行</a>。</p>
@@ -93,16 +93,14 @@
       组织授权令牌；手工创建的令牌会过期——“昨天还好好的”就该到设置的
       那一行去诊断。</p>
 
-      <h2 id="github-auth">GitHub："may not exist… or may be a private repository"</h2>
-      <p><em>"Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access."</em>
-      （无法打开……它可能在该引用处不存在，也可能是你的 GitHub 凭据无权
-      访问的私有仓库。）GitHub 的 API 对“私有且无权限”和“不存在”返回得
+      <h2 id="github-auth">GitHub：“可能在该 ref 上并不存在，也可能属于……私有仓库”</h2>
+      <p><em>“无法打开……它可能在该 ref 上并不存在，也可能属于你的 GitHub
+      凭据无权访问的私有仓库。”</em>GitHub 的 API 对“私有且无权限”和“不存在”返回得
       一模一样，所以 PullMark 没法告诉你是哪种。如果这个仓库本该可用，
       那几乎总是认证问题——见上文
       <a href="#github-access">GitHub 访问</a>，或打开
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      点 <em>Set&nbsp;Up…</em>。</p>
+      <strong>设置&nbsp;→&nbsp;通用&nbsp;→&nbsp;GitHub</strong>
+      点 <em>设置…</em>。</p>
 
       <h2 id="gatekeeper">Gatekeeper 不肯打开应用</h2>
       <p>正式版本以 Developer ID 签名并经 Apple 公证，正常下载不会出现
@@ -114,15 +112,15 @@
       <h2 id="quick-look">Quick Look 预览不再渲染了</h2>
       <p>Homebrew 升级会替换应用包，可能悄悄弄丢 Quick Look 扩展的注册。
       PullMark 每次启动都会重新注册它——所以把应用启动一次就好。如果预览
-      仍显示纯文本，检查 Settings → General → “Quick Look previews” 是否
-      设为 Rendered。</p>
+      仍显示纯文本，检查“设置 → 通用 → 快速查看预览”是否
+      设为“渲染后”。</p>
 
-      <h2 id="default-app">"PullMark is no longer your default Markdown app"</h2>
+      <h2 id="default-app">“PullMark 已不再是你的默认 Markdown 应用”</h2>
       <p>同一个原因：升级替换了应用包，macOS 丢掉了 <code>.md</code> 绑定。
-      横幅上的 <strong>Make Default Again</strong> 一键拿回来；
-      Settings → General 里也行。</p>
+      横幅上的<strong>重新设为默认</strong>一键拿回来；
+      “设置 → 通用”里也行。</p>
 
-      <h2 id="editing">"… changed while you were editing this block — nothing was saved"</h2>
+      <h2 id="editing">“……在你编辑这个区块期间发生了改动——什么都没有保存”</h2>
       <p>在你打开区块编辑器与保存之间，文件在磁盘上被改动了（另一个
       编辑器、一个智能体、一次 git 操作）。PullMark 拒绝往已经挪动的行里
       拼接内容——除了这一处编辑，什么都没丢，重新打开区块就能看到当前
@@ -133,25 +131,25 @@
       <p>带问号角标的“位置”，或者变灰的最近条目，表示路径此刻解析
       不了——未挂载的卷、切换了的 git 分支、被删除的工作树。行变暗而不
       消失是有意为之：路径回来时它们自动复活。点击一条失效的最近条目会
-      提供 <strong>Remove from Recents（从最近使用中移除）</strong>或
-      <strong>Keep（保留）</strong>。</p>
+      提供 <strong>从最近使用中移除</strong>或
+      <strong>保留</strong>。</p>
 
       <h2 id="pr-sync">拉取请求：横幅与待上传评论</h2>
       <ul>
-        <li><em>"This pull request was updated on GitHub."</em>——你加载
+        <li><em>“此拉取请求在 GitHub 上有更新。”</em>——你加载
         之后分支前进了。刷新只要一次点击，你的草稿评论安然无恙；审查
         进行中 PullMark 绝不自动重载。</li>
-        <li><em>"Review comments couldn't be loaded…"</em>——不提示的话，
-        差异就会伪装成一个没有评论的 PR；Retry 重新抓取。</li>
-        <li><em>"Could not upload N pending comment(s)… kept locally for
-        retry."</em>——离线（或 API 打嗝时）写下的评论按 PR head 排队
+        <li><em>“无法载入审查评论……”</em>——不提示的话，
+        差异就会伪装成一个没有评论的 PR；“重试”重新抓取。</li>
+        <li><em>“无法把 N 条待提交评论上传到 GitHub——已保留在本地以便
+        重试。”</em>——离线（或 API 打嗝时）写下的评论按 PR head 排队
         存盘，能上传时就上传。什么都不会丢。</li>
-        <li><em>"Committed …, but the push failed"</em>——提交已经安安稳稳
+        <li><em>“已提交……，但推送失败”</em>——提交已经安安稳稳
         在你的本地历史里；需要重试的只有推送。</li>
       </ul>
 
       <h2 id="updates">更新</h2>
-      <p>横幅上的 <strong>Update Now</strong> 会运行 brew 升级（DMG 安装则
+      <p>横幅上的<strong>立即更新</strong>会运行 brew 升级（DMG 安装则
       是经校验的原位安装）并重启。如果失败，横幅会显示准确的
       <code>brew upgrade --cask pullmark</code> 命令和一个复制按钮——在
       终端里运行它效果相同。开发构建不检查更新。</p>
@@ -170,7 +168,7 @@
 
       <h2 id="still-stuck">还是卡住？</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">提一个
-      issue</a>——应用内的 Help → Report a Bug… 会替你预填。</p>
+      issue</a>——应用内的“帮助 → 报告 Bug…”会替你预填。</p>
     </article>
   </div>
 </div>

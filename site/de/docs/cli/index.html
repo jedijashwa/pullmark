@@ -71,8 +71,8 @@
       <ul>
         <li><strong>Homebrew</strong> — schon installiert; der Cask verlinkt
         <code>pullmark</code> in dein Brew-Prefix.</li>
-        <li><strong>DMG</strong> — öffne <strong>Settings&nbsp;(⌘,) → General</strong>
-        und klick <strong>Install pullmark Command…</strong>; das verlinkt den
+        <li><strong>DMG</strong> — öffne <strong>Einstellungen&nbsp;(⌘,) → Allgemein</strong>
+        und klick <strong>pullmark-Befehl installieren…</strong>; das verlinkt den
         Befehl nach <code>/usr/local/bin</code> (eventuell wirst du um Freigabe
         gebeten).</li>
         <li><strong>Aus dem Quelltext</strong> — <code>make install-cli</code>
@@ -119,10 +119,10 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
       wird angezeigt. Das ist das ganze Rezept für „öffne diesen Worktree und
       zeig mir dieses Doc":</p>
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
-      <p>Der Baum des Worktrees landet unter „Orte" (mit seinem Branch-Chip,
+      <p>Der Baum des Worktrees landet unter „Orte“ (mit seinem Branch-Chip,
       denn ein Worktree ist einfach ein Git-Checkout), <code>plan.md</code>
-      sitzt fest in „Geöffnete Dateien" und ist gerendert. Rechtsklick darauf und
-      <strong>Reveal in Location</strong> springt dahin, wo sie im Baum wohnt.
+      sitzt fest in „Geöffnete Dateien“ und ist gerendert. Rechtsklick darauf und
+      <strong>Im Ort zeigen</strong> springt dahin, wo sie im Baum wohnt.
       Das läuft genauso, wenn der Ort schon offen war — eine Datei zu
       öffnen, die darin liegt, erzeugt nie eine zweite Welt, nur einen Eintrag
       im Arbeitsset.</p>
@@ -135,8 +135,8 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
       Arbeitsstand gegen den letzten Commit, gezeigt als dasselbe gerenderte,
       wortgenaue Diff, das auch Pull Requests bekommen.
       <code>--diff=&lt;ref&gt;</code> vergleicht stattdessen gegen einen
-      Branch, Tag oder Commit-SHA. Es ist die Shell-Tür zum Compare-Feature der
-      App (der Uhr-mit-Chevron-Button der Toolbar) und die schnellste Antwort
+      Branch, Tag oder Commit-SHA. Es ist die Shell-Tür zum „Vergleichen“-Feature
+      der App (der Uhr-mit-Chevron-Button der Toolbar) und die schnellste Antwort
       auf „was hat der Agent gerade mit diesem Dokument gemacht":</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># was die letzten Edits geändert haben</span>
 <span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># aktuelle Datei gegen main</span>
@@ -145,7 +145,7 @@ pullmark --version           <span class="c"># die Version der App ausgeben</spa
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># ein Worktree, plan.md als Diff</span></code></pre>
       <p>Ordner, die du danebenstellst, öffnen weiterhin als Orte, und
-      jede Form hat ihren Zwilling in der App, im Compare-Menü der Toolbar
+      jede Form hat ihren Zwilling in der App, im „Vergleichen“-Menü der Toolbar
       (samt <strong>Compare Revisions…</strong> und <strong>Compare with
       File…</strong>). Weil <code>--diff</code> und <code>--diff-with</code>
       Flags sind und nie Unterbefehle, öffnet eine Datei, die zufällig

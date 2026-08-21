@@ -69,10 +69,10 @@
       <h2 id="github-access">GitHub-Zugriff: wie PullMark sich verbindet — und wie du es reparierst</h2>
       <p>PullMark leiht sich die GitHub-Zugangsdaten, die deine eigenen Tools
       längst haben — es hat kein eigenes Login und legt nie ein Geheimnis ab.
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> zeigt,
+      <strong>Einstellungen&nbsp;→&nbsp;Allgemein&nbsp;→&nbsp;GitHub</strong> zeigt,
       ob es verbunden ist, als wer und über welche Quelle;
-      <em>Set&nbsp;Up…</em> führt eine frische Maschine durchs Verbinden, und
-      <em>Check&nbsp;Again</em> greift eine Reparatur sofort auf — nach
+      <em>Einrichten…</em> führt eine frische Maschine durchs Verbinden, und
+      <em>Erneut&nbsp;prüfen</em> greift eine Reparatur sofort auf — nach
       <code>gh auth login</code> ohne Neustart.</p>
       <p class="table-note">Liest du das auf dem Mac, auf dem PullMark
       (ab 0.36) installiert ist?
@@ -99,17 +99,16 @@
       angelegte Tokens laufen ab — die Zeile in den Einstellungen ist der Ort,
       an dem sich „ging gestern noch" diagnostizieren lässt.</p>
 
-      <h2 id="github-auth">GitHub: „may not exist… or may be a private repository"</h2>
-      <p><em>„Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access."</em> (Gibt es
-      an diesem Ref nicht — oder es ist ein privates Repo, an das deine
-      GitHub-Zugangsdaten nicht herankommen.) GitHubs API meldet
+      <h2 id="github-auth">GitHub: „gibt es an diesem Ref nicht … oder ein privates Repository“</h2>
+      <p><em>„… konnte nicht geöffnet werden: … Vielleicht gibt es das an
+      diesem Ref nicht, oder es ist ein privates Repository, an das deine
+      GitHub-Zugangsdaten nicht herankommen.“</em> GitHubs API meldet
       privat-ohne-Zugriff und gibt-es-nicht identisch, PullMark kann dir also
       nicht sagen, was von beidem es ist. Sollte das Repo eigentlich gehen,
       liegt es fast immer an der Authentifizierung — siehe
       <a href="#github-access">GitHub-Zugriff</a> weiter oben, oder öffne
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> und
-      drück <em>Set&nbsp;Up…</em>.</p>
+      <strong>Einstellungen&nbsp;→&nbsp;Allgemein&nbsp;→&nbsp;GitHub</strong> und
+      drück <em>Einrichten…</em>.</p>
 
       <h2 id="gatekeeper">Gatekeeper lässt die App nicht starten</h2>
       <p>Releases sind mit einer Developer ID signiert und von Apple
@@ -124,15 +123,15 @@
       Registrierung der Quick-Look-Erweiterung stillschweigend verloren gehen.
       PullMark meldet sie bei jedem Start neu an — starte die App also einfach
       einmal. Zeigen die Vorschauen danach immer noch rohen Text, prüf, ob
-      Settings → General → „Quick Look previews" auf Rendered steht.</p>
+      Einstellungen → Allgemein → „Quick-Look-Vorschauen“ auf „Gerendert“ steht.</p>
 
-      <h2 id="default-app">„PullMark is no longer your default Markdown app"</h2>
+      <h2 id="default-app">„PullMark ist nicht mehr deine Standard-App für Markdown“</h2>
       <p>Dieselbe Ursache: Ein Upgrade hat das Bundle ersetzt und macOS hat die
-      <code>.md</code>-Zuordnung verworfen. Das <strong>Make Default
-      Again</strong> im Banner holt sie zurück; Settings → General
+      <code>.md</code>-Zuordnung verworfen. Das <strong>Wieder zum Standard
+      machen</strong> im Banner holt sie zurück; Einstellungen → Allgemein
       genauso.</p>
 
-      <h2 id="editing">„… changed while you were editing this block — nothing was saved"</h2>
+      <h2 id="editing">„… hat sich geändert, während du diesen Block bearbeitet hast — nichts wurde gesichert“</h2>
       <p>Die Datei hat sich auf der Platte geändert (ein anderer Editor, ein
       Agent, eine Git-Operation), zwischen dem Öffnen des Block-Editors und dem
       Speichern. PullMark weigert sich, in Zeilen hineinzuschreiben, die
@@ -144,31 +143,33 @@
 
       <h2 id="dimmed">Gedimmte Zeilen: Ordner und zuletzt benutzte Einträge, die „nicht da" sind</h2>
       <p>Ein Ort mit Fragezeichen-Badge oder ein ausgegrauter Eintrag unter
-      „Zuletzt benutzt" heißt: Der Pfad löst gerade nicht auf — ein nicht
+      „Zuletzt benutzt“ heißt: Der Pfad löst gerade nicht auf — ein nicht
       eingebundenes Volume, ein gewechselter Git-Branch, ein gelöschter
       Worktree. Zeilen dimmen
       absichtlich, statt zu verschwinden: Sie erwachen von selbst wieder, wenn
       der Pfad zurückkommt. Klickst du einen toten Eintrag an, gibt es
-      <strong>Remove from Recents</strong> oder <strong>Keep</strong>.</p>
+      <strong>Aus „Zuletzt benutzt“ entfernen</strong> oder <strong>Behalten</strong>.</p>
 
       <h2 id="pr-sync">Pull Requests: Banner und ausstehende Kommentare</h2>
       <ul>
-        <li><em>„This pull request was updated on GitHub."</em> — der Branch
+        <li><em>„Dieser Pull Request wurde auf GitHub aktualisiert.“</em> — der Branch
         hat sich bewegt, seit du ihn geladen hast. Aktualisieren ist ein Klick
         und deine Kommentar-Entwürfe überleben; PullMark lädt nie von selbst
         neu, während ein Review läuft.</li>
-        <li><em>„Review comments couldn't be loaded…"</em> — sonst gäbe sich
-        das Diff als PR ohne Kommentare aus; Retry holt sie erneut.</li>
-        <li><em>„Could not upload N pending comment(s)… kept locally for
-        retry."</em> — offline geschriebene Kommentare (oder solche, die einen
+        <li><em>„Review-Kommentare konnten nicht geladen werden …“</em> — sonst
+        gäbe sich das Diff als PR ohne Kommentare aus; „Erneut versuchen“ holt
+        sie erneut.</li>
+        <li><em>„N ausstehende Kommentare konnten nicht zu GitHub hochgeladen
+        werden — lokal für einen neuen Versuch behalten.“</em> — offline
+        geschriebene Kommentare (oder solche, die einen
         API-Schluckauf erwischt haben) warten pro PR-Head auf der Platte in der
         Queue und laden hoch, sobald es geht. Nichts geht verloren.</li>
-        <li><em>„Committed …, but the push failed"</em> — der Commit liegt
+        <li><em>„… committet, aber der Push ist fehlgeschlagen“</em> — der Commit liegt
         sicher in deiner lokalen Historie; nur der Push muss noch einmal.</li>
       </ul>
 
       <h2 id="updates">Updates</h2>
-      <p>Das <strong>Update Now</strong> im Banner führt das Brew-Upgrade aus
+      <p>Das <strong>Jetzt updaten</strong> im Banner führt das Brew-Upgrade aus
       (oder, bei DMG-Installationen, eine geprüfte Installation an Ort und
       Stelle) und startet neu. Schlägt das fehl, zeigt das Banner den exakten
       Befehl <code>brew upgrade --cask pullmark</code> mit einem Copy-Knopf —
@@ -190,7 +191,7 @@
 
       <h2 id="still-stuck">Kommst du trotzdem nicht weiter?</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">Mach ein Issue
-      auf</a> — Help → Report a Bug… füllt eins schon aus der App heraus
+      auf</a> — Help → Fehler melden… füllt eins schon aus der App heraus
       vor.</p>
     </article>
   </div>

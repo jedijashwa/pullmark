@@ -591,9 +591,8 @@ footer .note { margin-left: auto; }
       comuns, que ficam fora da página renderizada — assim, <em>“resolva
       minhas notas no plano”</em> é a entrega inteira: seu agente lê cada
       nota exatamente onde você a deixou. Sem commit, sem colar, sem pull
-      request. Depois, veja a revisão chegar — o Compare (comparar) destaca
-      as edições do agente palavra por palavra, ao vivo, a cada
-      salvamento.</p>
+      request. Depois, veja a revisão chegar — o Comparar destaca as edições
+      do agente palavra por palavra, ao vivo, a cada salvamento.</p>
     </div>
     <figure class="shot reading-shot">
       <picture>
@@ -648,8 +647,8 @@ footer .note { margin-left: auto; }
     <p class="kicker">revisão</p>
     <h2>A revisão de docs inteira, direto da página renderizada.</h2>
     <p class="prose">Alterne entre os layouts <strong>inline</strong> e <strong>lado a
-    lado</strong>, desça ao <em>Source Diff</em> (o diff da fonte crua) ou visualize o
-    <em>Result</em> (o resultado final) — tudo pela barra de ferramentas, que também leva
+    lado</strong>, desça ao <em>Diff do Código-Fonte</em> ou visualize o
+    <em>Resultado</em> — tudo pela barra de ferramentas, que também leva
     você de arquivo em arquivo e de volta ao PR sem tocar na barra lateral. YAML front matter
     renderiza como uma <strong>tabela de metadados discreta</strong>, não um paredão de prosa
     em negrito — então docs carregados de configuração também diffam limpo. Um documento novo
@@ -657,8 +656,8 @@ footer .note { margin-left: auto; }
     bloco de verde. Threads de revisão existentes aparecem sob os blocos que discutem. Passe
     o mouse sobre qualquer bloco, clique no balão e comente no bloco inteiro ou
     <strong>exatamente nas linhas que você escolher</strong>. Ao terminar,
-    <strong>Approve</strong> (aprovar), <strong>Request Changes</strong> (solicitar
-    alterações) ou <strong>Comment</strong> (comentar), direto da visão geral — com ou sem
+    <strong>Aprovar</strong>, <strong>Solicitar alterações</strong> ou
+    <strong>Comentar</strong>, direto da visão geral — com ou sem
     comentários de linha — e deixe também comentários no arquivo inteiro ou na conversa. A
     visão geral mostra <strong>onde o PR está</strong>: aprovado ou com alterações
     solicitadas, o veredito de cada revisor, as verificações de CI com um clique até os logs
@@ -670,7 +669,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/pt/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/pt/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="PullMark revisando um pull request de documentação: um diff renderizado em que um parágrafo alterado carrega destaques palavra por palavra, um fluxograma Mermaid adicionado renderiza sobre o tom verde de bloco adicionado, a barra lateral mostra um contador de comentários no arquivo e o controle de revisão da barra de ferramentas diz Finish your review com três comentários pendentes">
+        alt="PullMark revisando um pull request de documentação: um diff renderizado em que um parágrafo alterado carrega destaques palavra por palavra, um fluxograma Mermaid adicionado renderiza sobre o tom verde de bloco adicionado, a barra lateral mostra um contador de comentários no arquivo e o controle de revisão da barra de ferramentas diz Finalizar a revisão com três comentários pendentes">
       </picture>
       <figcaption>Um PR de documentação como diff renderizado: a única frase alterada
       carrega destaques palavra por palavra, e o novo fluxograma chega como
@@ -682,8 +681,8 @@ footer .note { margin-left: auto; }
       <div class="act">
         <div class="act-name">Add to Review</div>
         <p>O padrão (adicionar à revisão): junta os rascunhos localmente. Envie tudo de uma
-        vez — Comment, Approve ou Request Changes — ou salve uma revisão pendente para
-        concluir no github.com.</p>
+        vez — Comentar, Aprovar ou Solicitar alterações — ou salve uma revisão pendente
+        para concluir no github.com.</p>
       </div>
       <div class="act">
         <div class="act-name">Comment Now</div>
@@ -702,7 +701,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/pt/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/pt/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="A visão geral de pull request do PullMark: o título do PR com um chip Open, uma cápsula Changes requested, uma cápsula Checks passed, avatares de revisores vestindo selos de veredito, um chip do time docs-guild, a descrição do PR renderizada e a linha do tempo da conversa, cujo primeiro comentário de revisão mostra uma tabela renderizada">
+        alt="A visão geral de pull request do PullMark: o título do PR com um chip Aberto, uma cápsula Alterações solicitadas, uma cápsula Verificações bem-sucedidas, avatares de revisores vestindo selos de veredito, um chip do time docs-guild, a descrição do PR renderizada e a linha do tempo da conversa, cujo primeiro comentário de revisão mostra uma tabela renderizada">
       </picture>
       <figcaption>A conversa como documento: comentários de revisão renderizam suas
       tabelas como tabelas, e o avatar de cada revisor veste seu veredito.</figcaption>
@@ -755,7 +754,7 @@ footer .note { margin-left: auto; }
         um repositório e cada arquivo aparece como <em>prévia</em>: uma única entrada em
         itálico em Arquivos Abertos que o próximo clique substitui. Clique duas vezes (ou
         simplesmente comece a editar) para mantê-lo.</li>
-      <li><strong>Outline</strong> (estrutura) — um mapa dos seus títulos no estilo
+      <li><strong>Sumário</strong> — um mapa dos seus títulos no estilo
         navegador, a um toque de distância.</li>
       <li><strong>Encontre qualquer coisa</strong> — <kbd>⌘F</kbd> percorre as ocorrências
         na página; <kbd>⇧⌘F</kbd> busca em todos os arquivos da barra lateral de uma
@@ -771,14 +770,14 @@ footer .note { margin-left: auto; }
         HTML autossuficiente; <kbd>⌘C</kbd> cola texto rico no Docs e no Slack, <kbd>⌥⌘C</kbd>
         devolve o Markdown.</li>
       <li><strong>Três temas de leitura</strong> — Editorial, GitHub e Terminal, com prévias
-        ao vivo nos Settings (Ajustes) — ou traga seu próprio CSS. Claro &amp; escuro
+        ao vivo nos Ajustes — ou traga seu próprio CSS. Claro &amp; escuro
         reestilizam tudo, Mermaid incluído, e o comprimento de linha é seu: Standard, Wide
         ou Full Width.</li>
       <li><strong>Links do GitHub abrem no app</strong> — clique num link de
         <code>github.com</code> para um arquivo Markdown e o PullMark o renderiza, com uma
         barra de procedência repo&nbsp;@&nbsp;branch sempre visível; <kbd>⌘</kbd>-clique
         manda para o navegador.</li>
-      <li><strong>Open Quickly</strong> (abrir rapidamente) — <kbd>⌘K</kbd> pula para
+      <li><strong>Abrir Rapidamente</strong> — <kbd>⌘K</kbd> pula para
         qualquer título, arquivo ou PR, com busca aproximada — ou cole a URL de um PR, a URL
         de um repositório ou um caminho de arquivo e ele abre direto.</li>
       <li><strong>Movido é movido</strong> — um parágrafo realocado ao pé da letra renderiza
@@ -824,7 +823,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/pt/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/pt/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark renderizando um arquivo Markdown buscado de um repositório do GitHub: uma barra de procedência acima do conteúdo traz o nome do repositório, um chip de branch, o caminho do arquivo e o commit fixado, com um link Open on GitHub; a seção Localizações da barra lateral mostra o repositório com um ícone de livro e sua árvore de arquivos Markdown">
+        alt="PullMark renderizando um arquivo Markdown buscado de um repositório do GitHub: uma barra de procedência acima do conteúdo traz o nome do repositório, um chip de branch, o caminho do arquivo e o commit fixado, com um link Abrir no GitHub; a seção Localizações da barra lateral mostra o repositório com um ícone de livro e sua árvore de arquivos Markdown">
       </picture>
       <figcaption>Um doc lido direto do GitHub: a barra de procedência sempre diz onde você
       está — repositório, branch, commit fixado — e o chip de branch troca ou abre branches
@@ -835,9 +834,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/pt/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/pt/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="A janela Settings do PullMark na aba Appearance: três cartões de prévia de tema ao vivo — GitHub, Editorial e Terminal — cada um renderizando o mesmo documento de amostra pelo pipeline de verdade, com Editorial selecionado, acima de botões para abrir a pasta de temas personalizados">
+        alt="A janela Ajustes do PullMark na aba Aparência: três cartões de prévia de tema ao vivo — GitHub, Editorial e Terminal — cada um renderizando o mesmo documento de amostra pelo pipeline de verdade, com Editorial selecionado, acima de botões para abrir a pasta de temas personalizados">
       </picture>
-      <figcaption>Settings → Appearance (Ajustes → Aparência): três prévias de tema ao vivo, renderizadas pelo pipeline de verdade — clique num cartão para trocar.</figcaption>
+      <figcaption>Ajustes → Aparência: três prévias de tema ao vivo, renderizadas pelo pipeline de verdade — clique num cartão para trocar.</figcaption>
     </figure>
   </div>
 </section>
@@ -860,7 +859,7 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>App padrão para .md</h3>
-        <p>Um clique nos Settings (Ajustes) faz o clique duplo no Finder significar
+        <p>Um clique nos Ajustes faz o clique duplo no Finder significar
         <em>renderizado</em>, em todo lugar — e se alguma atualização derrubar o vínculo, o
         PullMark percebe e o oferece de volta.</p>
       </div>

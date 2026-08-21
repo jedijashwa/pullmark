@@ -72,8 +72,8 @@
       <a href="/pt/docs/cli/">linha de comando</a>, ou mantendo um arquivo de
       uma Localização. Plano, reordenável por arrasto, cada linha removível com o
       ✕ que aparece ao passar o mouse (ou ⌫ na linha selecionada). Clique com
-      o botão direito no cabeçalho da seção para <strong>Close All</strong>
-      (fechar tudo).</p>
+      o botão direito no cabeçalho da seção para <strong>Fechar
+      Tudo</strong>.</p>
 
       <h3 id="previews">Prévias</h3>
       <p>Um clique num arquivo dentro de uma Localização e ele renderiza
@@ -87,16 +87,15 @@
       <ul>
         <li><strong>Clique duplo</strong> no arquivo na árvore, ou na própria
         entrada em itálico</li>
-        <li><strong>Começar a editar</strong> — entrar no Edit Mode (modo de
-        edição) ou salvar a edição de um bloco a fixa</li>
-        <li><strong>Keep Open</strong> (manter aberto) no menu do botão
-        direito</li>
+        <li><strong>Começar a editar</strong> — entrar no Modo de Edição ou
+        salvar a edição de um bloco a fixa</li>
+        <li><strong>Manter Aberto</strong> no menu do botão direito</li>
       </ul>
       <p>Interações de leitura — blame, histórico de linhas, inspecionar uma
       imagem ou diagrama — deliberadamente nunca promovem uma prévia. Se você
       preferir que cada clique abra arquivos por completo, mude
-      <a href="/pt/docs/settings/#clicking-files">Clicking files in
-      Locations</a> nos Ajustes.</p>
+      <a href="/pt/docs/settings/#clicking-files">Clicar em arquivos em
+      Localizações</a> nos Ajustes.</p>
       <p><strong>Repositórios remotos fazem prévia do mesmo jeito, no mesmo
       lugar.</strong> Navegar pela árvore de um repositório do GitHub, ou
       seguir links dentro de um documento remoto, coloca a mesma entrada
@@ -104,14 +103,14 @@
       linha <code>owner/repo @ ref</code>, já que o arquivo não está no seu
       Mac. Só existe <em>uma</em> prévia por janela, local ou remota:
       pré-visualizar qualquer coisa substitui o que você estava
-      pré-visualizando antes. Manter um doc remoto (clique duplo ou Keep
-      Open) é o que o arquiva com seu repositório — ele se move para a lista
+      pré-visualizando antes. Manter um doc remoto (clique duplo ou Manter
+      Aberto) é o que o arquiva com seu repositório — ele se move para a lista
       fixada do repositório sob Localizações. ⌘K abre já fixando, porque colar
       uma URL é intenção explícita.</p>
       <p>Qualquer linha de Arquivos Abertos que more dentro de uma
-      Localização aberta ganha <strong>Reveal in Location</strong> (revelar
-      na Localização) no menu do botão direito — o salto de volta de “o que
-      estou lendo” para “onde isso mora”.</p>
+      Localização aberta ganha <strong>Mostrar na Localização</strong> no
+      menu do botão direito — o salto de volta de “o que estou lendo” para
+      “onde isso mora”.</p>
 
       <h2 id="locations">Localizações</h2>
       <p>Raízes navegáveis, onde quer que morem. Dois tipos dividem
@@ -119,7 +118,7 @@
       <table>
         <tr><th>Linha</th><th>Significado</th></tr>
         <tr><td>📁 ícone de pasta</td><td>Uma pasta local — seus arquivos Markdown como árvore (ou
-          lista plana; botão direito → View as List). Vigiada por mudanças.</td></tr>
+          lista plana; botão direito → Ver como Lista). Vigiada por mudanças.</td></tr>
         <tr><td>📕 ícone de livro</td><td>Um repositório do GitHub aberto para navegação — buscado
           pela API, nada gravado no disco.</td></tr>
       </table>
@@ -137,16 +136,15 @@
         leia os arquivos de outra branch remotamente, sem tocar no seu
         checkout. Uma branch que já tem worktree local pula para a worktree —
         local ganha do remoto.</li>
-        <li><strong>Open on GitHub</strong> (abrir no GitHub) — o repositório
-        (nesta branch) no seu navegador.</li>
+        <li><strong>Abrir no GitHub</strong> — o repositório (nesta branch) no
+        seu navegador.</li>
       </ul>
       <p>Num repositório remoto (ícone de livro), o mesmo chip lista
       branches: <strong>Switch To</strong> (trocar para) re-fixa a sessão em
-      outra branch, e segurar ⌥ oferece <strong>Open Branch
-      Separately</strong> (abrir branch separadamente) para leitura lado a
-      lado. <strong>Browse Repo Files…</strong> (navegar pelos arquivos do
-      repositório) carrega a árvore Markdown inteira. Os docs mantidos do
-      repositório ficam acima da árvore, para nunca se afogarem num
+      outra branch, e segurar ⌥ oferece <strong>Abrir a Branch
+      Separadamente</strong> para leitura lado a lado. <strong>Navegar pelos
+      Arquivos do Repositório…</strong> carrega a árvore Markdown inteira. Os
+      docs mantidos do repositório ficam acima da árvore, para nunca se afogarem num
       repositório grande; um doc mantido que está visível na árvore é
       simplesmente representado ali. (Um doc que você está apenas
       pré-visualizando aparece em <a href="#previews">Arquivos Abertos</a>, não
@@ -160,8 +158,8 @@
       contagem de Markdown alterado), depois seus arquivos Markdown
       alterados — um balão de fala com um número marca arquivos com threads
       de revisão não resolvidas. Abaixo dos seus PRs abertos,
-      <strong>Review Requests</strong> (solicitações de revisão) reúne PRs
-      esperando pela sua revisão, com um contador de não lidos que permanece
+      <strong>Solicitações de Revisão</strong> reúne PRs esperando pela sua
+      revisão, com um contador de não lidos que permanece
       visível mesmo recolhido (ocultável nos Ajustes, e filtrável para só
       PRs que tocam Markdown).</p>
       <p>Ícones de status nas linhas de PR:</p>
@@ -169,7 +167,7 @@
         <tr><th>Status</th><th>Ícone</th></tr>
         <tr><td>Rascunho</td><td>setas de pull request, cinza</td></tr>
         <tr><td>Aberto</td><td>setas de pull request, verde</td></tr>
-        <tr><td>Merged</td><td>setas de merge, roxo</td></tr>
+        <tr><td>Mesclado</td><td>setas de merge, roxo</td></tr>
         <tr><td>Fechado</td><td>✕ num círculo, vermelho</td></tr>
         <tr><td>Indisponível</td><td>lixeira, cinza — o PR (ou seu acesso) foi embora</td></tr>
       </table>
@@ -184,7 +182,7 @@
       ao vivo; um recente cujo arquivo sumiu escurece (selo de relógio) em
       vez de desaparecer, e revive quando o caminho volta — feito para trocas
       de branch e volumes desmontados. Clique com o botão direito no
-      cabeçalho para <strong>Clear Recents</strong> (limpar recentes).</p>
+      cabeçalho para <strong>Limpar Recentes</strong>.</p>
 
       <h2 id="removal">Removendo coisas</h2>
       <p>Passe o mouse sobre qualquer linha de nível superior para o ✕ — ele
@@ -205,7 +203,7 @@
           remotamente; como pequena marca no fim: esta pasta local é um checkout de um)</td></tr>
         <tr><td>Glifo de branch + nome</td><td>O chip de branch — clique para branches e worktrees</td></tr>
         <tr><td>Setas de pull request</td><td>Um pull request</td></tr>
-        <tr><td>Bandeja</td><td>Review Requests — PRs aguardando a sua revisão</td></tr>
+        <tr><td>Bandeja</td><td>Solicitações de Revisão — PRs aguardando a sua revisão</td></tr>
         <tr><td>Balão de fala + número</td><td>Num arquivo de PR: comentários de revisão não resolvidos.
           Numa linha de Arquivos Abertos: <a href="/pt/docs/experimental/margin-notes/">notas de margem</a> ainda no documento</td></tr>
         <tr><td>Ponto colorido (borda esquerda)</td><td>Uma solicitação de revisão não lida</td></tr>

@@ -71,8 +71,8 @@
       <ul>
         <li><strong>Homebrew</strong> — ya está instalado; el cask enlaza
         <code>pullmark</code> dentro de tu prefijo de brew.</li>
-        <li><strong>DMG</strong> — abre <strong>Settings&nbsp;(⌘,) → General</strong>
-        (ajustes) y haz clic en <strong>Install pullmark Command…</strong>;
+        <li><strong>DMG</strong> — abre <strong>Ajustes&nbsp;(⌘,) → General</strong>
+        y haz clic en <strong>Instalar el comando pullmark…</strong>;
         eso enlaza el comando en <code>/usr/local/bin</code> (puede que te
         pida autorización).</li>
         <li><strong>Copia del código fuente</strong> —
@@ -125,7 +125,7 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
       porque un worktree no es más que un checkout de git),
       <code>plan.md</code> queda conservado en Archivos abiertos y
       renderizado. Haz clic derecho y elige
-      <strong>Reveal in Location</strong> (mostrar en su ubicación) para
+      <strong>Mostrar en su ubicación</strong> para
       saltar al punto del árbol donde vive. Funciona igual cuando la
       Ubicación ya estaba abierta — abrir un archivo que vive dentro de ella
       nunca crea un mundo duplicado, solo una entrada en el conjunto de
@@ -140,7 +140,7 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
       diff renderizado, palabra por palabra, que reciben los pull requests.
       <code>--diff=&lt;ref&gt;</code> compara en su lugar contra una rama, una
       etiqueta o el SHA de un commit. Es la puerta de la terminal a la función
-      Compare de la app (el botón del reloj con chevron en la barra de
+      Comparar de la app (el botón del reloj con chevron en la barra de
       herramientas), y la respuesta más rápida a «qué acaba de hacerle el
       agente a este documento»:</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># qué cambiaron las últimas ediciones</span>
@@ -150,7 +150,7 @@ pullmark --version           <span class="c"># imprime la versión de la app</sp
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># un worktree, con plan.md en diff</span></code></pre>
       <p>Las carpetas que pases al lado siguen abriéndose como Ubicaciones, y
-      cada forma tiene su gemela dentro de la app, en el menú Compare de la
+      cada forma tiene su gemela dentro de la app, en el menú Comparar de la
       barra de herramientas (incluidas <strong>Compare Revisions…</strong> y
       <strong>Compare with File…</strong>). Como <code>--diff</code> y
       <code>--diff-with</code> son opciones, nunca subcomandos, un archivo que

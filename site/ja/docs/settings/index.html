@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>設定 — PullMark ドキュメント</title>
-<meta name="description" content="PullMark のすべての設定。General、Appearance、Keyboard——デフォルト値と、それぞれのコントロールが変えるもの。">
+<meta name="description" content="PullMark のすべての設定。「一般」「外観」「キーボード」——デフォルト値と、それぞれのコントロールが変えるもの。">
 <link rel="canonical" href="https://pullmark.app/ja/docs/settings/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/settings/">
 <link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/settings/">
@@ -16,7 +16,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/settings/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/settings/">
 <meta property="og:title" content="設定 — PullMark ドキュメント">
-<meta property="og:description" content="PullMark のすべての設定。General、Appearance、Keyboard——デフォルト値と、それぞれのコントロールが変えるもの。">
+<meta property="og:description" content="PullMark のすべての設定。「一般」「外観」「キーボード」——デフォルト値と、それぞれのコントロールが変えるもの。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/ja/docs/settings/">
 <meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
@@ -61,36 +61,36 @@
     <article>
       <p class="kicker">ドキュメント</p>
       <h1>設定</h1>
-      <p class="article-lede">⌘, の向こうにあるすべて——タブは 4 つです。ふるまいの General（一般）、
-      PullMark の見た目の Appearance（外観）、キーマップの Keyboard（キーボード）、そしてまだ
-      落ち着ききっていない機能の Experimental（実験的機能）。ウィンドウは、最後に使ったタブで
+      <p class="article-lede">⌘, の向こうにあるすべて——タブは 4 つです。ふるまいの「一般」、
+      PullMark の見た目の「外観」、キーマップの「キーボード」、そしてまだ
+      落ち着ききっていない機能の「実験的機能」。ウィンドウは、最後に使ったタブで
       開き直します。</p>
 
-      <h2 id="general">General（一般）</h2>
-      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/general">General タブを開く</a>。</p>
+      <h2 id="general">一般</h2>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/general">「一般」タブを開く</a>。</p>
 
       <h3>読む</h3>
       <table>
         <tr><th>設定</th><th>選択肢 ・ <em>デフォルト</em></th><th>はたらき</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="この設定を PullMark で開く（0.28.3 以降）">Restore files and pull requests from the last session</a></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="この設定を PullMark で開く（0.28.3 以降）">前回のセッションのファイルとプルリクエストを復元する</a></td>
           <td>on/off — <em>on</em></td>
           <td>PullMark を最後に終了したとき、サイドバーにあったものを開き直します——ファイル、
           フォルダ、PR、ブラウズ中のリポジトリ、そしてプレビューの項目も（プレビューのまま）。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="この設定を PullMark で開く（0.28.3 以降）">Show hidden files</a></td><td>on/off — <em>off</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="この設定を PullMark で開く（0.28.3 以降）">隠しファイルを表示</a></td><td>on/off — <em>off</em></td>
           <td>「場所」の中のドットファイルと隠しフォルダ——<code>.github/</code> のドキュメントや
-          その仲間たち。<kbd>⇧⌘.</kbd>（Finder と同じ組み合わせ）や View → Show Hidden Files でも
+          その仲間たち。<kbd>⇧⌘.</kbd>（Finder と同じ組み合わせ）や 表示 →「隠しファイルを表示」でも
           切り替えられ、切り替えるたびに開いているすべての「場所」が再スキャンされます。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/github-links" title="この設定を PullMark で開く（0.28.3 以降）">GitHub Markdown links</a></td>
-          <td>Ask on first click ・ Open in PullMark ・ Open in Browser —
-          <em>Ask on first click</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/github-links" title="この設定を PullMark で開く（0.28.3 以降）">GitHub の Markdown リンク</a></td>
+          <td>最初のクリックで確認 ・ PullMark で開く ・ ブラウザで開く —
+          <em>最初のクリックで確認</em></td>
           <td>GitHub 上の Markdown ファイルへのリンクをクリックしたときの動作です。⌘ を押しながら
           クリックすれば、もう一方のふるまいになります。最初のクリックで出るダイアログの
-          「Remember my selection」チェックボックスが、この設定を代わりに決めてくれます。</td></tr>
-        <tr><td id="clicking-files"><a class="setting-link" href="pullmark://settings/general/clicking-files" title="この設定を PullMark で開く（0.28.3 以降）">Clicking files in Locations</a></td>
-          <td>Preview First ・ Open Fully — <em>Preview First</em></td>
-          <td>Preview First は、クリック 1 回でファイルを見せながら、手元には残しません——斜体の
+          「選択を記憶する」チェックボックスが、この設定を代わりに決めてくれます。</td></tr>
+        <tr><td id="clicking-files"><a class="setting-link" href="pullmark://settings/general/clicking-files" title="この設定を PullMark で開く（0.28.3 以降）">「場所」内のファイルをクリックしたとき</a></td>
+          <td>プレビュー優先 ・ 完全に開く — <em>プレビュー優先</em></td>
+          <td>「プレビュー優先」は、クリック 1 回でファイルを見せながら、手元には残しません——斜体の
           1 行（「開いているファイル」、またはその GitHub リポジトリの下）が、次のプレビューで入れ替わります。
-          ダブルクリックか、編集を始めれば残ります。Open Fully はクリックしたファイルをすべて
+          ダブルクリックか、編集を始めれば残ります。「完全に開く」はクリックしたファイルをすべて
           残します。ローカルフォルダにも、ブラウズ中の GitHub リポジトリにも同じように働きます。
           <a href="/ja/docs/sidebar/#previews">プレビュー</a>を参照。</td></tr>
       </table>
@@ -98,15 +98,15 @@
       <h3>レビューする</h3>
       <table>
         <tr><th>設定</th><th>選択肢 ・ <em>デフォルト</em></th><th>はたらき</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="この設定を PullMark で開く（0.28.3 以降）">Default diff layout</a></td><td>Inline ・ Side by Side — <em>Inline</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="この設定を PullMark で開く（0.28.3 以降）">差分の初期レイアウト</a></td><td>インライン ・ 並べて表示 — <em>インライン</em></td>
           <td>PR のレンダリングされた差分をどう開くか。ファイルごとに ⌥⌘L で切り替えられます。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="この設定を PullMark で開く（0.28.3 以降）">Show review requests in the sidebar</a></td><td>on/off — <em>on</em></td>
-          <td>Review Requests のサブグループ——あなたのレビューが求められているオープンな PR です。
+        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="この設定を PullMark で開く（0.28.3 以降）">サイドバーにレビューリクエストを表示する</a></td><td>on/off — <em>on</em></td>
+          <td>「レビューリクエスト」のサブグループ——あなたのレビューが求められているオープンな PR です。
           サインインしていないときは、どちらにせよ現れません。</td></tr>
-        <tr><td>Only requests that change Markdown</td><td>on/off — <em>on</em></td>
+        <tr><td>Markdown を変更するリクエストのみ</td><td>on/off — <em>on</em></td>
           <td>Markdown ファイルを含まないレビューリクエストを隠します——PullMark に見せられるものが
           何もないからです。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="この設定を PullMark で開く（0.28.3 以降）">Show review discussion on the PR overview</a></td><td>on/off — <em>on</em></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="この設定を PullMark で開く（0.28.3 以降）">PR の概要にレビューの議論を表示する</a></td><td>on/off — <em>on</em></td>
           <td>概要の会話の中に、インラインのレビュースレッドをそのレビューの下へネストして
           表示します——PullMark がレンダリングしないファイルのものも含めてすべてのスレッドを、
           コメントされた箇所を添えて。オフにすると、判定とコメントだけになります。0.34 で
@@ -118,9 +118,9 @@
         <tr><th>設定</th><th>はたらき</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/github" title="この設定を PullMark で開く（0.36 以降）">Connection</a></td>
         <td>PullMark が GitHub と話せるかどうか、誰として、どの認証情報を通じてか
-        （「Connected as you · GitHub CLI」）。<em>Check&nbsp;Again</em> は認証情報を
+        （「Connected as you · GitHub CLI」）。<em>「再確認」</em> は認証情報を
         読み直します——<code>gh auth login</code> のあとなら、再起動なしでつながります——
-        <em>Set&nbsp;Up…</em> はこの Mac に足りないものを見つけ出すウォークスルーを開きます。
+        <em>「設定…」</em> はこの Mac に足りないものを見つけ出すウォークスルーを開きます。
         認証情報のいきさつは<a href="/ja/docs/troubleshooting/#github-access">GitHub への
         アクセス</a>にすべて書きました。</td></tr>
       </table>
@@ -128,16 +128,16 @@
       <h3>アップデート</h3>
       <table>
         <tr><th>設定</th><th>はたらき</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/whats-new" title="この設定を PullMark で開く（0.28.3 以降）">Show What's New after an update</a></td>
+        <tr><td><a class="setting-link" href="pullmark://settings/general/whats-new" title="この設定を PullMark で開く（0.28.3 以降）">アップデート後に「新機能」を表示する</a></td>
           <td>オン（デフォルト）なら、アップデートが届いたあとにリリースノートを差し出します。
-          オフなら「Updated to PullMark X」という控えめなバナーに変わり、ノートはワンクリック
+          オフなら「PullMark X にアップデートしました」という控えめなバナーに変わり、ノートはワンクリック
           先に——アップデートは、どのみち何らかの形で自分から名乗ります。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/check-updates" title="この設定を PullMark で開く（0.28.3 以降）">Updates</a></td>
-          <td>思い立ったときの <strong>Check for Updates…</strong>。PullMark は起動時と、
+        <tr><td><a class="setting-link" href="pullmark://settings/general/check-updates" title="この設定を PullMark で開く（0.28.3 以降）">アップデート</a></td>
+          <td>思い立ったときの <strong>「アップデートを確認…」</strong>。PullMark は起動時と、
           ときどき自分でも確認します。すでにアップデートを把握しているときは、その行に
-          <strong>What's New</strong>、<strong>Update Now</strong>、そして再確認のボタンが
-          そろって並びます。What's New は、あなたのバージョンと新しいバージョンのあいだにある
-          すべてのリリースのノートを見せ、<strong>Help → Release Notes</strong> には
+          <strong>「新機能」</strong>、<strong>「今すぐアップデート」</strong>、そして再確認のボタンが
+          そろって並びます。「新機能」は、あなたのバージョンと新しいバージョンのあいだにある
+          すべてのリリースのノートを見せ、<strong>ヘルプ →「リリースノート」</strong> には
           いつでも全履歴があります。</td></tr>
       </table>
 
@@ -146,7 +146,7 @@
         <tr><th>設定</th><th>はたらき</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/default-app" title="この設定を PullMark で開く（0.28.3 以降）">Default Markdown app</a></td>
           <td>いま <code>.md</code> ファイルを開いているのがどのアプリかを示します。
-          <strong>Make PullMark the Default</strong> なら、ワンクリックで関連付けを引き受けます。
+          <strong>「PullMark をデフォルトにする」</strong> なら、ワンクリックで関連付けを引き受けます。
           のちのアップグレードで macOS がそれを手放しても、PullMark は気づいて取り返しを
           申し出ます。</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/command-line" title="この設定を PullMark で開く（0.28.3 以降）">Command line</a></td>
@@ -154,14 +154,14 @@
           コマンド</a>を <code>/usr/local/bin</code> に入れます（Homebrew ユーザーはすでに
           持っています）。PATH 上にすでに <code>pullmark</code> があるときは、チェックマークが
           付きます。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/quick-look" title="この設定を PullMark で開く（0.28.3 以降）">Quick Look previews</a></td>
-          <td>Rendered（デフォルト）か Raw Source か——Finder で Markdown ファイルにスペースキーを
+        <tr><td><a class="setting-link" href="pullmark://settings/general/quick-look" title="この設定を PullMark で開く（0.28.3 以降）">Quick Look のプレビュー</a></td>
+          <td>「レンダリング」（デフォルト）か「生ソース」か——Finder で Markdown ファイルにスペースキーを
           押したとき、何が出るかです。</td></tr>
       </table>
 
-      <h2 id="appearance-tab">Appearance（外観）</h2>
-      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/themes">Appearance タブを開く</a>。</p>
-      <p>いちばん上に Light・Dark・System の切り替えがあり、アプリ全体が——ウィンドウの装いも、
+      <h2 id="appearance-tab">外観</h2>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/themes">「外観」タブを開く</a>。</p>
+      <p>いちばん上に ライト・ダーク・システム の切り替えがあり、アプリ全体が——ウィンドウの装いも、
       レンダリングされたページも——それに従います（テーマはそれぞれ、自前のライトとダークの姿を
       持っています）。その下に、見た目の選択肢が並びます。</p>
       <p>ここでの選択はどれもカードになっていて、本物のパイプラインを通したライブプレビューが
@@ -187,33 +187,33 @@
         <tr><td>Full Width</td><td>テキストがウィンドウいっぱいに広がります——フルスクリーンで重宝します。</td></tr>
       </table>
       <p>どこにでも、その場で効き、テーマ・blame・差分・ズームと素直に組み合わさります。読んでいる
-      途中でも View → Content Width から切り替えられます。</p>
+      途中でも 表示 →「本文幅」から切り替えられます。</p>
 
       <h3>行番号 <a class="setting-jump" href="pullmark://settings/themes/line-numbers" title="PullMark で開く（0.28.3 以降）">&#8599;</a></h3>
       <table>
         <tr><th>選択肢</th><th>意味</th></tr>
-        <tr><td>Hidden <em>（デフォルト）</em></td><td>すっきりした余白。番号が要るときは Source ビューで。</td></tr>
-        <tr><td>Shown</td><td>レンダリングされた文書と差分の余白に、各ブロックの開始ソース行を
+        <tr><td>非表示 <em>（デフォルト）</em></td><td>すっきりした余白。番号が要るときは「ソース」ビューで。</td></tr>
+        <tr><td>表示中</td><td>レンダリングされた文書と差分の余白に、各ブロックの開始ソース行を
           表示します——番号にホバーすれば、そのブロックの範囲がまるごと分かります。番号は表示行
           ごとではなく、ブロックごとです（レンダリングされたテキストは自由に折り返すので）。
           生ソースのビューは、つねに自前の行番号を表示します。</td></tr>
       </table>
 
-      <h2 id="keyboard">Keyboard（キーボード）</h2>
-      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/keyboard">Keyboard タブを開く</a>。</p>
+      <h2 id="keyboard">キーボード</h2>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/keyboard">「キーボード」タブを開く</a>。</p>
       <p>メニューにあるアクションのショートカットは、どれも割り当て直せます——全体像と、記録・衝突・
-      Restore Defaults の仕組みは<a href="/ja/docs/shortcuts/">キーボードショートカット</a>に。</p>
+      「デフォルトに戻す」の仕組みは<a href="/ja/docs/shortcuts/">キーボードショートカット</a>に。</p>
 
-      <h2 id="experimental">Experimental（実験的機能）</h2>
-      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/experimental">Experimental タブを開く</a>。</p>
+      <h2 id="experimental">実験的機能</h2>
+      <p class="table-note">PullMark（0.28.1 以降）が入っている Mac でこれを読んでいますか？<a href="pullmark://settings/experimental">「実験的機能」タブを開く</a>。</p>
       <p>設計が固まる前に出荷される機能たちです。それぞれ <span class="beta-badge">beta</span> か
       <span class="beta-badge alpha">alpha</span> のラベルをまとい、それが何を約束するのかは
       <a href="/ja/docs/experimental/">レベルの取り決め</a>で説明しています。アルファの機能は
-      <strong>Show alpha features</strong> をオンにするまで隠れており（先にダイアログがアルファの
+      <strong>「アルファ機能を表示」</strong> をオンにするまで隠れており（先にダイアログがアルファの
       条件を説明します）、機能にはそれぞれ個別の有効化スイッチがあります。
       <a href="/ja/docs/experimental/margin-notes/">マージンノート</a>が住んでいるのもここです
       ——0.35 からベータで、デフォルトで有効。専用の有効化スイッチ、署名の設定、そして
-      エージェント向け指示スニペットの Copy ボタンが並び、はじめて使うときには機能の紹介と、
+      エージェント向け指示スニペットの「コピー」ボタンが並び、はじめて使うときには機能の紹介と、
       オフにする選択肢が示されます。</p>
 
       <h2 id="where-things-are-stored">どこに保存されるのか</h2>

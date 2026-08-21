@@ -69,10 +69,10 @@
       <h2 id="github-access">L'accès GitHub&nbsp;: comment PullMark se connecte, et comment réparer</h2>
       <p>PullMark emprunte les identifiants GitHub que vos propres outils ont déjà —
       il n'a pas de connexion à lui et ne stocke jamais de secret.
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> (réglages →
-      général → GitHub) montre s'il est connecté, en tant que qui, et par quelle
-      source&nbsp;; <em>Set&nbsp;Up…</em> guide une nouvelle machine jusqu'à la
-      connexion, et <em>Check&nbsp;Again</em> prend en compte une réparation
+      <strong>Réglages&nbsp;→&nbsp;Général&nbsp;→&nbsp;GitHub</strong>
+      montre s'il est connecté, en tant que qui, et par quelle
+      source&nbsp;; <em>Configurer…</em> guide une nouvelle machine jusqu'à la
+      connexion, et <em>Vérifier à nouveau</em> prend en compte une réparation
       immédiatement — après <code>gh auth login</code>, pas besoin de relancer.</p>
       <p class="table-note">Vous lisez ceci sur le Mac où PullMark
       (0.36+) est installé&nbsp;?
@@ -96,26 +96,25 @@
       les dépôts publics et les dépôts privés de ce propriétaire marchent, tout le
       reste est refusé&nbsp;; les organisations protégées par SSO exigent un jeton
       autorisé pour chaque organisation&nbsp;; et les jetons créés à la main
-      expirent — la ligne de Settings est l'endroit où se diagnostique «&nbsp;ça
+      expirent — la ligne de Réglages est l'endroit où se diagnostique «&nbsp;ça
       marchait hier&nbsp;».</p>
 
-      <h2 id="github-auth">GitHub&nbsp;: «&nbsp;may not exist… or may be a private repository&nbsp;»</h2>
-      <p><em>«&nbsp;Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access.&nbsp;»</em> (Le
-      document n'existe peut-être pas à cette ref, ou c'est un dépôt privé auquel vos
-      identifiants n'accèdent pas.) L'API de GitHub répond à l'identique pour
+      <h2 id="github-auth">GitHub&nbsp;: «&nbsp;n'existe peut-être pas… ou il s'agit d'un dépôt privé&nbsp;»</h2>
+      <p><em>«&nbsp;Impossible d'ouvrir … Le fichier n'existe peut-être pas à cette
+      référence, ou il s'agit d'un dépôt privé auquel vos identifiants GitHub n'ont
+      pas accès.&nbsp;»</em> L'API de GitHub répond à l'identique pour
       «&nbsp;privé sans accès&nbsp;» et «&nbsp;n'existe pas&nbsp;», si bien que
       PullMark ne peut pas vous dire lequel. Si le dépôt devrait marcher, c'est
       presque toujours l'authentification — voir
       <a href="#github-access">l'accès GitHub</a> ci-dessus, ou ouvrez
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      et lancez <em>Set&nbsp;Up…</em>.</p>
+      <strong>Réglages&nbsp;→&nbsp;Général&nbsp;→&nbsp;GitHub</strong>
+      et lancez <em>Configurer…</em>.</p>
 
       <h2 id="gatekeeper">Gatekeeper refuse d'ouvrir l'app</h2>
       <p>Les versions publiées sont signées avec un Developer ID et notarisées par
       Apple&nbsp;: un téléchargement normal n'affiche aucun avertissement. Si vous
       avez compilé depuis les sources (<code>make app</code>), l'app est signée
-      ad hoc&nbsp;: clic droit → <strong>Open</strong> → <strong>Open</strong>, ou
+      ad hoc&nbsp;: clic droit → <strong>Ouvrir</strong> → <strong>Ouvrir</strong>, ou
       autorisez-la dans Réglages Système → Confidentialité et sécurité.</p>
 
       <h2 id="quick-look">Les aperçus Quick Look ne se rendent plus</h2>
@@ -123,16 +122,16 @@
       silencieusement faire tomber l'enregistrement de l'extension Quick Look
       (Coup d'œil). PullMark la ré-enregistre à chaque lancement — lancez donc
       simplement l'app une fois. Si les aperçus montrent encore du texte brut,
-      vérifiez que Settings → General → «&nbsp;Quick Look previews&nbsp;» est sur
-      Rendered.</p>
+      vérifiez que Réglages → Général → «&nbsp;Aperçus Quick Look&nbsp;» est sur
+      Rendu.</p>
 
-      <h2 id="default-app">«&nbsp;PullMark is no longer your default Markdown app&nbsp;»</h2>
+      <h2 id="default-app">«&nbsp;PullMark n'est plus votre app Markdown par défaut&nbsp;»</h2>
       <p>Même cause&nbsp;: une mise à niveau a remplacé le bundle et macOS a lâché
-      l'association <code>.md</code>. Le bouton <strong>Make Default Again</strong>
-      (redevenir l'app par défaut) de la bannière la reprend&nbsp;; Settings → General
+      l'association <code>.md</code>. Le bouton <strong>Redéfinir par défaut</strong>
+      de la bannière la reprend&nbsp;; Réglages → Général
       aussi.</p>
 
-      <h2 id="editing">«&nbsp;… changed while you were editing this block — nothing was saved&nbsp;»</h2>
+      <h2 id="editing">«&nbsp;… a changé pendant que vous modifiiez ce bloc — rien n'a été enregistré&nbsp;»</h2>
       <p>Le fichier a changé sur le disque (un autre éditeur, un agent, une opération
       git) entre l'ouverture de l'éditeur de bloc et l'enregistrement. PullMark refuse
       de s'insérer dans des lignes qui ont bougé — rien n'est perdu hormis cette seule
@@ -145,32 +144,32 @@
       signifie que le chemin ne se résout pas pour l'instant — un volume démonté, une
       branche git changée, un worktree supprimé. Les lignes s'estompent au lieu de
       disparaître, à dessein&nbsp;: elles ressuscitent d'elles-mêmes quand le chemin
-      revient. Cliquer un récent mort propose <strong>Remove from Recents</strong>
-      (retirer des récents) ou <strong>Keep</strong> (conserver).</p>
+      revient. Cliquer un récent mort propose <strong>Retirer des récents</strong>
+      ou <strong>Conserver</strong>.</p>
 
       <h2 id="pr-sync">Pull requests&nbsp;: bannières et commentaires en attente</h2>
       <ul>
-        <li><em>«&nbsp;This pull request was updated on GitHub.&nbsp;»</em> — la
+        <li><em>«&nbsp;Cette pull request a été mise à jour sur GitHub.&nbsp;»</em> — la
         branche a avancé depuis votre chargement. Rafraîchir tient en un clic et vos
         brouillons survivent&nbsp;; PullMark ne recharge jamais tout seul sous une
         révision en cours.</li>
-        <li><em>«&nbsp;Review comments couldn't be loaded…&nbsp;»</em> — le diff se
-        ferait sinon passer pour une PR sans commentaire&nbsp;; Retry récupère à
+        <li><em>«&nbsp;Impossible de charger les commentaires de révision…&nbsp;»</em> — le diff se
+        ferait sinon passer pour une PR sans commentaire&nbsp;; Réessayer récupère à
         nouveau.</li>
-        <li><em>«&nbsp;Could not upload N pending comment(s)… kept locally for
-        retry.&nbsp;»</em> — les commentaires écrits hors ligne (ou à travers un
+        <li><em>«&nbsp;Impossible d'envoyer N commentaires en attente vers GitHub —
+        conservés en local pour une nouvelle tentative.&nbsp;»</em> — les commentaires écrits hors ligne (ou à travers un
         hoquet d'API) se mettent en file sur disque par tête de PR et s'envoient dès
         que possible. Rien n'est perdu.</li>
-        <li><em>«&nbsp;Committed …, but the push failed&nbsp;»</em> — le commit est
+        <li><em>«&nbsp;… committés, mais l'envoi a échoué&nbsp;»</em> — le commit est
         bien au chaud dans votre historique local&nbsp;; seul le push est à
         retenter.</li>
       </ul>
 
       <h2 id="updates">Mises à jour</h2>
-      <p>Le bouton <strong>Update Now</strong> de la bannière lance la mise à niveau
+      <p>Le bouton <strong>Mettre à jour</strong> de la bannière lance la mise à niveau
       brew (ou une installation sur place vérifiée pour les installations DMG) et
       relance l'app. En cas d'échec, la bannière montre la commande exacte
-      <code>brew upgrade --cask pullmark</code> avec un bouton Copy — l'exécuter dans
+      <code>brew upgrade --cask pullmark</code> avec un bouton Copier — l'exécuter dans
       un terminal fait la même chose. Les builds de développement ne vérifient pas
       les mises à jour.</p>
 
@@ -182,15 +181,15 @@
         bruyamment.</li>
         <li><em>Command not found</em> — voir
         <a href="/fr/docs/cli/#install">installer la commande</a>.</li>
-        <li><em>«&nbsp;Couldn't install the command&nbsp;»</em> — l'installateur de
-        Settings a besoin d'une autorisation pour écrire dans
+        <li><em>«&nbsp;Couldn't install the command&nbsp;»</em> — l'installateur des
+        Réglages a besoin d'une autorisation pour écrire dans
         <code>/usr/local/bin</code>&nbsp;; annulez et relancez si vous avez congédié
         l'invite.</li>
       </ul>
 
       <h2 id="still-stuck">Toujours bloqué&nbsp;?</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">Ouvrez une
-      issue</a> — Help → Report a Bug… en pré-remplit une depuis
+      issue</a> — Aide → Signaler un bug… en pré-remplit une depuis
       l'app.</p>
     </article>
   </div>

@@ -590,7 +590,7 @@ footer .note { margin-left: auto; }
       hors de la page rendue — si bien que <em>«&nbsp;traite mes notes dans le
       plan&nbsp;»</em> suffit comme passation&nbsp;: votre agent lit chaque note
       exactement là où vous l'avez laissée. Pas de commit, pas de copier-coller, pas de
-      pull request. Puis regardez la nouvelle version arriver — Compare (comparer)
+      pull request. Puis regardez la nouvelle version arriver — Comparer
       surligne les modifications de l'agent mot à mot, en direct à chaque
       enregistrement.</p>
     </div>
@@ -645,9 +645,9 @@ footer .note { margin-left: auto; }
   <div class="wrap">
     <p class="kicker">révision</p>
     <h2>Toute la révision de la doc, depuis la page rendue.</h2>
-    <p class="prose">Passez de la disposition <strong>inline</strong> à la vue <strong>côte à
-    côte</strong>, descendez au <em>Source Diff</em> (diff source) brut ou prévisualisez le
-    <em>Result</em> (résultat) final — le tout depuis la barre d'outils, qui vous mène aussi de
+    <p class="prose">Passez de la disposition <strong>en ligne</strong> à la vue <strong>côte à
+    côte</strong>, descendez au <em>Diff source</em> brut ou prévisualisez le
+    <em>Résultat</em> final — le tout depuis la barre d'outils, qui vous mène aussi de
     fichier en fichier et vous ramène à la PR sans toucher à la barre latérale. Le front matter
     YAML devient un <strong>discret tableau de métadonnées</strong>, pas un mur de prose en
     gras — les docs chargées en configuration se diffent donc proprement aussi. Un document tout
@@ -655,8 +655,8 @@ footer .note { margin-left: auto; }
     de teinter chaque bloc en vert. Les fils de révision existants apparaissent sous les blocs
     qu'ils discutent. Survolez un bloc, cliquez la bulle, et commentez le bloc entier ou
     <strong>exactement les lignes de votre choix</strong>. Quand vous avez terminé,
-    <strong>Approve</strong> (approuver), <strong>Request Changes</strong> (demander des
-    modifications) ou <strong>Comment</strong> (commenter), directement depuis la vue
+    <strong>Approuver</strong>, <strong>Demander des modifications</strong>
+    ou <strong>Commenter</strong>, directement depuis la vue
     d'ensemble — avec ou sans commentaires de ligne — et déposez aussi des commentaires au
     niveau du fichier ou de simples messages de conversation. La vue d'ensemble montre
     <strong>où en est la PR</strong>&nbsp;: approuvée ou modifications demandées, le verdict de
@@ -668,7 +668,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/fr/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/fr/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="PullMark révisant une pull request de documentation&nbsp;: un diff rendu où un paragraphe modifié porte un surlignage mot à mot, un organigramme Mermaid ajouté s'affiche sur un fond vert de bloc ajouté, la barre latérale montre un compteur de commentaires sur le fichier, et le contrôle de révision de la barre d'outils affiche Finish your review avec trois commentaires en attente">
+        alt="PullMark révisant une pull request de documentation&nbsp;: un diff rendu où un paragraphe modifié porte un surlignage mot à mot, un organigramme Mermaid ajouté s'affiche sur un fond vert de bloc ajouté, la barre latérale montre un compteur de commentaires sur le fichier, et le contrôle de révision de la barre d'outils affiche Terminer la révision avec trois commentaires en attente">
       </picture>
       <figcaption>Une PR de documentation en diff rendu&nbsp;: l'unique phrase modifiée porte
       un surlignage mot à mot, et le nouvel organigramme arrive comme un <em>diagramme</em>
@@ -680,7 +680,7 @@ footer .note { margin-left: auto; }
       <div class="act">
         <div class="act-name">Add to Review</div>
         <p>Le mode par défaut&nbsp;: les brouillons s'accumulent en local. Envoyez-les
-        ensemble — Comment, Approve ou Request Changes — ou enregistrez une révision en
+        ensemble — Commenter, Approuver ou Demander des modifications — ou enregistrez une révision en
         attente à terminer sur github.com.</p>
       </div>
       <div class="act">
@@ -699,7 +699,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/fr/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/fr/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="La vue d'ensemble de pull request de PullMark&nbsp;: le titre de la PR avec une pastille Open, une capsule Changes requested, une capsule Checks passed, les avatars des réviseurs portant leur badge de verdict, une pastille d'équipe docs-guild, la description de la PR rendue, et la chronologie de conversation dont le premier commentaire de révision montre un tableau rendu">
+        alt="La vue d'ensemble de pull request de PullMark&nbsp;: le titre de la PR avec une pastille Ouverte, une capsule Modifications demandées, une capsule Vérifications réussies, les avatars des réviseurs portant leur badge de verdict, une pastille d'équipe docs-guild, la description de la PR rendue, et la chronologie de conversation dont le premier commentaire de révision montre un tableau rendu">
       </picture>
       <figcaption>La conversation comme un document&nbsp;: les commentaires de révision
       affichent leurs tableaux comme des tableaux, et l'avatar de chaque réviseur porte son
@@ -769,14 +769,14 @@ footer .note { margin-left: auto; }
         autonome&nbsp;; <kbd>⌘C</kbd> colle en texte riche dans Docs et Slack,
         <kbd>⌥⌘C</kbd> restitue le Markdown.</li>
       <li><strong>Trois thèmes de lecture</strong> — Editorial, GitHub et Terminal, avec
-        aperçus en direct dans Settings (réglages) — ou déposez votre propre CSS. Clair et
+        aperçus en direct dans Réglages — ou déposez votre propre CSS. Clair et
         sombre restylent tout, Mermaid compris, et la longueur de ligne vous
         appartient&nbsp;: Standard, Wide ou Full Width.</li>
       <li><strong>Les liens GitHub s'ouvrent dans l'app</strong> — cliquez un lien
         <code>github.com</code> vers un fichier Markdown et PullMark le rend, avec une barre
         de provenance dépôt&nbsp;@&nbsp;branche toujours visible&nbsp;; <kbd>⌘</kbd>-clic
         l'envoie au navigateur.</li>
-      <li><strong>Open Quickly (ouvrir rapidement)</strong> — <kbd>⌘K</kbd> saute vers
+      <li><strong>Ouvrir rapidement</strong> — <kbd>⌘K</kbd> saute vers
         n'importe quel titre, fichier ou PR, en recherche floue — ou collez l'URL d'une PR,
         l'URL d'un dépôt ou un chemin de fichier, et il l'ouvre directement.</li>
       <li><strong>Déplacé veut dire déplacé</strong> — un paragraphe déplacé à l'identique
@@ -824,7 +824,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/fr/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/fr/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark affichant un fichier Markdown récupéré d'un dépôt GitHub&nbsp;: une barre de provenance au-dessus du contenu donne le nom du dépôt, une pastille de branche, le chemin du fichier et le commit épinglé, avec un lien Open on GitHub&nbsp;; la section Emplacements de la barre latérale montre le dépôt avec une icône de livre et son arborescence de fichiers Markdown">
+        alt="PullMark affichant un fichier Markdown récupéré d'un dépôt GitHub&nbsp;: une barre de provenance au-dessus du contenu donne le nom du dépôt, une pastille de branche, le chemin du fichier et le commit épinglé, avec un lien Ouvrir sur GitHub&nbsp;; la section Emplacements de la barre latérale montre le dépôt avec une icône de livre et son arborescence de fichiers Markdown">
       </picture>
       <figcaption>Une doc lue directement depuis GitHub&nbsp;: la barre de provenance dit
       toujours où vous êtes — dépôt, branche, commit épinglé — et la pastille de branche
@@ -835,9 +835,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/fr/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/fr/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="La fenêtre Settings de PullMark sur l'onglet Appearance&nbsp;: trois cartes d'aperçu de thème en direct — GitHub, Editorial et Terminal — chacune rendant le même document d'exemple via le vrai pipeline, Editorial sélectionné, au-dessus de boutons ouvrant le dossier de thèmes personnalisés">
+        alt="La fenêtre Réglages de PullMark sur l'onglet Apparence&nbsp;: trois cartes d'aperçu de thème en direct — GitHub, Editorial et Terminal — chacune rendant le même document d'exemple via le vrai pipeline, Editorial sélectionné, au-dessus de boutons ouvrant le dossier de thèmes personnalisés">
       </picture>
-      <figcaption>Settings → Appearance (réglages → apparence)&nbsp;: trois aperçus de thème en direct, rendus par le vrai pipeline — cliquez une carte pour changer.</figcaption>
+      <figcaption>Réglages → Apparence&nbsp;: trois aperçus de thème en direct, rendus par le vrai pipeline — cliquez une carte pour changer.</figcaption>
     </figure>
   </div>
 </section>
@@ -861,7 +861,7 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>App par défaut pour .md</h3>
-        <p>Un clic dans Settings (réglages) et le double-clic dans le Finder signifie
+        <p>Un clic dans Réglages et le double-clic dans le Finder signifie
         <em>rendu</em>, partout — et si une mise à jour fait un jour sauter l'association,
         PullMark s'en aperçoit et propose de la rétablir.</p>
       </div>

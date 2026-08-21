@@ -71,8 +71,8 @@
       <ul>
         <li><strong>Homebrew</strong> — al geïnstalleerd; de cask linkt
         <code>pullmark</code> in je brew-prefix.</li>
-        <li><strong>DMG</strong> — open <strong>Settings&nbsp;(⌘,) → General</strong>
-        en klik op <strong>Install pullmark Command…</strong>; dat linkt
+        <li><strong>DMG</strong> — open <strong>Instellingen&nbsp;(⌘,) → Algemeen</strong>
+        en klik op <strong>Installeer pullmark-commando…</strong>; dat linkt
         het commando in <code>/usr/local/bin</code> (mogelijk wordt om
         toestemming gevraagd).</li>
         <li><strong>Broncheckout</strong> — <code>make install-cli</code>
@@ -124,7 +124,7 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
       <p>De boom van de worktree landt in Locaties (met zijn branch-chip,
       want een worktree is gewoon een git-checkout), <code>plan.md</code>
       wordt vastgezet in Geopende bestanden en gerenderd. Rechtsklik erop en kies
-      <strong>Reveal in Location</strong> om te springen naar waar het in
+      <strong>Toon in Locaties</strong> om te springen naar waar het in
       de boom zit. Dit werkt hetzelfde wanneer de Locatie al open was —
       een bestand openen dat erin woont maakt nooit een dubbele wereld,
       alleen een regel in de werkset.</p>
@@ -139,7 +139,7 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
       diff op woordniveau die pull requests krijgen.
       <code>--diff=&lt;ref&gt;</code> vergelijkt in plaats daarvan met een
       branch, tag of commit-SHA. Het is de shelldeur naar de
-      Compare-functie van de app (de klok-met-chevron-knop in de toolbar),
+      Vergelijk-functie van de app (de klok-met-chevron-knop in de toolbar),
       en het snelste antwoord op "wat heeft de agent net met dit document
       gedaan":</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># wat de laatste bewerkingen veranderden</span>
@@ -149,7 +149,7 @@ pullmark --version           <span class="c"># toont de appversie</span></code><
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># een worktree, plan.md als diff</span></code></pre>
       <p>Mappen die je erbij doorgeeft openen nog steeds als Locaties, en
-      elke vorm heeft een tweelingbroer in de app, in het Compare-menu van
+      elke vorm heeft een tweelingbroer in de app, in het Vergelijk-menu van
       de toolbar (inclusief <strong>Compare Revisions…</strong> en
       <strong>Compare with File…</strong>). Omdat <code>--diff</code> en
       <code>--diff-with</code> flags zijn en nooit subcommando's, opent een

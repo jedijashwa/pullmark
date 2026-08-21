@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>サイドバー — PullMark ドキュメント</title>
-<meta name="description" content="PullMark のサイドバーを解説。「開いているファイル」とプレビュー、「場所」、Pull Requests、「最近使った項目」、そしてすべてのアイコンの意味。">
+<meta name="description" content="PullMark のサイドバーを解説。「開いているファイル」とプレビュー、「場所」、「プルリクエスト」、「最近使った項目」、そしてすべてのアイコンの意味。">
 <link rel="canonical" href="https://pullmark.app/ja/docs/sidebar/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/sidebar/">
 <link rel="alternate" hreflang="zh-Hans" href="https://pullmark.app/zh/docs/sidebar/">
@@ -16,7 +16,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/sidebar/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/sidebar/">
 <meta property="og:title" content="サイドバー — PullMark ドキュメント">
-<meta property="og:description" content="PullMark のサイドバーを解説。「開いているファイル」とプレビュー、「場所」、Pull Requests、「最近使った項目」、そしてすべてのアイコンの意味。">
+<meta property="og:description" content="PullMark のサイドバーを解説。「開いているファイル」とプレビュー、「場所」、「プルリクエスト」、「最近使った項目」、そしてすべてのアイコンの意味。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/ja/docs/sidebar/">
 <meta property="og:image" content="https://pullmark.app/img/og-card.png?v=1">
@@ -70,7 +70,7 @@
       <a href="/ja/docs/cli/">コマンドライン</a>から、あるいは「場所」のファイルを確定して——
       明示的に開いたすべての文書が並びます。フラットな一覧で、ドラッグで並べ替えられ、各行はホバーで
       現れる ✕（または選択して ⌫）で外せます。セクション見出しを右クリックすると
-      <strong>Close All</strong>（すべて閉じる）。</p>
+      <strong>「すべて閉じる」</strong>。</p>
 
       <h3 id="previews">プレビュー</h3>
       <p>「場所」内のファイルをシングルクリックすると、すぐにレンダリングされます——そして
@@ -81,24 +81,24 @@
       <p>読む以上の関わりを見せると、プレビューは普通のピン留め項目になります。</p>
       <ul>
         <li><strong>ダブルクリック</strong> — ツリー内のファイル、または斜体の行そのもの</li>
-        <li><strong>編集を始める</strong> — Edit Mode に入るか、ブロック編集を保存するとピン留め
+        <li><strong>編集を始める</strong> — 「編集モード」に入るか、ブロック編集を保存するとピン留め
         されます</li>
-        <li>右クリックメニューの <strong>Keep Open</strong></li>
+        <li>右クリックメニューの <strong>「開いたままにする」</strong></li>
       </ul>
       <p>読むための操作——blame、行履歴、画像や図の拡大表示——では、プレビューはあえて昇格しません。
       クリックのたびにファイルを完全に開きたい場合は、設定の
-      <a href="/ja/docs/settings/#clicking-files">Clicking files in Locations</a> を切り替えて
+      <a href="/ja/docs/settings/#clicking-files">「場所」内のファイルをクリックしたとき</a> を切り替えて
       ください。</p>
       <p><strong>リモートリポジトリも、同じ場所で同じようにプレビューされます。</strong>
       GitHub リポジトリのツリーをブラウズしても、リモート文書内のリンクをたどっても、「開いているファイル」に
       現れるのは同じ斜体の 1 行——ただしファイルが Mac 上にないので、本のアイコンと
       <code>owner/repo @ ref</code> の 2 行目が付きます。プレビューはウィンドウごとにつねに
       <em>ひとつ</em>だけ、ローカルでもリモートでも同じ。何かをプレビューすれば、それまでの
-      プレビューは置き換わります。リモート文書の確定（ダブルクリックまたは Keep Open）は、その文書を
+      プレビューは置き換わります。リモート文書の確定（ダブルクリックまたは「開いたままにする」）は、その文書を
       リポジトリのもとへ整理すること——「場所」にあるそのリポジトリのピン留めリストに移ります。
       ⌘K からは直接ピン留めで開きます。URL を貼り付けるのは、明確な意図だからです。</p>
       <p>開いた「場所」の中にある「開いているファイル」の行には、右クリックメニューに
-      <strong>Reveal in Location</strong> が加わります。「いま読んでいるもの」から「それが住んでいる
+      <strong>「Location 内に表示」</strong> が加わります。「いま読んでいるもの」から「それが住んでいる
       場所」への帰り道です。</p>
 
       <h2 id="locations">場所</h2>
@@ -107,7 +107,7 @@
       <table>
         <tr><th>行</th><th>意味</th></tr>
         <tr><td>📁 フォルダアイコン</td><td>ローカルフォルダ——中の Markdown ファイルをツリーで
-          （右クリック → View as List でフラットな一覧でも）。変更は監視されます。</td></tr>
+          （右クリック →「リストとして表示」でフラットな一覧でも）。変更は監視されます。</td></tr>
         <tr><td>📕 本のアイコン</td><td>ブラウズ用に開いた GitHub リポジトリ——API から取得され、
           ディスクには何も書き込まれません。</td></tr>
       </table>
@@ -123,11 +123,11 @@
         <li><strong>View Branch from GitHub</strong> — チェックアウトに触れずに、別ブランチの
         ファイルをリモートから読みます。ローカルにワークツリーがあるブランチならそちらへジャンプ——
         ローカルがリモートに勝ちます。</li>
-        <li><strong>Open on GitHub</strong> — このブランチのリポジトリをブラウザで。</li>
+        <li><strong>「GitHub で開く」</strong> — このブランチのリポジトリをブラウザで。</li>
       </ul>
       <p>リモート（本のアイコン）のリポジトリでは、同じチップがブランチを一覧します。
       <strong>Switch To</strong> はセッションを別ブランチに固定し直し、⌥ を押しながらなら
-      <strong>Open Branch Separately</strong> で並べて読めます。<strong>Browse Repo Files…</strong>
+      <strong>「ブランチを別に開く」</strong> で並べて読めます。<strong>「リポジトリのファイルをブラウズ…」</strong>
       はリポジトリの Markdown ツリー全体を読み込みます。確定済みの文書はツリーの上に並ぶので、
       大きなリポジトリに埋もれません。ツリー内に見えている確定済みの文書は、単にそこで表される
       だけです。（単にプレビュー中の文書は「<a href="#previews">開いているファイル</a>」に表示され、ここには
@@ -138,7 +138,7 @@
       <h2 id="pull-requests">プルリクエスト</h2>
       <p>開いた PR はそれぞれグループになります。概要行（ステータスアイコン + 変更された Markdown の
       数）に続いて、変更された Markdown ファイルが並び、未解決のレビュースレッドがあるファイルには
-      件数付きのコメントバブルが付きます。開いた PR の下には <strong>Review Requests</strong>——
+      件数付きのコメントバブルが付きます。開いた PR の下には <strong>「レビューリクエスト」</strong>——
       あなたのレビュー待ちの PR が集まり、未読数は折りたたんでも見え続けます（設定で非表示にも、
       Markdown を変更する PR だけに絞ることもできます）。</p>
       <p>PR 行のステータスアイコン。</p>
@@ -158,7 +158,7 @@
       PR の行はライブなステータスアイコンをまといます。ファイルが行方不明になった項目は、消える
       代わりに（時計バッジ付きで）淡色表示になり、パスが戻れば復活します——ブランチの切り替えや
       マウント解除されたボリュームのための設計です。見出しを右クリックすると
-      <strong>Clear Recents</strong>。</p>
+      <strong>「最近使った項目を消去」</strong>。</p>
 
       <h2 id="removal">項目を取り除く</h2>
       <p>最上位の行にホバーすると ✕ が現れます——外れるのはサイドバーの行だけで、ディスクや GitHub
@@ -177,7 +177,7 @@
           後ろに付く小さなマークとして: このローカルフォルダはそのチェックアウト）</td></tr>
         <tr><td>ブランチ記号 + 名前</td><td>ブランチチップ——クリックでブランチとワークツリー</td></tr>
         <tr><td>プルリクエストの矢印</td><td>プルリクエスト</td></tr>
-        <tr><td>トレイ</td><td>Review Requests——あなたのレビュー待ちの PR</td></tr>
+        <tr><td>トレイ</td><td>「レビューリクエスト」——あなたのレビュー待ちの PR</td></tr>
         <tr><td>吹き出し + 件数</td><td>PR のファイル上では、未解決のレビューコメント。「開いているファイル」の
           行では、文書に残っている<a href="/ja/docs/experimental/margin-notes/">マージンノート</a></td></tr>
         <tr><td>色付きドット（左端）</td><td>未読のレビューリクエスト</td></tr>

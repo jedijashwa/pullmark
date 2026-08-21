@@ -70,8 +70,8 @@
       <ul>
         <li><strong>Homebrew</strong> — すでに入っています。cask が <code>pullmark</code> を
         brew の prefix にリンクします。</li>
-        <li><strong>DMG</strong> — <strong>Settings&nbsp;(⌘,) → General</strong> を開いて
-        <strong>Install pullmark Command…</strong> をクリックしてください。コマンドが
+        <li><strong>DMG</strong> — <strong>設定&nbsp;(⌘,) →「一般」</strong> を開いて
+        <strong>「pullmark コマンドをインストール…」</strong> をクリックしてください。コマンドが
         <code>/usr/local/bin</code> にリンクされます（認証を求められることがあります）。</li>
         <li><strong>ソースのチェックアウト</strong> — <code>make install-cli</code>
         （置き場所を選ぶなら <code>BIN_DIR=~/bin</code> を付けてください）。</li>
@@ -117,7 +117,7 @@ pullmark --version           <span class="c"># アプリのバージョンを表
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
       <p>ワークツリーのツリーは「場所」に着地し（ワークツリーもただの git チェックアウトなので、
       ブランチチップ付きで）、<code>plan.md</code> は「開いているファイル」にピン留めされてレンダリングされます。
-      右クリックして <strong>Reveal in Location</strong> を選べば、ツリーの中のその居場所へ飛べます。
+      右クリックして <strong>「Location 内に表示」</strong> を選べば、ツリーの中のその居場所へ飛べます。
       「場所」がすでに開いていたときも同じです——その中にあるファイルを開いても、世界がもうひとつ
       できることはなく、作業セットに 1 行が増えるだけです。</p>
       <p>フォルダとファイルの組み合わせに順番は関係ありませんが、表示されるのは<em>最後に渡した
@@ -127,7 +127,7 @@ pullmark --version           <span class="c"># アプリのバージョンを表
       <p><code>--diff</code> は、それぞれのファイルを<em>比較しながら</em>開きます——作業中の内容を
       直近のコミットと突き合わせ、プルリクエストとまったく同じ、レンダリングされた単語単位の差分として。
       <code>--diff=&lt;ref&gt;</code> なら、代わりにブランチ・タグ・コミット SHA と比べます。アプリの
-      Compare（比較）機能——ツールバーの時計とシェブロンのボタン——へのシェルからの入り口であり、
+      「比較」機能——ツールバーの時計とシェブロンのボタン——へのシェルからの入り口であり、
       「エージェントはこの文書に何をしたのか」への最速の答えです。</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 直近の編集が変えたもの</span>
 <span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># 現在のファイルと main</span>
@@ -136,7 +136,7 @@ pullmark --version           <span class="c"># アプリのバージョンを表
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># ワークツリーと、差分の plan.md</span></code></pre>
       <p>一緒に渡したフォルダは変わらず「場所」として開きますし、どの形にも、ツールバーの
-      Compare メニューにアプリ内の双子がいます（<strong>Compare Revisions…</strong> と
+      「比較」メニューにアプリ内の双子がいます（<strong>Compare Revisions…</strong> と
       <strong>Compare with File…</strong> を含めて）。<code>--diff</code> と
       <code>--diff-with</code> はあくまでフラグであってサブコマンドではないので、たまたま
       <code>diff</code> という名前のファイルは、いつもどおりただ開きます。</p>

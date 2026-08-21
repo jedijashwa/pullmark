@@ -72,8 +72,7 @@
       <a href="/es/docs/cli/">línea de comandos</a> o al conservar un archivo
       de una Ubicación. Plano, reordenable arrastrando, cada fila eliminable
       con la ✕ que aparece al pasar el cursor (o ⌫ en la fila seleccionada).
-      Clic derecho en la cabecera de la sección para <strong>Close All</strong>
-      (cerrar todo).</p>
+      Clic derecho en la cabecera de la sección para <strong>Cerrar todo</strong>.</p>
 
       <h3 id="previews">Vistas previas</h3>
       <p>Un solo clic en un archivo dentro de una Ubicación y se renderiza al
@@ -90,14 +89,14 @@
         propia entrada en cursiva</li>
         <li><strong>Empezar a editar</strong> — entrar en el modo de edición o
         guardar la edición de un bloque la fija</li>
-        <li><strong>Keep Open</strong> (mantener abierto) en el menú
+        <li><strong>Mantener abierto</strong> en el menú
         contextual</li>
       </ul>
       <p>Las interacciones de lectura — blame, historial de líneas,
       inspeccionar una imagen o un diagrama — deliberadamente nunca ascienden
       una vista previa. Si prefieres que cada clic abra los archivos del
-      todo, cambia <a href="/es/docs/settings/#clicking-files">Clicking files
-      in Locations</a> en Settings.</p>
+      todo, cambia <a href="/es/docs/settings/#clicking-files">Al hacer clic en
+      archivos de Ubicaciones</a> en Ajustes.</p>
       <p><strong>Los repos remotos se previsualizan igual, en el mismo
       lugar.</strong> Navegar el árbol de un repo de GitHub, o seguir enlaces
       dentro de un documento remoto, pone la misma entrada única en cursiva
@@ -105,13 +104,13 @@
       <code>owner/repo @ ref</code>, ya que el archivo no está en tu Mac.
       Solo existe <em>una</em> vista previa por ventana, local o remota:
       previsualizar algo reemplaza lo que estuvieras previsualizando antes.
-      Conservar un doc remoto (doble clic o Keep Open) es lo que lo archiva
+      Conservar un doc remoto (doble clic o Mantener abierto) es lo que lo archiva
       con su repo — pasa a la lista de fijados del repo bajo Ubicaciones. ⌘K
       abre fijando directamente, porque pegar una URL es intención
       explícita.</p>
       <p>Cualquier fila de Archivos abiertos que viva dentro de una Ubicación
-      abierta tiene <strong>Reveal in Location</strong> (mostrar en su
-      ubicación) en su menú contextual — el salto de vuelta de «lo que estoy
+      abierta tiene <strong>Mostrar en su ubicación</strong> en su menú
+      contextual — el salto de vuelta de «lo que estoy
       leyendo» a «donde vive».</p>
 
       <h2 id="locations">Ubicaciones</h2>
@@ -120,7 +119,7 @@
       <table>
         <tr><th>Fila</th><th>Significado</th></tr>
         <tr><td>📁 icono de carpeta</td><td>Una carpeta local — sus archivos Markdown como árbol
-          (o como lista plana; clic derecho → View as List). Vigilada por si cambia.</td></tr>
+          (o como lista plana; clic derecho → Ver como lista). Vigilada por si cambia.</td></tr>
         <tr><td>📕 icono de libro</td><td>Un repositorio de GitHub abierto para navegar —
           descargado de la API, nada se escribe en disco.</td></tr>
       </table>
@@ -138,14 +137,14 @@
         lee los archivos de otra rama en remoto, sin tocar tu checkout. Una
         rama que ya tiene worktree local salta al worktree — lo local gana a
         lo remoto.</li>
-        <li><strong>Open on GitHub</strong> (abrir en GitHub) — el repo (en
+        <li><strong>Abrir en GitHub</strong> — el repo (en
         esta rama) en tu navegador.</li>
       </ul>
       <p>En un repo remoto (icono de libro), el mismo chip lista ramas:
       <strong>Switch To</strong> (cambiar a) vuelve a fijar la sesión en otra
-      rama y, manteniendo ⌥, aparece <strong>Open Branch Separately</strong>
-      (abrir la rama por separado) para leer lado a lado. <strong>Browse Repo
-      Files…</strong> (explorar los archivos del repo) carga el árbol
+      rama y, manteniendo ⌥, aparece <strong>Abrir la rama por separado</strong>
+      para leer lado a lado. <strong>Explorar los archivos del
+      repo…</strong> carga el árbol
       Markdown completo del repo. Los docs conservados del repo van encima
       del árbol, para que nunca se ahoguen bajo un repo grande; un doc
       conservado que ya es visible en el árbol simplemente se representa ahí.
@@ -160,9 +159,9 @@
       número de archivos Markdown modificados) y luego sus archivos Markdown
       modificados — un globo de comentario con contador marca los archivos
       con hilos de revisión sin resolver. Bajo tus PR abiertos,
-      <strong>Review Requests</strong> (solicitudes de revisión) reúne los PR
+      <strong>Solicitudes de revisión</strong> reúne los PR
       que esperan tu revisión, con un contador de no leídos que sigue visible
-      incluso plegado (ocultable en Settings, y filtrable a solo los PR que
+      incluso plegado (ocultable en Ajustes, y filtrable a solo los PR que
       tocan Markdown).</p>
       <p>Iconos de estado en las filas de PR:</p>
       <table>
@@ -184,7 +183,7 @@
       vivo; un reciente cuyo archivo desapareció se atenúa (insignia de
       reloj) en vez de esfumarse y revive cuando la ruta vuelve — pensado
       para cambios de rama y volúmenes desmontados. Clic derecho en la
-      cabecera para <strong>Clear Recents</strong> (vaciar recientes).</p>
+      cabecera para <strong>Vaciar recientes</strong>.</p>
 
       <h2 id="removal">Quitar cosas</h2>
       <p>Pasa el cursor por cualquier fila de primer nivel para la ✕ — quita
@@ -205,7 +204,7 @@
           remoto; como pequeña marca al final: esta carpeta local es un checkout de uno)</td></tr>
         <tr><td>Glifo de rama + nombre</td><td>El chip de rama — haz clic para ramas y worktrees</td></tr>
         <tr><td>Flechas de pull request</td><td>Un pull request</td></tr>
-        <tr><td>Bandeja</td><td>Review Requests — PRs que esperan tu revisión</td></tr>
+        <tr><td>Bandeja</td><td>Solicitudes de revisión — PRs que esperan tu revisión</td></tr>
         <tr><td>Globo de diálogo + contador</td><td>En un archivo de PR: comentarios de revisión sin
           resolver. En una fila de Archivos abiertos: <a href="/es/docs/experimental/margin-notes/">notas al
           margen</a> aún presentes en el documento</td></tr>

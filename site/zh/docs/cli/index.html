@@ -70,8 +70,8 @@
       <ul>
         <li><strong>Homebrew</strong>——已经装好；cask 会把
         <code>pullmark</code> 链接进你的 brew 前缀。</li>
-        <li><strong>DMG</strong>——打开 <strong>Settings&nbsp;(⌘,) → General</strong>，
-        点击 <strong>Install pullmark Command…</strong>；它会把命令链接进
+        <li><strong>DMG</strong>——打开 <strong>设置&nbsp;(⌘,) → 通用</strong>，
+        点击 <strong>安装 pullmark 命令…</strong>；它会把命令链接进
         <code>/usr/local/bin</code>（可能会要求授权）。</li>
         <li><strong>源码检出</strong>——<code>make install-cli</code>
         （加 <code>BIN_DIR=~/bin</code> 可自选位置）。</li>
@@ -116,7 +116,7 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
 <pre><code><span class="p">$ </span>pullmark ~/wt/feature ~/wt/feature/docs/plan.md</code></pre>
       <p>工作树的文件树进入“位置”（带分支标签，因为工作树就是一个 git
       检出），<code>plan.md</code> 固定在“打开的文件”中并渲染出来。右键它选
-      <strong>Reveal in Location</strong>（在“位置”中显示）即可跳到它在树中的
+      <strong>在“位置”中显示</strong>即可跳到它在树中的
       落点。若该“位置”早已打开，行为完全相同——打开位于其中的文件绝不会
       造出一个重复的世界，只会多一条工作集条目。</p>
       <p>文件夹/文件的配对不看顺序，但显示的是<em>最后</em>传入的文件，
@@ -126,7 +126,7 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
       <p><code>--diff</code> 让每个文件以<em>比较状态</em>打开——工作内容
       对比最后一次提交，呈现为拉取请求同款的渲染词级差异。
       <code>--diff=&lt;ref&gt;</code> 改为对比某个分支、标签或提交 SHA。
-      它是通往应用内 Compare（比较）功能（工具栏的时钟加箭头按钮）的
+      它是通往应用内“比较”功能（工具栏的时钟加箭头按钮）的
       shell 之门，也是“智能体刚对这份文档做了什么”的最快答案：</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># 最近的编辑改了什么</span>
 <span class="p">$ </span>pullmark --diff=main README.md          <span class="c"># 当前文件对比 main</span>
@@ -135,7 +135,7 @@ pullmark --version           <span class="c"># 打印应用版本</span></code><
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># 一个工作树，plan.md 以差异显示</span></code></pre>
       <p>一同传入的文件夹照常作为“位置”打开，每种形式在工具栏的
-      Compare 菜单里都有应用内的孪生兄弟（包括
+      “比较”菜单里都有应用内的孪生兄弟（包括
       <strong>Compare Revisions…</strong> 和 <strong>Compare with
       File…</strong>）。因为 <code>--diff</code> 和 <code>--diff-with</code>
       是旗标而非子命令，一个恰好叫 <code>diff</code> 的文件永远会被正常

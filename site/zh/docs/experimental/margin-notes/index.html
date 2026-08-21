@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>页边批注（Margin Notes）— PullMark 文档</title>
+<title>页边批注 — PullMark 文档</title>
 <meta name="description" content="页边批注：在任何 Markdown 文件上留下 PR 式评论，以署名 HTML 注释保存进文件本身。完整格式规范，附给智能体的指令。">
 <link rel="canonical" href="https://pullmark.app/zh/docs/experimental/margin-notes/">
 <link rel="alternate" hreflang="en" href="https://pullmark.app/docs/experimental/margin-notes/">
@@ -15,7 +15,7 @@
 <link rel="alternate" hreflang="es" href="https://pullmark.app/es/docs/experimental/margin-notes/">
 <link rel="alternate" hreflang="pt-BR" href="https://pullmark.app/pt/docs/experimental/margin-notes/">
 <link rel="alternate" hreflang="x-default" href="https://pullmark.app/docs/experimental/margin-notes/">
-<meta property="og:title" content="页边批注（Margin Notes）— PullMark 文档">
+<meta property="og:title" content="页边批注 — PullMark 文档">
 <meta property="og:description" content="页边批注：在任何 Markdown 文件上留下 PR 式评论，以署名 HTML 注释保存进文件本身。完整格式规范，附给智能体的指令。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pullmark.app/zh/docs/experimental/margin-notes/">
@@ -60,7 +60,7 @@
 
     <article>
       <p class="kicker">文档 / beta</p>
-      <h1>页边批注（Margin Notes）<span class="beta-badge">beta</span></h1>
+      <h1>页边批注<span class="beta-badge">beta</span></h1>
       <p class="article-lede">像评论拉取请求一样评论任何本地 Markdown
       文档——只不过评论住在文件本身里，是不会出现在渲染页面上的普通 HTML
       注释。它专为一个闭环而造：智能体给你写了一份文档，你在 PullMark 里
@@ -76,10 +76,10 @@
         <li><strong>默认开启</strong>——页边批注是一个
         <a href="/zh/docs/experimental/">beta 级实验性功能</a>，出厂即启用
         （0.35 起）。你第一次伸手用它——悬停气泡、<kbd>⌥⌘M</kbd>，或对
-        别人留给你的批注点 Edit / Delete——PullMark 会做一次介绍：批注是
-        什么、一枚教你的智能体的复制按钮，以及一枚 Turn Off 按钮（如果它
+        别人留给你的批注点“编辑”/“删除”——PullMark 会做一次介绍：批注是
+        什么、一枚教你的智能体的复制按钮，以及一枚“关闭”按钮（如果它
         不合你意）。开关住在
-        <strong>Settings&nbsp;→&nbsp;Experimental</strong>，只管住撰写
+        <strong>设置&nbsp;→&nbsp;实验性功能</strong>，只管住撰写
         工具；已经含有批注的文档无论如何都会显示气泡（只读），所以队友
         或智能体批注过的文件绝不会悄无声息地渲染成空白。</li>
         <li><strong>添加批注</strong>——悬停本地文档的任意区块，点击页边的
@@ -87,12 +87,11 @@
         那一项；在表格里指向那一行——一层淡淡的底色标明批注将附着的确切
         范围。先选中文字，批注就带着所选引文打开——这就是指着一句话而
         不是一整段的方式。<kbd>⌥⌘M</kbd> 批注你正在读的区块；
-        <strong>Edit&nbsp;→&nbsp;File Margin Note…</strong> 在文档顶部留下
+        <strong>编辑&nbsp;→&nbsp;整篇文档的页边批注…</strong> 在文档顶部留下
         一条关于整份文档的批注。</li>
         <li><strong>写 Markdown</strong>——粗体、代码、围栏代码块、链接、
-        列表；<kbd>⌘↩</kbd> 保存。每次保存是文件里的一次编辑（用
-        File&nbsp;→&nbsp;Revert Last Edit 撤销）。</li>
-        <li><strong>Edit / Delete（编辑 / 删除）</strong>——悬停批注气泡见
+        列表；<kbd>⌘↩</kbd> 保存。每次保存是文件里的一次编辑（用“文件&nbsp;→&nbsp;还原上次编辑”撤销）。</li>
+        <li><strong>编辑 / 删除</strong>——悬停批注气泡见
         操作。删除批注就是解决它：没有状态，没有归档——处理完的批注就是
         不存在的批注。</li>
         <li><strong>计数标签</strong>——文档还带着批注时，“打开的文件”行上
@@ -100,11 +99,10 @@
         计数就在你眼前下降，气泡逐个消失。</li>
         <li><strong>其他地方</strong>——批注在浏览的 GitHub 文件中只读
         渲染，绝不出现在打印、PDF/HTML 导出或 Quick Look 中；
-        <strong>View&nbsp;→&nbsp;Hide Margin Notes</strong> 想清净阅读时
+        <strong>显示&nbsp;→&nbsp;隐藏页边批注</strong> 想清净阅读时
         一键清屏。</li>
         <li><strong>你的署名</strong>——批注默认署名
-        <code>@your-github-login</code>；到
-        Settings&nbsp;→&nbsp;Experimental 里该功能自己的开关下修改。</li>
+        <code>@your-github-login</code>；到“设置&nbsp;→&nbsp;实验性功能”里该功能自己的开关下修改。</li>
       </ul>
 
       <h2 id="format">格式</h2>
@@ -160,7 +158,7 @@ Requests retry five times with exponential backoff.
       <h2 id="agents">给智能体</h2>
       <p>交接是零协议的：智能体读文件，而批注就在文件里，物理上紧挨着
       它们谈论的文字。把下面这段粘进你的 <code>CLAUDE.md</code> /
-      <code>AGENTS.md</code>——Settings&nbsp;→&nbsp;Experimental 里的 Copy
+      <code>AGENTS.md</code>——“设置&nbsp;→&nbsp;实验性功能”里的“拷贝”
       按钮是同一段文字（口头说清也行）：</p>
       <pre><code>## Margin notes
 

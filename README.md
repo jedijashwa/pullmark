@@ -61,6 +61,7 @@ And not every document belongs in a pull request. Agents write serious Markdown 
 - **Front matter as metadata** — YAML front matter renders as a quiet, collapsible key/value table at the top of documents (and Quick Look previews), and rendered diffs show compact old/new tables inside the usual red/green blocks instead of walls of bold prose.
 - **Hardened rendering** — a Content-Security-Policy lets only PullMark's own bundled scripts run, so `<script>` tags or `on*=` handlers smuggled into hostile Markdown via raw HTML never execute; the render payload is embedded as non-executing JSON, and Quick Look previews allow no scripts at all.
 - **Default-app control** — Settings → General shows which app currently opens `.md` files and makes PullMark the default in one click; if an upgrade ever makes Launch Services drop the binding, PullMark notices and offers to take it back.
+- **Eight languages** — the app ships in English, 简体中文, 日本語, Français, Deutsch, Nederlands, Español, and Português (Brasil), following your system language or a per-app choice in Settings → General; [pullmark.app](https://pullmark.app) is available in all eight too, screenshots included.
 
 ## Installation
 

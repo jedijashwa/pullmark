@@ -72,11 +72,11 @@
       <a href="/de/docs/cli/">Kommandozeile</a> oder indem du eine Datei aus
       einem Ort behalten hast. Flach, per Ziehen umsortierbar, jede Zeile
       mit dem Hover-✕ entfernbar (oder ⌫ auf der ausgewählten Zeile).
-      Rechtsklick auf die Bereichsüberschrift für <strong>Close All</strong>.</p>
+      Rechtsklick auf die Bereichsüberschrift für <strong>Alle schließen</strong>.</p>
 
       <h3 id="previews">Vorschauen</h3>
       <p>Ein Einzelklick auf eine Datei in einem Ort rendert sie sofort —
-      und sie erscheint in „Geöffnete Dateien" als <em>Vorschau</em>: ein
+      und sie erscheint in „Geöffnete Dateien“ als <em>Vorschau</em>: ein
       kursiver Eintrag, immer zuletzt im Bereich. Klick eine andere Datei und der
       Vorschau-Eintrag wird ersetzt — Stöbern durch einen großen Baum stapelt
       also nie Zeilen auf. Es ist dieselbe Idee wie die Vorschau-Tabs in VS
@@ -86,29 +86,29 @@
       <ul>
         <li><strong>Doppelklick</strong> auf die Datei im Baum — oder auf den
         kursiven Eintrag selbst</li>
-        <li><strong>Anfangen zu bearbeiten</strong> — der Edit Mode oder das
+        <li><strong>Anfangen zu bearbeiten</strong> — der Bearbeitungsmodus oder das
         Speichern einer Blockänderung pinnt sie fest</li>
-        <li><strong>Keep Open</strong> im Rechtsklick-Menü</li>
+        <li><strong>Geöffnet lassen</strong> im Rechtsklick-Menü</li>
       </ul>
       <p>Lese-Interaktionen — Blame, Zeilenhistorie, ein Bild oder Diagramm
       inspizieren — befördern eine Vorschau absichtlich nie. Wenn du lieber
       jeden Klick Dateien voll öffnen lässt, stell
-      <a href="/de/docs/settings/#clicking-files">Clicking files in Locations</a>
+      <a href="/de/docs/settings/#clicking-files">Klick auf Dateien in „Orte“</a>
       in den Einstellungen um.</p>
       <p><strong>Remote-Repos previewen genauso, am selben Ort.</strong> Beim
       Stöbern durch den Baum eines GitHub-Repos, oder beim Folgen von Links in
       einem Remote-Dokument, landet derselbe eine kursive Eintrag in
-      „Geöffnete Dateien" — mit Buch-Icon und einer
+      „Geöffnete Dateien“ — mit Buch-Icon und einer
       <code>owner/repo @ ref</code>-Zweitzeile, weil die Datei nicht auf
       deinem Mac liegt. Es gibt immer nur
       <em>eine</em> Vorschau pro Fenster, lokal oder remote: Etwas anderes zu
       previewen ersetzt, was du davor angesehen hast. Ein Remote-Doc zu
-      behalten (Doppelklick oder Keep Open) heftet es bei seinem Repo ab — es
-      wandert in die feste Liste des Repos unter „Orte". ⌘K öffnet direkt
+      behalten (Doppelklick oder „Geöffnet lassen“) heftet es bei seinem Repo ab
+      — es wandert in die feste Liste des Repos unter „Orte“. ⌘K öffnet direkt
       fest, denn eine URL einzufügen ist ausdrückliche Absicht.</p>
-      <p>Jede Zeile unter „Geöffnete Dateien", die in einem offenen Ort liegt,
-      bekommt <strong>Reveal in Location</strong> ins Rechtsklick-Menü — der
-      Sprung zurück von „was ich lese" zu „wo es wohnt".</p>
+      <p>Jede Zeile unter „Geöffnete Dateien“, die in einem offenen Ort liegt,
+      bekommt <strong>Im Ort zeigen</strong> ins Rechtsklick-Menü — der
+      Sprung zurück von „was ich lese“ zu „wo es wohnt“.</p>
 
       <h2 id="locations">Orte</h2>
       <p>Durchstöberbare Wurzeln, wo immer sie liegen. Zwei Arten teilen sich
@@ -116,7 +116,7 @@
       <table>
         <tr><th>Zeile</th><th>Bedeutung</th></tr>
         <tr><td>📁 Ordner-Icon</td><td>Ein lokaler Ordner — seine Markdown-Dateien als Baum (oder
-          flache Liste; Rechtsklick → View as List). Wird auf Änderungen überwacht.</td></tr>
+          flache Liste; Rechtsklick → Als Liste). Wird auf Änderungen überwacht.</td></tr>
         <tr><td>📕 Buch-Icon</td><td>Ein GitHub-Repository, zum Stöbern geöffnet — über die
           API geladen, nichts wird auf die Platte geschrieben.</td></tr>
       </table>
@@ -134,13 +134,13 @@
         anderen Branches remote, ohne deinen Checkout anzufassen. Ein Branch,
         der schon einen lokalen Worktree hat, springt stattdessen zum
         Worktree — lokal schlägt remote.</li>
-        <li><strong>Open on GitHub</strong> — das Repo (auf diesem Branch) in
+        <li><strong>Auf GitHub öffnen</strong> — das Repo (auf diesem Branch) in
         deinem Browser.</li>
       </ul>
       <p>Auf einem Remote-Repo (Buch-Icon) listet derselbe Chip Branches:
       <strong>Switch To</strong> pinnt die Session auf einen anderen Branch um,
-      und mit gehaltenem ⌥ gibt es <strong>Open Branch Separately</strong> fürs
-      Lesen nebeneinander. <strong>Browse Repo Files…</strong> lädt den ganzen
+      und mit gehaltenem ⌥ gibt es <strong>Branch separat öffnen</strong> fürs
+      Lesen nebeneinander. <strong>Repo-Dateien durchstöbern…</strong> lädt den ganzen
       Markdown-Baum des Repos. Die behaltenen Docs des Repos sitzen über dem
       Baum, damit sie in einem großen Repo nie untergehen; ein behaltenes Doc,
       das im Baum sichtbar ist, wird einfach dort dargestellt. (Ein Doc, das du
@@ -155,17 +155,17 @@
       <p>Jeder geöffnete PR ist eine Gruppe: die Übersichtszeile (Status-Icon +
       Zahl geänderter Markdown-Dateien), dann seine geänderten
       Markdown-Dateien — eine Sprechblase mit Zahl markiert Dateien mit
-      unaufgelösten Review-Threads. Unter deinen geöffneten PRs sammelt
-      <strong>Review Requests</strong> (Review-Anfragen) PRs, die auf dein
+      unaufgelösten Review-Threads. Unter deinen geöffneten PRs sammelt der
+      Bereich <strong>Review-Anfragen</strong> die PRs, die auf dein
       Review warten, mit einer Ungelesen-Zahl, die auch eingeklappt sichtbar
       bleibt (in den Einstellungen ausblendbar — und filterbar auf PRs, die
       Markdown anfassen).</p>
       <p>Status-Icons auf PR-Zeilen:</p>
       <table>
         <tr><th>Status</th><th>Icon</th></tr>
-        <tr><td>Draft (Entwurf)</td><td>Pull-Request-Pfeile, grau</td></tr>
+        <tr><td>Entwurf</td><td>Pull-Request-Pfeile, grau</td></tr>
         <tr><td>Offen</td><td>Pull-Request-Pfeile, grün</td></tr>
-        <tr><td>Gemerged</td><td>Merge-Pfeile, violett</td></tr>
+        <tr><td>Zusammengeführt</td><td>Merge-Pfeile, violett</td></tr>
         <tr><td>Geschlossen</td><td>✕ im Kreis, rot</td></tr>
         <tr><td>Nicht verfügbar</td><td>Papierkorb, grau — der PR (oder dein Zugriff) ist weg</td></tr>
       </table>
@@ -179,7 +179,7 @@
       Eintrag, dessen Datei verschwunden ist, wird gedimmt (Uhr-Badge), statt
       zu verschwinden, und erwacht wieder, wenn der Pfad zurückkommt — gebaut
       für Branch-Wechsel und ausgeworfene Volumes. Rechtsklick auf die
-      Überschrift für <strong>Clear Recents</strong>.</p>
+      Überschrift für <strong>„Zuletzt benutzt“ leeren</strong>.</p>
 
       <h2 id="removal">Dinge entfernen</h2>
       <p>Fahr über eine beliebige Zeile der obersten Ebene für das ✕ — es
@@ -195,14 +195,14 @@
         <tr><td>Dokument, kursiver Name</td><td>Die Vorschau — ersetzt durch deinen nächsten Einzelklick</td></tr>
         <tr><td>Ordner</td><td>Ein lokaler Ordner</td></tr>
         <tr><td>Ordner + ?</td><td>Ordner gerade nicht auffindbar — gedimmt, erwacht wieder</td></tr>
-        <tr><td>Dokument + Uhr</td><td>Ein Eintrag unter „Zuletzt benutzt", dessen Datei fehlt</td></tr>
+        <tr><td>Dokument + Uhr</td><td>Ein Eintrag unter „Zuletzt benutzt“, dessen Datei fehlt</td></tr>
         <tr><td>Geschlossenes Buch</td><td>Ein GitHub-Repository (als Zeilen-Icon: remote durchstöbert;
           als kleine nachgestellte Marke: dieser lokale Ordner ist ein Checkout davon)</td></tr>
         <tr><td>Branch-Glyphe + Name</td><td>Der Branch-Chip — Klick für Branches und Worktrees</td></tr>
         <tr><td>Pull-Request-Pfeile</td><td>Ein Pull Request</td></tr>
-        <tr><td>Ablagefach</td><td>Review Requests — PRs, die auf dein Review warten</td></tr>
+        <tr><td>Ablagefach</td><td>Review-Anfragen — PRs, die auf dein Review warten</td></tr>
         <tr><td>Sprechblase + Zahl</td><td>An einer PR-Datei: unaufgelöste Review-Kommentare. An einer
-          Zeile unter „Geöffnete Dateien": <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
+          Zeile unter „Geöffnete Dateien“: <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
         <tr><td>Farbiger Punkt (linke Kante)</td><td>Eine ungelesene Review-Anfrage</td></tr>
         <tr><td>✕ im Kreis (bei Hover)</td><td>Aus der Seitenleiste entfernen / Vorschau verwerfen</td></tr>
       </table>

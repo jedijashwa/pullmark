@@ -62,7 +62,7 @@
       <p class="kicker">文档</p>
       <h1>工具栏</h1>
       <p class="article-lede">每种视图一条工具栏，全都可以自定义：右键点它
-      （或 View → Customize Toolbar…），把项目拖走、重新排列、加入初始
+      （或“显示 → 自定义工具栏…”），把项目拖走、重新排列、加入初始
       隐藏的项目。每个视图跨启动记住自己的排布。</p>
 
       <h2 id="customizing">自定义的原理</h2>
@@ -83,31 +83,31 @@
           <td>会变形的审查控件，仅在 PR 视图上——待提交评论数、结论、提交。
           窗口收窄时它坚持得最久：其他项目折进溢出菜单后，审查状态依然
           可见。</td></tr>
-        <tr><td>Open File or Folder（打开文件或文件夹）</td><td>显示</td>
+        <tr><td>打开文件或文件夹</td><td>显示</td>
           <td>打开本地 Markdown 或一个文件夹“位置”。</td></tr>
-        <tr><td>Open Pull Request（打开拉取请求）</td><td>显示</td>
+        <tr><td>打开拉取请求</td><td>显示</td>
           <td>按 URL 打开 GitHub 拉取请求。</td></tr>
-        <tr><td>Appearance（外观）</td><td>显示</td>
+        <tr><td>外观</td><td>显示</td>
           <td>浅色 · 深色 · 跟随系统，应用全局。</td></tr>
       </table>
 
       <h2 id="local-files">本地文件</h2>
       <table>
         <tr><th>项目</th><th>默认</th><th>作用</th></tr>
-        <tr><td>Share（共享）</td><td>显示</td><td>该文件的标准共享面板。</td></tr>
-        <tr><td>Edit（编辑）</td><td>显示</td><td>编辑模式——点击任意区块原地编辑。</td></tr>
-        <tr><td>Compare（比较）</td><td>显示</td>
+        <tr><td>共享</td><td>显示</td><td>该文件的标准共享面板。</td></tr>
+        <tr><td>编辑</td><td>显示</td><td>编辑模式——点击任意区块原地编辑。</td></tr>
+        <tr><td>比较</td><td>显示</td>
           <td>与某个提交或分支比较（需要 git 仓库）。一枚小点表示文件有
           未提交的改动。</td></tr>
         <tr><td>Blame</td><td>显示</td>
           <td>每个区块最后由谁改动；不在仓库中时禁用。</td></tr>
-        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
-        <tr><td>Reload（重新载入）</td><td>显示</td><td>从磁盘重读文件。</td></tr>
-        <tr><td>Source（源码）</td><td>隐藏</td><td>渲染页面背后的原始 Markdown。</td></tr>
-        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>隐藏</td>
+        <tr><td>大纲</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>重新载入</td><td>显示</td><td>从磁盘重读文件。</td></tr>
+        <tr><td>源码</td><td>隐藏</td><td>渲染页面背后的原始 Markdown。</td></tr>
+        <tr><td>放大 · 实际大小 · 缩小</td><td>隐藏</td>
           <td>相互独立的项目——只加你用得着的那几个。</td></tr>
-        <tr><td>Content Width（栏宽）</td><td>隐藏</td><td>Standard · Wide · Full Width。</td></tr>
-        <tr><td>Add Margin Note（添加页边批注）</td><td>隐藏</td>
+        <tr><td>栏宽</td><td>隐藏</td><td>Standard · Wide · Full Width。</td></tr>
+        <tr><td>添加页边批注</td><td>隐藏</td>
           <td>仅当<a href="/zh/docs/experimental/margin-notes/">页边批注</a>
           开启时出现在面板里。</td></tr>
       </table>
@@ -117,17 +117,17 @@
       打开。</p>
       <table>
         <tr><th>项目</th><th>默认</th><th>作用</th></tr>
-        <tr><td>Compare（比较）</td><td>显示</td><td>同一文档在另一分支上的版本，以渲染差异呈现。</td></tr>
+        <tr><td>比较</td><td>显示</td><td>同一文档在另一分支上的版本，以渲染差异呈现。</td></tr>
         <tr><td>Blame</td><td>显示</td><td>来自 GitHub API 的逐区块 blame。</td></tr>
-        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
-        <tr><td>Share（共享）</td><td>隐藏</td>
+        <tr><td>大纲</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>共享</td><td>隐藏</td>
           <td>文档的 github.com 页面——人真正想要的那个链接，绝不是
           裸 URL。</td></tr>
-        <tr><td>Reload（重新载入）</td><td>隐藏</td>
+        <tr><td>重新载入</td><td>隐藏</td>
           <td>把分支重新解析到当前最新提交并重新抓取。对钉在特定提交上
           打开的文档保持禁用——并写明原因——因为那不可能再变。</td></tr>
-        <tr><td>Source（源码）</td><td>隐藏</td><td>原始 Markdown。</td></tr>
-        <tr><td>缩放项目 · Content Width</td><td>隐藏</td><td>与本地文件相同。</td></tr>
+        <tr><td>源码</td><td>隐藏</td><td>原始 Markdown。</td></tr>
+        <tr><td>缩放项目 · 栏宽</td><td>隐藏</td><td>与本地文件相同。</td></tr>
       </table>
 
       <h2 id="pr-files">拉取请求文件</h2>
@@ -137,23 +137,23 @@
           <td>回到总览、上一个/下一个 Markdown 文件，以及 n/m 跳转菜单——
           一个整体，一次拖动。</td></tr>
         <tr><td>View picker（视图选择器）</td><td>显示</td>
-          <td>Rendered Diff · Source Diff · Result，居中。</td></tr>
-        <tr><td>Outline（大纲）</td><td>显示</td><td>标题侧边栏。</td></tr>
-        <tr><td>Layout（布局）</td><td>显示</td>
-          <td>行内或并排——在 Rendered Diff 视图中可用（新文件始终以行内
+          <td>渲染差异 · 源码差异 · 结果，居中。</td></tr>
+        <tr><td>大纲</td><td>显示</td><td>标题侧边栏。</td></tr>
+        <tr><td>布局</td><td>显示</td>
+          <td>内联或并排——在“渲染差异”视图中可用（新文件始终以内联方式
           渲染）。</td></tr>
         <tr><td>Blame</td><td>显示</td>
-          <td>在 Result 视图中可用——那里才有一份完成的文档可以注解。</td></tr>
-        <tr><td>Comment on File（评论文件）</td><td>显示</td>
+          <td>在“结果”视图中可用——那里才有一份完成的文档可以注解。</td></tr>
+        <tr><td>评论文件</td><td>显示</td>
           <td>针对文件整体、而非某一行的评论。</td></tr>
-        <tr><td>缩放项目 · Content Width</td><td>隐藏</td><td>与本地文件相同。</td></tr>
+        <tr><td>缩放项目 · 栏宽</td><td>隐藏</td><td>与本地文件相同。</td></tr>
       </table>
 
       <h2 id="other-views">PR 总览，以及从 PR 浏览的仓库文档</h2>
-      <p>总览保持精简：<strong>Share</strong>（拉取请求的 GitHub 页面）加上
+      <p>总览保持精简：<strong>共享</strong>（拉取请求的 GitHub 页面）加上
       每个视图都有的项目。从 PR 内容浏览到的仓库文档带
-      <strong>Blame</strong> 和 <strong>Outline</strong>，缩放项目和
-      Content Width 收在它的面板里。</p>
+      <strong>Blame</strong> 和<strong>大纲</strong>，缩放项目和
+      栏宽收在它的面板里。</p>
     </article>
   </div>
 </div>

@@ -77,9 +77,9 @@
         <code>==destaque==</code>, <code>~sub~</code> e <code>^sup^</code>
         também renderizam.</li>
         <li><strong>Clique para inspecionar</strong> — imagens, diagramas e
-        fórmulas de bloco abrem num overlay de pan e zoom; Save As… (salvar
-        como) e Share (compartilhar) exportam exatamente o que você está
-        inspecionando (diagramas como SVG de verdade).</li>
+        fórmulas de bloco abrem num overlay de pan e zoom; Salvar Como… e
+        Compartilhar exportam exatamente o que você está inspecionando
+        (diagramas como SVG de verdade).</li>
         <li><strong>Arquivos vivos</strong> — documentos re-renderizam ao
         serem salvos em qualquer editor; imagens e links relativos resolvem,
         e clicar num link para outro arquivo Markdown o abre no lugar (como
@@ -87,8 +87,8 @@
         Localização aberta).</li>
         <li><strong>Navegação</strong> — a barra lateral de estrutura (⌥⌘O),
         busca na página com ⌘F, busca em todos os arquivos da barra lateral
-        com ⇧⌘F, e o Open Quickly (abrir rapidamente) com ⌘K para títulos,
-        arquivos, PRs e recentes — ou cole nele um caminho ou uma URL do
+        com ⇧⌘F, e o Abrir Rapidamente com ⌘K para títulos, arquivos, PRs e
+        recentes — ou cole nele um caminho ou uma URL do
         GitHub.</li>
         <li><strong>Blame à altura da leitura</strong> — uma régua discreta de
         autoria: um avatar por sequência de blocos, passe o mouse para ver o
@@ -106,9 +106,9 @@
         <li><strong>Diffs renderizados</strong> — blocos adicionados,
         removidos e alterados destacados na página renderizada, diffs
         palavra por palavra quando a edição é pequena o bastante para fazer
-        sentido, inline ou lado a lado (⌥⌘L), mais o Source Diff cru (⌘2) e o
-        Result final (⌘3). Parágrafos movidos ganham um chip discreto de
-        “movido” em vez de ruído vermelho-mais-verde.</li>
+        sentido, em linha ou lado a lado (⌥⌘L), mais o Diff do Código-Fonte
+        cru (⌘2) e o Resultado final (⌘3). Parágrafos movidos ganham um chip
+        discreto de “movido” em vez de ruído vermelho-mais-verde.</li>
         <li><strong>Threads de revisão no lugar</strong> — comentários
         existentes aparecem sob os blocos que discutem; passe o mouse sobre
         um bloco para Comment Now (comentar agora), Add to Review (adicionar
@@ -127,8 +127,8 @@
         ordem, os comentários inline de cada revisão aninhados sob seu
         resumo, com o arquivo que discutem nomeado no cartão. Reações,
         edições e exclusões dos seus próprios comentários, e a caixa de
-        comentário no pé da linha do tempo. Ativa para todos (Settings ▸
-        General ▸ Reviewing esconde as threads).</li>
+        comentário no pé da linha do tempo. Ativa para todos (Ajustes ▸
+        Geral ▸ Revisão esconde as threads).</li>
         <li><strong>Sempre atual</strong> — PRs abertos são checados a cada
         minuto; um banner oferece atualizar quando a branch avança, e seus
         rascunhos de comentário sobrevivem. Comentários escritos offline
@@ -162,8 +162,8 @@
         <li><strong>Edite no lugar</strong> — o lápis de um bloco (ou ⌘E para
         o documento inteiro) transforma blocos em editores dentro da página
         renderizada; ⌘↩ salva, Esc cancela. Os salvamentos são protegidos
-        contra o arquivo mudar por baixo, e versionados para o Revert Last
-        Edit (reverter última edição).</li>
+        contra o arquivo mudar por baixo, e versionados para o Reverter Última
+        Edição.</li>
         <li><strong>Commit de dentro do app</strong> — ⌃⌘K abre a folha de
         commit para o repositório do arquivo: escolha arquivos, escreva a
         mensagem, opcionalmente faça push, com uma proteção antes de
@@ -173,14 +173,14 @@
       <h2 id="compare">Comparação com o histórico</h2>
       <ul>
         <li><strong>Qualquer arquivo, qualquer revisão</strong> — o botão
-        Compare da barra de ferramentas (o relógio com chevron) diffa o
+        Comparar da barra de ferramentas (o relógio com chevron) diffa o
         arquivo de trabalho contra qualquer um dos seus últimos 25 commits,
         ou qualquer branch local ou remota — renderizado, com as palavras
         alteradas em destaque, exatamente como um pull request. Um ponto
         discreto no botão significa que o arquivo tem mudanças não
         commitadas.</li>
         <li><strong>“O que eu acabei de mudar?”</strong> — um item de menu
-        (<strong>View → Compare with Last Commit</strong>) ou um comando de
+        (<strong>Visualizar → Compare with Last Commit</strong>) ou um comando de
         shell (<code>pullmark --diff arquivo.md</code>, veja a
         <a href="/pt/docs/cli/#diff">CLI</a>). O diff acompanha o arquivo
         enquanto ele continua mudando — veja as edições de um agente
@@ -190,8 +190,8 @@
       <h2 id="output">Tirando documentos de volta</h2>
       <ul>
         <li><strong>Exportação</strong> — PDF (uma página contínua) ou HTML
-        totalmente autossuficiente; Share (compartilhar) envia o documento
-        para onde o macOS alcançar.</li>
+        totalmente autossuficiente; Compartilhar envia o documento para onde
+        o macOS alcançar.</li>
         <li><strong>Cópia em dois sabores</strong> — ⌘C é texto rico para
         Docs/Slack; ⌥⌘C é o Markdown por trás.</li>
         <li><strong>Impressão</strong> — ⌘P, a 100% independentemente do
@@ -201,23 +201,24 @@
       </ul>
 
       <h2 id="toolbar">Uma barra de ferramentas que é sua</h2>
-      <p>Clique com o botão direito na barra de ferramentas — ou View →
-      Customize Toolbar… — para a paleta nativa de personalização: arraste
-      para fora o que você nunca usa, reorganize o resto, adicione Flexible
+      <p>Clique com o botão direito na barra de ferramentas — ou Visualizar →
+      Personalizar Barra de Ferramentas… — para a paleta nativa de
+      personalização: arraste para fora o que você nunca usa, reorganize o
+      resto, adicione Flexible
       Space (espaço flexível). Cada tipo de visão mantém seu próprio arranjo,
       lembrado entre as aberturas: um arquivo local, um doc do GitHub, um
       arquivo de pull request e a visão geral do PR são barras separadas, e
       você personaliza cada uma enquanto está nela — do mesmo jeito que a
       janela de composição do Mail mantém sua própria barra.</p>
       <p>Além do conjunto padrão, a paleta guarda itens que começam ocultos:
-      um interruptor de <strong>Source</strong> (fonte crua), <strong>Zoom
-      In / Actual Size / Zoom Out</strong>, o seletor de <strong>Content
-      Width</strong> (largura do conteúdo), <strong>Add Margin Note</strong>
-      (adicionar nota de margem, enquanto o recurso estiver ativo) e, para
-      docs do GitHub, <strong>Share</strong> — a página github.com do
-      documento, nunca um link cru — e <strong>Reload</strong>, que
-      re-resolve uma branch para sua ponta atual e permanece desativado, com
-      o motivo, para documentos abertos num commit específico. De fábrica,
+      um interruptor de <strong>Código-Fonte</strong>, <strong>Mais Zoom /
+      Tamanho Real / Menos Zoom</strong>, o seletor de <strong>Largura do
+      Conteúdo</strong>, <strong>Adicionar Nota de Margem</strong> (enquanto
+      o recurso estiver ativo) e, para docs do GitHub,
+      <strong>Compartilhar</strong> — a página github.com do documento, nunca
+      um link cru — e <strong>Recarregar</strong>, que re-resolve uma branch
+      para sua ponta atual e permanece desativado, com o motivo, para
+      documentos abertos num commit específico. De fábrica,
       nada muda; a paleta guarda o resto.
       <a href="/pt/docs/toolbar/">A barra de ferramentas</a> lista os itens
       de cada visão.</p>
@@ -234,8 +235,8 @@
         responsável por <code>.md</code> com um clique, e ele percebe se uma
         atualização derrubar o vínculo.</li>
         <li><strong>Atualizações embutidas</strong> — releases assinadas e
-        notarizadas, com atualização em um clique e uma folha de novidades
-        (What's New).</li>
+        notarizadas, com atualização em um clique e uma folha de
+        Novidades.</li>
         <li><strong>Postura de privacidade</strong> — o conteúdo do GitHub é
         buscado pela API e mantido em memória, e documentos nunca são
         copiados para lugar nenhum. A <a href="/privacy/">página de

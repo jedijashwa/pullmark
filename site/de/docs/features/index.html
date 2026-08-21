@@ -77,8 +77,8 @@
         <code>==highlight==</code>, <code>~sub~</code>, <code>^sup^</code>
         rendern auch.</li>
         <li><strong>Klicken zum Inspizieren</strong> — Bilder, Diagramme und
-        Blockformeln öffnen in einem Overlay mit Schwenken und Zoomen; Save As…
-        und Share exportieren genau das, was du gerade betrachtest (Diagramme
+        Blockformeln öffnen in einem Overlay mit Schwenken und Zoomen; Sichern
+        unter… und Teilen exportieren genau das, was du gerade betrachtest (Diagramme
         als echtes SVG).</li>
         <li><strong>Lebende Dateien</strong> — Dokumente rendern neu, sobald
         irgendein Editor speichert; relative Bilder und Links lösen auf, und ein
@@ -87,7 +87,7 @@
         sie in einem offenen Ort liegt).</li>
         <li><strong>Navigation</strong> — die Gliederungs-Seitenleiste (⌥⌘O), ⌘F
         für die Suche auf der Seite, ⇧⌘F für die Suche über alle Dateien in der
-        Seitenleiste und ⌘K Open Quickly für Überschriften, Dateien, PRs,
+        Seitenleiste und ⌘K Schnell öffnen für Überschriften, Dateien, PRs,
         zuletzt Geöffnetes — oder füg direkt einen Pfad oder eine GitHub-URL
         ein.</li>
         <li><strong>Blame auf Lesehöhe</strong> — eine stille Spalte der
@@ -104,14 +104,14 @@
         <li><strong>Gerenderte Diffs</strong> — hinzugefügte, entfernte und
         geänderte Blöcke direkt in der gerenderten Seite hervorgehoben,
         wortgenaue Diffs, wo die Änderung klein genug ist, um Sinn zu ergeben,
-        inline oder nebeneinander (⌥⌘L), dazu das rohe Source Diff (⌘2) und das
-        finale Result (⌘3). Verschobene Absätze bekommen einen dezenten
-        „moved"-Chip statt Rot-plus-Grün-Rauschen.</li>
+        inline oder nebeneinander (⌥⌘L), dazu das rohe Quelltext-Diff (⌘2) und
+        das finale Ergebnis (⌘3). Verschobene Absätze bekommen einen dezenten
+        „verschoben“-Chip statt Rot-plus-Grün-Rauschen.</li>
         <li><strong>Review-Threads an Ort und Stelle</strong> — bestehende
         Kommentare erscheinen unter den Blöcken, die sie diskutieren; fahr über
         einen Block für Comment Now, Add to Review oder Insert Suggestion (und
         der Stift bearbeitet den Block als Suggestion). Reviews gehen mit Urteil
-        raus — oder als Pending Review zu GitHub.</li>
+        raus — oder als ausstehendes Review zu GitHub.</li>
         <li><strong>Wo der PR steht</strong> — der Übersichts-Header zeigt die
         Review-Entscheidung (genehmigt, Änderungen angefordert, Review
         erforderlich), das Urteil jedes Reviewers als Avatare mit Badges,
@@ -123,8 +123,8 @@
         Reihenfolge, die Inline-Kommentare jedes Reviews unter seiner
         Zusammenfassung verschachtelt, mit der diskutierten Datei auf der
         Karte. Reaktionen, Bearbeiten und Löschen eigener Kommentare und das
-        Kommentarfeld am Fuß der Timeline. Für alle an (Settings ▸ General ▸
-        Reviewing klappt die Threads weg).</li>
+        Kommentarfeld am Fuß der Timeline. Für alle an (Einstellungen ▸ Allgemein
+        ▸ Reviewen klappt die Threads weg).</li>
         <li><strong>Bleibt aktuell</strong> — offene PRs werden jede Minute
         geprüft; ein Banner bietet Aktualisieren an, wenn der Branch sich
         bewegt, und deine Kommentar-Entwürfe überleben. Offline geschriebene
@@ -158,7 +158,7 @@
         Blocks (oder ⌘E fürs ganze Dokument) verwandelt Blöcke in Editoren
         mitten in der gerenderten Seite; ⌘↩ speichert, Esc bricht ab. Speichern
         ist dagegen abgesichert, dass sich die Datei darunter ändert, und
-        versioniert für Revert Last Edit.</li>
+        versioniert für „Letzte Änderung zurücknehmen“.</li>
         <li><strong>Committen aus der App</strong> — ⌃⌘K öffnet das Commit-Sheet
         fürs Repo der Datei: Dateien wählen, Nachricht schreiben, optional
         pushen — mit einer Sicherung, bevor es direkt auf main geht.</li>
@@ -166,14 +166,14 @@
 
       <h2 id="compare">Mit der Historie vergleichen</h2>
       <ul>
-        <li><strong>Jede Datei, jede Revision</strong> — der Compare-Button der
-        Toolbar (Uhr mit Chevron) difft die Arbeitsdatei gegen jeden ihrer
+        <li><strong>Jede Datei, jede Revision</strong> — der „Vergleichen“-Button
+        der Toolbar (Uhr mit Chevron) difft die Arbeitsdatei gegen jeden ihrer
         letzten 25 Commits oder jeden lokalen oder Remote-Branch — gerendert,
         mit hervorgehobenen geänderten Wörtern, genau wie bei einem Pull
         Request. Ein dezenter Punkt auf dem Button heißt: Die Datei hat
         uncommittete Änderungen.</li>
         <li><strong>„Was habe ich gerade geändert?"</strong> — ein Menüpunkt
-        (<strong>View → Compare with Last Commit</strong>) oder ein
+        (<strong>Darstellung → Compare with Last Commit</strong>) oder ein
         Shell-Befehl (<code>pullmark --diff file.md</code>, siehe die
         <a href="/de/docs/cli/#diff">CLI</a>). Das Diff bleibt dran, während die
         Datei sich weiter ändert — sieh zu, wie die Änderungen eines Agenten
@@ -193,7 +193,7 @@
       </ul>
 
       <h2 id="toolbar">Eine Toolbar, die dir gehört</h2>
-      <p>Rechtsklick auf die Toolbar — oder View → Customize Toolbar… — öffnet
+      <p>Rechtsklick auf die Toolbar — oder Darstellung → Symbolleiste anpassen… — öffnet
       die native Anpassungs-Palette: Zieh raus, was du nie benutzt, ordne den
       Rest neu, füge Flexible Space hinzu. Jede Art von Ansicht behält ihre
       eigene Anordnung, gemerkt über Starts hinweg: eine lokale Datei, ein
@@ -201,12 +201,12 @@
       Toolbars, und du passt jede an, während du drin bist — so wie das
       Verfassen-Fenster von Mail seine eigene Toolbar behält.</p>
       <p>Über den Standardsatz hinaus hält die Palette Elemente bereit, die
-      versteckt starten: einen <strong>Source</strong>-Schalter für den rohen
-      Quelltext, <strong>Zoom In / Actual Size / Zoom Out</strong>, den
-      <strong>Content-Width</strong>-Picker, <strong>Add Margin Note</strong>
+      versteckt starten: einen <strong>Quelltext</strong>-Schalter für den rohen
+      Quelltext, <strong>Einzoomen / Tatsächliche Größe / Auszoomen</strong>, den
+      <strong>Inhaltsbreite</strong>-Picker, <strong>Randnotiz hinzufügen</strong>
       (solange das Feature an ist) und für GitHub-Docs
-      <strong>Share</strong> — die github.com-Seite des Dokuments, nie ein
-      roher Link — sowie <strong>Reload</strong>, das einen Branch neu auf
+      <strong>Teilen</strong> — die github.com-Seite des Dokuments, nie ein
+      roher Link — sowie <strong>Neu laden</strong>, das einen Branch neu auf
       seine aktuelle Spitze auflöst und für Dokumente, die an einem bestimmten
       Commit geöffnet wurden, deaktiviert bleibt — mit Begründung. Out of the
       box ändert sich nichts; die Palette hält den Rest.
@@ -225,7 +225,7 @@
         Klick zum <code>.md</code>-Handler — und es merkt, wenn ein Update die
         Zuordnung verwirft.</li>
         <li><strong>Eingebaute Updates</strong> — signierte, notarisierte
-        Releases mit Ein-Klick-Update und einem What's-New-Sheet.</li>
+        Releases mit Ein-Klick-Update und einem „Neuerungen“-Sheet.</li>
         <li><strong>Datenschutz-Haltung</strong> — GitHub-Inhalte kommen über
         die API und bleiben im Speicher, und Dokumente werden nie irgendwohin
         kopiert. Die <a href="/privacy/">Datenschutz-Seite</a> hat die ganze

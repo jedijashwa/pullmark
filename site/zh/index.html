@@ -580,10 +580,10 @@ footer .note { margin-left: auto; }
       原始源码，读者会看到的样子就被藏了起来；把片段贴进聊天窗口，反馈便与它所指的位置断了联系；
       而为了拿到 PR 的评论框，把一份还在改的草稿提交上去，纯属仪式——并不是每份文档都该走一遍
       拉取请求。</p>
-      <p><strong>页边批注（Margin Notes）</strong>把反馈放进文档本身。渲染着读这份草稿，在不对劲
+      <p><strong>页边批注</strong>把反馈放进文档本身。渲染着读这份草稿，在不对劲
       的地方点一下，留下一条署名的批注，锚在那个区块上。批注是不会出现在渲染页面上的普通 HTML
       注释——所以一句<em>“把计划里的批注都处理掉”</em>就是全部交接：智能体会在你留下批注的确切
-      位置逐条读到它们。不用提交，不用粘贴，不用开拉取请求。然后看着修订落地——Compare（比较）
+      位置逐条读到它们。不用提交，不用粘贴，不用开拉取请求。然后看着修订落地——“比较”
       把智能体的改动逐词高亮，随它保存实时更新。</p>
     </div>
     <figure class="shot reading-shot">
@@ -628,15 +628,15 @@ footer .note { margin-left: auto; }
   <div class="wrap">
     <p class="kicker">审查</p>
     <h2>整场文档审查，都在渲染好的页面上完成。</h2>
-    <p class="prose">在<strong>行内</strong>与<strong>并排</strong>两种版式之间切换，落到原始的
-    <em>Source Diff</em>（源码差异），或者预览最终的 <em>Result</em>（结果）——全都在工具栏上；
+    <p class="prose">在<strong>内联</strong>与<strong>并排</strong>两种版式之间切换，落到原始的
+    <em>源码差异</em>，或者预览最终的<em>结果</em>——全都在工具栏上；
     工具栏还带你从一个文件走到下一个、再走回 PR，全程不必碰侧边栏。YAML front matter 渲染成
     一张<strong>安静的元数据表</strong>，而不是一堵加粗的文字墙——所以配置密集的文档也能干净地
     比对。全新的文档读起来仍然是一份文档——一条说明写着它整篇都是新的，而不是把每个区块都染成
     绿色。已有的审查会话出现在它们所讨论的区块下方。悬停任意区块，点开气泡，就能评论整个区块，
     或者<strong>只评论你挑中的那几行</strong>。写完之后，直接在总览页上
-    <strong>Approve</strong>（批准）、<strong>Request Changes</strong>（请求更改）或
-    <strong>Comment</strong>（评论）——带不带行内评论都行——也可以留下文件级评论或纯粹的会话
+    <strong>批准</strong>、<strong>请求更改</strong>或
+    <strong>评论</strong>——带不带行内评论都行——也可以留下文件级评论或纯粹的会话
     评论。总览页显示<strong>这个 PR 的处境</strong>：已批准还是已请求更改、每位审查者的裁定、
     CI 检查（可一路点进任意一项检查的日志），以及作为可读时间线呈现的完整会话。打开的 PR
     每分钟检查一次；分支往前走了，一键刷新，你的草稿安然无恙。</p>
@@ -645,7 +645,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/zh/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/zh/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="PullMark 正在审查一个文档拉取请求：渲染出来的差异中，改动过的段落带着词级高亮，新增的 Mermaid 流程图渲染在绿色的新增区块底色上，侧边栏在该文件上显示评论数，工具栏的审查控件写着 Finish your review，并标着三条待提交的评论">
+        alt="PullMark 正在审查一个文档拉取请求：渲染出来的差异中，改动过的段落带着词级高亮，新增的 Mermaid 流程图渲染在绿色的新增区块底色上，侧边栏在该文件上显示评论数，工具栏的审查控件写着“完成审查”，并标着三条待提交的评论">
       </picture>
       <figcaption>一个文档 PR 作为渲染差异：唯一改动的那句话带着词级高亮，新来的流程图以
       <em>图</em>的样子落在新增区块的底色上——而不是八十行绿色的 Mermaid 源码。</figcaption>
@@ -654,8 +654,7 @@ footer .note { margin-left: auto; }
     <div class="trio">
       <div class="act">
         <div class="act-name">Add to Review（加入审查）</div>
-        <p>默认动作：把草稿评论先攒在本地。再一起提交——Comment、Approve 或 Request
-        Changes——也可以存成待完成的审查，回 github.com 上收尾。</p>
+        <p>默认动作：把草稿评论先攒在本地。再一起提交——“评论”、“批准”或“请求更改”——也可以存成待完成的审查，回 github.com 上收尾。</p>
       </div>
       <div class="act">
         <div class="act-name">Comment Now（立即评论）</div>
@@ -673,7 +672,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/zh/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/zh/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark 的拉取请求总览：PR 标题旁挂着 Open 标签，一枚 Changes requested 胶囊，一枚 Checks passed 胶囊，审查者头像佩戴着裁定徽章，一枚 docs-guild 团队标签，渲染好的 PR 描述，以及会话时间线——其中第一条审查评论里的表格是渲染过的">
+        alt="PullMark 的拉取请求总览：PR 标题旁挂着“开启”标签，一枚“已请求更改”胶囊，一枚“检查已通过”胶囊，审查者头像佩戴着裁定徽章，一枚 docs-guild 团队标签，渲染好的 PR 描述，以及会话时间线——其中第一条审查评论里的表格是渲染过的">
       </picture>
       <figcaption>会话本身就是一份文档：审查评论里的表格渲染成表格，每位审查者的头像都佩戴着
       自己的裁定。</figcaption>
@@ -736,7 +735,7 @@ footer .note { margin-left: auto; }
       <li><strong>GitHub 链接在应用内打开</strong>——点击一个指向 Markdown 文件的
         <code>github.com</code> 链接，PullMark 就渲染它，并始终显示一条
         repo&nbsp;@&nbsp;branch 的来源栏；<kbd>⌘</kbd>-点击则把它交给浏览器。</li>
-      <li><strong>Open Quickly（快速打开）</strong>——<kbd>⌘K</kbd> 模糊匹配，跳到任意标题、
+      <li><strong>快速打开</strong>——<kbd>⌘K</kbd> 模糊匹配，跳到任意标题、
         文件或 PR——也可以粘贴一个 PR 链接、仓库链接或文件路径，直接打开。</li>
       <li><strong>搬了家就是搬了家</strong>——原样挪了位置的段落只渲染一次，佩戴一枚安静的
         紫色标签，而不是红加绿的噪音。</li>
@@ -774,7 +773,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/zh/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/zh/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark 渲染一个从 GitHub 仓库抓取的 Markdown 文件：内容上方的来源栏写着仓库名、一枚分支标签、文件路径和钉住的提交，并带一个 Open on GitHub 链接；侧边栏的“位置”区以书本图标显示该仓库及其 Markdown 文件树">
+        alt="PullMark 渲染一个从 GitHub 仓库抓取的 Markdown 文件：内容上方的来源栏写着仓库名、一枚分支标签、文件路径和钉住的提交，并带一个“在 GitHub 上打开”链接；侧边栏的“位置”区以书本图标显示该仓库及其 Markdown 文件树">
       </picture>
       <figcaption>直接从 GitHub 读一份文档：来源栏始终说明你身在何处——仓库、分支、钉住的
       提交——分支标签不必离开页面就能切换或打开分支。</figcaption>
@@ -784,9 +783,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/zh/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/zh/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="PullMark 的设置窗口停在 Appearance 标签页：三张实时主题预览卡片——GitHub、Editorial 和 Terminal——各自用真实的渲染管线渲染同一份示例文档，其中 Editorial 处于选中状态，下方是打开自定义 Themes 文件夹的按钮">
+        alt="PullMark 的设置窗口停在“外观”标签页：三张实时主题预览卡片——GitHub、Editorial 和 Terminal——各自用真实的渲染管线渲染同一份示例文档，其中 Editorial 处于选中状态，下方是打开自定义 Themes 文件夹的按钮">
       </picture>
-      <figcaption>Settings&nbsp;→&nbsp;Appearance（设置 → 外观）：三张实时主题预览，由真实的
+      <figcaption>设置&nbsp;→&nbsp;外观：三张实时主题预览，由真实的
       渲染管线渲染——点一张卡片就切换。</figcaption>
     </figure>
   </div>

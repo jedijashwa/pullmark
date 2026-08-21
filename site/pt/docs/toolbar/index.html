@@ -62,9 +62,9 @@
       <p class="kicker">docs</p>
       <h1>A barra de ferramentas</h1>
       <p class="article-lede">Uma barra por tipo de visão, cada uma totalmente
-      personalizável: clique nela com o botão direito (ou View → Customize
-      Toolbar…) e arraste itens para fora, reorganize-os, adicione o que
-      começa oculto. Cada visão lembra seu próprio arranjo entre as
+      personalizável: clique nela com o botão direito (ou Visualizar →
+      Personalizar Barra de Ferramentas…) e arraste itens para fora,
+      reorganize-os, adicione o que começa oculto. Cada visão lembra seu próprio arranjo entre as
       aberturas do app.</p>
 
       <h2 id="customizing">Como funciona a personalização</h2>
@@ -90,32 +90,31 @@
           contagem de comentários pendentes, veredito, envio. Sobrevive mais
           tempo a uma janela estreita: o status da revisão continua visível
           quando os outros itens recolhem para o overflow.</td></tr>
-        <tr><td>Open File or Folder</td><td>exibido</td>
+        <tr><td>Abrir Arquivo ou Pasta</td><td>exibido</td>
           <td>Abrir Markdown local ou uma pasta como Localização.</td></tr>
-        <tr><td>Open Pull Request</td><td>exibido</td>
+        <tr><td>Abrir Pull Request</td><td>exibido</td>
           <td>Abrir um pull request do GitHub por URL.</td></tr>
-        <tr><td>Appearance</td><td>exibido</td>
-          <td>Light · Dark · System (claro, escuro, sistema), para o app
-          inteiro.</td></tr>
+        <tr><td>Aparência</td><td>exibido</td>
+          <td>Claro · Escuro · Sistema, para o app inteiro.</td></tr>
       </table>
 
       <h2 id="local-files">Arquivos locais</h2>
       <table>
         <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
-        <tr><td>Share</td><td>exibido</td><td>A folha padrão de compartilhamento para o arquivo.</td></tr>
-        <tr><td>Edit</td><td>exibido</td><td>Modo de edição — clique em qualquer bloco para editar no lugar.</td></tr>
-        <tr><td>Compare</td><td>exibido</td>
+        <tr><td>Compartilhar</td><td>exibido</td><td>A folha padrão de compartilhamento para o arquivo.</td></tr>
+        <tr><td>Editar</td><td>exibido</td><td>Modo de Edição — clique em qualquer bloco para editar no lugar.</td></tr>
+        <tr><td>Comparar</td><td>exibido</td>
           <td>Comparar com um commit ou branch (exige um repositório git).
           Um pontinho significa que o arquivo tem mudanças não commitadas.</td></tr>
         <tr><td>Blame</td><td>exibido</td>
           <td>Quem mudou cada bloco por último; desativado fora de um repositório.</td></tr>
-        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
-        <tr><td>Reload</td><td>exibido</td><td>Reler o arquivo do disco.</td></tr>
-        <tr><td>Source</td><td>oculto</td><td>O Markdown cru por trás da página renderizada.</td></tr>
-        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>oculto</td>
+        <tr><td>Sumário</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+        <tr><td>Recarregar</td><td>exibido</td><td>Reler o arquivo do disco.</td></tr>
+        <tr><td>Código-Fonte</td><td>oculto</td><td>O Markdown cru por trás da página renderizada.</td></tr>
+        <tr><td>Mais Zoom · Tamanho Real · Menos Zoom</td><td>oculto</td>
           <td>Itens separados — adicione só o par que você usa.</td></tr>
-        <tr><td>Content Width</td><td>oculto</td><td>Standard · Wide · Full Width (largura do conteúdo).</td></tr>
-        <tr><td>Add Margin Note</td><td>oculto</td>
+        <tr><td>Largura do Conteúdo</td><td>oculto</td><td>Standard · Wide · Full Width.</td></tr>
+        <tr><td>Adicionar Nota de Margem</td><td>oculto</td>
           <td>Só na paleta enquanto as
           <a href="/pt/docs/experimental/margin-notes/">notas de margem</a>
           estiverem ativadas.</td></tr>
@@ -126,18 +125,18 @@
       uma Localização de repositório navegado.</p>
       <table>
         <tr><th>Item</th><th>Padrão</th><th>O que faz</th></tr>
-        <tr><td>Compare</td><td>exibido</td><td>O mesmo documento em outra branch, como diff renderizado.</td></tr>
+        <tr><td>Comparar</td><td>exibido</td><td>O mesmo documento em outra branch, como diff renderizado.</td></tr>
         <tr><td>Blame</td><td>exibido</td><td>Blame por bloco, pela API do GitHub.</td></tr>
-        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
-        <tr><td>Share</td><td>oculto</td>
+        <tr><td>Sumário</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+        <tr><td>Compartilhar</td><td>oculto</td>
           <td>A página github.com do documento — o link que uma pessoa quer
           de verdade, nunca uma URL crua.</td></tr>
-        <tr><td>Reload</td><td>oculto</td>
+        <tr><td>Recarregar</td><td>oculto</td>
           <td>Re-resolve a branch para sua ponta atual e rebusca. Desativado
           — com o motivo — para documentos abertos num commit específico,
           que não pode mudar.</td></tr>
-        <tr><td>Source</td><td>oculto</td><td>O Markdown cru.</td></tr>
-        <tr><td>Itens de zoom · Content Width</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
+        <tr><td>Código-Fonte</td><td>oculto</td><td>O Markdown cru.</td></tr>
+        <tr><td>Itens de zoom · Largura do Conteúdo</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
       </table>
 
       <h2 id="pr-files">Arquivos de pull request</h2>
@@ -147,26 +146,26 @@
           <td>De volta à visão geral, arquivo Markdown anterior/seguinte e o
           menu de salto n-de-m — um grupo só, uma unidade arrastável.</td></tr>
         <tr><td>View picker</td><td>exibido</td>
-          <td>Rendered Diff · Source Diff · Result, centralizado.</td></tr>
-        <tr><td>Outline</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
+          <td>Diff Renderizado · Diff do Código-Fonte · Resultado, centralizado.</td></tr>
+        <tr><td>Sumário</td><td>exibido</td><td>A barra lateral de títulos.</td></tr>
         <tr><td>Layout</td><td>exibido</td>
-          <td>Inline ou lado a lado — ativo na visão Rendered Diff (arquivos
-          novos sempre renderizam inline).</td></tr>
+          <td>Em linha ou lado a lado — ativo na visão Diff Renderizado
+          (arquivos novos sempre renderizam em linha).</td></tr>
         <tr><td>Blame</td><td>exibido</td>
-          <td>Ativo na visão Result, onde há um documento pronto para
+          <td>Ativo na visão Resultado, onde há um documento pronto para
           anotar.</td></tr>
-        <tr><td>Comment on File</td><td>exibido</td>
+        <tr><td>Comentar no Arquivo</td><td>exibido</td>
           <td>Um comentário sobre o arquivo como um todo, não sobre uma linha
           específica.</td></tr>
-        <tr><td>Itens de zoom · Content Width</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
+        <tr><td>Itens de zoom · Largura do Conteúdo</td><td>oculto</td><td>Como nos arquivos locais.</td></tr>
       </table>
 
       <h2 id="other-views">A visão geral do PR e docs de repositório navegados de um PR</h2>
-      <p>A visão geral se mantém mínima: <strong>Share</strong> (a página do
-      pull request no GitHub) mais os itens de toda visão. Um documento de
-      repositório navegado a partir do conteúdo de um PR carrega
-      <strong>Blame</strong> e <strong>Outline</strong>, com os itens de zoom
-      e o Content Width na sua paleta.</p>
+      <p>A visão geral se mantém mínima: <strong>Compartilhar</strong> (a
+      página do pull request no GitHub) mais os itens de toda visão. Um
+      documento de repositório navegado a partir do conteúdo de um PR carrega
+      <strong>Blame</strong> e <strong>Sumário</strong>, com os itens de zoom
+      e a Largura do Conteúdo na sua paleta.</p>
     </article>
   </div>
 </div>

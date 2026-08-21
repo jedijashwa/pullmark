@@ -71,8 +71,8 @@
       <ul>
         <li><strong>Homebrew</strong> — déjà installée&nbsp;; le cask lie
         <code>pullmark</code> dans votre préfixe brew.</li>
-        <li><strong>DMG</strong> — ouvrez <strong>Settings&nbsp;(⌘,) → General</strong>
-        et cliquez <strong>Install pullmark Command…</strong>&nbsp;; la commande se
+        <li><strong>DMG</strong> — ouvrez <strong>Réglages&nbsp;(⌘,) → Général</strong>
+        et cliquez <strong>Installer la commande pullmark…</strong>&nbsp;; la commande se
         lie dans <code>/usr/local/bin</code> (une autorisation peut vous être
         demandée).</li>
         <li><strong>Copie des sources</strong> — <code>make install-cli</code>
@@ -122,7 +122,7 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
       <p>L'arborescence du worktree atterrit dans Emplacements (avec sa pastille de
       branche, un worktree n'étant qu'une copie de travail git),
       <code>plan.md</code> est épinglé dans Fichiers ouverts et rendu. Clic droit dessus et
-      <strong>Reveal in Location</strong> (afficher dans l'emplacement) saute vers sa
+      <strong>Afficher dans Emplacements</strong> saute vers sa
       place dans l'arborescence. Cela marche pareil quand l'emplacement était déjà
       ouvert — ouvrir un fichier qui vit dedans ne crée jamais un monde en double,
       juste une entrée dans l'ensemble de travail.</p>
@@ -135,7 +135,7 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
       de travail contre le dernier commit, montré comme le même diff rendu, mot à mot,
       que reçoivent les pull requests. <code>--diff=&lt;ref&gt;</code> compare plutôt
       à une branche, un tag ou un SHA de commit. C'est la porte shell vers la
-      fonctionnalité Compare de l'app (le bouton horloge-et-chevron de la barre
+      fonctionnalité Comparer de l'app (le bouton horloge-et-chevron de la barre
       d'outils), et la réponse la plus rapide à «&nbsp;qu'est-ce que l'agent vient de
       faire à ce document&nbsp;»&nbsp;:</p>
 <pre><code><span class="p">$ </span>pullmark --diff docs/plan.md            <span class="c"># ce que les dernières éditions ont changé</span>
@@ -145,7 +145,7 @@ pullmark --version           <span class="c"># afficher la version de l'app</spa
 <span class="p">$ </span>pullmark --diff ~/wt/feature ~/wt/feature/docs/plan.md
                                           <span class="c"># un worktree, plan.md diffé</span></code></pre>
       <p>Les dossiers passés à côté s'ouvrent toujours en emplacements, et chaque forme a
-      son jumeau dans le menu Compare de la barre d'outils (y compris
+      son jumeau dans le menu Comparer de la barre d'outils (y compris
       <strong>Compare Revisions…</strong> et <strong>Compare with File…</strong>).
       Parce que <code>--diff</code> et <code>--diff-with</code> sont des drapeaux,
       jamais des sous-commandes, un fichier qui s'appellerait <code>diff</code>

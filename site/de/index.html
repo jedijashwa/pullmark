@@ -586,14 +586,14 @@ footer .note { margin-left: auto; }
       von seiner Stelle, und einen Arbeitsentwurf zu committen, nur um
       PR-Kommentarfelder zu bekommen, ist Zeremonie — nicht jedes Dokument
       gehört in einen Pull Request.</p>
-      <p><strong>Randnotizen</strong> (Margin Notes) legen das Feedback ins
+      <p><strong>Randnotizen</strong> legen das Feedback ins
       Dokument selbst. Lies den Entwurf gerendert, klick dahin, wo es hakt,
       und hinterlass eine signierte Notiz, verankert an genau dem Block.
       Notizen sind gewöhnliche HTML-Kommentare, die aus der gerenderten Seite
       herausbleiben — <em>„geh meine Notizen im Plan durch"</em> ist also die
       ganze Übergabe: dein Agent liest jede Notiz genau dort, wo du sie
       hinterlassen hast. Kein Commit, kein Copy-Paste, kein Pull Request.
-      Und dann sieh zu, wie die Überarbeitung landet — Compare hebt die
+      Und dann sieh zu, wie die Überarbeitung landet — „Vergleichen“ hebt die
       Änderungen des Agenten Wort für Wort hervor, live beim Speichern.</p>
     </div>
     <figure class="shot reading-shot">
@@ -650,8 +650,8 @@ footer .note { margin-left: auto; }
     <p class="kicker">reviewen</p>
     <h2>Das ganze Docs-Review, von der gerenderten Seite aus.</h2>
     <p class="prose">Wechsle zwischen <strong>Inline-</strong> und
-    <strong>Side-by-Side-Layout</strong>, spring ins rohe <em>Source Diff</em> (das
-    Quelltext-Diff) oder sieh dir das finale <em>Result</em> (Ergebnis) an — alles über die
+    <strong>Side-by-Side-Layout</strong>, spring ins rohe <em>Quelltext-Diff</em>
+    oder sieh dir das finale <em>Ergebnis</em> an — alles über die
     Toolbar, die dich auch von Datei zu Datei und zurück zum PR führt, ohne die Seitenleiste
     anzufassen. YAML-Front-Matter rendert als <strong>ruhige Metadaten-Tabelle</strong>, nicht
     als Wand aus fettem Text — config-lastige Docs diffen also auch sauber. Ein brandneues
@@ -659,8 +659,8 @@ footer .note { margin-left: auto; }
     grün einzufärben. Bestehende Review-Threads erscheinen unter den Blöcken, die sie
     diskutieren. Fahr über einen Block, klick die Sprechblase und kommentiere den ganzen Block
     oder <strong>genau die Zeilen, die du auswählst</strong>. Am Ende:
-    <strong>Approve</strong> (genehmigen), <strong>Request Changes</strong> (Änderungen
-    anfordern) oder <strong>Comment</strong>, direkt aus der Übersicht — mit oder ohne
+    <strong>Genehmigen</strong>, <strong>Änderungen anfordern</strong> oder
+    <strong>Kommentieren</strong>, direkt aus der Übersicht — mit oder ohne
     Zeilenkommentare — plus Kommentare auf Dateiebene oder in der Unterhaltung. Die Übersicht
     zeigt, <strong>wo der PR steht</strong>: genehmigt oder Änderungen angefordert, das Urteil
     jedes Reviewers, CI-Checks mit Durchklick zu den Logs jedes Checks und die volle
@@ -671,7 +671,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/de/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/de/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="PullMark beim Review eines Dokumentations-Pull-Requests: ein gerendertes Diff, in dem ein geänderter Absatz wortgenaue Hervorhebungen trägt, ein hinzugefügtes Mermaid-Flussdiagramm auf grünem Hinzugefügt-Ton rendert, die Seitenleiste eine Kommentarzahl an der Datei zeigt und das Review-Element der Toolbar „Finish your review“ mit drei ausstehenden Kommentaren anzeigt">
+        alt="PullMark beim Review eines Dokumentations-Pull-Requests: ein gerendertes Diff, in dem ein geänderter Absatz wortgenaue Hervorhebungen trägt, ein hinzugefügtes Mermaid-Flussdiagramm auf grünem Hinzugefügt-Ton rendert, die Seitenleiste eine Kommentarzahl an der Datei zeigt und das Review-Element der Toolbar „Review abschließen“ mit drei ausstehenden Kommentaren anzeigt">
       </picture>
       <figcaption>Ein Dokumentations-PR als gerendertes Diff: der eine geänderte Satz
       trägt wortgenaue Hervorhebungen, und das neue Flussdiagramm kommt als
@@ -682,9 +682,9 @@ footer .note { margin-left: auto; }
     <div class="trio">
       <div class="act">
         <div class="act-name">Add to Review</div>
-        <p>Der Standard: sammelt Entwürfe lokal. Reiche sie zusammen ein — Comment, Approve
-        oder Request Changes — oder speichere ein Pending Review, um es auf github.com
-        abzuschließen.</p>
+        <p>Der Standard: sammelt Entwürfe lokal. Reiche sie zusammen ein — Kommentieren,
+        Genehmigen oder Änderungen anfordern — oder speichere ein ausstehendes Review, um
+        es auf github.com abzuschließen.</p>
       </div>
       <div class="act">
         <div class="act-name">Comment Now</div>
@@ -703,7 +703,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/de/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/de/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMarks Pull-Request-Übersicht: der PR-Titel mit einem Open-Chip, eine Kapsel „Changes requested“, eine Kapsel „Checks passed“, Reviewer-Avatare mit Urteils-Badges, ein docs-guild-Team-Chip, die gerenderte PR-Beschreibung und die Unterhaltungs-Timeline, deren erster Review-Kommentar eine gerenderte Tabelle zeigt">
+        alt="PullMarks Pull-Request-Übersicht: der PR-Titel mit einem „Offen“-Chip, eine Kapsel „Änderungen angefordert“, eine Kapsel „Checks bestanden“, Reviewer-Avatare mit Urteils-Badges, ein docs-guild-Team-Chip, die gerenderte PR-Beschreibung und die Unterhaltungs-Timeline, deren erster Review-Kommentar eine gerenderte Tabelle zeigt">
       </picture>
       <figcaption>Die Unterhaltung als Dokument: Review-Kommentare rendern ihre Tabellen
       als Tabellen, und der Avatar jedes Reviewers trägt sein Urteil.</figcaption>
@@ -737,7 +737,7 @@ footer .note { margin-left: auto; }
       </picture>
       <figcaption>Ordner kommen als lebende Bäume herein, jeder Ort trägt seinen Git-Branch,
       und beim Stöbern erscheinen Dateien als <em>Vorschau</em> — der kursive Eintrag in
-      „Geöffnete Dateien", den der nächste Klick ersetzt. Pull Requests sitzen neben deinen lokalen Dateien,
+      „Geöffnete Dateien“, den der nächste Klick ersetzt. Pull Requests sitzen neben deinen lokalen Dateien,
       und die Titelleiste weiß, wo du bist.</figcaption>
     </figure>
 
@@ -753,7 +753,7 @@ footer .note { margin-left: auto; }
         das schnellste „Was hat der Agent gerade an meinem Doc geändert".</li>
       <li><strong>Stöbern, ohne dich zuzuschütten</strong> — Einzelklick durch einen Ordner
         oder ein Repo, und jede Datei erscheint als <em>Vorschau</em>: ein kursiver Eintrag
-        in „Geöffnete Dateien", den der nächste Klick ersetzt. Doppelklick (oder einfach
+        in „Geöffnete Dateien“, den der nächste Klick ersetzt. Doppelklick (oder einfach
         lostippen)
         behält sie.</li>
       <li><strong>Gliederungs-Seitenleiste</strong> — eine Navigator-artige Karte deiner
@@ -771,14 +771,14 @@ footer .note { margin-left: auto; }
         in sich geschlossene HTML-Datei; <kbd>⌘C</kbd> fügt Rich Text in Docs und Slack
         ein, <kbd>⌥⌘C</kbd> gibt das Markdown zurück.</li>
       <li><strong>Drei Lesethemes</strong> — Editorial, GitHub und Terminal, mit
-        Live-Vorschauen in den Settings — oder leg dein eigenes CSS dazu. Hell &amp; Dunkel
+        Live-Vorschauen in den Einstellungen — oder leg dein eigenes CSS dazu. Hell &amp; Dunkel
         gestalten alles um, Mermaid inklusive, und die Zeilenlänge gehört dir: Standard,
         Wide oder Full Width.</li>
       <li><strong>GitHub-Links öffnen in der App</strong> — klick einen
         <code>github.com</code>-Link auf eine Markdown-Datei und PullMark rendert sie, mit
         einer stets sichtbaren Repo&nbsp;@&nbsp;Branch-Herkunftsleiste; <kbd>⌘</kbd>-Klick
         schickt ihn stattdessen in den Browser.</li>
-      <li><strong>Open Quickly</strong> — <kbd>⌘K</kbd> springt zu jeder Überschrift, jeder
+      <li><strong>Schnell öffnen</strong> — <kbd>⌘K</kbd> springt zu jeder Überschrift, jeder
         Datei, jedem PR, fuzzy-gematcht — oder füg eine PR-URL, eine Repo-URL oder einen
         Dateipfad ein und genau das öffnet sich.</li>
       <li><strong>Verschoben heißt verschoben</strong> — ein wortgleich umgezogener Absatz
@@ -804,9 +804,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/de/app-edit-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/de/app-edit.png?v=4" width="860" height="420" loading="lazy"
-        alt="Ein gerendertes Dokument im Edit-Modus: ein Absatz zeigt an Ort und Stelle sein rohes Markdown, umgeben von gerendertem Inhalt">
+        alt="Ein gerendertes Dokument im Bearbeitungsmodus: ein Absatz zeigt an Ort und Stelle sein rohes Markdown, umgeben von gerendertem Inhalt">
       </picture>
-      <figcaption>Edit-Modus: der aktive Block zeigt seinen Quelltext; alles andere bleibt gerendert.</figcaption>
+      <figcaption>Bearbeitungsmodus: der aktive Block zeigt seinen Quelltext; alles andere bleibt gerendert.</figcaption>
     </figure>
 
     <h3 style="font-family: var(--serif); font-size: 26px; margin: 56px 0 10px;">GitHub ist ein Ort, an dem deine Docs wohnen. Lies ihn auch so.</h3>
@@ -826,7 +826,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/de/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/de/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark rendert eine aus einem GitHub-Repository geladene Markdown-Datei: eine Herkunftsleiste über dem Inhalt zeigt den Repository-Namen, einen Branch-Chip, den Dateipfad und den gepinnten Commit, mit einem Open-on-GitHub-Link; der Bereich Orte der Seitenleiste zeigt das Repository mit Buch-Icon und seinem Markdown-Dateibaum">
+        alt="PullMark rendert eine aus einem GitHub-Repository geladene Markdown-Datei: eine Herkunftsleiste über dem Inhalt zeigt den Repository-Namen, einen Branch-Chip, den Dateipfad und den gepinnten Commit, mit einem „Auf GitHub öffnen“-Link; der Bereich Orte der Seitenleiste zeigt das Repository mit Buch-Icon und seinem Markdown-Dateibaum">
       </picture>
       <figcaption>Ein Doc, direkt von GitHub gelesen: die Herkunftsleiste sagt immer, wo du
       bist — Repo, Branch, gepinnter Commit — und der Branch-Chip wechselt oder öffnet
@@ -837,9 +837,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/de/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/de/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="PullMarks Settings-Fenster auf dem Appearance-Tab: drei Live-Theme-Vorschaukarten — GitHub, Editorial und Terminal — rendern jeweils dasselbe Beispieldokument durch die echte Pipeline, Editorial ist ausgewählt, darunter Buttons zum Öffnen des eigenen Themes-Ordners">
+        alt="PullMarks Einstellungsfenster auf dem Tab „Erscheinungsbild“: drei Live-Theme-Vorschaukarten — GitHub, Editorial und Terminal — rendern jeweils dasselbe Beispieldokument durch die echte Pipeline, Editorial ist ausgewählt, darunter Buttons zum Öffnen des eigenen Themes-Ordners">
       </picture>
-      <figcaption>Settings → Appearance: drei Live-Theme-Vorschauen, gerendert von der echten Pipeline — klick eine Karte zum Wechseln.</figcaption>
+      <figcaption>Einstellungen → Erscheinungsbild: drei Live-Theme-Vorschauen, gerendert von der echten Pipeline — klick eine Karte zum Wechseln.</figcaption>
     </figure>
   </div>
 </section>
@@ -863,7 +863,7 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>Standard-App für .md</h3>
-        <p>Ein Klick in den Settings, und Doppelklick im Finder heißt überall
+        <p>Ein Klick in den Einstellungen, und Doppelklick im Finder heißt überall
         <em>gerendert</em> — und verwirft ein Update die Zuordnung je, merkt PullMark das
         und bietet sie dir zurück an.</p>
       </div>

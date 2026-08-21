@@ -70,12 +70,11 @@
       <p>O PullMark toma emprestadas as credenciais do GitHub que suas
       próprias ferramentas já têm — ele não tem login próprio e nunca guarda
       um segredo.
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      (Ajustes → Geral → GitHub) mostra se está conectado, como quem e por
-      qual fonte; <em>Set&nbsp;Up…</em> (configurar) guia uma máquina nova
-      pela conexão, e <em>Check&nbsp;Again</em> (verificar de novo) pega uma
-      correção na hora — depois de <code>gh auth login</code>, sem precisar
-      reabrir o app.</p>
+      <strong>Ajustes&nbsp;→&nbsp;Geral&nbsp;→&nbsp;GitHub</strong>
+      mostra se está conectado, como quem e por qual fonte;
+      <em>Configurar…</em> guia uma máquina nova pela conexão, e
+      <em>Verificar&nbsp;Novamente</em> pega uma correção na hora — depois de
+      <code>gh auth login</code>, sem precisar reabrir o app.</p>
       <p class="table-note">Lendo isto no Mac onde o PullMark (0.36+) está
       instalado?
       <a href="pullmark://settings/general/github">Abra a linha de conexão
@@ -101,17 +100,16 @@
       manualmente expiram — a linha nos Ajustes é onde o “ontem funcionava”
       é diagnosticado.</p>
 
-      <h2 id="github-auth">GitHub: “may not exist… or may be a private repository”</h2>
-      <p><em>“Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access.”</em> (Não
-      foi possível abrir: pode não existir nessa ref, ou ser um repositório
-      privado que suas credenciais não alcançam.) A API do GitHub relata
+      <h2 id="github-auth">GitHub: “pode não existir nesse ref… ou pode ser um repositório privado”</h2>
+      <p><em>“Não foi possível abrir … Pode não existir nesse ref, ou pode
+      ser um repositório privado que suas credenciais do GitHub não
+      acessam.”</em> A API do GitHub relata
       “privado sem acesso” e “não existe” de forma idêntica, então o
       PullMark não consegue dizer qual dos dois é. Se o repositório deveria
       funcionar, é quase sempre autenticação — veja
       <a href="#github-access">Acesso ao GitHub</a> acima, ou abra
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      e acione <em>Set&nbsp;Up…</em>.</p>
+      <strong>Ajustes&nbsp;→&nbsp;Geral&nbsp;→&nbsp;GitHub</strong>
+      e acione <em>Configurar…</em>.</p>
 
       <h2 id="gatekeeper">O Gatekeeper não abre o app</h2>
       <p>As releases são assinadas com um Developer ID e notarizadas pela
@@ -125,16 +123,15 @@
       <p>Uma atualização do Homebrew substitui o pacote do app, o que pode
       derrubar silenciosamente o registro da extensão de Quick Look. O
       PullMark a re-registra a cada abertura — então basta abrir o app uma
-      vez. Se as prévias ainda mostrarem texto cru, confira se Settings →
-      General → “Quick Look previews” está em Rendered.</p>
+      vez. Se as prévias ainda mostrarem texto cru, confira se Ajustes →
+      Geral → “Prévias do Quick Look” está em Renderizado.</p>
 
-      <h2 id="default-app">“PullMark is no longer your default Markdown app”</h2>
+      <h2 id="default-app">“O PullMark não é mais seu app padrão de Markdown”</h2>
       <p>Mesma causa: uma atualização substituiu o pacote e o macOS derrubou
-      o vínculo com <code>.md</code>. O <strong>Make Default Again</strong>
-      (tornar padrão de novo) do banner o retoma; Settings → General
-      também.</p>
+      o vínculo com <code>.md</code>. O <strong>Tornar Padrão de
+      Novo</strong> do banner o retoma; Ajustes → Geral também.</p>
 
-      <h2 id="editing">“… changed while you were editing this block — nothing was saved”</h2>
+      <h2 id="editing">“… mudou enquanto você estava editando este bloco — nada foi salvo”</h2>
       <p>O arquivo mudou no disco (outro editor, um agente, uma operação
       git) entre abrir o editor de bloco e salvar. O PullMark se recusa a
       emendar em linhas que se moveram — nada se perde além daquela única
@@ -147,27 +144,29 @@
       significa que o caminho não resolve agora — um volume desmontado, uma
       branch git trocada, uma worktree apagada. As linhas escurecem em vez
       de sumir de propósito: elas revivem sozinhas quando o caminho volta.
-      Clicar num recente morto oferece <strong>Remove from Recents</strong>
-      (remover dos recentes) ou <strong>Keep</strong> (manter).</p>
+      Clicar num recente morto oferece <strong>Remover dos Recentes</strong>
+      ou <strong>Manter</strong>.</p>
 
       <h2 id="pr-sync">Pull requests: banners e comentários pendentes</h2>
       <ul>
-        <li><em>“This pull request was updated on GitHub.”</em> — a branch
+        <li><em>“Este pull request foi atualizado no GitHub.”</em> — a branch
         avançou desde que você o carregou. Atualizar é um clique e seus
         rascunhos de comentário sobrevivem; o PullMark nunca recarrega
         sozinho por baixo de uma revisão em andamento.</li>
-        <li><em>“Review comments couldn't be loaded…”</em> — sem isso, o
-        diff se passaria por um PR sem comentários; Retry rebusca.</li>
-        <li><em>“Could not upload N pending comment(s)… kept locally for
-        retry.”</em> — comentários escritos offline (ou durante um soluço da
-        API) entram numa fila no disco por head de PR e sobem quando podem.
+        <li><em>“Não foi possível carregar os comentários de revisão…”</em> —
+        sem isso, o diff se passaria por um PR sem comentários; Tentar
+        Novamente rebusca.</li>
+        <li><em>“Não foi possível enviar N comentários pendentes… mantidos
+        localmente para nova tentativa.”</em> — comentários escritos offline
+        (ou durante um soluço da API) entram numa fila no disco por head de PR
+        e sobem quando podem.
         Nada é descartado.</li>
-        <li><em>“Committed …, but the push failed”</em> — o commit está a
+        <li><em>“…, mas o push falhou”</em> — o commit está a
         salvo no seu histórico local; só o push precisa ser repetido.</li>
       </ul>
 
       <h2 id="updates">Atualizações</h2>
-      <p>O <strong>Update Now</strong> do banner executa o upgrade do brew
+      <p>O <strong>Atualizar Agora</strong> do banner executa o upgrade do brew
       (ou uma instalação verificada no lugar, para instalações via DMG) e
       reabre o app. Se falhar, o banner mostra o comando exato
       <code>brew upgrade --cask pullmark</code> com um botão de copiar —
@@ -190,7 +189,7 @@
 
       <h2 id="still-stuck">Ainda travado?</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">Abra uma
-      issue</a> — Help → Report a Bug… pré-preenche uma de dentro do
+      issue</a> — Ajuda → Relatar um Erro… pré-preenche uma de dentro do
       app.</p>
     </article>
   </div>

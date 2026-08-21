@@ -68,9 +68,9 @@
       <h2 id="github-access">GitHub へのアクセス——どうつながり、どう直すか</h2>
       <p>PullMark は、あなた自身のツールがすでに持っている GitHub の認証情報を借ります——自前の
       ログインは持たず、秘密を保存することもありません。
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> が、つながっているか、
-      誰として、どの出どころを通じてかを示します。<em>Set&nbsp;Up…</em> は新しいマシンでの接続を
-      案内し、<em>Check&nbsp;Again</em> は直したその場で拾い上げます——<code>gh auth login</code>
+      <strong>設定&nbsp;→&nbsp;一般&nbsp;→&nbsp;GitHub</strong> が、つながっているか、
+      誰として、どの出どころを通じてかを示します。<em>「設定…」</em> は新しいマシンでの接続を
+      案内し、<em>「再確認」</em> は直したその場で拾い上げます——<code>gh auth login</code>
       のあと、再起動は要りません。</p>
       <p class="table-note">PullMark（0.36 以降）が入っている Mac でこれを読んでいますか？
       <a href="pullmark://settings/general/github">いま接続の行を開く</a>。</p>
@@ -92,16 +92,15 @@
       作ったトークンには期限があります——「昨日は動いたのに」が診断される場所が、あの設定の
       行です。</p>
 
-      <h2 id="github-auth">GitHub:「may not exist… or may be a private repository」</h2>
-      <p><em>「Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access.」</em>
-      （…… を開けませんでした。その ref に存在しないか、あなたの GitHub 認証情報では
-      アクセスできないプライベートリポジトリかもしれません。）GitHub の API は「プライベートで
-      権限が無い」と「存在しない」をまったく同じように報告するので、PullMark にもどちらなのかは
+      <h2 id="github-auth">GitHub:「その ref には存在しないか…プライベートリポジトリかもしれません」</h2>
+      <p><em>「… を開けませんでした: …。その ref には存在しないか、いまの GitHub
+      認証情報ではアクセスできないプライベートリポジトリかもしれません。」</em>
+      GitHub の API は「プライベートで権限が無い」と「存在しない」をまったく
+      同じように報告するので、PullMark にもどちらなのかは
       分かりません。動くはずのリポジトリなら、ほぼ間違いなく認証の問題です——上の
       <a href="#github-access">GitHub へのアクセス</a>を見るか、
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong> を開いて
-      <em>Set&nbsp;Up…</em> を押してください。</p>
+      <strong>設定&nbsp;→&nbsp;一般&nbsp;→&nbsp;GitHub</strong> を開いて
+      <em>「設定…」</em> を押してください。</p>
 
       <h2 id="gatekeeper">Gatekeeper がアプリを開いてくれない</h2>
       <p>リリースは Developer ID で署名され、Apple の公証を受けているので、普通にダウンロード
@@ -112,15 +111,15 @@
       <h2 id="quick-look">Quick Look のプレビューがレンダリングされなくなった</h2>
       <p>Homebrew のアップグレードはアプリバンドルを差し替えるので、Quick Look 拡張の登録が
       黙って外れることがあります。PullMark は起動のたびに登録し直すので、一度アプリを起動すれば
-      それで済みます。それでも素のテキストが出るなら、Settings → General →「Quick Look previews」
-      が Rendered になっているか確かめてください。</p>
+      それで済みます。それでも素のテキストが出るなら、設定 → 一般 →「Quick Look のプレビュー」
+      が「レンダリング」になっているか確かめてください。</p>
 
-      <h2 id="default-app">「PullMark is no longer your default Markdown app」</h2>
+      <h2 id="default-app">「PullMark は Markdown のデフォルトアプリではなくなりました」</h2>
       <p>原因は同じです。アップグレードがバンドルを差し替え、macOS が <code>.md</code> の
-      関連付けを手放しました。バナーの <strong>Make Default Again</strong> で取り戻せますし、
-      Settings → General からでも同じことができます。</p>
+      関連付けを手放しました。バナーの <strong>「もう一度デフォルトにする」</strong> で取り戻せますし、
+      設定 → 一般 からでも同じことができます。</p>
 
-      <h2 id="editing">「… changed while you were editing this block — nothing was saved」</h2>
+      <h2 id="editing">「このブロックを編集しているあいだに … が変更されました — 何も保存されていません」</h2>
       <p>ブロックエディタを開いてから保存するまでのあいだに、ファイルがディスク上で変わりました
       （別のエディタ、エージェント、git の操作）。PullMark は、動いてしまった行に割り込むことを
       拒みます——失われるのはその 1 回の編集だけで、ブロックを開き直せば現在のテキストが出ます。
@@ -131,27 +130,29 @@
       <p>疑問符バッジの付いた「場所」や、グレーになった最近の項目は、いまそのパスが解決できない
       という意味です——マウント解除されたボリューム、切り替えた git ブランチ、削除されたワーク
       ツリー。行が消えずに淡くなるのは、わざとです。パスが戻れば、自動的に復活します。もう生きて
-      いない最近の項目をクリックすると、<strong>Remove from Recents</strong> か
-      <strong>Keep</strong> を選べます。</p>
+      いない最近の項目をクリックすると、<strong>「最近使った項目から取り除く」</strong> か
+      <strong>「残す」</strong> を選べます。</p>
 
       <h2 id="pr-sync">プルリクエスト——バナーと保留中のコメント</h2>
       <ul>
-        <li><em>「This pull request was updated on GitHub.」</em>——読み込んでからブランチが
+        <li><em>「このプルリクエストは GitHub で更新されました。」</em>——読み込んでからブランチが
         動きました。更新はワンクリックで、下書きのコメントは生き残ります。レビューの途中で
         PullMark が勝手に読み直すことはありません。</li>
-        <li><em>「Review comments couldn't be loaded…」</em>——そうでなければ、差分がコメントの
-        無い PR のふりをしてしまいます。Retry で取得し直します。</li>
-        <li><em>「Could not upload N pending comment(s)… kept locally for retry.」</em>——
+        <li><em>「レビューコメントを読み込めませんでした — 既存のスレッドが表示されて
+        いない可能性があります。」</em>——そうでなければ、差分がコメントの
+        無い PR のふりをしてしまいます。「再試行」で取得し直します。</li>
+        <li><em>「保留中のコメント N 件を GitHub にアップロードできませんでした —
+        再試行のためローカルに保持しています。」</em>——
         オフラインで（あるいは API の不調で）書いたコメントは、PR のヘッドごとにディスクで順番を
         待ち、可能になり次第アップロードされます。捨てられるものはありません。</li>
-        <li><em>「Committed …, but the push failed」</em>——コミットはローカルの履歴に無事
+        <li><em>「… 個のファイルをコミットしました。ただしプッシュに失敗しました」</em>——コミットはローカルの履歴に無事
         あります。やり直すべきは、プッシュだけです。</li>
       </ul>
 
       <h2 id="updates">アップデート</h2>
-      <p>バナーの <strong>Update Now</strong> は brew のアップグレード（DMG でのインストールなら、
+      <p>バナーの <strong>「今すぐアップデート」</strong> は brew のアップグレード（DMG でのインストールなら、
       検証付きのその場での上書きインストール）を実行して、再起動します。失敗したときは、バナーが
-      <code>brew upgrade --cask pullmark</code> というコマンドをそのまま Copy ボタン付きで
+      <code>brew upgrade --cask pullmark</code> というコマンドをそのまま「コピー」ボタン付きで
       表示します——ターミナルで走らせても、することは同じです。開発ビルドはアップデートを
       確認しません。</p>
 
@@ -169,7 +170,7 @@
 
       <h2 id="still-stuck">それでも行き詰まったら</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">issue を立ててください</a>——
-      Help → Report a Bug… なら、アプリの中から下書き済みのものを開けます。</p>
+      ヘルプ →「バグを報告…」なら、アプリの中から下書き済みのものを開けます。</p>
     </article>
   </div>
 </div>

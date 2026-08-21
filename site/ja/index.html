@@ -586,7 +586,7 @@ footer .note { margin-left: auto; }
       残す。ノートの実体はごく普通の HTML コメントで、レンダリングされたページには現れません。だから
       <em>「計画のノートに対応して」</em>のひと言で受け渡しは完了。エージェントは、あなたが残したまさに
       その場所でノートを読みます。コミットも、貼り付けも、プルリクエストも不要。あとは修正が届くのを
-      眺めるだけ——Compare（比較）がエージェントの編集を単語単位でハイライトし、保存のたびにライブで
+      眺めるだけ——「比較」がエージェントの編集を単語単位でハイライトし、保存のたびにライブで
       更新します。</p>
     </div>
     <figure class="shot reading-shot">
@@ -637,15 +637,15 @@ footer .note { margin-left: auto; }
     <p class="kicker">レビュー</p>
     <h2>ドキュメントレビューのすべてを、レンダリングされたページから。</h2>
     <p class="prose">レイアウトは<strong>インライン</strong>と<strong>左右並列</strong>を切り替えられ、生の
-    Source Diff（ソース差分）に降りることも、最終形の Result（結果）をプレビューすることもできます。
+    「ソース差分」に降りることも、最終形の「結果」をプレビューすることもできます。
     すべてツールバーから——ファイルからファイルへの移動も PR への戻りも、サイドバーに触れずに済みます。
     YAML フロントマターは太字だらけの壁ではなく<strong>控えめなメタデータ表</strong>としてレンダリング
     されるので、設定の多いドキュメントもきれいに差分が取れます。新規ドキュメントは、全ブロックを緑に
     染める代わりに「すべて新規」のひと言を添えて、一篇のドキュメントとして読めます。既存のレビュー
     スレッドは、話題にしているブロックの下に表示。ブロックにポインタを重ねてバブルをクリックすれば、
     ブロック全体にも<strong>選んだ行だけ</strong>にもコメントできます。仕上げは概要画面から
-    <strong>Approve</strong>（承認）、<strong>Request Changes</strong>（変更のリクエスト）、
-    <strong>Comment</strong>（コメント）——行コメントの有無は問いません。ファイル単位のコメントや、
+    <strong>「承認」</strong>、<strong>「変更をリクエスト」</strong>、
+    <strong>「コメント」</strong>——行コメントの有無は問いません。ファイル単位のコメントや、
     通常の会話コメントも残せます。概要画面が示すのは <strong>PR の現在地</strong>。承認済みか変更
     リクエスト中か、各レビュアーの判定、ログまでクリックひとつでたどれる CI チェック、そして読みやすい
     タイムラインになった会話の全体です。開いている PR は毎分チェックされ、ブランチが動いたらワンクリックで
@@ -655,7 +655,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/ja/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/ja/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="ドキュメントのプルリクエストをレビューする PullMark。レンダリングされた差分では変更された段落に単語単位のハイライトが乗り、追加された Mermaid フローチャートが緑の追加ブロックの色合いの上にレンダリングされている。サイドバーはファイルのコメント数を示し、ツールバーのレビューコントロールには保留中のコメント 3 件とともに Finish your review と表示されている">
+        alt="ドキュメントのプルリクエストをレビューする PullMark。レンダリングされた差分では変更された段落に単語単位のハイライトが乗り、追加された Mermaid フローチャートが緑の追加ブロックの色合いの上にレンダリングされている。サイドバーはファイルのコメント数を示し、ツールバーのレビューコントロールには保留中のコメント 3 件とともに「レビューを完了」と表示されている">
       </picture>
       <figcaption>レンダリングされた差分としてのドキュメント PR。変わった一文には単語単位のハイライトが
       乗り、新しいフローチャートは追加ブロックの色合いの上に<em>図</em>として届きます——80 行の緑の
@@ -685,7 +685,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/ja/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/ja/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark のプルリクエスト概要。Open チップ付きの PR タイトル、Changes requested カプセル、Checks passed カプセル、判定バッジをまとったレビュアーのアバター、docs-guild チームのチップ、レンダリングされた PR 説明、そして最初のレビューコメントに表が表として表示されている会話のタイムライン">
+        alt="PullMark のプルリクエスト概要。「オープン」チップ付きの PR タイトル、「変更をリクエスト済み」カプセル、「チェック成功」カプセル、判定バッジをまとったレビュアーのアバター、docs-guild チームのチップ、レンダリングされた PR 説明、そして最初のレビューコメントに表が表として表示されている会話のタイムライン">
       </picture>
       <figcaption>会話もドキュメントとして。レビューコメントの中の表は表としてレンダリングされ、
       各レビュアーのアバターは自分の判定バッジをまとっています。</figcaption>
@@ -748,13 +748,13 @@ footer .note { margin-left: auto; }
       <li><strong>どこへでも持ち出せる</strong> — PDF や自己完結した単一の HTML として書き出し。
         <kbd>⌘C</kbd> は Docs や Slack にリッチテキストで貼り付き、<kbd>⌥⌘C</kbd> は Markdown を
         返します。</li>
-      <li><strong>3 つの読書テーマ</strong> — Editorial、GitHub、Terminal。Settings（設定）でライブ
+      <li><strong>3 つの読書テーマ</strong> — Editorial、GitHub、Terminal。「設定」でライブ
         プレビューでき、自作の CSS を置くこともできます。ライトとダークは Mermaid まで含めてすべてを
         着替えさせ、行の長さも Standard・Wide・Full Width から選べます。</li>
       <li><strong>GitHub リンクはアプリ内で</strong> — Markdown ファイルへの <code>github.com</code>
         リンクをクリックすると PullMark がレンダリングし、リポジトリ&nbsp;@&nbsp;ブランチの出所バーが
         つねに表示されます。<kbd>⌘</kbd> クリックならブラウザへ。</li>
-      <li><strong>Open Quickly</strong> — <kbd>⌘K</kbd> であいまい一致から任意の見出し・ファイル・PR に
+      <li><strong>「クイックオープン」</strong> — <kbd>⌘K</kbd> であいまい一致から任意の見出し・ファイル・PR に
         ジャンプ。PR の URL、リポジトリの URL、ファイルパスを貼り付ければ、それを直接開きます。</li>
       <li><strong>移動は移動として</strong> — そのまま場所を変えた段落は、赤と緑のノイズではなく、
         控えめな紫のチップ付きで一度だけレンダリングされます。</li>
@@ -796,7 +796,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/ja/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/ja/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="GitHub リポジトリから取得した Markdown ファイルをレンダリングする PullMark。本文の上の出所バーにはリポジトリ名、ブランチのチップ、ファイルパス、固定されたコミットが並び、Open on GitHub リンクがある。サイドバーの「場所」セクションには本のアイコン付きのリポジトリとその Markdown ファイルツリーが見えている">
+        alt="GitHub リポジトリから取得した Markdown ファイルをレンダリングする PullMark。本文の上の出所バーにはリポジトリ名、ブランチのチップ、ファイルパス、固定されたコミットが並び、「GitHub で開く」リンクがある。サイドバーの「場所」セクションには本のアイコン付きのリポジトリとその Markdown ファイルツリーが見えている">
       </picture>
       <figcaption>GitHub から直接読むドキュメント。出所バーがつねに現在地——リポジトリ、ブランチ、
       固定されたコミット——を告げ、ブランチのチップはページを離れずに切り替えも別ブランチのオープンも
@@ -807,9 +807,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/ja/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/ja/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="PullMark の設定ウィンドウ、Appearance タブ。GitHub・Editorial・Terminal の 3 枚のライブテーマプレビューカードが同じサンプル文書を実際のパイプラインでレンダリングしており、Editorial が選択されている。下にはカスタムの Themes フォルダを開くボタン">
+        alt="PullMark の設定ウィンドウ、「外観」タブ。GitHub・Editorial・Terminal の 3 枚のライブテーマプレビューカードが同じサンプル文書を実際のパイプラインでレンダリングしており、Editorial が選択されている。下にはカスタムの Themes フォルダを開くボタン">
       </picture>
-      <figcaption>Settings → Appearance（設定 → 外観）。実際のパイプラインでレンダリングされる 3 枚の
+      <figcaption>設定 → 外観。実際のパイプラインでレンダリングされる 3 枚の
       ライブテーマプレビュー——カードをクリックで切り替えです。</figcaption>
     </figure>
   </div>
@@ -833,7 +833,7 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>.md のデフォルトアプリに</h3>
-        <p>Settings のワンクリックで、Finder のダブルクリックがどこでも「レンダリングして開く」の
+        <p>「設定」のワンクリックで、Finder のダブルクリックがどこでも「レンダリングして開く」の
         意味になります。アップグレードで関連付けが外れても、PullMark が気づいて取り戻しを申し出ます。</p>
       </div>
       <div class="cell">

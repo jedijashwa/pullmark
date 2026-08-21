@@ -69,10 +69,10 @@
       <h2 id="github-access">GitHub-toegang: hoe PullMark verbindt, en hoe je het repareert</h2>
       <p>PullMark leent de GitHub-credentials die je eigen tools al
       hebben — het heeft geen eigen login en bewaart nooit een geheim.
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
+      <strong>Instellingen&nbsp;→&nbsp;Algemeen&nbsp;→&nbsp;GitHub</strong>
       toont of er verbinding is, als wie, en via welke bron;
-      <em>Set&nbsp;Up…</em> loodst een nieuwe machine door het verbinden,
-      en <em>Check&nbsp;Again</em> pikt een reparatie meteen op — na
+      <em>Stel&nbsp;in…</em> loodst een nieuwe machine door het verbinden,
+      en <em>Controleer&nbsp;opnieuw</em> pikt een reparatie meteen op — na
       <code>gh auth login</code>, zonder herstart.</p>
       <p class="table-note">Lees je dit op de Mac waar PullMark (0.36+) is
       geïnstalleerd?
@@ -97,20 +97,19 @@
       owner</strong> — publieke repo's en de privérepo's van die eigenaar
       werken, al het andere wordt geweigerd; organisaties met SSO
       vereisen dat het token per organisatie is geautoriseerd; en
-      handmatig aangemaakte tokens verlopen — de Settings-rij is de plek
-      waar "gisteren werkte het nog" wordt gediagnosticeerd.</p>
+      handmatig aangemaakte tokens verlopen — de rij in Instellingen is de
+      plek waar "gisteren werkte het nog" wordt gediagnosticeerd.</p>
 
-      <h2 id="github-auth">GitHub: "may not exist… or may be a private repository"</h2>
-      <p><em>"Couldn't open … It may not exist at that ref, or it may be a
-      private repository your GitHub credentials can't access."</em>
-      (Kon … niet openen. Het bestaat mogelijk niet op die ref, of het is
-      een privérepository waar je GitHub-credentials niet bij kunnen.)
+      <h2 id="github-auth">GitHub: "bestaat mogelijk niet op die ref… of het is een privérepository"</h2>
+      <p><em>"Kon … niet openen. Het bestaat mogelijk niet op die ref, of
+      het is een privérepository waar je GitHub-credentials geen toegang
+      toe hebben."</em>
       GitHubs API meldt privé-zonder-toegang en bestaat-niet identiek, dus
       PullMark kan je niet vertellen welke van de twee het is. Zou de repo
       moeten werken, dan is het bijna altijd authenticatie — zie
       <a href="#github-access">GitHub-toegang</a> hierboven, of open
-      <strong>Settings&nbsp;→&nbsp;General&nbsp;→&nbsp;GitHub</strong>
-      en klik op <em>Set&nbsp;Up…</em>.</p>
+      <strong>Instellingen&nbsp;→&nbsp;Algemeen&nbsp;→&nbsp;GitHub</strong>
+      en klik op <em>Stel&nbsp;in…</em>.</p>
 
       <h2 id="gatekeeper">Gatekeeper wil de app niet openen</h2>
       <p>Releases zijn ondertekend met een Developer ID en genotariseerd
@@ -125,16 +124,16 @@
       van de Quick Look-extensie geruisloos kan laten vallen. PullMark
       registreert haar bij elke start opnieuw — start de app dus gewoon
       één keer. Tonen previews daarna nog steeds ruwe tekst, controleer
-      dan of Settings → General → "Quick Look previews" op Rendered
+      dan of Instellingen → Algemeen → "Quick Look-previews" op Gerenderd
       staat.</p>
 
-      <h2 id="default-app">"PullMark is no longer your default Markdown app"</h2>
+      <h2 id="default-app">"PullMark is niet langer je standaard-Markdown-app"</h2>
       <p>Zelfde oorzaak: een upgrade verving de bundle en macOS liet de
-      <code>.md</code>-koppeling vallen. <strong>Make Default
-      Again</strong> in de banner claimt haar terug; Settings → General
-      ook.</p>
+      <code>.md</code>-koppeling vallen. <strong>Maak weer
+      standaard</strong> in de banner claimt haar terug; Instellingen →
+      Algemeen ook.</p>
 
-      <h2 id="editing">"… changed while you were editing this block — nothing was saved"</h2>
+      <h2 id="editing">"… is veranderd terwijl je bezig was met het bewerken van dit blok — er is niets bewaard"</h2>
       <p>Het bestand veranderde op schijf (een andere editor, een agent,
       een git-operatie) tussen het openen van de blokeditor en het
       opslaan. PullMark weigert te splitsen in regels die zijn
@@ -150,28 +149,28 @@
       niet-geactiveerd volume, een gewisselde git-branch, een verwijderde
       worktree. Rijen dimmen met opzet in plaats van te verdwijnen: ze
       herleven automatisch wanneer het pad terugkeert. Klikken op een dood
-      recent item biedt <strong>Remove from Recents</strong> of
-      <strong>Keep</strong>.</p>
+      recent item biedt <strong>Verwijder uit Recent</strong> of
+      <strong>Behoud</strong>.</p>
 
       <h2 id="pr-sync">Pull requests: banners en openstaande comments</h2>
       <ul>
-        <li><em>"This pull request was updated on GitHub."</em> — de branch
+        <li><em>"Deze pull request is bijgewerkt op GitHub."</em> — de branch
         is verplaatst sinds je hem laadde. Verversen is één klik en je
         conceptcomments blijven bewaard; PullMark herlaadt nooit vanzelf
         onder een lopende review.</li>
-        <li><em>"Review comments couldn't be loaded…"</em> — de diff zou
-        zich anders voordoen als een PR zonder comments; Retry haalt ze
-        opnieuw op.</li>
-        <li><em>"Could not upload N pending comment(s)… kept locally for
-        retry."</em> — comments die offline zijn geschreven (of door een
+        <li><em>"Reviewcomments konden niet worden geladen…"</em> — de diff
+        zou zich anders voordoen als een PR zonder comments; Probeer
+        opnieuw haalt ze opnieuw op.</li>
+        <li><em>"Kon N pending comment(s) niet naar GitHub uploaden… lokaal
+        bewaard voor een nieuwe poging."</em> — comments die offline zijn geschreven (of door een
         API-hapering) komen per PR-head op schijf in de wachtrij en
         uploaden zodra het kan. Er valt niets weg.</li>
-        <li><em>"Committed …, but the push failed"</em> — de commit staat
+        <li><em>"… gecommit, maar de push is mislukt"</em> — de commit staat
         veilig in je lokale geschiedenis; alleen de push moet opnieuw.</li>
       </ul>
 
       <h2 id="updates">Updates</h2>
-      <p><strong>Update Now</strong> in de banner draait de brew-upgrade
+      <p><strong>Werk nu bij</strong> in de banner draait de brew-upgrade
       (of een geverifieerde in-place-installatie voor DMG-installaties) en
       herstart. Mislukt dat, dan toont de banner het exacte commando
       <code>brew upgrade --cask pullmark</code> met een kopieerknop — het
@@ -186,14 +185,14 @@
         <li><em>Command not found</em> — zie
         <a href="/nl/docs/cli/#install">het commando installeren</a>.</li>
         <li><em>"Couldn't install the command"</em> — de installer in
-        Settings heeft toestemming nodig om naar
+        Instellingen heeft toestemming nodig om naar
         <code>/usr/local/bin</code> te schrijven; annuleer en probeer
         opnieuw als je de prompt hebt weggeklikt.</li>
       </ul>
 
       <h2 id="still-stuck">Kom je er niet uit?</h2>
       <p><a href="https://github.com/jedijashwa/pullmark/issues">Open een
-      issue</a> — Help → Report a Bug… vult er vanuit de app alvast een
+      issue</a> — Help → Meld een bug… vult er vanuit de app alvast een
       voor je in.</p>
     </article>
   </div>

@@ -69,7 +69,7 @@
       <p>工作集：每一份你明确打开过的文档——来自 Finder、拖放、⌘O、
       <a href="/zh/docs/cli/">命令行</a>，或从某个“位置”保留下来的文件。
       平铺排列，可拖动排序，悬停任意一行出现 ✕ 即可移除（选中行按 ⌫ 亦可）。
-      右键分区标题有 <strong>Close All（全部关闭）</strong>。</p>
+      右键分区标题有 <strong>全部关闭</strong>。</p>
 
       <h3 id="previews">预览</h3>
       <p>在“位置”里单击一个文件，它立即渲染——并以<em>预览</em>的身份
@@ -79,22 +79,22 @@
       <p>当你对一份预览表现出阅读之外的投入，它就转正为普通的固定条目：</p>
       <ul>
         <li><strong>双击</strong>树里的文件，或双击那条斜体条目本身</li>
-        <li><strong>开始编辑</strong>——进入 Edit Mode（编辑模式）或保存一次
+        <li><strong>开始编辑</strong>——进入“编辑模式”或保存一次
         区块编辑都会把它固定</li>
-        <li>右键菜单里的 <strong>Keep Open（保持打开）</strong></li>
+        <li>右键菜单里的 <strong>保持打开</strong></li>
       </ul>
       <p>阅读性的动作——blame、行历史、细看图片或图表——刻意不会转正预览。
       如果你更希望每次点击都完整打开文件，请在设置里改
-      <a href="/zh/docs/settings/#clicking-files">Clicking files in Locations</a>。</p>
+      <a href="/zh/docs/settings/#clicking-files">点击“位置”中的文件</a>。</p>
       <p><strong>远程仓库以同样的方式、在同样的位置预览。</strong>浏览 GitHub
       仓库的文件树，或跟随远程文档内部的链接，会在“打开的文件”中放同一条
       斜体条目——带书本图标和 <code>owner/repo @ ref</code> 的第二行，因为
       文件不在你的 Mac 上。每个窗口永远只有<em>一条</em>预览，本地远程皆然：
       预览任何新内容都会替换你之前预览的东西。保留一份远程文档（双击或
-      Keep Open）才把它归档到它的仓库——它会移到“位置”中该仓库的固定
+      “保持打开”）才把它归档到它的仓库——它会移到“位置”中该仓库的固定
       列表里。⌘K 打开的内容直接固定，因为粘贴 URL 是明确的意图。</p>
       <p>凡是位于某个已打开“位置”内的“打开的文件”行，右键菜单里都有
-      <strong>Reveal in Location（在“位置”中显示）</strong>——从“我在读什么”
+      <strong>在“位置”中显示</strong>——从“我在读什么”
       跳回“它住在哪里”。</p>
 
       <h2 id="locations">位置</h2>
@@ -102,7 +102,7 @@
       <table>
         <tr><th>行</th><th>含义</th></tr>
         <tr><td>📁 文件夹图标</td><td>本地文件夹——其中的 Markdown 文件以树呈现
-          （或平铺列表；右键 → View as List）。持续监视变化。</td></tr>
+          （或平铺列表；右键 → 以列表显示）。持续监视变化。</td></tr>
         <tr><td>📕 书本图标</td><td>为浏览而打开的 GitHub 仓库——从 API 抓取，
           不写盘。</td></tr>
       </table>
@@ -116,13 +116,13 @@
         <li><strong>View Branch from GitHub（从 GitHub 查看分支）</strong>——
         远程读取另一个分支的文件，不动你的检出。已有本地工作树的分支会
         跳到那个工作树——本地优先于远程。</li>
-        <li><strong>Open on GitHub（在 GitHub 上打开）</strong>——在浏览器里
+        <li><strong>在 GitHub 上打开</strong>——在浏览器里
         打开该仓库（当前分支）。</li>
       </ul>
       <p>在远程（书本图标）仓库上，同一枚标签列出分支：<strong>Switch To
       （切换到）</strong>把会话重新钉到另一个分支，按住 ⌥ 则出现
-      <strong>Open Branch Separately（单独打开分支）</strong>供并排阅读。
-      <strong>Browse Repo Files…（浏览仓库文件…）</strong>载入仓库完整的
+      <strong>单独打开分支</strong>供并排阅读。
+      <strong>浏览仓库文件…</strong>载入仓库完整的
       Markdown 树。仓库保留的文档排在树上方，永远不会淹没在大仓库里；
       已在树中可见的保留文档就在树里表示。（仅在预览的文档显示在
       <a href="#previews">“打开的文件”</a>，不在这里。）</p>
@@ -132,14 +132,13 @@
       <h2 id="pull-requests">拉取请求</h2>
       <p>每个打开的 PR 是一组：先是总览行（状态图标 + 改动的 Markdown
       数量），然后是它改动的 Markdown 文件——带计数的评论气泡标记着有
-      未解决审查会话的文件。在你打开的 PR 之下，<strong>Review Requests
-      （审查请求）</strong>收集等待你审查的 PR，未读计数即使折叠也保持可见
+      未解决审查会话的文件。在你打开的 PR 之下，<strong>审查请求</strong>收集等待你审查的 PR，未读计数即使折叠也保持可见
       （可在设置中隐藏，也可只显示涉及 Markdown 的 PR）。</p>
       <p>PR 行的状态图标：</p>
       <table>
         <tr><th>状态</th><th>图标</th></tr>
         <tr><td>草稿</td><td>拉取请求箭头，灰色</td></tr>
-        <tr><td>打开</td><td>拉取请求箭头，绿色</td></tr>
+        <tr><td>开启</td><td>拉取请求箭头，绿色</td></tr>
         <tr><td>已合并</td><td>合并箭头，紫色</td></tr>
         <tr><td>已关闭</td><td>✕ 圆圈，红色</td></tr>
         <tr><td>不可用</td><td>垃圾桶，灰色——PR（或你的访问权限）不在了</td></tr>
@@ -152,7 +151,7 @@
       <p>最近打开、且没有在上方出现的文件、文件夹和拉取请求。PR 条目带着
       实时状态图标；文件已丢失的最近条目会变暗（时钟角标）而不是消失，
       路径回来时复活——为切换分支和未挂载的卷而生。右键分区标题可
-      <strong>Clear Recents（清除最近使用）</strong>。</p>
+      <strong>清除最近使用</strong>。</p>
 
       <h2 id="removal">移除</h2>
       <p>悬停任意顶层行出现 ✕——它把行从侧边栏移走，绝不删除磁盘或
@@ -171,9 +170,9 @@
           作为行尾小标记：这个本地文件夹是它的检出）</td></tr>
         <tr><td>分支符号 + 名称</td><td>分支标签——点击查看分支与工作树</td></tr>
         <tr><td>拉取请求箭头</td><td>一个拉取请求</td></tr>
-        <tr><td>托盘</td><td>Review Requests——等待你审查的 PR</td></tr>
-        <tr><td>气泡 + 计数</td><td>在 PR 文件上：未解决的审查评论。在 Open
-          Files 行上：文档中尚存的<a href="/zh/docs/experimental/margin-notes/">页边批注</a></td></tr>
+        <tr><td>托盘</td><td>审查请求——等待你审查的 PR</td></tr>
+        <tr><td>气泡 + 计数</td><td>在 PR 文件上：未解决的审查评论。在“打开的
+          文件”行上：文档中尚存的<a href="/zh/docs/experimental/margin-notes/">页边批注</a></td></tr>
         <tr><td>彩色圆点（左缘）</td><td>未读的审查请求</td></tr>
         <tr><td>圆圈 ✕（悬停出现）</td><td>从侧边栏移除 / 关闭预览</td></tr>
       </table>

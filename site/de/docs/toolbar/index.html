@@ -62,7 +62,7 @@
       <p class="kicker">docs</p>
       <h1>Die Toolbar</h1>
       <p class="article-lede">Eine Toolbar pro Art von Ansicht, jede voll
-      anpassbar: Rechtsklick darauf (oder View → Customize Toolbar…), zieh
+      anpassbar: Rechtsklick darauf (oder Darstellung → Symbolleiste anpassen…), zieh
       Elemente raus, ordne sie neu, hol dazu, was versteckt startet. Jede
       Ansicht merkt sich ihre eigene Anordnung über Starts hinweg.</p>
 
@@ -90,32 +90,32 @@
           ausstehenden Kommentare, Urteil, Absenden. Übersteht ein schmales
           Fenster am längsten: Der Review-Status bleibt sichtbar, wenn andere
           Elemente ins Overflow-Menü rutschen.</td></tr>
-        <tr><td>Open File or Folder</td><td>sichtbar</td>
+        <tr><td>Datei oder Ordner öffnen</td><td>sichtbar</td>
           <td>Lokales Markdown oder einen Ordner als Ort öffnen.</td></tr>
-        <tr><td>Open Pull Request</td><td>sichtbar</td>
+        <tr><td>Pull Request öffnen</td><td>sichtbar</td>
           <td>Einen GitHub-Pull-Request per URL öffnen.</td></tr>
-        <tr><td>Appearance</td><td>sichtbar</td>
-          <td>Light · Dark · System, für die ganze App.</td></tr>
+        <tr><td>Erscheinungsbild</td><td>sichtbar</td>
+          <td>Hell · Dunkel · System, für die ganze App.</td></tr>
       </table>
 
       <h2 id="local-files">Lokale Dateien</h2>
       <table>
         <tr><th>Element</th><th>Standard</th><th>Was es tut</th></tr>
-        <tr><td>Share</td><td>sichtbar</td><td>Das übliche Share-Sheet für die Datei.</td></tr>
-        <tr><td>Edit</td><td>sichtbar</td><td>Edit Mode — klick einen beliebigen Block, um ihn an Ort und Stelle zu bearbeiten.</td></tr>
-        <tr><td>Compare</td><td>sichtbar</td>
+        <tr><td>Teilen</td><td>sichtbar</td><td>Das übliche Share-Sheet für die Datei.</td></tr>
+        <tr><td>Bearbeiten</td><td>sichtbar</td><td>Der Bearbeitungsmodus — klick einen beliebigen Block, um ihn an Ort und Stelle zu bearbeiten.</td></tr>
+        <tr><td>Vergleichen</td><td>sichtbar</td>
           <td>Mit einem Commit oder Branch vergleichen (braucht ein
           Git-Repository). Ein kleiner Punkt heißt: Die Datei hat uncommittete
           Änderungen.</td></tr>
         <tr><td>Blame</td><td>sichtbar</td>
           <td>Wer jeden Block zuletzt geändert hat; außerhalb eines Repositorys deaktiviert.</td></tr>
-        <tr><td>Outline</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
-        <tr><td>Reload</td><td>sichtbar</td><td>Die Datei neu von der Platte lesen.</td></tr>
-        <tr><td>Source</td><td>versteckt</td><td>Das rohe Markdown hinter der gerenderten Seite.</td></tr>
-        <tr><td>Zoom In · Actual Size · Zoom Out</td><td>versteckt</td>
+        <tr><td>Gliederung</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
+        <tr><td>Neu laden</td><td>sichtbar</td><td>Die Datei neu von der Platte lesen.</td></tr>
+        <tr><td>Quelltext</td><td>versteckt</td><td>Das rohe Markdown hinter der gerenderten Seite.</td></tr>
+        <tr><td>Einzoomen · Tatsächliche Größe · Auszoomen</td><td>versteckt</td>
           <td>Einzelne Elemente — nimm nur das Paar, das du wirklich benutzt.</td></tr>
-        <tr><td>Content Width</td><td>versteckt</td><td>Standard · Wide · Full Width.</td></tr>
-        <tr><td>Add Margin Note</td><td>versteckt</td>
+        <tr><td>Inhaltsbreite</td><td>versteckt</td><td>Standard · Wide · Full Width.</td></tr>
+        <tr><td>Randnotiz hinzufügen</td><td>versteckt</td>
           <td>Nur in der Palette, solange
           <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>
           eingeschaltet sind.</td></tr>
@@ -123,21 +123,21 @@
 
       <h2 id="github-docs">GitHub-Dokumente</h2>
       <p>Dokumente, die direkt aus einem Repo gelesen werden — geöffnet über
-      Links, ⌘K oder ein durchstöbertes Repo unter „Orte".</p>
+      Links, ⌘K oder ein durchstöbertes Repo unter „Orte“.</p>
       <table>
         <tr><th>Element</th><th>Standard</th><th>Was es tut</th></tr>
-        <tr><td>Compare</td><td>sichtbar</td><td>Dasselbe Dokument auf einem anderen Branch, als gerendertes Diff.</td></tr>
+        <tr><td>Vergleichen</td><td>sichtbar</td><td>Dasselbe Dokument auf einem anderen Branch, als gerendertes Diff.</td></tr>
         <tr><td>Blame</td><td>sichtbar</td><td>Blame pro Block, aus der GitHub-API.</td></tr>
-        <tr><td>Outline</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
-        <tr><td>Share</td><td>versteckt</td>
+        <tr><td>Gliederung</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
+        <tr><td>Teilen</td><td>versteckt</td>
           <td>Die github.com-Seite des Dokuments — der Link, den ein Mensch
           wirklich will, nie eine rohe URL.</td></tr>
-        <tr><td>Reload</td><td>versteckt</td>
+        <tr><td>Neu laden</td><td>versteckt</td>
           <td>Löst den Branch neu auf seine aktuelle Spitze auf und lädt neu.
           Deaktiviert — mit Begründung — für Dokumente, die an einem bestimmten
           Commit geöffnet wurden und sich gar nicht ändern können.</td></tr>
-        <tr><td>Source</td><td>versteckt</td><td>Das rohe Markdown.</td></tr>
-        <tr><td>Zoom-Elemente · Content Width</td><td>versteckt</td><td>Wie bei lokalen Dateien.</td></tr>
+        <tr><td>Quelltext</td><td>versteckt</td><td>Das rohe Markdown.</td></tr>
+        <tr><td>Zoom-Elemente · Inhaltsbreite</td><td>versteckt</td><td>Wie bei lokalen Dateien.</td></tr>
       </table>
 
       <h2 id="pr-files">Pull-Request-Dateien</h2>
@@ -147,26 +147,26 @@
           <td>Zurück zur Übersicht, vorherige/nächste Markdown-Datei und das
           n-von-m-Sprungmenü — eine Gruppe, eine ziehbare Einheit.</td></tr>
         <tr><td>View-Picker</td><td>sichtbar</td>
-          <td>Rendered Diff · Source Diff · Result, zentriert.</td></tr>
-        <tr><td>Outline</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
+          <td>Gerendertes Diff · Quelltext-Diff · Ergebnis, zentriert.</td></tr>
+        <tr><td>Gliederung</td><td>sichtbar</td><td>Die Gliederungs-Seitenleiste.</td></tr>
         <tr><td>Layout</td><td>sichtbar</td>
-          <td>Inline oder nebeneinander — aktiv in der Rendered-Diff-Ansicht
+          <td>Inline oder nebeneinander — aktiv in der Ansicht „Gerendertes Diff“
           (neue Dateien rendern immer inline).</td></tr>
         <tr><td>Blame</td><td>sichtbar</td>
-          <td>Aktiv in der Result-Ansicht, wo es ein fertiges Dokument zum
+          <td>Aktiv in der Ergebnis-Ansicht, wo es ein fertiges Dokument zum
           Annotieren gibt.</td></tr>
-        <tr><td>Comment on File</td><td>sichtbar</td>
+        <tr><td>Datei kommentieren</td><td>sichtbar</td>
           <td>Ein Kommentar zur Datei als Ganzes, nicht zu einer bestimmten
           Zeile.</td></tr>
-        <tr><td>Zoom-Elemente · Content Width</td><td>versteckt</td><td>Wie bei lokalen Dateien.</td></tr>
+        <tr><td>Zoom-Elemente · Inhaltsbreite</td><td>versteckt</td><td>Wie bei lokalen Dateien.</td></tr>
       </table>
 
       <h2 id="other-views">Die PR-Übersicht — und Repo-Docs, die du aus einem PR heraus öffnest</h2>
-      <p>Die Übersicht hält es knapp: <strong>Share</strong> (die GitHub-Seite
+      <p>Die Übersicht hält es knapp: <strong>Teilen</strong> (die GitHub-Seite
       des Pull Requests) plus die Elemente, die es in jeder Ansicht gibt. Ein
       Repo-Dokument, das du aus PR-Inhalten heraus durchstöberst, trägt
-      <strong>Blame</strong> und <strong>Outline</strong>, mit den
-      Zoom-Elementen und Content Width in seiner Palette.</p>
+      <strong>Blame</strong> und <strong>Gliederung</strong>, mit den
+      Zoom-Elementen und der Inhaltsbreite in seiner Palette.</p>
     </article>
   </div>
 </div>

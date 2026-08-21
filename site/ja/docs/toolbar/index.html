@@ -62,7 +62,7 @@
       <p class="kicker">ドキュメント</p>
       <h1>ツールバー</h1>
       <p class="article-lede">ビューの種類ごとにツールバーがひとつ、そのどれもが思いのままです。
-      右クリック——または View → Customize Toolbar…——で、項目をドラッグして外し、並べ替え、
+      右クリック——または 表示 →「ツールバーをカスタマイズ…」——で、項目をドラッグして外し、並べ替え、
       最初は隠れているものを足す。配置はビューごとに、起動をまたいで記憶されます。</p>
 
       <h2 id="customizing">カスタマイズの仕組み</h2>
@@ -84,31 +84,31 @@
           <td>PR のビューにだけ現れる、姿を変えるレビューコントロール——保留中のコメント数、判定、
           送信。狭いウィンドウでいちばん長く生き残ります。ほかの項目がオーバーフローに畳まれても、
           レビューの状態は見えたままです。</td></tr>
-        <tr><td>Open File or Folder</td><td>表示</td>
+        <tr><td>ファイルまたはフォルダを開く</td><td>表示</td>
           <td>ローカルの Markdown、またはフォルダを「場所」として開きます。</td></tr>
-        <tr><td>Open Pull Request</td><td>表示</td>
+        <tr><td>プルリクエストを開く</td><td>表示</td>
           <td>GitHub のプルリクエストを URL で開きます。</td></tr>
-        <tr><td>Appearance</td><td>表示</td>
-          <td>Light・Dark・System を、アプリ全体に。</td></tr>
+        <tr><td>外観</td><td>表示</td>
+          <td>ライト・ダーク・システム を、アプリ全体に。</td></tr>
       </table>
 
       <h2 id="local-files">ローカルファイル</h2>
       <table>
         <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
-        <tr><td>Share</td><td>表示</td><td>そのファイルの、標準の共有シート。</td></tr>
-        <tr><td>Edit</td><td>表示</td><td>編集モード——どのブロックもクリックしてその場で編集。</td></tr>
-        <tr><td>Compare</td><td>表示</td>
+        <tr><td>共有</td><td>表示</td><td>そのファイルの、標準の共有シート。</td></tr>
+        <tr><td>編集</td><td>表示</td><td>編集モード——どのブロックもクリックしてその場で編集。</td></tr>
+        <tr><td>比較</td><td>表示</td>
           <td>コミットやブランチと比較します（git リポジトリが必要）。小さなドットは、そのファイルに
           未コミットの変更があるしるしです。</td></tr>
         <tr><td>Blame</td><td>表示</td>
           <td>各ブロックを最後に変えたのは誰か。リポジトリの外では無効です。</td></tr>
-        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
-        <tr><td>Reload</td><td>表示</td><td>ファイルをディスクから読み直します。</td></tr>
-        <tr><td>Source</td><td>非表示</td><td>レンダリングされたページの背後にある、生の Markdown。</td></tr>
-        <tr><td>Zoom In・Actual Size・Zoom Out</td><td>非表示</td>
+        <tr><td>アウトライン</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>再読み込み</td><td>表示</td><td>ファイルをディスクから読み直します。</td></tr>
+        <tr><td>ソース</td><td>非表示</td><td>レンダリングされたページの背後にある、生の Markdown。</td></tr>
+        <tr><td>拡大・実際のサイズ・縮小</td><td>非表示</td>
           <td>それぞれ独立した項目です——使う組み合わせだけを足せます。</td></tr>
-        <tr><td>Content Width</td><td>非表示</td><td>Standard・Wide・Full Width。</td></tr>
-        <tr><td>Add Margin Note</td><td>非表示</td>
+        <tr><td>本文幅</td><td>非表示</td><td>Standard・Wide・Full Width。</td></tr>
+        <tr><td>マージンノートを追加</td><td>非表示</td>
           <td><a href="/ja/docs/experimental/margin-notes/">マージンノート</a>が有効なあいだだけ、
           パレットに現れます。</td></tr>
       </table>
@@ -118,17 +118,17 @@
       開いたもの。</p>
       <table>
         <tr><th>項目</th><th>初期状態</th><th>はたらき</th></tr>
-        <tr><td>Compare</td><td>表示</td><td>同じ文書の別ブランチの姿を、レンダリングされた差分で。</td></tr>
+        <tr><td>比較</td><td>表示</td><td>同じ文書の別ブランチの姿を、レンダリングされた差分で。</td></tr>
         <tr><td>Blame</td><td>表示</td><td>GitHub API から取る、ブロックごとの blame。</td></tr>
-        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
-        <tr><td>Share</td><td>非表示</td>
+        <tr><td>アウトライン</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>共有</td><td>非表示</td>
           <td>その文書の github.com ページ——人がほんとうに欲しいリンクであって、生の URL では
           ありません。</td></tr>
-        <tr><td>Reload</td><td>非表示</td>
+        <tr><td>再読み込み</td><td>非表示</td>
           <td>ブランチを現在の先端に解決し直して、取得し直します。特定のコミットで開いた文書は
           変わりようがないので、理由の表示とともに無効です。</td></tr>
-        <tr><td>Source</td><td>非表示</td><td>生の Markdown。</td></tr>
-        <tr><td>Zoom 系の項目・Content Width</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
+        <tr><td>ソース</td><td>非表示</td><td>生の Markdown。</td></tr>
+        <tr><td>ズーム系の項目・本文幅</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
       </table>
 
       <h2 id="pr-files">プルリクエストのファイル</h2>
@@ -137,24 +137,24 @@
         <tr><td>Navigation</td><td>表示</td>
           <td>概要へ戻る、前後の Markdown ファイル、そして n/m のジャンプメニュー——ひとかたまりで、
           ひとつのドラッグ単位です。</td></tr>
-        <tr><td>View picker</td><td>表示</td>
-          <td>Rendered Diff・Source Diff・Result を、中央に。</td></tr>
-        <tr><td>Outline</td><td>表示</td><td>見出しのサイドバー。</td></tr>
-        <tr><td>Layout</td><td>表示</td>
-          <td>インラインか左右並列か——Rendered Diff のビューで有効です（新規ファイルはつねに
+        <tr><td>「表示」ピッカー</td><td>表示</td>
+          <td>レンダリング差分・ソース差分・結果 を、中央に。</td></tr>
+        <tr><td>アウトライン</td><td>表示</td><td>見出しのサイドバー。</td></tr>
+        <tr><td>レイアウト</td><td>表示</td>
+          <td>インラインか並べて表示か——「レンダリング差分」のビューで有効です（新規ファイルはつねに
           インラインでレンダリングされます）。</td></tr>
         <tr><td>Blame</td><td>表示</td>
-          <td>Result のビューで有効。注釈を付けるべき完成した文書があるのは、そこだからです。</td></tr>
-        <tr><td>Comment on File</td><td>表示</td>
+          <td>「結果」のビューで有効。注釈を付けるべき完成した文書があるのは、そこだからです。</td></tr>
+        <tr><td>ファイルにコメント</td><td>表示</td>
           <td>特定の行ではなく、ファイル全体についてのコメント。</td></tr>
-        <tr><td>Zoom 系の項目・Content Width</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
+        <tr><td>ズーム系の項目・本文幅</td><td>非表示</td><td>ローカルファイルと同じです。</td></tr>
       </table>
 
       <h2 id="other-views">PR の概要と、PR から辿ったリポジトリの文書</h2>
-      <p>概要は最小限を保ちます。<strong>Share</strong>（そのプルリクエストの GitHub ページ）と、
+      <p>概要は最小限を保ちます。<strong>「共有」</strong>（そのプルリクエストの GitHub ページ）と、
       すべてのビュー共通の項目だけ。PR の内容から辿って開いたリポジトリの文書は
-      <strong>Blame</strong> と <strong>Outline</strong> を備え、パレットには Zoom 系の項目と
-      Content Width が控えています。</p>
+      <strong>Blame</strong> と <strong>「アウトライン」</strong> を備え、パレットにはズーム系の項目と
+      「本文幅」が控えています。</p>
     </article>
   </div>
 </div>

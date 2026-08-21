@@ -593,7 +593,7 @@ footer .note { margin-left: auto; }
       así que <em>«atiende mis notas en el plan»</em> es todo el traspaso:
       tu agente lee cada nota exactamente donde la dejaste. Sin commit, sin
       pegar nada, sin pull request. Después mira aterrizar la revisión —
-      Compare resalta los cambios del agente palabra por palabra, en vivo a
+      Comparar resalta los cambios del agente palabra por palabra, en vivo a
       medida que guarda.</p>
     </div>
     <figure class="shot reading-shot">
@@ -649,8 +649,8 @@ footer .note { margin-left: auto; }
     <p class="kicker">revisar</p>
     <h2>Toda la revisión de docs, desde la página renderizada.</h2>
     <p class="prose">Alterna entre la disposición <strong>en línea</strong> y <strong>lado a
-    lado</strong>, baja al <em>Source Diff</em> (el diff del código fuente) o previsualiza el
-    <em>Result</em> (el resultado final) — todo desde la barra de herramientas, que además te
+    lado</strong>, baja al <em>Diff del código fuente</em> o previsualiza el
+    <em>Resultado</em> final — todo desde la barra de herramientas, que además te
     lleva de archivo en archivo y de vuelta al PR sin tocar la barra lateral. El front matter
     YAML se renderiza como una <strong>tabla de metadatos discreta</strong>, no como un muro de
     prosa en negrita — así los docs cargados de configuración también se comparan con limpieza.
@@ -658,8 +658,8 @@ footer .note { margin-left: auto; }
     lugar de teñir de verde cada bloque. Los hilos de revisión existentes aparecen bajo los
     bloques que discuten. Pasa el cursor por cualquier bloque, haz clic en el globo y comenta el
     bloque entero o <strong>exactamente las líneas que elijas</strong>. Al terminar,
-    <strong>Approve</strong> (aprobar), <strong>Request Changes</strong> (solicitar cambios) o
-    <strong>Comment</strong> (comentar) directamente desde el resumen — con o sin comentarios de
+    <strong>Aprobar</strong>, <strong>Solicitar cambios</strong> o
+    <strong>Comentar</strong> directamente desde el resumen — con o sin comentarios de
     línea — y deja también comentarios a nivel de archivo o de simple conversación. El resumen
     muestra <strong>en qué punto está el PR</strong>: aprobado o con cambios solicitados, el
     veredicto de cada revisor, los checks de CI con acceso directo a los logs de cada check y la
@@ -670,7 +670,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/es/app-diff-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/es/app-diff.png?v=7" width="1393" height="903" loading="lazy"
-        alt="PullMark revisando un pull request de documentación: un diff renderizado donde un párrafo modificado lleva resaltado palabra por palabra, un diagrama de flujo Mermaid añadido se renderiza sobre el tinte verde de bloque añadido, la barra lateral muestra un contador de comentarios en el archivo y el control de revisión de la barra de herramientas dice Finish your review con tres comentarios pendientes">
+        alt="PullMark revisando un pull request de documentación: un diff renderizado donde un párrafo modificado lleva resaltado palabra por palabra, un diagrama de flujo Mermaid añadido se renderiza sobre el tinte verde de bloque añadido, la barra lateral muestra un contador de comentarios en el archivo y el control de revisión de la barra de herramientas dice Terminar la revisión con tres comentarios pendientes">
       </picture>
       <figcaption>Un PR de documentación como diff renderizado: la única frase
       modificada lleva resaltado palabra por palabra, y el nuevo diagrama de flujo
@@ -681,8 +681,8 @@ footer .note { margin-left: auto; }
     <div class="trio">
       <div class="act">
         <div class="act-name">Add to Review</div>
-        <p>La opción por defecto: acumula borradores en local. Envíalos juntos — Comment,
-        Approve o Request Changes — o guarda una revisión pendiente para terminarla en
+        <p>La opción por defecto: acumula borradores en local. Envíalos juntos — Comentar,
+        Aprobar o Solicitar cambios — o guarda una revisión pendiente para terminarla en
         github.com.</p>
       </div>
       <div class="act">
@@ -701,7 +701,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/es/app-pr-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/es/app-pr.png?v=3" width="1052" height="784" loading="lazy"
-        alt="El resumen de pull request de PullMark: el título del PR con una insignia Open, una cápsula Changes requested, una cápsula Checks passed, avatares de revisores con insignias de veredicto, una etiqueta del equipo docs-guild, la descripción del PR renderizada y la cronología de la conversación, cuyo primer comentario de revisión muestra una tabla renderizada">
+        alt="El resumen de pull request de PullMark: el título del PR con una insignia Abierto, una cápsula Cambios solicitados, una cápsula Verificaciones superadas, avatares de revisores con insignias de veredicto, una etiqueta del equipo docs-guild, la descripción del PR renderizada y la cronología de la conversación, cuyo primer comentario de revisión muestra una tabla renderizada">
       </picture>
       <figcaption>La conversación como documento: los comentarios de revisión renderizan
       sus tablas como tablas, y el avatar de cada revisor lleva su veredicto.</figcaption>
@@ -734,8 +734,8 @@ footer .note { margin-left: auto; }
         alt="PullMark renderizando un archivo Markdown local de un repo de documentación: la sección Archivos abiertos de la barra lateral lista tres documentos conservados y una entrada de vista previa en cursiva; la sección Ubicaciones muestra la carpeta como un árbol de subcarpetas y archivos Markdown, con un chip de rama git y una marca de repo de GitHub; los archivos modificados de un pull request abierto forman un árbol con iconos de estado y un contador de comentarios; el documento renderizado muestra encabezados, listas, un enlace y una alerta Tip; la barra de título muestra la carpeta del archivo y la rama git, con una píldora de recuento de palabras en la esquina">
       </picture>
       <figcaption>Las carpetas entran como árboles vivos, cada ubicación lleva su rama git, y
-      navegar muestra los archivos como <em>vistas previas</em> — la entrada en cursiva de Open
-      Files que el siguiente clic reemplaza. Los pull requests conviven con tus archivos
+      navegar muestra los archivos como <em>vistas previas</em> — la entrada en cursiva de
+      Archivos abiertos que el siguiente clic reemplaza. Los pull requests conviven con tus archivos
       locales, y la barra de título sabe dónde estás.</figcaption>
     </figure>
 
@@ -750,8 +750,8 @@ footer .note { margin-left: auto; }
         el archivo sigue cambiando; <code>pullmark --diff</code> lo hace desde una terminal —
         la vía más rápida al «qué acaba de cambiar el agente en mi doc».</li>
       <li><strong>Navega sin enterrarte</strong> — recorre con un clic una carpeta o un repo y
-        cada archivo se muestra como <em>vista previa</em>: una sola entrada en cursiva en Open
-        Files que el siguiente clic reemplaza. Doble clic (o empieza a editar) para
+        cada archivo se muestra como <em>vista previa</em>: una sola entrada en cursiva en
+        Archivos abiertos que el siguiente clic reemplaza. Doble clic (o empieza a editar) para
         conservarla.</li>
       <li><strong>Barra lateral de esquema</strong> — un mapa de tus encabezados al estilo de un
         navegador de código, a un interruptor de distancia.</li>
@@ -769,13 +769,13 @@ footer .note { margin-left: auto; }
         autocontenido; <kbd>⌘C</kbd> pega con formato en Docs y Slack, <kbd>⌥⌘C</kbd> devuelve
         el Markdown.</li>
       <li><strong>Tres temas de lectura</strong> — Editorial, GitHub y Terminal, con vistas
-        previas en vivo en Settings — o añade tu propio CSS. Claro y oscuro lo reestilizan
+        previas en vivo en Ajustes — o añade tu propio CSS. Claro y oscuro lo reestilizan
         todo, Mermaid incluido, y el largo de línea es tuyo: Standard, Wide o Full Width.</li>
       <li><strong>Los enlaces de GitHub se abren en la app</strong> — haz clic en un enlace de
         <code>github.com</code> a un archivo Markdown y PullMark lo renderiza, con una barra de
         procedencia siempre visible con repo&nbsp;@&nbsp;rama; con <kbd>⌘</kbd>-clic lo mandas
         al navegador.</li>
-      <li><strong>Open Quickly</strong> (abrir rápidamente) — <kbd>⌘K</kbd> salta a cualquier
+      <li><strong>Apertura rápida</strong> — <kbd>⌘K</kbd> salta a cualquier
         encabezado, archivo o PR, con búsqueda difusa — o pega la URL de un PR, la URL de un
         repo o una ruta de archivo y lo abre directamente.</li>
       <li><strong>Movido significa movido</strong> — un párrafo reubicado sin cambios se
@@ -821,7 +821,7 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/es/app-remote-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/es/app-remote.png?v=3" width="1052" height="784" loading="lazy"
-        alt="PullMark renderizando un archivo Markdown descargado de un repositorio de GitHub: una barra de procedencia sobre el contenido muestra el nombre del repositorio, un chip de rama, la ruta del archivo y el commit fijado, con un enlace Open on GitHub; la sección Ubicaciones de la barra lateral muestra el repositorio con un icono de libro y su árbol de archivos Markdown">
+        alt="PullMark renderizando un archivo Markdown descargado de un repositorio de GitHub: una barra de procedencia sobre el contenido muestra el nombre del repositorio, un chip de rama, la ruta del archivo y el commit fijado, con un enlace Abrir en GitHub; la sección Ubicaciones de la barra lateral muestra el repositorio con un icono de libro y su árbol de archivos Markdown">
       </picture>
       <figcaption>Un doc leído directamente de GitHub: la barra de procedencia siempre dice
       dónde estás — repo, rama, commit fijado — y el chip de rama cambia o abre ramas sin
@@ -832,9 +832,9 @@ footer .note { margin-left: auto; }
       <picture>
         <source data-pm-dark srcset="/img/es/app-themes-dark.png?v=2" media="(prefers-color-scheme: dark)">
         <img src="/img/es/app-themes.png?v=5" width="792" height="820" loading="lazy"
-        alt="La ventana de Settings de PullMark en la pestaña Appearance: tres tarjetas de vista previa de tema en vivo — GitHub, Editorial y Terminal — cada una renderizando el mismo documento de muestra con el pipeline real, con Editorial seleccionado, sobre botones para abrir la carpeta de temas personalizados">
+        alt="La ventana de Ajustes de PullMark en la pestaña Apariencia: tres tarjetas de vista previa de tema en vivo — GitHub, Editorial y Terminal — cada una renderizando el mismo documento de muestra con el pipeline real, con Editorial seleccionado, sobre botones para abrir la carpeta de temas personalizados">
       </picture>
-      <figcaption>Settings → Appearance: tres vistas previas de tema en vivo, renderizadas por el pipeline real — haz clic en una tarjeta para cambiar.</figcaption>
+      <figcaption>Ajustes → Apariencia: tres vistas previas de tema en vivo, renderizadas por el pipeline real — haz clic en una tarjeta para cambiar.</figcaption>
     </figure>
   </div>
 </section>
@@ -857,7 +857,7 @@ footer .note { margin-left: auto; }
       </div>
       <div class="cell">
         <h3>La app por defecto para .md</h3>
-        <p>Un clic en Settings hace que doble clic en el Finder signifique <em>renderizado</em>,
+        <p>Un clic en Ajustes hace que doble clic en el Finder signifique <em>renderizado</em>,
         en todas partes — y si una actualización rompe alguna vez el vínculo, PullMark lo nota
         y te lo ofrece de vuelta.</p>
       </div>
