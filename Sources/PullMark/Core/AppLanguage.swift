@@ -54,4 +54,38 @@ enum AppLanguage: String, CaseIterable, Identifiable {
             UserDefaults.pullmark.set([rawValue], forKey: "AppleLanguages")
         }
     }
+
+    /// The lproj this choice would relaunch into — for .system, the
+    /// system's own preference order matched against what we ship
+    /// (read from the GLOBAL domain: this process's Locale is already
+    /// colored by the current per-app override). nil means English,
+    /// which has no lproj — keys are the strings.
+    private var relaunchLproj: String? {
+        switch self {
+        case .english:
+            return nil
+        case .system:
+            let global = CFPreferencesCopyValue(
+                "AppleLanguages" as CFString, kCFPreferencesAnyApplication,
+                kCFPreferencesCurrentUser, kCFPreferencesAnyHost) as? [String] ?? []
+            let shipped = AppLanguage.allCases.map(\.rawValue).filter { $0 != "system" }
+            let preferred = Bundle.preferredLocalizations(from: shipped + ["en"], forPreferences: global)
+            let first = preferred.first ?? "en"
+            return first == "en" ? nil : first
+        default:
+            return rawValue
+        }
+    }
+
+    /// Resolve a localized key IN THIS LANGUAGE rather than the launch
+    /// language. The Settings relaunch row uses it so "takes effect
+    /// after relaunch" and its button read in the language the user
+    /// just chose — the one they're headed to (and can read).
+    func resolve(_ key: String, fallback: String) -> String {
+        guard let lproj = relaunchLproj,
+              let path = Bundle.main.path(forResource: lproj, ofType: "lproj"),
+              let bundle = Bundle(path: path)
+        else { return fallback }
+        return bundle.localizedString(forKey: key, value: fallback, table: nil)
+    }
 }

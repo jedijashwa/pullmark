@@ -74,11 +74,23 @@ struct GeneralSettingsTab: View {
             }
             .settingAnchor("language")
             if languageRaw != AppLanguage.atLaunch.rawValue {
+                // The note and button resolve in the language JUST
+                // CHOSEN, not the launch language: whoever is switching
+                // reads the instruction in the language they're headed
+                // to — and never has to read the escape hatch in a
+                // language they picked by mistake. (Josh's ask.)
+                let chosen = AppLanguage(rawValue: languageRaw) ?? .system
                 HStack(spacing: 12) {
-                    Text("Takes effect after PullMark relaunches.")
+                    Text(verbatim: chosen.resolve(
+                        "Takes effect after PullMark relaunches.",
+                        fallback: String(localized: "Takes effect after PullMark relaunches.")))
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                    Button("Relaunch Now") { AppRelaunch.relaunch() }
+                    Button(action: { AppRelaunch.relaunch() }) {
+                        Text(verbatim: chosen.resolve(
+                            "Relaunch Now",
+                            fallback: String(localized: "Relaunch Now")))
+                    }
                 }
             }
             }
