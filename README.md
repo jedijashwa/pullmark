@@ -27,10 +27,10 @@ And not every document belongs in a pull request. Agents write serious Markdown 
 - **Rendered PR diffs** — added, removed, and changed blocks highlighted in place. Changed blocks show a **word-level diff** when the edit is small enough to make sense (falling back to old/new stacked when it isn't). Switch between **inline** and **side-by-side** layout, or drop to the raw *Source Diff*, or preview the final *Result*.
 - **Compare any local file with its history** — the toolbar's Compare button (the clock and chevron) diffs the working file against any of its last 25 commits or any branch, rendered with the same word-level highlights PRs get, and the diff keeps up as the file keeps changing — watch an agent's edits land highlighted as they save. **View → Compare with Last Commit** answers "what did I just change?" in one step, and a quiet dot on the button means the file has uncommitted changes. Tucked into the same menu: **Compare Revisions…** freezes both sides between any two refs, and **Compare with File…** diffs against any file on disk (no git required). All of it works from a terminal too: `pullmark --diff` (see the CLI below).
 - **PR review comments** — existing review threads appear under the blocks they discuss (outdated threads listed at the end). Hover any block and click the bubble to add your own:
-  - **Comment Now** posts a single review comment immediately.
-  - **Add to Review** collects drafts locally; submit them together (Comment / Approve / Request Changes) or save them to GitHub as a **pending review** to finish later on github.com.
-  - **Insert Suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
-  - **Edit as suggestion** — the pencil next to the bubble opens the block's Markdown source in an editor; your change (plus an optional note) is submitted as a suggestion, now or as part of your review.
+  - **Start a review** collects drafts locally (once a review is going, the button reads **Add review comment**); submit them together (Comment / Approve / Request changes) or leave them on GitHub as a **pending review** to finish later on github.com.
+  - **Add single comment** posts a single review comment immediately.
+  - **Add a suggestion** pre-fills a ` ```suggestion ` block with the targeted lines so the author can apply your edit with one click on GitHub.
+  - The **pencil** next to the bubble opens the block's Markdown source in an editor; your change (plus an optional note) is submitted as a suggestion, now or as part of your review.
 - **PR images and links** — repo-relative images in PR files render (fetched at the PR's commit, cached in memory only); repo-relative links to Markdown files open in-app at that commit, other repo links open on GitHub.
 - **Stays current** — open PRs are checked every minute; if the branch moves, a banner offers a one-click refresh (your draft comments survive).
 - **GitHub Markdown links open in-app** — click a `github.com/…/blob/…` link to a Markdown file and PullMark renders it in place of the browser (first click asks; ⌘-click inverts your default). An always-visible provenance bar reads `owner/repo @ ref · path` with the pinned commit and a way back to GitHub. Relative links inside a remote doc resolve against the repo, Browse Repo Files loads the whole Markdown tree into the sidebar's Locations section (where local folders and repos live side by side), blame and branch compare work there too, and private repos use the credentials PRs already use — nothing fetched ever touches disk.
@@ -172,8 +172,8 @@ No credentials at all still works for *reading public repos* (subject to GitHub'
 ### Commenting and reviewing
 
 - Hover a block in the Rendered Diff and click the speech-bubble button.
-- **Comment Now** publishes immediately; **Add to Review** saves a draft locally.
-- Drafts live on the PR's overview page: add a summary, then **Submit Review** (Comment / Approve / Request Changes) or **Save as Pending on GitHub** to finish the review in the browser later.
+- **Add single comment** publishes immediately; **Start a review** (then **Add review comment**) saves drafts locally.
+- Drafts live on the PR's overview page: add a summary, then **Submit review** (Comment / Approve / Request changes) — or just walk away: drafts sync to GitHub as a **pending review** you can finish in the browser later.
 - GitHub only accepts comments on lines that are part of the diff (changed lines plus nearby context). Commenting on an untouched block far from any change returns an API error — PullMark shows it and keeps your text.
 
 ### Appearance

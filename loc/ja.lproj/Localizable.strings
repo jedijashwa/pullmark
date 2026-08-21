@@ -627,7 +627,7 @@
 "GitHub CLI" = "GitHub CLI";
 "Hidden" = "非表示";
 "Language" = "言語";
-"Language:" = "言語：";
+"Language:" = "言語:";
 "Line numbers hidden" = "行番号は非表示";
 "Line numbers shown" = "行番号を表示中";
 "Modified" = "変更";
