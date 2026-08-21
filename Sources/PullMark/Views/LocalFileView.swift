@@ -373,7 +373,8 @@ struct LocalFileView: View {
             menu.addItem(item)
         }
         if !commits.isEmpty {
-            addHeader(commits.count >= 25 ? "History (25 most recent)" : "History")
+            addHeader(commits.count >= 25 ? String(localized: "History (25 most recent)")
+                                          : String(localized: "History"))
             for commit in commits {
                 addAction("\(commit.shortSHA) · \(commit.date) · \(commit.subject)") {
                     startComparing(ref: commit.sha,
@@ -382,7 +383,8 @@ struct LocalFileView: View {
             }
         }
         if !branches.isEmpty {
-            addHeader(branches.count >= 20 ? "Recent Branches" : "Branches")
+            addHeader(branches.count >= 20 ? String(localized: "Recent Branches")
+                                           : String(localized: "Branches"))
             for branch in branches {
                 // The checkmark marks where the working file already is.
                 addAction(branch, checked: branch == currentBranch) {
@@ -391,14 +393,15 @@ struct LocalFileView: View {
             }
         }
         if !tags.isEmpty {
-            addHeader(tags.count >= 20 ? "Recent Tags" : "Tags")
+            addHeader(tags.count >= 20 ? String(localized: "Recent Tags")
+                                       : String(localized: "Tags"))
             for tag in tags {
                 addAction(tag) { startComparing(ref: tag, label: tag) }
             }
         }
         if !remoteBranches.isEmpty {
-            addHeader(remoteBranches.count >= 20 ? "Recent Remote Branches"
-                                                 : "Remote Branches")
+            addHeader(remoteBranches.count >= 20 ? String(localized: "Recent Remote Branches")
+                                                 : String(localized: "Remote Branches"))
             for branch in remoteBranches {
                 addAction(branch) { startComparing(ref: branch, label: branch) }
             }
@@ -406,13 +409,13 @@ struct LocalFileView: View {
         // The quieter forms, tucked at the bottom: another file as the
         // baseline (works without git), and a frozen two-revision pair.
         if !menu.items.isEmpty { menu.addItem(.separator()) }
-        addAction("Compare with File…") { pickCompareFile() }
+        addAction(String(localized: "Compare with File…")) { pickCompareFile() }
         if inGitRepo, !commits.isEmpty {
-            addAction("Compare Revisions…") { revisionsSheetShown = true }
+            addAction(String(localized: "Compare Revisions…")) { revisionsSheetShown = true }
         }
         if compare != nil {
             menu.addItem(.separator())
-            addAction("Stop Comparing") { stopComparing() }
+            addAction(String(localized: "Stop Comparing")) { stopComparing() }
         }
         comparePresenter.actions = actions
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: view)

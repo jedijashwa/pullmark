@@ -272,16 +272,17 @@ struct RemoteDocView: View {
         }
         let others = branches.filter { $0 != session?.displayRef }
         if !others.isEmpty {
-            addHeader(others.count >= 100 ? "Branches (first 100)" : "Branches")
+            addHeader(others.count >= 100 ? String(localized: "Branches (first 100)")
+                                          : String(localized: "Branches"))
             for branch in others.prefix(100) {
                 addAction(branch) { startComparing(ref: branch, label: branch) }
             }
         } else {
-            addHeader("No other branches")
+            addHeader(String(localized: "No other branches"))
         }
         if compare != nil {
             menu.addItem(.separator())
-            addAction("Stop Comparing") { stopComparing() }
+            addAction(String(localized: "Stop Comparing")) { stopComparing() }
         }
         comparePresenter.actions = actions
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -6), in: view)
@@ -436,12 +437,13 @@ enum RemoteBranchMenu {
         }
 
         let shown = branches.prefix(100)
-        header(shown.count < branches.count ? "Switch To (first 100)" : "Switch To", in: menu)
+        header(shown.count < branches.count ? String(localized: "Switch To (first 100)")
+                                            : String(localized: "Switch To"), in: menu)
         for branch in shown {
             item(branch, checked: branch == session.displayRef, in: menu) {
                 state.switchRemoteSession(id: session.id, toRef: branch)
             }
-            item("Open \(branch) Separately", alternate: true, in: menu) {
+            item(String(localized: "Open \(branch) Separately"), alternate: true, in: menu) {
                 Task {
                     await state.openRemoteRepo(owner: session.ref.owner, repo: session.ref.repo,
                                                refName: branch, loadTree: false)
@@ -462,7 +464,7 @@ enum RemoteBranchMenu {
         separately.submenu = submenu
         menu.addItem(separately)
         menu.addItem(.separator())
-        item("Open on GitHub", in: menu) {
+        item(String(localized: "Open on GitHub"), in: menu) {
             if let url = URL(string: "https://github.com/\(session.ref.owner)/"
                 + "\(session.ref.repo)/tree/\(session.displayRef)") {
                 NSWorkspace.shared.open(url)

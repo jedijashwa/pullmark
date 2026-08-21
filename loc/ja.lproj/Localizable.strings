@@ -24,6 +24,7 @@
 "%@ requested changes %@" = "%@ が変更をリクエストしました（%@）";
 "%@ words · %lld min" = "%@ 語 · %lld 分";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — プレビュー中。ダブルクリックでリポジトリのもとに残します";
+"%@ — worktree" = "%@ — ワークツリー";
 "%@, but the push failed: %@" = "%@。ただしプッシュに失敗しました: %@";
 "1 Markdown file changed" = "Markdown ファイル 1 個を変更";
 "1 file" = "1 個のファイル";
@@ -52,6 +53,7 @@
 "Blame" = "Blame";
 "Branch name" = "ブランチ名";
 "Branches" = "ブランチ";
+"Branches (first 100)" = "ブランチ (最初の 100 件)";
 "Branches and worktrees" = "ブランチとワークツリー";
 "Browse Repo Files" = "リポジトリのファイルをブラウズ";
 "Browse Repo Files…" = "リポジトリのファイルをブラウズ…";
@@ -79,6 +81,7 @@
 "Close All" = "すべて閉じる";
 "Close All Files" = "すべてのファイルを閉じる";
 "Command" = "コマンド";
+"Command line:" = "コマンドライン:";
 "Comment" = "コメント";
 "Comment on %@" = "%@ にコメント";
 "Comment on File" = "ファイルにコメント";
@@ -96,9 +99,14 @@
 "Committed 1 file on new branch “%@”" = "1 個のファイルを新しいブランチ「%@」にコミットしました";
 "Compare" = "比較";
 "Compare Revisions" = "リビジョンを比較";
+"Compare Revisions…" = "リビジョンを比較…";
+"Compare with File…" = "ファイルと比較…";
+"Compare with Last Commit" = "最後のコミットと比較";
 "Comparing " = "比較中: ";
 "Comparing with %@" = "%@ と比較中";
+"Connected as %@" = "%@ として接続済み";
 "Connection status…" = "接続状況…";
+"Connection:" = "接続:";
 "Content Width" = "本文幅";
 "Content width" = "本文幅";
 "Control" = "コントロール";
@@ -127,6 +135,7 @@
 "Could not update the reaction: %@" = "リアクションを更新できませんでした: %@";
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "保留中のコメント %lld 件を GitHub にアップロードできませんでした — 再試行のためローカルに保持しています。%@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "保留中のコメント 1 件を GitHub にアップロードできませんでした — 再試行のためローカルに保持しています。%@";
+"Couldn't install the command: " = "コマンドをインストールできませんでした: ";
 "Couldn't move PullMark" = "PullMark を移動できませんでした";
 "Couldn't open %@/%@#%lld: " = "%@/%@#%lld を開けませんでした: ";
 "Couldn't open %@: %@" = "%@ を開けませんでした: %@";
@@ -138,6 +147,7 @@
 "Custom themes" = "カスタムテーマ";
 "Customize Toolbar…" = "ツールバーをカスタマイズ…";
 "Dark" = "ダーク";
+"Default Markdown app:" = "Markdown のデフォルトアプリ:";
 "Default diff layout:" = "差分の初期レイアウト:";
 "Delete" = "削除";
 "Delete comment" = "コメントを削除";
@@ -197,6 +207,7 @@
 "Hide Resolved Conversations" = "解決済みの会話を非表示";
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Markdown ファイルを含まないレビューリクエストを隠します — PullMark に見せられるものがないからです";
 "History" = "履歴";
+"History (25 most recent)" = "履歴 (最近の 25 件)";
 "Home" = "Home";
 "Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "どれかのブロックにホバーするとノートの吹き出しが出ます（先にテキストを選択すれば引用されます）。⌥⌘M でも構いません。編集と削除は各吹き出しから。ノートを削除することが、解決するということです。文書がまだノートを抱えているあいだ、「開いているファイル」の行には件数のチップが付き、表示 → マージンノートを非表示 はきれいに読むためにページを片づけます。";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "折り返すまでにテキストがどこまで広がるか。Standard は本のような古典的な行長を保ち、Wide は行長に上限を残したまま画面に載る量を増やし、Full Width は文書にウィンドウ全体を与えます — フルスクリーンで重宝します。どこにでもその場で効き、どのテーマとも素直に組み合わさります。";
@@ -248,6 +259,7 @@
 "No Markdown files found in %@." = "%@ に Markdown ファイルが見つかりませんでした。";
 "No changes to commit." = "コミットする変更はありません。";
 "No headings" = "見出しがありません";
+"No other branches" = "他のブランチはありません";
 "None" = "なし";
 "Not Now" = "今はしない";
 "Not a Homebrew user? [Download the CLI from cli.github.com](https://cli.github.com), then sign in the same way." = "Homebrew を使っていませんか？ [cli.github.com から CLI をダウンロード](https://cli.github.com)して、同じ手順でサインインしてください。";
@@ -259,6 +271,7 @@
 "Off shows a quiet banner instead — the notes stay one click away" = "オフにすると控えめなバナーに変わります — ノートはワンクリック先のままです";
 "Only requests that change Markdown" = "Markdown を変更するリクエストのみ";
 "Open" = "開く";
+"Open %@ Separately" = "%@ を別に開く";
 "Open Branch Separately" = "ブランチを別に開く";
 "Open File or Folder" = "ファイルまたはフォルダを開く";
 "Open Files" = "開いているファイル";
@@ -328,6 +341,9 @@
 "Re-read this file from disk" = "このファイルをディスクから読み直します";
 "Reaction state unavailable — try refreshing the PR." = "リアクションの状態を取得できません — PR を更新してみてください。";
 "Reading" = "読む";
+"Recent Branches" = "最近のブランチ";
+"Recent Remote Branches" = "最近のリモートブランチ";
+"Recent Tags" = "最近のタグ";
 "Recents" = "最近使った項目";
 "Redo" = "やり直す";
 "Refresh" = "更新";
@@ -423,9 +439,12 @@
 "Spotlight" = "Spotlight";
 "Stage and commit changes in this file's repository" = "このファイルのリポジトリで変更をステージしてコミットします";
 "Standard" = "Standard";
+"Stop Comparing" = "比較をやめる";
 "Submit review" = "レビューを送信";
 "Submit the review with the selected verdict (⌘↩)" = "選んだ判定でレビューを送信します (⌘↩)";
 "Support PullMark ❤️" = "PullMark を応援する ❤️";
+"Switch To" = "切り替え先";
+"Switch To (first 100)" = "切り替え先 (最初の 100 件)";
 "Switch between light, dark, and system appearance" = "ライト・ダーク・システムの外観を切り替えます";
 "Switch or Open Branch…" = "ブランチを切り替える／開く…";
 "System" = "システム";
@@ -445,6 +464,7 @@
 "Theme" = "テーマ";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "テーマは、レンダリングされた Markdown と差分の装いを変え、ライト／ダークの外観に従います。Themes フォルダに .css ファイルを入れれば、自分のテーマを追加できます — GitHub の姿の上に重ねて適用されます。Quick Look のプレビューもテーマに従います（そこではカスタムテーマは、土台の GitHub にフォールバックします）。";
 "These keys are fixed and can't be changed." = "これらのキーは固定されていて、変更できません。";
+"This build doesn't include the command-line tool." = "このビルドにはコマンドラインツールが含まれていません。";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "このコメントはまだ GitHub と同期中です — 少ししてからもう一度破棄してみてください。";
 "This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "このフォルダには、PullMark がスキャンする数より多くの Markdown ファイルがあります — 残りを見るには、サブフォルダを独立した Location として開いてください";
 "This pull request was updated on GitHub." = "このプルリクエストは GitHub で更新されました。";
@@ -457,11 +477,13 @@
 "Update failed: %@" = "アップデートに失敗しました: %@";
 "Updated to PullMark %@." = "PullMark %@ にアップデートしました。";
 "Updates" = "アップデート";
+"Updates:" = "アップデート:";
 "Upload the remaining comments into your pending review on GitHub" = "残りのコメントを GitHub の保留中のレビューにアップロードします";
 "Use Anyway" = "このまま使用";
 "Using it" = "使い方";
 "View" = "表示";
 "View All Release Notes" = "すべてのリリースノートを表示";
+"View Branch from GitHub" = "GitHub のブランチを表示";
 "View as List" = "リストとして表示";
 "View as Tree" = "ツリーとして表示";
 "Viewing signed out — commenting and reviewing are unavailable" = "サインアウトした状態で閲覧しています — コメントとレビューは利用できません";
@@ -479,10 +501,12 @@
 "With a local file or folder selected" = "ローカルのファイルかフォルダを選んでいるとき";
 "With files in Open Files" = "「開いているファイル」にファイルがあるとき";
 "Works with private repos using your existing gh or git credentials." = "既存の gh または git の認証情報を使って、プライベートリポジトリでも動きます。";
+"Worktrees" = "ワークツリー";
 "You're on %@." = "現在 %@ にいます。";
 "Your custom shortcuts will be removed. This can't be undone." = "カスタムのショートカットは削除されます。この操作は取り消せません。";
 "Zoom In" = "拡大";
 "Zoom Out" = "縮小";
+"administrator authorization failed." = "管理者の認証に失敗しました。";
 "and %lld more" = "ほか %lld 件";
 "confirming sheets" = "シートの確定";
 "cycling windows" = "ウィンドウの切り替え";
@@ -495,10 +519,13 @@
 "the app switcher" = "アプリケーションスイッチャー";
 " · was {r}" = " · 元は {r}";
 "(empty)" = "(空)";
+"Add Note" = "ノートを追加";
 "Add a margin note" = "マージンノートを追加";
 "Add a suggestion" = "提案を追加";
 "Add reaction" = "リアクションを追加";
+"Add review comment" = "レビューコメントを追加";
 "Add single comment" = "単一のコメントを追加";
+"Add to your pending review — it posts when you submit the review (⌘↩)" = "保留中のレビューに追加します — レビューを送信したときに投稿されます (⌘↩)";
 "Click the gutter for history" = "余白をクリックで履歴";
 "Comment actions" = "コメントの操作";
 "Comment on line {n}" = "{n} 行目にコメント";
@@ -519,6 +546,8 @@
 "Insert a ```suggestion block pre-filled with the current lines" = "現在の行を入れた ```suggestion ブロックを挿入します";
 "LEFT" = "LEFT";
 "Leave a comment" = "コメントを残す";
+"Leave a margin note" = "マージンノートを残す";
+"Leave a note about the whole document" = "文書全体についてのノートを残す";
 "Line {n}" = "{n} 行目";
 "Lines {a}–{b}" = "{a}–{b} 行目";
 "Moved from line {n} — content unchanged" = "{n} 行目から移動 — 内容は変わっていません";
@@ -542,6 +571,8 @@
 "Show on GitHub" = "GitHub で表示";
 "Show {n} resolved conversation" = "解決済みの会話 {n} 件を表示";
 "Show {n} resolved conversations" = "解決済みの会話 {n} 件を表示";
+"Start a pending review with this comment (⌘↩)" = "このコメントで保留中のレビューを開始します (⌘↩)";
+"Start a review" = "レビューを開始";
 "Suggested change" = "変更の提案";
 "Suggestions can only target new-file lines — GitHub applies them in place of the commented lines." = "提案は新しいファイル側の行にしか付けられません — GitHub はコメントした行と置き換えて適用します。";
 "The conversation could not be loaded — retrying." = "会話を読み込めませんでした — 再試行しています。";
@@ -558,6 +589,7 @@
 "bot" = "bot";
 "copied" = "コピーしました";
 "dismissed their review" = "がレビューを却下しました";
+"edit-action" = "編集";
 "moved" = "移動";
 "requested changes" = "が変更をリクエストしました";
 "reviewed" = "がレビューしました";

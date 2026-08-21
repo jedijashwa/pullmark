@@ -48,7 +48,7 @@ enum CLIInstaller {
     /// failure to show.
     static func install() -> String? {
         guard let shim = bundledShim else {
-            return "This build doesn't include the command-line tool."
+            return String(localized: "This build doesn't include the command-line tool.")
         }
         let fm = FileManager.default
         do {
@@ -66,9 +66,9 @@ enum CLIInstaller {
             var errorInfo: NSDictionary?
             NSAppleScript(source: script)?.executeAndReturnError(&errorInfo)
             if let errorInfo, errorInfo[NSAppleScript.errorNumber] as? Int != -128 {
-                return "Couldn't install the command: "
+                return String(localized: "Couldn't install the command: ")
                     + ((errorInfo[NSAppleScript.errorMessage] as? String)
-                        ?? "administrator authorization failed.")
+                        ?? String(localized: "administrator authorization failed."))
             }
             if errorInfo != nil { return nil } // user cancelled — say nothing
             return nil

@@ -10,18 +10,30 @@ enum PageStrings {
     static let table: [String: String] = {
         var strings: [String: String] = [:]
         for key in keys {
-            strings[key] = NSLocalizedString(key, comment: "rendered page")
+            strings[key] = NSLocalizedString(
+                key, value: disambiguated[key] ?? key, comment: "rendered page")
         }
         return strings
     }()
 
+    /// Keys that aren't their own English text — the same English word
+    /// translates differently by role (es: the Edit category is Edición,
+    /// the Edit button Editar). value = the English display text, since
+    /// there is no en.lproj to carry it.
+    static let disambiguated: [String: String] = [
+        "edit-action": "Edit",
+    ]
+
     static let keys: [String] = [
         " · was {r}",
         "(empty)",
+        "Add Note",
         "Add a margin note",
         "Add a suggestion",
         "Add reaction",
+        "Add review comment",
         "Add single comment",
+        "Add to your pending review — it posts when you submit the review (⌘↩)",
         "Cancel",
         "Click the gutter for history",
         "Comment",
@@ -38,7 +50,6 @@ enum PageStrings {
         "Copy full SHA",
         "Couldn't load this image from GitHub · ",
         "Delete",
-        "Edit",
         "File comments",
         "Front matter",
         "Hide {n} resolved conversation",
@@ -46,6 +57,8 @@ enum PageStrings {
         "Insert a ```suggestion block pre-filled with the current lines",
         "LEFT",
         "Leave a comment",
+        "Leave a margin note",
+        "Leave a note about the whole document",
         "Line {n}",
         "Lines {a}–{b}",
         "Moved from line {n} — content unchanged",
@@ -69,6 +82,8 @@ enum PageStrings {
         "Save",
         "Save your edit (⌘↩)",
         "Show on GitHub",
+        "Start a pending review with this comment (⌘↩)",
+        "Start a review",
         "Show {n} resolved conversation",
         "Show {n} resolved conversations",
         "Suggested change",
@@ -87,6 +102,7 @@ enum PageStrings {
         "bot",
         "copied",
         "dismissed their review",
+        "edit-action",
         "moved",
         "requested changes",
         "reviewed",

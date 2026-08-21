@@ -543,7 +543,11 @@ private struct EditToolbarToggle: View {
             get: { surface?.editMode ?? false },
             set: { surface?.setEditMode?($0) }
         )) {
-            Label("Edit", systemImage: "pencil")
+            // "edit-action": the verb, distinct from the "Edit" menu/category
+            // noun — es Edición vs Editar (the Offen/Öffnen collision class).
+            Label(NSLocalizedString("edit-action", value: "Edit",
+                                    comment: "Toolbar toggle: edit this document"),
+                  systemImage: "pencil")
         }
         // The key equivalent lives on Edit → Edit Mode; binding it here too
         // would give one combo two owners.

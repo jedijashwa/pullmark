@@ -21,6 +21,7 @@
 "%@ requested changes %@" = "%@ a demandé des modifications %@";
 "%@ words · %lld min" = "%@ mots · %lld min";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — en aperçu ; double-cliquez pour le conserver avec son dépôt";
+"%@ — worktree" = "%@ — worktree";
 "%@, but the push failed: %@" = "%@, mais l'envoi a échoué : %@";
 "1 Markdown file changed" = "1 fichier Markdown modifié";
 "1 file" = "1 fichier";
@@ -49,6 +50,7 @@
 "Blame" = "Blame";
 "Branch name" = "Nom de la branche";
 "Branches" = "Branches";
+"Branches (first 100)" = "Branches (100 premières)";
 "Branches and worktrees" = "Branches et worktrees";
 "Browse Repo Files" = "Parcourir les fichiers du dépôt";
 "Browse Repo Files…" = "Parcourir les fichiers du dépôt…";
@@ -76,6 +78,7 @@
 "Close All" = "Tout fermer";
 "Close All Files" = "Fermer tous les fichiers";
 "Command" = "Commande";
+"Command line:" = "Ligne de commande :";
 "Comment" = "Commenter";
 "Comment on %@" = "Commenter %@";
 "Comment on File" = "Commenter le fichier";
@@ -93,9 +96,14 @@
 "Committed 1 file on new branch “%@”" = "1 fichier committé sur la nouvelle branche « %@ »";
 "Compare" = "Comparer";
 "Compare Revisions" = "Comparer des versions";
+"Compare Revisions…" = "Comparer des versions…";
+"Compare with File…" = "Comparer avec un fichier…";
+"Compare with Last Commit" = "Comparer avec le dernier commit";
 "Comparing " = "Comparaison ";
 "Comparing with %@" = "Comparaison avec %@";
+"Connected as %@" = "Connecté en tant que %@";
 "Connection status…" = "État de la connexion…";
+"Connection:" = "Connexion :";
 "Content Width" = "Largeur du contenu";
 "Content width" = "Largeur du contenu";
 "Control" = "Contrôle";
@@ -124,6 +132,7 @@
 "Could not update the reaction: %@" = "Impossible de mettre à jour la réaction : %@";
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "Impossible d'envoyer %lld commentaires en attente vers GitHub — conservés en local pour une nouvelle tentative. %@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "Impossible d'envoyer 1 commentaire en attente vers GitHub — conservé en local pour une nouvelle tentative. %@";
+"Couldn't install the command: " = "Impossible d'installer la commande : ";
 "Couldn't move PullMark" = "Impossible de déplacer PullMark";
 "Couldn't open %@/%@#%lld: " = "Impossible d'ouvrir %@/%@#%lld : ";
 "Couldn't open %@: %@" = "Impossible d'ouvrir %@ : %@";
@@ -135,6 +144,7 @@
 "Custom themes" = "Thèmes personnalisés";
 "Customize Toolbar…" = "Personnaliser la barre d'outils…";
 "Dark" = "Sombre";
+"Default Markdown app:" = "App Markdown par défaut :";
 "Default diff layout:" = "Disposition par défaut des diffs :";
 "Delete" = "Supprimer";
 "Delete comment" = "Supprimer le commentaire";
@@ -194,6 +204,7 @@
 "Hide Resolved Conversations" = "Masquer les conversations résolues";
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Masque les demandes de révision sans fichier Markdown — PullMark n'a rien à y montrer";
 "History" = "Historique";
+"History (25 most recent)" = "Historique (25 derniers)";
 "Home" = "Début";
 "Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Survolez n'importe quel bloc pour faire apparaître la bulle de note (sélectionnez du texte d'abord pour le citer), ou appuyez sur ⌥⌘M. Modifiez et supprimez depuis chaque bulle ; supprimer une note, c'est ainsi qu'on la résout. Les lignes de Fichiers ouverts portent une pastille de compte tant que le document contient encore des notes, et Présentation → Masquer les notes de marge nettoie la page pour lire au propre.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "Jusqu'où le texte peut s'étirer avant de se replier. Standard garde la justification classique, façon livre ; Wide met plus de texte à l'écran tout en plafonnant la longueur de ligne ; Full Width donne toute la fenêtre au document — pratique en plein écran. S'applique partout, en direct, et se compose avec n'importe quel thème.";
@@ -245,6 +256,7 @@
 "No Markdown files found in %@." = "Aucun fichier Markdown trouvé dans %@.";
 "No changes to commit." = "Aucune modification à committer.";
 "No headings" = "Aucun titre";
+"No other branches" = "Aucune autre branche";
 "None" = "Aucun";
 "Not Now" = "Pas maintenant";
 "Not a Homebrew user? [Download the CLI from cli.github.com](https://cli.github.com), then sign in the same way." = "Vous n'utilisez pas Homebrew ? [Téléchargez la CLI depuis cli.github.com](https://cli.github.com), puis connectez-vous de la même façon.";
@@ -256,6 +268,7 @@
 "Off shows a quiet banner instead — the notes stay one click away" = "Désactivé, une discrète bannière prend le relais — les notes restent à un clic";
 "Only requests that change Markdown" = "Uniquement les demandes qui modifient du Markdown";
 "Open" = "Ouvrir";
+"Open %@ Separately" = "Ouvrir %@ à part";
 "Open Branch Separately" = "Ouvrir la branche à part";
 "Open File or Folder" = "Ouvrir un fichier ou un dossier";
 "Open Files" = "Fichiers ouverts";
@@ -325,6 +338,9 @@
 "Re-read this file from disk" = "Relit ce fichier depuis le disque";
 "Reaction state unavailable — try refreshing the PR." = "État de la réaction indisponible — essayez d'actualiser la PR.";
 "Reading" = "Lecture";
+"Recent Branches" = "Branches récentes";
+"Recent Remote Branches" = "Branches distantes récentes";
+"Recent Tags" = "Tags récents";
 "Recents" = "Récents";
 "Redo" = "Rétablir";
 "Refresh" = "Actualiser";
@@ -420,9 +436,12 @@
 "Spotlight" = "Spotlight";
 "Stage and commit changes in this file's repository" = "Indexe et committe les modifications dans le dépôt de ce fichier";
 "Standard" = "Standard";
+"Stop Comparing" = "Arrêter la comparaison";
 "Submit review" = "Envoyer la révision";
 "Submit the review with the selected verdict (⌘↩)" = "Envoyer la révision avec le verdict sélectionné (⌘↩)";
 "Support PullMark ❤️" = "Soutenir PullMark ❤️";
+"Switch To" = "Basculer vers";
+"Switch To (first 100)" = "Basculer vers (100 premières)";
 "Switch between light, dark, and system appearance" = "Basculer entre l'apparence claire, sombre et système";
 "Switch or Open Branch…" = "Changer ou ouvrir une branche…";
 "System" = "Système";
@@ -442,6 +461,7 @@
 "Theme" = "Thème";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Les thèmes restylent le Markdown rendu et les diffs, et suivent l'apparence claire/sombre. Déposez des fichiers .css dans le dossier Themes pour ajouter les vôtres — ils s'appliquent par-dessus le look GitHub. Les aperçus Quick Look suivent aussi votre thème (les thèmes personnalisés y retombent sur leur base GitHub).";
 "These keys are fixed and can't be changed." = "Ces touches sont fixes et ne peuvent pas être modifiées.";
+"This build doesn't include the command-line tool." = "Cette version ne contient pas l'outil en ligne de commande.";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "Ce commentaire est encore en cours de synchronisation avec GitHub — réessayez de le supprimer dans un instant.";
 "This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Ce dossier contient plus de fichiers Markdown que PullMark n'en analyse — ouvrez un sous-dossier comme emplacement à part pour voir le reste";
 "This pull request was updated on GitHub." = "Cette pull request a été mise à jour sur GitHub.";
@@ -454,11 +474,13 @@
 "Update failed: %@" = "Échec de la mise à jour : %@";
 "Updated to PullMark %@." = "Mis à jour vers PullMark %@.";
 "Updates" = "Mises à jour";
+"Updates:" = "Mises à jour :";
 "Upload the remaining comments into your pending review on GitHub" = "Envoyer les commentaires restants dans votre révision en attente sur GitHub";
 "Use Anyway" = "Utiliser quand même";
 "Using it" = "Les utiliser";
 "View" = "Présentation";
 "View All Release Notes" = "Voir toutes les notes de version";
+"View Branch from GitHub" = "Voir une branche depuis GitHub";
 "View as List" = "Afficher en liste";
 "View as Tree" = "Afficher en arborescence";
 "Viewing signed out — commenting and reviewing are unavailable" = "Consultation hors connexion — commenter et réviser sont indisponibles";
@@ -476,10 +498,12 @@
 "With a local file or folder selected" = "Avec un fichier ou dossier local sélectionné";
 "With files in Open Files" = "Avec des fichiers dans la section Fichiers ouverts";
 "Works with private repos using your existing gh or git credentials." = "Fonctionne avec les dépôts privés grâce à vos identifiants gh ou git existants.";
+"Worktrees" = "Worktrees";
 "You're on %@." = "Vous êtes sur %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Vos raccourcis personnalisés seront supprimés. Cette action est irréversible.";
 "Zoom In" = "Zoom avant";
 "Zoom Out" = "Zoom arrière";
+"administrator authorization failed." = "l'autorisation administrateur a échoué.";
 "and %lld more" = "et %lld de plus";
 "confirming sheets" = "la validation des feuilles";
 "cycling windows" = "le passage d'une fenêtre à l'autre";
@@ -492,10 +516,13 @@
 "the app switcher" = "le sélecteur d'apps";
 " · was {r}" = " · était {r}";
 "(empty)" = "(vide)";
+"Add Note" = "Ajouter la note";
 "Add a margin note" = "Ajouter une note de marge";
 "Add a suggestion" = "Ajouter une suggestion";
 "Add reaction" = "Ajouter une réaction";
+"Add review comment" = "Ajouter un commentaire de révision";
 "Add single comment" = "Ajouter un seul commentaire";
+"Add to your pending review — it posts when you submit the review (⌘↩)" = "Ajoute à votre révision en attente — publié quand vous envoyez la révision (⌘↩)";
 "Click the gutter for history" = "Cliquez la gouttière pour l'historique";
 "Comment actions" = "Actions du commentaire";
 "Comment on line {n}" = "Commenter la ligne {n}";
@@ -516,6 +543,8 @@
 "Insert a ```suggestion block pre-filled with the current lines" = "Insère un bloc ```suggestion prérempli avec les lignes actuelles";
 "LEFT" = "LEFT";
 "Leave a comment" = "Laisser un commentaire";
+"Leave a margin note" = "Laisser une note de marge";
+"Leave a note about the whole document" = "Laisser une note sur le document entier";
 "Line {n}" = "Ligne {n}";
 "Lines {a}–{b}" = "Lignes {a}–{b}";
 "Moved from line {n} — content unchanged" = "Déplacé depuis la ligne {n} — contenu inchangé";
@@ -539,6 +568,8 @@
 "Show on GitHub" = "Afficher sur GitHub";
 "Show {n} resolved conversation" = "Afficher {n} conversation résolue";
 "Show {n} resolved conversations" = "Afficher {n} conversations résolues";
+"Start a pending review with this comment (⌘↩)" = "Commence une révision en attente avec ce commentaire (⌘↩)";
+"Start a review" = "Commencer une révision";
 "Suggested change" = "Modification suggérée";
 "Suggestions can only target new-file lines — GitHub applies them in place of the commented lines." = "Les suggestions ne peuvent viser que les lignes du nouveau fichier — GitHub les applique à la place des lignes commentées.";
 "The conversation could not be loaded — retrying." = "Impossible de charger la conversation — nouvelle tentative.";
@@ -555,6 +586,7 @@
 "bot" = "bot";
 "copied" = "copié";
 "dismissed their review" = "a rejeté sa révision";
+"edit-action" = "Modifier";
 "moved" = "déplacé";
 "requested changes" = "a demandé des modifications";
 "reviewed" = "a révisé";

@@ -2145,7 +2145,7 @@
       var edit = document.createElement("button");
       edit.type = "button";
       edit.setAttribute("role", "menuitem");
-      edit.textContent = pmString("Edit");
+      edit.textContent = pmString("edit-action");
       edit.addEventListener("click", function () {
         closeTransientPopup();
         openEditComposer(c, card, bodyEl);
@@ -2543,10 +2543,11 @@
     var primary = document.createElement("button");
     primary.type = "button";
     primary.className = "pm-composer-primary";
-    primary.textContent = payload.reviewPending ? "Add review comment" : "Start a review";
+    primary.textContent = payload.reviewPending
+      ? pmString("Add review comment") : pmString("Start a review");
     primary.title = payload.reviewPending
-      ? "Add to your pending review — it posts when you submit the review (⌘↩)"
-      : "Start a pending review with this comment (⌘↩)";
+      ? pmString("Add to your pending review — it posts when you submit the review (⌘↩)")
+      : pmString("Start a pending review with this comment (⌘↩)");
     actions.append(cancel, secondary, primary);
 
     root.append(bar, ta, note, actions);
@@ -3077,7 +3078,7 @@
     root.className = "pm-composer pm-note-composer pm-annotation";
     var ta = document.createElement("textarea");
     ta.className = "pm-composer-text";
-    ta.placeholder = opts.placeholder || "Leave a margin note";
+    ta.placeholder = opts.placeholder || pmString("Leave a margin note");
     ta.rows = 3;
     var actions = document.createElement("div");
     actions.className = "pm-composer-actions";
@@ -3087,7 +3088,7 @@
     var primary = document.createElement("button");
     primary.type = "button";
     primary.className = "pm-composer-primary";
-    primary.textContent = opts.primaryLabel || "Add Note";
+    primary.textContent = opts.primaryLabel || pmString("Add Note");
     primary.title = "⌘↩";
     actions.append(cancel, primary);
     root.append(ta, actions);
@@ -3182,14 +3183,14 @@
       actions.className = "pm-note-actions";
       var edit = document.createElement("button");
       edit.type = "button";
-      edit.textContent = pmString("Edit");
+      edit.textContent = pmString("edit-action");
       edit.addEventListener("click", function () {
         noteIntroGate(function () {
           card.style.display = "none";
           noteComposerOpen({
             anchor: card,
             seed: note.body,
-            primaryLabel: "Save",
+            primaryLabel: pmString("Save"),
             onSubmit: function (text) {
               post({ type: "noteEdit", index: note.index, body: text });
             },
@@ -3435,7 +3436,7 @@
     if (fileLevel) {
       noteComposerOpen({
         anchor: null,
-        placeholder: "Leave a note about the whole document",
+        placeholder: pmString("Leave a note about the whole document"),
         onSubmit: function (body) {
           post({ type: "noteAdd", afterLine: 0, body: body });
         }

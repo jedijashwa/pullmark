@@ -763,7 +763,7 @@ private struct FolderRootGroup: View {
             }
         }
 
-        header("Worktrees")
+        header(String(localized: "Worktrees"))
         for worktree in git.worktrees {
             let path = worktree.path
             let isHere = path == git.toplevel
@@ -773,11 +773,11 @@ private struct FolderRootGroup: View {
             }
         }
         if let repoID = git.primaryGitHubRepo, !ghBranches.isEmpty {
-            header("View Branch from GitHub")
+            header(String(localized: "View Branch from GitHub"))
             for branch in ghBranches.prefix(100) where branch != git.branch {
                 if let worktree = git.worktrees.first(where: { $0.branch == branch }) {
                     let path = worktree.path
-                    item("\(branch) — worktree", in: menu) {
+                    item(String(localized: "\(branch) — worktree"), in: menu) {
                         state.add(url: URL(fileURLWithPath: path))
                     }
                 } else {
@@ -793,7 +793,7 @@ private struct FolderRootGroup: View {
         if let repoID = git.primaryGitHubRepo {
             menu.addItem(.separator())
             let branch = git.branch
-            item("Open on GitHub", in: menu) {
+            item(String(localized: "Open on GitHub"), in: menu) {
                 let ref = branch.map { "/tree/\($0)" } ?? ""
                 if let url = URL(string: "https://github.com/\(repoID.owner)/\(repoID.repo)\(ref)") {
                     NSWorkspace.shared.open(url)

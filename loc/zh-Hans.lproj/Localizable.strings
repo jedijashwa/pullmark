@@ -24,6 +24,7 @@
 "%@ requested changes %@" = "%@ 已请求更改（%@）";
 "%@ words · %lld min" = "%@ 字 · %lld 分钟";
 "%@ — previewing; double-click to keep it with its repo" = "%@ —— 预览中；双击可将它保留在所属仓库下";
+"%@ — worktree" = "%@ —— 工作树";
 "%@, but the push failed: %@" = "%@，但推送失败：%@";
 "1 Markdown file changed" = "更改了 1 个 Markdown 文件";
 "1 file" = "1 个文件";
@@ -52,6 +53,7 @@
 "Blame" = "Blame";
 "Branch name" = "分支名称";
 "Branches" = "分支";
+"Branches (first 100)" = "分支（前 100 个）";
 "Branches and worktrees" = "分支与工作树";
 "Browse Repo Files" = "浏览仓库文件";
 "Browse Repo Files…" = "浏览仓库文件…";
@@ -79,6 +81,7 @@
 "Close All" = "全部关闭";
 "Close All Files" = "关闭所有文件";
 "Command" = "Command";
+"Command line:" = "命令行：";
 "Comment" = "评论";
 "Comment on %@" = "评论 %@";
 "Comment on File" = "评论文件";
@@ -96,9 +99,14 @@
 "Committed 1 file on new branch “%@”" = "已提交 1 个文件到新分支“%@”";
 "Compare" = "比较";
 "Compare Revisions" = "比较修订版本";
+"Compare Revisions…" = "比较修订版本…";
+"Compare with File…" = "与文件比较…";
+"Compare with Last Commit" = "与上次提交比较";
 "Comparing " = "正在比较 ";
 "Comparing with %@" = "正在与 %@ 比较";
+"Connected as %@" = "已连接为 %@";
 "Connection status…" = "连接状态…";
+"Connection:" = "连接：";
 "Content Width" = "栏宽";
 "Content width" = "栏宽";
 "Control" = "Control";
@@ -127,6 +135,7 @@
 "Could not update the reaction: %@" = "无法更新表情回应：%@";
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "无法把 %lld 条待提交评论上传到 GitHub——已保留在本地以便重试。%@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "无法把 1 条待提交评论上传到 GitHub——已保留在本地以便重试。%@";
+"Couldn't install the command: " = "无法安装该命令：";
 "Couldn't move PullMark" = "无法移动 PullMark";
 "Couldn't open %@/%@#%lld: " = "无法打开 %@/%@#%lld：";
 "Couldn't open %@: %@" = "无法打开 %@：%@";
@@ -138,6 +147,7 @@
 "Custom themes" = "自定义主题";
 "Customize Toolbar…" = "自定义工具栏…";
 "Dark" = "深色";
+"Default Markdown app:" = "默认 Markdown 应用：";
 "Default diff layout:" = "默认差异布局：";
 "Delete" = "删除";
 "Delete comment" = "删除评论";
@@ -197,6 +207,7 @@
 "Hide Resolved Conversations" = "隐藏已解决的会话";
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "隐藏不含 Markdown 文件的审查请求——PullMark 对它们无可展示";
 "History" = "历史";
+"History (25 most recent)" = "历史（最近 25 条）";
 "Home" = "Home";
 "Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "悬停任意区块即可看到批注气泡（先选中文字即可引用它），也可以按 ⌥⌘M。在每个气泡上编辑和删除；删除一条批注就是解决它。文档还带着批注时，“打开的文件”中的行会显示一枚计数标签；想清净阅读时，用“显示”菜单里的 隐藏页边批注 清屏。";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "文字在折行前可以伸展多远。Standard 保持经典的书本式行长；Wide 在屏幕上容纳更多内容，同时仍为行长设上限；Full Width 把整个窗口都交给文档——全屏时很好用。处处生效、即时生效，也与任何主题相处融洽。";
@@ -248,6 +259,7 @@
 "No Markdown files found in %@." = "在 %@ 中未找到 Markdown 文件。";
 "No changes to commit." = "没有可提交的更改。";
 "No headings" = "没有标题";
+"No other branches" = "没有其他分支";
 "None" = "无";
 "Not Now" = "以后";
 "Not a Homebrew user? [Download the CLI from cli.github.com](https://cli.github.com), then sign in the same way." = "不是 Homebrew 用户？[从 cli.github.com 下载 CLI](https://cli.github.com)，然后用同样的方式登录。";
@@ -259,6 +271,7 @@
 "Off shows a quiet banner instead — the notes stay one click away" = "关闭时改为显示一条安静的横幅——批注依然一键可达";
 "Only requests that change Markdown" = "仅显示改动 Markdown 的请求";
 "Open" = "打开";
+"Open %@ Separately" = "单独打开 %@";
 "Open Branch Separately" = "单独打开分支";
 "Open File or Folder" = "打开文件或文件夹";
 "Open Files" = "打开的文件";
@@ -328,6 +341,9 @@
 "Re-read this file from disk" = "从磁盘重新读取此文件";
 "Reaction state unavailable — try refreshing the PR." = "表情回应状态不可用——请尝试刷新此 PR。";
 "Reading" = "阅读";
+"Recent Branches" = "最近的分支";
+"Recent Remote Branches" = "最近的远程分支";
+"Recent Tags" = "最近的标签";
 "Recents" = "最近使用";
 "Redo" = "重做";
 "Refresh" = "刷新";
@@ -423,9 +439,12 @@
 "Spotlight" = "聚焦";
 "Stage and commit changes in this file's repository" = "在此文件所属的仓库中暂存并提交更改";
 "Standard" = "Standard";
+"Stop Comparing" = "停止比较";
 "Submit review" = "提交审查";
 "Submit the review with the selected verdict (⌘↩)" = "以所选结论提交审查（⌘↩）";
 "Support PullMark ❤️" = "支持 PullMark ❤️";
+"Switch To" = "切换到";
+"Switch To (first 100)" = "切换到（前 100 个）";
 "Switch between light, dark, and system appearance" = "在浅色、深色和跟随系统的外观之间切换";
 "Switch or Open Branch…" = "切换或打开分支…";
 "System" = "系统";
@@ -445,6 +464,7 @@
 "Theme" = "主题";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "主题会重新装点渲染后的 Markdown 和差异，并跟随浅色/深色外观。把 .css 文件放进 Themes 文件夹即可添加自己的主题——它们叠加在 GitHub 外观之上。快速查看预览也跟随你的主题（自定义主题在那里回落到它们的 GitHub 基底）。";
 "These keys are fixed and can't be changed." = "这些按键是固定的，无法更改。";
+"This build doesn't include the command-line tool." = "此构建版本不包含命令行工具。";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "该评论仍在与 GitHub 同步——请稍后再试着丢弃它。";
 "This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "这个文件夹的 Markdown 文件多于 PullMark 扫描的上限——把子文件夹作为独立的“位置”打开即可看到其余部分";
 "This pull request was updated on GitHub." = "此拉取请求在 GitHub 上有更新。";
@@ -457,11 +477,13 @@
 "Update failed: %@" = "更新失败：%@";
 "Updated to PullMark %@." = "已更新到 PullMark %@。";
 "Updates" = "更新";
+"Updates:" = "更新：";
 "Upload the remaining comments into your pending review on GitHub" = "把剩余的评论上传到你在 GitHub 上的待提交审查中";
 "Use Anyway" = "仍要使用";
 "Using it" = "使用方法";
 "View" = "显示";
 "View All Release Notes" = "查看全部发行说明";
+"View Branch from GitHub" = "查看 GitHub 上的分支";
 "View as List" = "以列表显示";
 "View as Tree" = "以树状显示";
 "Viewing signed out — commenting and reviewing are unavailable" = "以未登录状态查看——无法评论和审查";
@@ -479,10 +501,12 @@
 "With a local file or folder selected" = "选中本地文件或文件夹时";
 "With files in Open Files" = "“打开的文件”中有文件时";
 "Works with private repos using your existing gh or git credentials." = "使用你现有的 gh 或 git 凭据即可处理私有仓库。";
+"Worktrees" = "工作树";
 "You're on %@." = "你当前在 %@ 上。";
 "Your custom shortcuts will be removed. This can't be undone." = "你自定的快捷键将被移除。此操作无法撤销。";
 "Zoom In" = "放大";
 "Zoom Out" = "缩小";
+"administrator authorization failed." = "管理员授权失败。";
 "and %lld more" = "另有 %lld 位";
 "confirming sheets" = "确认对话框";
 "cycling windows" = "在窗口间循环";
@@ -495,10 +519,13 @@
 "the app switcher" = "应用程序切换器";
 " · was {r}" = " · 原为 {r}";
 "(empty)" = "（空）";
+"Add Note" = "添加批注";
 "Add a margin note" = "添加页边批注";
 "Add a suggestion" = "添加建议";
 "Add reaction" = "添加表情回应";
+"Add review comment" = "添加审查评论";
 "Add single comment" = "添加单条评论";
+"Add to your pending review — it posts when you submit the review (⌘↩)" = "添加到你的待提交审查——在你提交审查时发表（⌘↩）";
 "Click the gutter for history" = "点击页边可查看历史";
 "Comment actions" = "评论操作";
 "Comment on line {n}" = "评论第 {n} 行";
@@ -519,6 +546,8 @@
 "Insert a ```suggestion block pre-filled with the current lines" = "插入一个 ```suggestion 区块，并预先填入当前的行";
 "LEFT" = "LEFT";
 "Leave a comment" = "留下评论";
+"Leave a margin note" = "留下一条页边批注";
+"Leave a note about the whole document" = "为整篇文档留下一条批注";
 "Line {n}" = "第 {n} 行";
 "Lines {a}–{b}" = "第 {a}–{b} 行";
 "Moved from line {n} — content unchanged" = "从第 {n} 行移来——内容未变";
@@ -542,6 +571,8 @@
 "Show on GitHub" = "在 GitHub 上显示";
 "Show {n} resolved conversation" = "显示 {n} 场已解决的会话";
 "Show {n} resolved conversations" = "显示 {n} 场已解决的会话";
+"Start a pending review with this comment (⌘↩)" = "用这条评论开始一份待提交审查（⌘↩）";
+"Start a review" = "开始审查";
 "Suggested change" = "建议的更改";
 "Suggestions can only target new-file lines — GitHub applies them in place of the commented lines." = "建议只能针对新文件的行——GitHub 会用它替换掉被评论的那些行。";
 "The conversation could not be loaded — retrying." = "无法载入这场会话——正在重试。";
@@ -558,6 +589,7 @@
 "bot" = "机器人";
 "copied" = "已拷贝";
 "dismissed their review" = "撤销了审查";
+"edit-action" = "编辑";
 "moved" = "已移动";
 "requested changes" = "请求了更改";
 "reviewed" = "提交了审查";

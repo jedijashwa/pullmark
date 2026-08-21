@@ -449,7 +449,8 @@ struct PullMarkApp: App {
                     .disabled(activeLocalFileURL == nil)
                     .help("Re-read this file from disk")
                 Button(state?.expectedSurfaceToolbar?.comparing == true
-                       ? "Stop Comparing" : "Compare with Last Commit") {
+                       ? String(localized: "Stop Comparing")
+                       : String(localized: "Compare with Last Commit")) {
                     state?.send(.toggleCompare)
                 }
                 .disabled(activeLocalFileURL == nil

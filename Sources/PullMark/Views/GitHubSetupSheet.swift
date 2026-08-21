@@ -99,7 +99,8 @@ struct GitHubSetupSheet: View {
         guard case .connected(let login, let source) = connection.status else {
             return String(localized: "Connected")
         }
-        let who = login.map { "Connected as \($0)" } ?? "Connected"
+        let who = login.map { String(localized: "Connected as \($0)") }
+            ?? String(localized: "Connected")
         return "\(who) · \(source.label)"
     }
 

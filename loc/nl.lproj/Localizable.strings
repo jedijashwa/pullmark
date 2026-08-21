@@ -24,6 +24,7 @@
 "%@ requested changes %@" = "%@ heeft %@ wijzigingen gevraagd";
 "%@ words · %lld min" = "%@ woorden · %lld min";
 "%@ — previewing; double-click to keep it with its repo" = "%@ — preview; dubbelklik om het bij zijn repo te houden";
+"%@ — worktree" = "%@ — worktree";
 "%@, but the push failed: %@" = "%@, maar de push is mislukt: %@";
 "1 Markdown file changed" = "1 Markdown-bestand gewijzigd";
 "1 file" = "1 bestand";
@@ -52,6 +53,7 @@
 "Blame" = "Blame";
 "Branch name" = "Branchnaam";
 "Branches" = "Branches";
+"Branches (first 100)" = "Branches (eerste 100)";
 "Branches and worktrees" = "Branches en worktrees";
 "Browse Repo Files" = "Blader door repo-bestanden";
 "Browse Repo Files…" = "Blader door repo-bestanden…";
@@ -79,6 +81,7 @@
 "Close All" = "Sluit alles";
 "Close All Files" = "Sluit alle bestanden";
 "Command" = "Command";
+"Command line:" = "Opdrachtregel:";
 "Comment" = "Plaats comment";
 "Comment on %@" = "Reageer op %@";
 "Comment on File" = "Reageer op bestand";
@@ -96,9 +99,14 @@
 "Committed 1 file on new branch “%@”" = "1 bestand gecommit op nieuwe branch “%@”";
 "Compare" = "Vergelijk";
 "Compare Revisions" = "Vergelijk revisies";
+"Compare Revisions…" = "Vergelijk revisies…";
+"Compare with File…" = "Vergelijk met bestand…";
+"Compare with Last Commit" = "Vergelijk met laatste commit";
 "Comparing " = "Vergelijken: ";
 "Comparing with %@" = "Vergelijken met %@";
+"Connected as %@" = "Verbonden als %@";
 "Connection status…" = "Verbindingsstatus…";
+"Connection:" = "Verbinding:";
 "Content Width" = "Tekstbreedte";
 "Content width" = "Tekstbreedte";
 "Control" = "Control";
@@ -127,6 +135,7 @@
 "Could not update the reaction: %@" = "Kon de reactie niet bijwerken: %@";
 "Could not upload %lld pending comments to GitHub — kept locally for retry. %@" = "Kon %lld pending comments niet naar GitHub uploaden — lokaal bewaard voor een nieuwe poging. %@";
 "Could not upload 1 pending comment to GitHub — kept locally for retry. %@" = "Kon 1 pending comment niet naar GitHub uploaden — lokaal bewaard voor een nieuwe poging. %@";
+"Couldn't install the command: " = "Kon het commando niet installeren: ";
 "Couldn't move PullMark" = "Kon PullMark niet verplaatsen";
 "Couldn't open %@/%@#%lld: " = "Kon %@/%@#%lld niet openen: ";
 "Couldn't open %@: %@" = "Kon %@ niet openen: %@";
@@ -138,6 +147,7 @@
 "Custom themes" = "Eigen thema's";
 "Customize Toolbar…" = "Pas toolbar aan…";
 "Dark" = "Donker";
+"Default Markdown app:" = "Standaard-Markdown-app:";
 "Default diff layout:" = "Standaard diff-indeling:";
 "Delete" = "Verwijder";
 "Delete comment" = "Verwijder comment";
@@ -197,6 +207,7 @@
 "Hide Resolved Conversations" = "Verberg opgeloste conversaties";
 "Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Verbergt reviewverzoeken zonder Markdown-bestanden — PullMark heeft er niets voor te tonen";
 "History" = "Geschiedenis";
+"History (25 most recent)" = "Geschiedenis (laatste 25)";
 "Home" = "Home";
 "Hover any block for the note bubble (select text first to quote it), or press ⌥⌘M. Edit and delete from each bubble; deleting a note is how it's resolved. Open Files rows show a count chip while a document still carries notes, and View → Hide Margin Notes clears the page for clean reading." = "Hover over een blok voor het notitieballonnetje (selecteer eerst tekst om die te citeren), of druk op ⌥⌘M. Bewerken en verwijderen doe je vanuit elk ballonnetje; een notitie verwijderen is hoe je haar afhandelt. Rijen in Geopende bestanden dragen een chip met het aantal notities zolang een document ze nog bevat, en Weergave → Verberg margin notes maakt de pagina leeg om schoon te lezen.";
 "How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme." = "Hoe ver tekst mag uitlopen voordat hij afbreekt. Standard houdt de klassieke, boekachtige leesbreedte aan; Wide past meer op het scherm en begrenst de regellengte nog steeds; Full Width geeft het document het hele venster — handig in volledig scherm. Geldt overal, live, en combineert met elk thema.";
@@ -248,6 +259,7 @@
 "No Markdown files found in %@." = "Geen Markdown-bestanden gevonden in %@.";
 "No changes to commit." = "Geen wijzigingen om te committen.";
 "No headings" = "Geen koppen";
+"No other branches" = "Geen andere branches";
 "None" = "Geen";
 "Not Now" = "Niet nu";
 "Not a Homebrew user? [Download the CLI from cli.github.com](https://cli.github.com), then sign in the same way." = "Geen Homebrew-gebruiker? [Download de CLI van cli.github.com](https://cli.github.com) en log daarna op dezelfde manier in.";
@@ -259,6 +271,7 @@
 "Off shows a quiet banner instead — the notes stay one click away" = "Uit toont in plaats daarvan een rustige banner — de notes blijven één klik verderop";
 "Only requests that change Markdown" = "Alleen verzoeken die Markdown wijzigen";
 "Open" = "Open";
+"Open %@ Separately" = "Open %@ apart";
 "Open Branch Separately" = "Open branch apart";
 "Open File or Folder" = "Open bestand of map";
 "Open Files" = "Geopende bestanden";
@@ -328,6 +341,9 @@
 "Re-read this file from disk" = "Lees dit bestand opnieuw van schijf";
 "Reaction state unavailable — try refreshing the PR." = "Reactiestatus niet beschikbaar — ververs de PR.";
 "Reading" = "Lezen";
+"Recent Branches" = "Recente branches";
+"Recent Remote Branches" = "Recente remote branches";
+"Recent Tags" = "Recente tags";
 "Recents" = "Recent";
 "Redo" = "Herhaal";
 "Refresh" = "Ververs";
@@ -423,9 +439,12 @@
 "Spotlight" = "Spotlight";
 "Stage and commit changes in this file's repository" = "Stage en commit wijzigingen in de repository van dit bestand";
 "Standard" = "Standard";
+"Stop Comparing" = "Stop met vergelijken";
 "Submit review" = "Dien review in";
 "Submit the review with the selected verdict (⌘↩)" = "Dien de review in met het gekozen oordeel (⌘↩)";
 "Support PullMark ❤️" = "Steun PullMark ❤️";
+"Switch To" = "Wissel naar";
+"Switch To (first 100)" = "Wissel naar (eerste 100)";
 "Switch between light, dark, and system appearance" = "Wissel tussen lichte, donkere en systeemweergave";
 "Switch or Open Branch…" = "Wissel of open branch…";
 "System" = "Systeem";
@@ -445,6 +464,7 @@
 "Theme" = "Thema";
 "Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there)." = "Thema's restylen gerenderde Markdown en diffs, en volgen de Light/Dark-weergave. Zet .css-bestanden in de Themes-map om je eigen thema toe te voegen — ze werken bovenop de GitHub-look. Quick Look-previews volgen je thema ook (eigen thema's vallen daar terug op hun GitHub-basis).";
 "These keys are fixed and can't be changed." = "Deze toetsen liggen vast en zijn niet te veranderen.";
+"This build doesn't include the command-line tool." = "Deze build bevat het opdrachtregelprogramma niet.";
 "This comment is still syncing with GitHub — try discarding it again in a moment." = "Deze comment synchroniseert nog met GitHub — probeer hem zo meteen opnieuw te verwijderen.";
 "This folder has more Markdown files than PullMark scans — open a subfolder as its own Location to see the rest" = "Deze map heeft meer Markdown-bestanden dan PullMark scant — open een submap als eigen Location om de rest te zien";
 "This pull request was updated on GitHub." = "Deze pull request is bijgewerkt op GitHub.";
@@ -457,11 +477,13 @@
 "Update failed: %@" = "Bijwerken mislukt: %@";
 "Updated to PullMark %@." = "Bijgewerkt naar PullMark %@.";
 "Updates" = "Updates";
+"Updates:" = "Updates:";
 "Upload the remaining comments into your pending review on GitHub" = "Upload de resterende comments naar je pending review op GitHub";
 "Use Anyway" = "Gebruik toch";
 "Using it" = "Zo gebruik je het";
 "View" = "Weergave";
 "View All Release Notes" = "Bekijk alle releasenotes";
+"View Branch from GitHub" = "Bekijk branch van GitHub";
 "View as List" = "Toon als lijst";
 "View as Tree" = "Toon als boomstructuur";
 "Viewing signed out — commenting and reviewing are unavailable" = "Je bekijkt dit uitgelogd — reageren en reviewen zijn niet beschikbaar";
@@ -479,10 +501,12 @@
 "With a local file or folder selected" = "Met een lokaal bestand of lokale map geselecteerd";
 "With files in Open Files" = "Met bestanden onder Geopende bestanden";
 "Works with private repos using your existing gh or git credentials." = "Werkt met privérepo's via je bestaande gh- of git-credentials.";
+"Worktrees" = "Worktrees";
 "You're on %@." = "Je zit op %@.";
 "Your custom shortcuts will be removed. This can't be undone." = "Je eigen sneltoetsen worden verwijderd. Dit kan niet ongedaan worden gemaakt.";
 "Zoom In" = "Zoom in";
 "Zoom Out" = "Zoom uit";
+"administrator authorization failed." = "beheerdersautorisatie is mislukt.";
 "and %lld more" = "en nog %lld";
 "confirming sheets" = "het bevestigen van panelen";
 "cycling windows" = "wisselen tussen vensters";
@@ -495,10 +519,13 @@
 "the app switcher" = "de appwisselaar";
 " · was {r}" = " · was {r}";
 "(empty)" = "(leeg)";
+"Add Note" = "Voeg notitie toe";
 "Add a margin note" = "Voeg een margin note toe";
 "Add a suggestion" = "Voeg een suggestie toe";
 "Add reaction" = "Voeg reactie toe";
+"Add review comment" = "Voeg review-comment toe";
 "Add single comment" = "Voeg losse comment toe";
+"Add to your pending review — it posts when you submit the review (⌘↩)" = "Voeg toe aan je pending review — het wordt geplaatst als je de review indient (⌘↩)";
 "Click the gutter for history" = "Klik in de kantlijn voor de geschiedenis";
 "Comment actions" = "Commentacties";
 "Comment on line {n}" = "Reageer op regel {n}";
@@ -519,6 +546,8 @@
 "Insert a ```suggestion block pre-filled with the current lines" = "Voegt een ```suggestion-blok in, alvast gevuld met de huidige regels";
 "LEFT" = "LEFT";
 "Leave a comment" = "Laat een comment achter";
+"Leave a margin note" = "Laat een margin note achter";
+"Leave a note about the whole document" = "Laat een notitie over het hele document achter";
 "Line {n}" = "Regel {n}";
 "Lines {a}–{b}" = "Regels {a}–{b}";
 "Moved from line {n} — content unchanged" = "Verplaatst van regel {n} — inhoud ongewijzigd";
@@ -542,6 +571,8 @@
 "Show on GitHub" = "Toon op GitHub";
 "Show {n} resolved conversation" = "Toon {n} opgeloste conversatie";
 "Show {n} resolved conversations" = "Toon {n} opgeloste conversaties";
+"Start a pending review with this comment (⌘↩)" = "Start een pending review met deze comment (⌘↩)";
+"Start a review" = "Start een review";
 "Suggested change" = "Voorgestelde wijziging";
 "Suggestions can only target new-file lines — GitHub applies them in place of the commented lines." = "Suggesties kunnen alleen op regels van het nieuwe bestand mikken — GitHub past ze toe in plaats van de becommentarieerde regels.";
 "The conversation could not be loaded — retrying." = "De conversatie kon niet worden geladen — nieuwe poging.";
@@ -558,6 +589,7 @@
 "bot" = "bot";
 "copied" = "gekopieerd";
 "dismissed their review" = "heeft de review verworpen";
+"edit-action" = "Bewerk";
 "moved" = "verplaatst";
 "requested changes" = "heeft wijzigingen gevraagd";
 "reviewed" = "heeft gereviewd";
@@ -582,7 +614,7 @@
 "View all checks on GitHub" = "Bekijk alle checks op GitHub";
 "%lld of %lld done" = "%lld van %lld klaar";
 "%lld of %lld failing" = "%lld van %lld mislukt";
-"A clean margin, numbers on demand in Source" = "Een rustige marge, nummers op verzoek in Source";
+"A clean margin, numbers on demand in Source" = "Een rustige marge, nummers op verzoek in Bron";
 "A workflow is waiting for approval" = "Een workflow wacht op goedkeuring";
 "Added" = "Toegevoegd";
 "Changed" = "Gewijzigd";

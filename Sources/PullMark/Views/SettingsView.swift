@@ -956,7 +956,8 @@ struct GitHubConnectionSection: View {
         case .connected(let login, let source):
             HStack(spacing: 6) {
                 Circle().fill(.green).frame(width: 7, height: 7)
-                Text(login.map { "Connected as \($0)" } ?? "Connected")
+                Text(login.map { String(localized: "Connected as \($0)") }
+                     ?? String(localized: "Connected"))
                 Text("· \(source.label)")
                     .foregroundStyle(.secondary)
             }
