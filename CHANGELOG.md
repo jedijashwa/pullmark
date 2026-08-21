@@ -4,6 +4,24 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.42.0 - 2026-08-21
+
+- **The seven translations sat for a proper audit.** Sidebar sections
+  stopped borrowing the English word and now use each language's own —
+  場所, Orte, Emplacements, Ubicaciones, Locaties, Localizações, 位置 —
+  and about eighty more strings that had been quietly staying in
+  English are translated: tooltips and titles across the toolbar, the
+  back/forward history, checks summaries, comment badges, Open
+  Quickly, the lightbox, and the Compare Revisions sheet. A CI check's
+  duration is now written the way your language writes durations
+  (3分32秒 rather than "3m 32s"), the pull request state chip no
+  longer reuses the "Open" command's wording (German reads Offen, not
+  Öffnen; Japanese オープン, not 開く), the "editing" marker in the
+  title bar speaks your language, and Dutch, Spanish, and Brazilian
+  Portuguese finally have real words for Light and Dark instead of the
+  English ones. Demo sessions show their documents at
+  `~/Documents/PullMark Demo` instead of a raw temporary path.
+
 ## 0.41.0 - 2026-08-20
 
 - **PullMark speaks seven languages.** The entire app — menus, settings,
