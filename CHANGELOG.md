@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.42.2 - 2026-08-21
+
+- Rendered pages that ship no translation table — the theme previews in
+  Settings — fall back to English by treating each string's key as its
+  own English text. 0.42.1 added the first key that isn't its own text
+  (Edit the verb, which several languages write differently from the
+  Edit menu's noun), so that fallback would have rendered the raw key.
+  Nothing on screen reached it, but the fallback now produces the
+  English word, and a build check holds the app's two string tables
+  together so they can't drift apart again.
+
 ## 0.42.1 - 2026-08-21
 
 - **The last English holdouts speak your language.** Thirty-two strings
