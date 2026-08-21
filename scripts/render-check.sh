@@ -262,9 +262,11 @@ conversation_check "nested thread jump"      '>View in File</button>'
 conversation_check "composer placeholder"    'Comment on the pull request conversation'
 # Bounded to the card: the DOM is one long line, so the window is cut
 # at the next card's opening class before asserting — an unanchored .*
-# (or a fixed-width window) spans into the following card's body and
-# false-positives.
-if grep -oE 'pm-verdict-approved.{0,400}' "$CONVERSATION_DOM" \
+# spans into the following card's body and false-positives, so the sed
+# is what bounds it. Don't reintroduce a fixed width: BSD grep caps
+# repetition at 255 and ERRORS OUT above it, which made this check
+# vacuously pass on macOS (and so in CI) rather than fail loudly.
+if grep -oE 'pm-verdict-approved.*' "$CONVERSATION_DOM" \
     | sed 's/pm-conversation-card.*//' | grep -q 'pm-thread-comment'; then
   echo "FAIL: empty approved verdict rendered a comment card"
   failures=$((failures + 1))
