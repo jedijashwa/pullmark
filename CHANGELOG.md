@@ -4,6 +4,26 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## 0.42.1 - 2026-08-21
+
+- **The last English holdouts speak your language.** Thirty-two strings
+  that stayed English no matter the setting are translated in all seven
+  languages: the branch menu (Worktrees, View Branch from GitHub, Open
+  on GitHub), the compare menus down to their History/Branches/Tags
+  headings, the Settings rows for Connection, Updates, Default Markdown
+  app and Command line, "Connected as", the review composer's Start a
+  review and Add review comment with their tooltips, the margin-note
+  composer, and the errors the command-line install can report. Buttons
+  labelled Edit now use the verb instead of the Edit menu's noun —
+  Editar, Modifier, Bewerk — four descriptions that called the Source
+  view by a name it doesn't carry are corrected, and the Japanese
+  Language row punctuates like its neighbours.
+- **The language switch explains itself in the language you picked.**
+  "Takes effect after PullMark relaunches." and the Relaunch Now button
+  beside it now read in the language you just chose rather than the one
+  the app launched in — so the way back stays legible even if you
+  picked a language by mistake.
+
 ## 0.42.0 - 2026-08-21
 
 - **The seven translations sat for a proper audit.** Sidebar sections
