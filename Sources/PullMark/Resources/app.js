@@ -44,8 +44,16 @@
   // (previews, missing translation) falls back to the English key —
   // the same silent-English failure mode .strings files have, which
   // scripts/check-strings.py exists to catch.
+  // Mirrors PageStrings.disambiguated: keys that AREN'T their own
+  // English text, because one English word translates differently by
+  // role. Without this the fallback would render the raw key on a page
+  // that ships no table (preview: true). check-strings.py keeps the two
+  // tables in step.
+  var PM_ENGLISH = {
+    "edit-action": "Edit",
+  };
   function pmString(key) {
-    return (payload.strings && payload.strings[key]) || key;
+    return (payload.strings && payload.strings[key]) || PM_ENGLISH[key] || key;
   }
   // Templated variant: pmFormat("Comment on line {n}", {n: 12})
   function pmFormat(key, subs) {

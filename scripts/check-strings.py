@@ -172,6 +172,26 @@ def collect_pagestrings_keys():
                for lit in re.findall(STRING_LIT, body))
 
 
+def collect_disambiguated():
+    """PageStrings.disambiguated — keys whose English text isn't the key."""
+    s = (SOURCES / "Rendering" / "PageStrings.swift").read_text(encoding="utf-8")
+    parts = s.split("static let disambiguated", 1)
+    if len(parts) == 1:
+        return {}
+    body = parts[1].split("= [", 1)[1].split("]", 1)[0]
+    return dict(re.findall(r'"([^"]*)"\s*:\s*"([^"]*)"', body))
+
+
+def collect_js_english():
+    """app.js PM_ENGLISH — the mirror pmString falls back through."""
+    s = (SOURCES / "Resources" / "app.js").read_text(encoding="utf-8")
+    parts = s.split("var PM_ENGLISH", 1)
+    if len(parts) == 1:
+        return {}
+    body = parts[1].split("}", 1)[0]
+    return dict(re.findall(r'"([^"]*)"\s*:\s*"([^"]*)"', body))
+
+
 def collect_js_keys():
     s = (SOURCES / "Resources" / "app.js").read_text(encoding="utf-8")
 
@@ -244,6 +264,20 @@ def main():
         problem(f"PageStrings.keys missing app.js key: {key!r}")
     for key in sorted(page_keys - js_keys):
         problem(f"PageStrings.keys has orphan (no app.js use): {key!r}")
+
+    # Keys that aren't their own English text need the same English in
+    # app.js's PM_ENGLISH, or a page with no strings table (preview:
+    # true) renders the raw key instead of a word.
+    swift_disambiguated = collect_disambiguated()
+    js_disambiguated = collect_js_english()
+    for key, value in sorted(swift_disambiguated.items()):
+        if js_disambiguated.get(key) != value:
+            problem(f"app.js PM_ENGLISH must map {key!r} to {value!r} "
+                    f"(PageStrings.disambiguated), got "
+                    f"{js_disambiguated.get(key)!r}")
+    for key in sorted(set(js_disambiguated) - set(swift_disambiguated)):
+        problem(f"app.js PM_ENGLISH has orphan {key!r} "
+                f"(not in PageStrings.disambiguated)")
 
     inventory = dict(sorted(swift_keys.items()))
     for key in sorted(page_keys):
