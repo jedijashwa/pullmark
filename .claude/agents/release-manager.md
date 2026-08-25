@@ -32,29 +32,32 @@ Runbook (in order, verifying each step):
    retrying — the script is safe to re-run from a clean state. The
    script pushes main itself before tagging (the tag must land on the
    changelog-cut commit, not the remote's stale head).
-4. Confirm `git status` shows main in sync with origin/main and the
-   `vX.Y.Z` tag pointing at the changelog-cut commit.
-5. Verify the user-facing upgrade path: `brew update && brew upgrade
-   --cask pullmark`, then read the installed app's
-   CFBundleShortVersionString and confirm it matches.
-6. Compare what shipped against the published screenshots: the site's
+4. `./scripts/verify-release.sh X.Y.Z` — one pass over every
+   mechanical check: tag placement (must be the changelog-cut commit),
+   release state/assets/notes, cask version+sha, the fetched artifact's
+   version/notarization/staple, DMG staple, Launch Services strays,
+   git cleanliness. All rows must read PASS; a FAIL is yours to
+   diagnose, fix, and re-verify. The script installs nothing and
+   never touches /Applications — updating the installed app is the
+   human's own in-app-updater action, never yours.
+5. Compare what shipped against the published screenshots: the site's
    `site/img/app-*.png` (doc, diff, edit, blame, themes) and the
    README hero `docs/img/pullmark.png`. If the release visibly
    changed any surface those images show, refresh the affected shots.
    Captures for the site/README are taken from the demo fixture —
    NEVER from real user documents, folders, or pull requests (nothing
-   real may appear in a published pixel). Launch the *upgraded
-   installed app* from step 5 into demo mode:
-   `PM_DEMO=1 /Applications/PullMark.app/Contents/MacOS/PullMark`
-   — it opens fully populated (fictional docs, a staged PR with
-   threads, reactions, and a pending review) and entirely offline;
-   quitting leaves no trace in the real defaults domain. Drive it with
-   the `scripts/drive/` tooling (see its README — in-process, silent
-   captures), match each existing image's pixel dimensions, bump the
-   changed images' `?v=` cache-busters in `site/index.html`, and
-   commit the images + HTML to main and push. Stale screenshots are a
-   release defect, not a nice-to-have.
-7. If site copy or screenshots changed this release: `npx wrangler
+   real may appear in a published pixel). Launch a release-versioned
+   build into demo mode (`PM_DEMO=1 dist/PullMark.app/Contents/MacOS/
+   PullMark`, then `make unregister-dist` when done) — it opens fully
+   populated (fictional docs, a staged PR with threads, reactions, and
+   a pending review) and entirely offline; quitting leaves no trace in
+   the real defaults domain. Drive it with the `scripts/drive/`
+   tooling (see its README — in-process, silent captures), match each
+   existing image's pixel dimensions, bump the changed images' `?v=`
+   cache-busters in `site/index.html`, and commit the images + HTML to
+   main and push. Stale screenshots are a release defect, not a
+   nice-to-have.
+6. If site copy or screenshots changed this release: `npx wrangler
    pages deploy site --project-name=pullmark --branch=main
    --commit-dirty=true`.
 
