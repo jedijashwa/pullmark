@@ -89,4 +89,61 @@ struct GitHubLinkTests {
         let bridged = NSURL(fileURLWithPath: root.appendingPathComponent("plain/a.md").path) as URL
         #expect(!GitHubLink.inRepository(bridged, isDirectory: false))
     }
+
+    @Test func nearestRootWinsForNestedCheckouts() throws {
+        // A checkout inside a checkout: files in the inner one belong
+        // to it, matching what click-time rev-parse would say — the
+        // outer repo's tracked-set must not get to veto them.
+        let root = try makeTempTree()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent("repo/.git"), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent("repo/vendor/inner/.git"), withIntermediateDirectories: true)
+        let outerFile = root.appendingPathComponent("repo/docs/a.md")
+        let innerFile = root.appendingPathComponent("repo/vendor/inner/b.md")
+        let repoPath = (root.appendingPathComponent("repo").path as NSString).standardizingPath
+        #expect(GitHubLink.nearestRepoRoot(outerFile, isDirectory: false) == repoPath)
+        #expect(GitHubLink.nearestRepoRoot(innerFile, isDirectory: false)
+            == (repoPath as NSString).appendingPathComponent("vendor/inner"))
+        #expect(GitHubLink.nearestRepoRoot(root.appendingPathComponent("plain/a.md"),
+                                           isDirectory: false) == nil)
+    }
+
+    // MARK: - offersLink (tracked-set gate)
+
+    private let files: Set<String> = ["README.md", "docs/setup.md"]
+    private let dirs: Set<String> = ["docs"]
+
+    @Test func trackedFileOffers() {
+        #expect(GitHubLink.offersLink(relativePath: "docs/setup.md", isDirectory: false,
+                                      trackedFiles: files, trackedDirs: dirs))
+    }
+
+    @Test func untrackedFileDoesNot() {
+        #expect(!GitHubLink.offersLink(relativePath: "scratch.md", isDirectory: false,
+                                       trackedFiles: files, trackedDirs: dirs))
+    }
+
+    @Test func directoryWithTrackedContentOffers() {
+        #expect(GitHubLink.offersLink(relativePath: "docs", isDirectory: true,
+                                      trackedFiles: files, trackedDirs: dirs))
+    }
+
+    @Test func ignoredDirectoryDoesNot() {
+        #expect(!GitHubLink.offersLink(relativePath: "node_modules", isDirectory: true,
+                                       trackedFiles: files, trackedDirs: dirs))
+    }
+
+    @Test func repoRootAlwaysOffers() {
+        #expect(GitHubLink.offersLink(relativePath: "", isDirectory: true,
+                                      trackedFiles: [], trackedDirs: []))
+    }
+
+    @Test func unknownTrackednessDefersToTheClick() {
+        // Nil sets = no opened folder covers this repo (or it was too
+        // large to index) — the item must keep appearing, as before.
+        #expect(GitHubLink.offersLink(relativePath: "scratch.md", isDirectory: false,
+                                      trackedFiles: nil, trackedDirs: nil))
+    }
 }

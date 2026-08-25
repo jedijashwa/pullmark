@@ -276,6 +276,10 @@ struct CommitSheet: View {
                         : committed + "."
                 }
                 state.gitStateTick += 1
+                // A commit can turn untracked files into tracked ones —
+                // folder identities (Copy GitHub Link's gate among them)
+                // must learn that now, not at the next app activation.
+                state.refreshFolderGitIdentities()
                 dismiss()
             }
         }

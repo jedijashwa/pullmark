@@ -60,4 +60,42 @@ struct LocalGitStatusTests {
         #expect(!after.contains("moved.md"))
         #expect(!after.contains("base.md"))
     }
+
+    // MARK: - Tracked paths (Copy GitHub Link's render gate)
+
+    @Test func parseTrackedPathsBuildsFilesAndAncestorDirs() {
+        let parsed = LocalGit.parseTrackedPaths(
+            "a.md\0docs/guide/setup.md\0docs/intro.md\0r\u{00E9}sum\u{00E9} dir/nested/n.md\0")
+        #expect(parsed.files == ["a.md", "docs/guide/setup.md", "docs/intro.md",
+                                 "r\u{00E9}sum\u{00E9} dir/nested/n.md"])
+        #expect(parsed.dirs == ["docs", "docs/guide",
+                                "r\u{00E9}sum\u{00E9} dir", "r\u{00E9}sum\u{00E9} dir/nested"])
+    }
+
+    @Test func parseTrackedPathsEmptyOutput() {
+        let parsed = LocalGit.parseTrackedPaths("")
+        #expect(parsed.files.isEmpty)
+        #expect(parsed.dirs.isEmpty)
+    }
+
+    @Test func repoInfoCarriesTrackedPaths() throws {
+        let root = try makeRepo()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let info = try #require(LocalGit.repoInfo(forDirectory: root))
+        let tracked = try #require(info.trackedPaths)
+        // The rename is staged: moved.md is in the index, base.md is not.
+        #expect(tracked.contains("moved.md"))
+        #expect(!tracked.contains("base.md"))
+        #expect(tracked.contains("r\u{00E9}sum\u{00E9} file.md"))
+        // Untracked worktree files never appear.
+        #expect(!tracked.contains("untracked.md"))
+    }
+
+    @Test func isTrackedAsksTheIndex() throws {
+        let root = try makeRepo()
+        defer { try? FileManager.default.removeItem(at: root) }
+        #expect(LocalGit.isTracked("moved.md", in: root))
+        #expect(!LocalGit.isTracked("untracked.md", in: root))
+        #expect(!LocalGit.isTracked("never-existed.md", in: root))
+    }
 }

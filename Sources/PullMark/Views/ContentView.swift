@@ -644,14 +644,23 @@ enum SidebarActions {
             state.lastNotice = String(localized: "This repository has no GitHub remote.")
             return
         }
-        let ref = permalink
-            ? LocalGit.headSHA(in: root)
-            : LocalGit.currentBranch(in: root) ?? LocalGit.headSHA(in: root)
-        guard let ref else { return }
         // The checkout root itself links as the bare tree/<ref> —
         // relativePath's lastPathComponent fallback is for files.
         let path = url.standardizedFileURL.path == root.standardizedFileURL.path
             ? "" : LocalGit.relativePath(of: url, in: root)
+        // The menu gate hides untracked rows, but it degrades to
+        // showing when trackedness is unknown (loose file, oversized
+        // repo) or stale (a rare terminal `git rm` window) — so the
+        // click asks git for the truth rather than copying a dead link.
+        // The repo root itself is always linkable.
+        if !path.isEmpty, !LocalGit.isTracked(path, in: root) {
+            state.lastNotice = String(localized: "Not tracked in this repository.")
+            return
+        }
+        let ref = permalink
+            ? LocalGit.headSHA(in: root)
+            : LocalGit.currentBranch(in: root) ?? LocalGit.headSHA(in: root)
+        guard let ref else { return }
         let link = GitHubLink.url(
             owner: repo.owner, repo: repo.repo, ref: ref,
             path: path, isDirectory: isDirectory)
@@ -670,10 +679,42 @@ extension SidebarActions {
     /// git checkout; the primary copies what Settings says, the
     /// alternate names the other flavor. macOS 13/14 lack
     /// modifierKeyAlternate and show only the primary item.
+    /// Render-time eligibility for Copy GitHub Link: inside a checkout,
+    /// AND tracked by it (spec: copy-github-link §3). The `.git` walk
+    /// stays pure filesystem; trackedness comes from the RepoInfo an
+    /// opened folder already holds — no subprocess at row render, ever.
+    /// No folder covers the repo (loose file, symlinked open path whose
+    /// string form differs from git's toplevel): offer the item, the
+    /// pre-cache behavior, and the click's own git check catches lies.
+    /// A nested checkout's nearest root matches no toplevel the same
+    /// way — its rows stay offered and resolve against the inner repo.
+    @MainActor
+    static func offersGitHubLink(url: URL, isDirectory: Bool, state: AppState) -> Bool {
+        guard let root = GitHubLink.nearestRepoRoot(url, isDirectory: isDirectory) else {
+            return false
+        }
+        // toplevel comes from git as a realpath ("/private/tmp/…"); the
+        // walk standardizes NSString-style ("/tmp/…") — normalize the
+        // git side the same way or the two never match under /tmp, /var,
+        // /etc. Symlinked roots elsewhere still miss and default to
+        // offering, which the click's own check backstops.
+        guard let info = state.folders.lazy.compactMap(\.git)
+            .first(where: { ($0.toplevel as NSString).standardizingPath == root })
+        else { return true }
+        // Both paths standardized the same way, so the prefix relation
+        // the walk established holds; dropFirst eats the "/" separator
+        // (already absent when the row IS the root).
+        let full = (url.path as NSString).standardizingPath
+        let rel = String(full.dropFirst(min(root.count + 1, full.count)))
+        return GitHubLink.offersLink(relativePath: rel, isDirectory: isDirectory,
+                                     trackedFiles: info.trackedPaths,
+                                     trackedDirs: info.trackedDirs)
+    }
+
     @MainActor @ViewBuilder
     static func copyGitHubLinkItems(url: URL, isDirectory: Bool = false,
                                     state: AppState) -> some View {
-        if GitHubLink.inRepository(url, isDirectory: isDirectory) {
+        if offersGitHubLink(url: url, isDirectory: isDirectory, state: state) {
             // The setting is read at CLICK time — context menu content
             // builds at row render, and a builder-time read would copy
             // a stale flavor after Settings changes. Only the alternate

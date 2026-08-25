@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Copy GitHub Link knows what GitHub actually has.** The context-menu
+  item (and its File-menu twin) now appears only for content the
+  repository tracks — untracked files, gitignored ones, and locally
+  excluded ones no longer offer a link that could only 404. Folders
+  offer it when something tracked lives inside; the checkout root
+  always does. Committing inside PullMark updates the menus
+  immediately, and when trackedness can't be known up front, the click
+  itself checks and says so quietly instead of copying a dead link.
+
 ## 0.42.2 - 2026-08-21
 
 - Rendered pages that ship no translation table — the theme previews in

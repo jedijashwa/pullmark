@@ -34,17 +34,41 @@ enum GitHubLink {
     /// while the sidebar beachballed). NSString's path API is a true
     /// fixed point at the root.
     static func inRepository(_ url: URL, isDirectory: Bool) -> Bool {
+        nearestRepoRoot(url, isDirectory: isDirectory) != nil
+    }
+
+    /// The nearest checkout root: the CLOSEST ancestor holding a `.git`
+    /// entry, as a standardized path string. "Nearest" matters — a
+    /// nested checkout or submodule file belongs to the inner repo, and
+    /// the click-time resolution (git rev-parse from the file's own
+    /// directory) agrees with this walk on which repo that is.
+    static func nearestRepoRoot(_ url: URL, isDirectory: Bool) -> String? {
         let fm = FileManager.default
         let start = isDirectory ? url.path : (url.path as NSString).deletingLastPathComponent
         var dir = (start as NSString).standardizingPath
         while true {
             if fm.fileExists(atPath: (dir as NSString).appendingPathComponent(".git")) {
-                return true
+                return dir
             }
             let parent = (dir as NSString).deletingLastPathComponent
-            if parent == dir { return false }
+            if parent == dir { return nil }
             dir = parent
         }
+    }
+
+    /// Whether a row should offer Copy GitHub Link, given what the
+    /// index tracks (spec: copy-github-link §3). Untracked and ignored
+    /// content has no page on GitHub, so the item stays out of the
+    /// menu. Nil sets mean the tracked list isn't known (no opened
+    /// folder covers this repo, or it was too large to hold) — offer
+    /// the item and let the click resolve, which is the pre-cache
+    /// behavior. The repo root itself always links (bare tree/<ref>).
+    static func offersLink(relativePath: String, isDirectory: Bool,
+                           trackedFiles: Set<String>?, trackedDirs: Set<String>?) -> Bool {
+        guard let trackedFiles, let trackedDirs else { return true }
+        if relativePath.isEmpty { return true }
+        return isDirectory ? trackedDirs.contains(relativePath)
+                           : trackedFiles.contains(relativePath)
     }
 
     /// Unreserved characters only — everything else, including "/",

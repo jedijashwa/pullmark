@@ -327,6 +327,18 @@ enum LocalGit {
         var branch: String?
         var gitHubRepos: [GitHubRepoID] = []
         var worktrees: [Worktree] = []
+        /// Repo-relative paths the index tracks, and every directory on
+        /// the way to one — the render-time gate for Copy GitHub Link
+        /// (untracked/ignored rows don't offer it; spec:
+        /// copy-github-link §3). Nil when unknown: ls-files failed, or
+        /// the repo is past `trackedPathsLimit` — the gate then offers
+        /// the item and defers to the click, never the other way
+        /// around. Computed here because RepoInfo already refreshes at
+        /// every moment trackedness can change under the app (open,
+        /// rescan, activation, in-app commit) — menus read it without
+        /// spawning git at row render.
+        var trackedPaths: Set<String>?
+        var trackedDirs: Set<String>?
 
         var primaryGitHubRepo: GitHubRepoID? { gitHubRepos.first }
     }
@@ -346,7 +358,46 @@ enum LocalGit {
         if let list = run(["worktree", "list", "--porcelain"], in: toplevel) {
             info.worktrees = parseWorktreeList(list)
         }
+        if let files = run(["ls-files", "-z"], in: toplevel) {
+            let tracked = parseTrackedPaths(files)
+            // A monorepo far past the sidebar's own 20k-file cap would
+            // put six-figure sets through main-thread equality on every
+            // activation heartbeat — leave trackedness unknown instead.
+            if tracked.files.count <= trackedPathsLimit {
+                info.trackedPaths = tracked.files
+                info.trackedDirs = tracked.dirs
+            }
+        }
         return info
+    }
+
+    nonisolated static let trackedPathsLimit = 50_000
+
+    /// Pure parser for `git ls-files -z`: the tracked files, plus every
+    /// ancestor directory of one (git tracks no directories itself, so
+    /// "this folder has a GitHub page" means "some tracked file lives
+    /// under it"). The ancestor loop stops at the first prefix already
+    /// present — each directory inserts once, keeping the pass linear.
+    static func parseTrackedPaths(_ output: String) -> (files: Set<String>, dirs: Set<String>) {
+        var files: Set<String> = []
+        var dirs: Set<String> = []
+        for path in output.split(separator: "\0") where !path.isEmpty {
+            files.insert(String(path))
+            var prefix = path[...]
+            while let cut = prefix.lastIndex(of: "/") {
+                prefix = prefix[..<cut]
+                if !dirs.insert(String(prefix)).inserted { break }
+            }
+        }
+        return (files, dirs)
+    }
+
+    /// Click-time truth for one path: does the index track it (files),
+    /// or anything under it (directories)? `--error-unmatch` turns "the
+    /// pathspec matched nothing" into a nonzero exit, which `run`
+    /// already maps to nil.
+    static func isTracked(_ relativePath: String, in root: URL) -> Bool {
+        run(["ls-files", "--error-unmatch", "--", relativePath], in: root.path) != nil
     }
 
     /// Pure parser for `git remote -v`: unique GitHub repos, origin first,

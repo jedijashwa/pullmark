@@ -53,13 +53,28 @@ only new logic:
 - A row/command shows the item when the URL has a `.git` ancestor —
   a pure filesystem walk at menu-build time (no subprocess in a view
   builder; `.git` may be a file, which is how worktrees look, and
-  counts).
+  counts) — AND the index tracks it. Untracked and ignored content
+  (gitignore, .git/info/exclude, core.excludesFile alike — the index
+  doesn't distinguish) has no page on GitHub, so the item stays out
+  of the menu rather than copying a dead link.
+- Trackedness comes from the RepoInfo an opened folder already holds
+  (one `ls-files -z` per identity refresh: open, rescan, activation,
+  in-app commit), matched by the NEAREST `.git` ancestor — never a
+  subprocess at row render. When no opened folder covers the repo
+  (loose file, nested checkout, submodule, a repo past the 50k-entry
+  cap), the item shows and the click decides — the pre-gate behavior.
+  Directories offer the item when some tracked file lives under them;
+  the repo root always does.
 - The git work runs only on click: repo root, branch (or HEAD SHA for
   permalinks), and the GitHub remote — origin first, else the first
-  GitHub remote among the others, matching RepoInfo's own preference.
+  GitHub remote among the others, matching RepoInfo's own preference —
+  plus one `ls-files --error-unmatch` truth check, which catches what
+  the render gate couldn't know.
 - Repo has no GitHub remote at click time: nothing is copied and the
   quiet notice line says "This repository has no GitHub remote."
-  (lastNotice, never the error alert).
+  (lastNotice, never the error alert). Untracked at click time (stale
+  or absent gate data): same treatment, "Not tracked in this
+  repository." 
 
 ## §4 Surfaces
 
@@ -83,8 +98,11 @@ only new logic:
   plumbing, writes nothing.
 - Worktrees: `.git`-file checkouts resolve like clones (existing
   LocalGit behavior).
-- Untracked or unpushed files: the link copies and may 404 until
-  pushed — deliberate, matching Copy Path.
+- Unpushed content: a TRACKED file's link copies and may 404 until
+  pushed — deliberate; whether the remote has caught up is not
+  knowable without the network. Untracked/ignored files stopped
+  getting the item post-0.42.1 (they 404 forever, not "until
+  pushed").
 
 ## §6 Out of scope
 

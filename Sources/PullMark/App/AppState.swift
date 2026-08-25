@@ -1567,8 +1567,16 @@ final class AppState: ObservableObject {
             if exists == folder.missing { rescanFolder(root: folder.rootURL) }
         }
         // Branch/worktree facts change outside the app (a checkout in a
-        // terminal) — refresh identities on the same activation heartbeat,
-        // off-main, publishing only actual changes.
+        // terminal) — refresh identities on the same activation heartbeat.
+        refreshFolderGitIdentities()
+    }
+
+    /// Re-reads every opened folder's git identity (branch, remotes,
+    /// worktrees, tracked paths) off-main, publishing only actual
+    /// changes. Runs on the activation heartbeat, and after an in-app
+    /// commit — committing can newly track files without touching the
+    /// worktree, so watchers never see it.
+    func refreshFolderGitIdentities() {
         for folder in folders where !folder.missing {
             let root = folder.rootURL
             Task.detached(priority: .utility) { [weak self] in

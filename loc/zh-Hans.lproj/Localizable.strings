@@ -266,6 +266,7 @@
 "Not available in this build" = "此构建版本中不可用";
 "Not connected" = "未连接";
 "Not connected to GitHub — private repositories and reviewing are unavailable." = "未连接到 GitHub——私有仓库和审查功能不可用。";
+"Not tracked in this repository." = "未被此仓库跟踪。";
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "批注的写法便于智能体读取并据此行动。把这段片段粘贴到智能体的指令文件（CLAUDE.md、AGENTS.md……）中，一句“处理这个文件里的页边批注”就是一次完整的交接。";
 "OK" = "好";
 "Off shows a quiet banner instead — the notes stay one click away" = "关闭时改为显示一条安静的横幅——批注依然一键可达";

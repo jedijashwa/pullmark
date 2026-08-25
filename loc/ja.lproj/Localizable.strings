@@ -266,6 +266,7 @@
 "Not available in this build" = "このビルドでは利用できません";
 "Not connected" = "未接続";
 "Not connected to GitHub — private repositories and reviewing are unavailable." = "GitHub に接続していません — プライベートリポジトリとレビューは利用できません。";
+"Not tracked in this repository." = "このリポジトリでは追跡されていません。";
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "ノートは、エージェントが読んで対応できるように書かれています。スニペットをエージェントの指示ファイル（CLAUDE.md、AGENTS.md、…）に貼り付ければ、「このファイルのマージンノートに対応して」だけで受け渡しが完結します。";
 "OK" = "OK";
 "Off shows a quiet banner instead — the notes stay one click away" = "オフにすると控えめなバナーに変わります — ノートはワンクリック先のままです";

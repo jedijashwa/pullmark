@@ -155,11 +155,13 @@ struct PullMarkApp: App {
     }
 
     /// The selection's URL when Copy GitHub Link can act on it: local,
-    /// and inside a git checkout — a pure filesystem walk, cheap at
-    /// menu render (spec: copy-github-link §4).
+    /// inside a git checkout, and tracked by it — the same walk + set
+    /// lookup the context menus use, no subprocess at menu render
+    /// (spec: copy-github-link §4).
     private var selectionGitHubLinkURL: URL? {
         guard let state, let url = state.selectionLocalURL,
-              GitHubLink.inRepository(url, isDirectory: state.selectionIsDirectory)
+              SidebarActions.offersGitHubLink(url: url, isDirectory: state.selectionIsDirectory,
+                                              state: state)
         else { return nil }
         return url
     }

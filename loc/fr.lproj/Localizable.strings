@@ -263,6 +263,7 @@
 "Not available in this build" = "Non disponible dans cette version";
 "Not connected" = "Non connecté";
 "Not connected to GitHub — private repositories and reviewing are unavailable." = "Non connecté à GitHub — les dépôts privés et la révision ne sont pas disponibles.";
+"Not tracked in this repository." = "Non suivi dans ce dépôt.";
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "Les notes sont écrites pour que les agents puissent les lire et agir dessus. Collez l'extrait dans le fichier d'instructions de votre agent (CLAUDE.md, AGENTS.md, …) et « traite les notes de marge de ce fichier » suffit comme passation.";
 "OK" = "OK";
 "Off shows a quiet banner instead — the notes stay one click away" = "Désactivé, une discrète bannière prend le relais — les notes restent à un clic";
