@@ -88,9 +88,17 @@ DMG="dist/PullMark-${VERSION}.dmg"
 STABLE_DMG="dist/PullMark.dmg"
 cp -f "$DMG" "$STABLE_DMG"
 
+# gh release create tags whatever the REMOTE default branch points at, not
+# local HEAD — without this push, a changelog cut committed above (or any
+# unpushed work) is left out of the tag, which is exactly what happened to
+# v0.40.0 through v0.42.0. Push first, then pin the tag to the pushed sha
+# so a concurrent push can't shift it either.
+echo "==> Pushing main so the tag lands on the release commit"
+git push origin HEAD
+
 echo "==> Creating GitHub release v${VERSION}"
 gh release create "v${VERSION}" "$ZIP" "$DMG" "$STABLE_DMG" --title "PullMark ${VERSION}" \
-  --notes "$NOTES"
+  --target "$(git rev-parse HEAD)" --notes "$NOTES"
 
 echo "==> Updating cask in ${TAP}"
 TAP_DIR=$(mktemp -d)

@@ -29,8 +29,11 @@ Runbook (in order, verifying each step):
    staples, uploads the DMG/zip to a GitHub release, and bumps the
    Homebrew cask. Notarization must report Accepted; on any failure,
    check for partial artifacts (stray mounts, tags, releases) before
-   retrying — the script is safe to re-run from a clean state.
-4. `git push origin main`.
+   retrying — the script is safe to re-run from a clean state. The
+   script pushes main itself before tagging (the tag must land on the
+   changelog-cut commit, not the remote's stale head).
+4. Confirm `git status` shows main in sync with origin/main and the
+   `vX.Y.Z` tag pointing at the changelog-cut commit.
 5. Verify the user-facing upgrade path: `brew update && brew upgrade
    --cask pullmark`, then read the installed app's
    CFBundleShortVersionString and confirm it matches.
