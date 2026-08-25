@@ -111,5 +111,17 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 git -C "$TAP_DIR" push -q
 rm -rf "$TAP_DIR"
 
+# gh created the tag on the REMOTE only; carry it into this checkout so
+# verify-release.sh's tag checks see it without a manual fetch.
+git fetch -q origin "refs/tags/v${VERSION}:refs/tags/v${VERSION}"
+
+# Gatekeeper assessments REGISTER what they assess with Launch Services
+# (the spctl above on dist/, and the DMG verification inside its mount)
+# — scrub both so the dev copies never steal bindings from
+# /Applications and the post-release stray sweep starts clean.
+LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+"$LSREGISTER" -u "$(pwd)/dist/PullMark.app" >/dev/null 2>&1 || true
+"$LSREGISTER" -u /Volumes/PullMark/PullMark.app >/dev/null 2>&1 || true
+
 echo "==> Released v${VERSION} (sha256 ${SHA})"
 echo "    Users update with: brew upgrade --cask pullmark"

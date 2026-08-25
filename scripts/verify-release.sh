@@ -39,7 +39,12 @@ check() {  # check <name> <ok:0|1> <detail>
 # ---- Tag: local, remote, and the release's target must be one commit,
 # and that commit must be the changelog cut (the make-release.sh
 # ordering fix asserts this holds on every release from 0.43.0 on).
-LOCAL_SHA=$(git rev-parse "${TAG}^{commit}" 2>/dev/null || echo "MISSING")
+# The release creates the tag on the remote; install it locally if this
+# checkout lacks it (a non-fast-forward refusal preserves drift as a
+# FAIL). --verify --quiet: plain rev-parse echoes the unresolvable arg
+# to stdout, poisoning the comparison with "vX^{commit}".
+git fetch -q origin "refs/tags/${TAG}:refs/tags/${TAG}" 2>/dev/null || true
+LOCAL_SHA=$(git rev-parse --verify --quiet "${TAG}^{commit}" || echo "MISSING")
 REMOTE_SHA=$(git ls-remote --tags origin "$TAG" | awk '{print $1}')
 REMOTE_SHA=${REMOTE_SHA:-MISSING}
 RELEASE_JSON=$(gh api "repos/${REPO}/releases/tags/${TAG}" 2>/dev/null || echo "{}")
