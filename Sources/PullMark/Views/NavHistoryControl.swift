@@ -11,17 +11,25 @@ struct NavHistoryControl: View {
     @ObservedObject private var shortcuts = ShortcutStore.shared
 
     var body: some View {
-        HStack(spacing: 2) {
-            NavHistoryButton(
-                state: state, direction: -1,
-                symbol: "chevron.backward", label: "Back",
-                enabled: state.canGoBack,
-                help: String(localized: "Show the previous document\(shortcuts.hint(.goBack)) — click and hold to see history"))
-            NavHistoryButton(
-                state: state, direction: 1,
-                symbol: "chevron.forward", label: "Forward",
-                enabled: state.canGoForward,
-                help: String(localized: "Show the next document\(shortcuts.hint(.goForward)) — click and hold to see history"))
+        // The outer Label names the pair in the customize palette and
+        // the icon-and-text display mode (Safari labels its own pair
+        // "Back/Forward"); the AppKit buttons inside carry no title
+        // SwiftUI could find, so without it the item sat unnamed.
+        Label {
+            Text("Back/Forward")
+        } icon: {
+            HStack(spacing: 2) {
+                NavHistoryButton(
+                    state: state, direction: -1,
+                    symbol: "chevron.backward", label: String(localized: "Back"),
+                    enabled: state.canGoBack,
+                    help: String(localized: "Show the previous document\(shortcuts.hint(.goBack)) — click and hold to see history"))
+                NavHistoryButton(
+                    state: state, direction: 1,
+                    symbol: "chevron.forward", label: String(localized: "Forward"),
+                    enabled: state.canGoForward,
+                    help: String(localized: "Show the next document\(shortcuts.hint(.goForward)) — click and hold to see history"))
+            }
         }
     }
 }

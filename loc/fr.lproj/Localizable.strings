@@ -47,6 +47,7 @@
 "Ask on first click" = "Demander au premier clic";
 "Awaiting review from %@" = "En attente de la révision de %@";
 "Back" = "Précédent";
+"Back/Forward" = "Précédent/Suivant";
 "Blame" = "Blame";
 "Branch name" = "Nom de la branche";
 "Branches" = "Branches";
@@ -307,6 +308,7 @@
 "Outdated" = "Obsolète";
 "Outdated — was line %lld" = "Obsolète — était la ligne %lld";
 "Outline" = "Plan";
+"PR Navigation" = "Navigation du PR";
 "PR Overview" = "Vue d'ensemble de la PR";
 "Page Down" = "Page suivante";
 "Page Setup…" = "Format d'impression…";

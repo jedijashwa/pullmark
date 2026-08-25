@@ -50,6 +50,7 @@
 "Ask on first click" = "最初のクリックで確認";
 "Awaiting review from %@" = "%@ のレビュー待ち";
 "Back" = "戻る";
+"Back/Forward" = "戻る/進む";
 "Blame" = "Blame";
 "Branch name" = "ブランチ名";
 "Branches" = "ブランチ";
@@ -310,6 +311,7 @@
 "Outdated" = "古い";
 "Outdated — was line %lld" = "古い — 元は %lld 行目";
 "Outline" = "アウトライン";
+"PR Navigation" = "PRナビゲーション";
 "PR Overview" = "PR の概要";
 "Page Down" = "Page Down";
 "Page Setup…" = "ページ設定…";

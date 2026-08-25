@@ -50,6 +50,7 @@
 "Ask on first click" = "Vraag bij de eerste klik";
 "Awaiting review from %@" = "Wacht op review van %@";
 "Back" = "Terug";
+"Back/Forward" = "Terug/Vooruit";
 "Blame" = "Blame";
 "Branch name" = "Branchnaam";
 "Branches" = "Branches";
@@ -310,6 +311,7 @@
 "Outdated" = "Verouderd";
 "Outdated — was line %lld" = "Verouderd — was regel %lld";
 "Outline" = "Outline";
+"PR Navigation" = "PR-navigatie";
 "PR Overview" = "PR-overzicht";
 "Page Down" = "Page Down";
 "Page Setup…" = "Pagina-instelling…";

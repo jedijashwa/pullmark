@@ -50,6 +50,7 @@
 "Ask on first click" = "首次点击时询问";
 "Awaiting review from %@" = "等待 %@ 审查";
 "Back" = "后退";
+"Back/Forward" = "后退/前进";
 "Blame" = "Blame";
 "Branch name" = "分支名称";
 "Branches" = "分支";
@@ -310,6 +311,7 @@
 "Outdated" = "已过时";
 "Outdated — was line %lld" = "已过时——原为第 %lld 行";
 "Outline" = "大纲";
+"PR Navigation" = "PR 导航";
 "PR Overview" = "PR 总览";
 "Page Down" = "Page Down";
 "Page Setup…" = "页面设置…";

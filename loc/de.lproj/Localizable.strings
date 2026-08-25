@@ -55,6 +55,7 @@
 "Ask on first click" = "Beim ersten Klick fragen";
 "Awaiting review from %@" = "Wartet auf das Review von %@";
 "Back" = "Zurück";
+"Back/Forward" = "Zurück/Vorwärts";
 "Blame" = "Blame";
 "Branch name" = "Branch-Name";
 "Branches" = "Branches";
@@ -315,6 +316,7 @@
 "Outdated" = "Veraltet";
 "Outdated — was line %lld" = "Veraltet — war Zeile %lld";
 "Outline" = "Gliederung";
+"PR Navigation" = "PR-Navigation";
 "PR Overview" = "PR-Übersicht";
 "Page Down" = "Bild ab";
 "Page Setup…" = "Papierformat…";

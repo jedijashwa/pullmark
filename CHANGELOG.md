@@ -4,6 +4,15 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Every toolbar item now carries a proper localized name in the
+  Customize Toolbar palette. The back/forward pair is labeled
+  Back/Forward, the compare button Compare, and the PR file navigation
+  cluster PR Navigation — previously these showed no name (or borrowed
+  an inner button's), in every language. The site's toolbar reference
+  now cites each item by the name the palette actually shows.
+
 ## 0.44.0 - 2026-08-25
 
 - **Close Others, Close Above, and Close Below** join the context menu

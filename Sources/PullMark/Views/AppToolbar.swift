@@ -569,31 +569,39 @@ private struct CompareToolbarButton: View {
         Button {
             if let view = anchor.view { surface?.popCompare?(view) }
         } label: {
-            HStack(spacing: 3) {
-                // The quiet signal that there's something to compare:
-                // this file has uncommitted changes. Anchored to the
-                // clock glyph itself (the thing it badges) at its
-                // 1-o'clock, with a background-colored keyline so the
-                // overlap reads deliberate. Hidden mid-comparison — the
-                // page is already showing the changes.
-                Image(systemName: "clock.arrow.circlepath")
-                    .overlay(alignment: .topTrailing) {
-                        if surface?.compareHasChanges == true, surface?.comparing != true {
-                            Circle()
-                                .fill(Color.accentColor)
-                                .frame(width: 5, height: 5)
-                                .background(
-                                    Circle()
-                                        .fill(Color(nsColor: .windowBackgroundColor))
-                                        .frame(width: 7.5, height: 7.5)
-                                )
-                                .offset(x: 2, y: -1.5)
-                                .accessibilityLabel("Uncommitted changes")
+            // A titled Label around the composite glyph: the customize
+            // palette and the icon-and-text display mode take their item
+            // label from the nearest Label title, and a bare HStack left
+            // this the only unnamed button in the palette.
+            Label {
+                Text("Compare")
+            } icon: {
+                HStack(spacing: 3) {
+                    // The quiet signal that there's something to compare:
+                    // this file has uncommitted changes. Anchored to the
+                    // clock glyph itself (the thing it badges) at its
+                    // 1-o'clock, with a background-colored keyline so the
+                    // overlap reads deliberate. Hidden mid-comparison — the
+                    // page is already showing the changes.
+                    Image(systemName: "clock.arrow.circlepath")
+                        .overlay(alignment: .topTrailing) {
+                            if surface?.compareHasChanges == true, surface?.comparing != true {
+                                Circle()
+                                    .fill(Color.accentColor)
+                                    .frame(width: 5, height: 5)
+                                    .background(
+                                        Circle()
+                                            .fill(Color(nsColor: .windowBackgroundColor))
+                                            .frame(width: 7.5, height: 7.5)
+                                    )
+                                    .offset(x: 2, y: -1.5)
+                                    .accessibilityLabel("Uncommitted changes")
+                            }
                         }
-                    }
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .bold))
-                    .opacity(0.8)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                        .opacity(0.8)
+                }
             }
         }
         .accessibilityLabel("Compare")
@@ -728,10 +736,23 @@ private struct PRFileNavigationItem: View {
             // wayfinding cluster one draggable unit.
             // (Toolbar content also doesn't reliably inherit the
             // hierarchy's environment — inject explicitly.)
-            HStack(spacing: 2) {
-                PRFileNavigation(sessionID: sessionID, path: path, session: session)
+            // The outer Label names the CLUSTER for the customize
+            // palette; without it the palette borrowed the first inner
+            // button's title ("PR Overview") for the whole unit.
+            Label {
+                Text("PR Navigation")
+            } icon: {
+                HStack(spacing: 2) {
+                    PRFileNavigation(sessionID: sessionID, path: path, session: session)
+                }
+                // The outer Label absorbs the toolbar's icon-only
+                // styling, which the inner Previous/Next labels relied
+                // on — without this they sprout their titles in the bar
+                // (verified live). The cluster's one title above is what
+                // text display modes should show.
+                .labelStyle(.iconOnly)
+                .environmentObject(state)
             }
-            .environmentObject(state)
         }
     }
 }
