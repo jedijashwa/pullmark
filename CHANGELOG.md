@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.44.1 - 2026-08-25
 
 - Every toolbar item now carries a proper localized name in the
   Customize Toolbar palette. The back/forward pair is labeled
