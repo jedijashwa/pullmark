@@ -14,8 +14,18 @@ BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /u
 
 .PHONY: build test app run clean install-cli release unregister-dist render-check perf-check
 
+# The bare debug executable's Bundle.main is its directory, and directory
+# bundles honor .lproj lookup — symlinking loc/ beside the binary gives
+# debug builds live localization (launch with -AppleLanguages "(de)" etc;
+# the '("xx")' quoted form silently suppresses the main window). Symlinks,
+# not copies: .strings edits apply on the next launch.
+define LINK_LPROJ
+	@for d in loc/*.lproj; do ln -sfh "$(CURDIR)/$$d" ".build/debug/$$(basename $$d)"; done
+endef
+
 build:
 	swift build
+	$(LINK_LPROJ)
 
 test:
 	swift test $(TEST_FLAGS)
@@ -35,6 +45,8 @@ perf-check:
 	./scripts/perf-check.sh
 
 run:
+	swift build
+	$(LINK_LPROJ)
 	swift run PullMark
 
 install-cli:
