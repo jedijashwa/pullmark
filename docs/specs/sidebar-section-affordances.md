@@ -135,3 +135,31 @@ Full report in the session record (2026-08-20). Load-bearing findings:
   section toggling, collapsed-section behavior, zoom rendering, and
   the File-menu parity item's enablement. Screenshot review for Josh
   per current practice.
+
+## §8 Row-scoped bulk closes (added 2026-08-25)
+
+Close Others / Close Above / Close Below on every pinned Open Files
+row, directly after Remove from Sidebar — the tab bar's context-menu
+family (VS Code, Firefox) translated to a vertical list. Motivation:
+tens of documents accumulate over a long session; new files append at
+the BOTTOM, so Above is where the stale ones pile up and Below holds
+only the most recent opens. Both directions ship.
+
+- The what-closes decision is pure and unit-tested
+  (`WorkingSetClose.plan`); `AppState.closeOpenFiles` applies it.
+  Others closes every other pinned row AND dismisses the preview
+  slot; Above closes earlier pinned rows only — the preview renders
+  below every pinned row, so it survives; Below closes later pinned
+  rows and the preview.
+- Items disable rather than hide when their direction is empty, so
+  the menu keeps a stable shape (VS Code's behavior).
+- The preview slot — local and remote — carries Close Others alone:
+  Above would duplicate it there and Below is always empty.
+- Selection handoff: when the closed set swallowed the selection, the
+  invoked row (which always survives) takes it, so the detail view
+  never goes blank under a document the user just chose to keep. A
+  selection outside Open Files (a PR doc, a tree file) is untouched.
+- Row indices are re-resolved at click time — the menu builder runs at
+  row render and drag-reordering can move the row in between.
+- Header Close All, File → Close All Files, and every existing row
+  item: unchanged.

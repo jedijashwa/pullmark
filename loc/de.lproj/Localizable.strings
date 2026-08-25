@@ -83,8 +83,11 @@
 "Click to type a zoom level" = "Klicken, um eine Zoomstufe einzutippen";
 "Clicking files in Locations:" = "Klick auf Dateien in „Orte“:";
 "Close" = "Schließen";
+"Close Above" = "Darüber schließen";
 "Close All" = "Alle schließen";
 "Close All Files" = "Alle Dateien schließen";
+"Close Below" = "Darunter schließen";
+"Close Others" = "Andere schließen";
 "Command" = "Befehlstaste";
 "Command line:" = "Befehlszeile:";
 "Comment" = "Kommentieren";

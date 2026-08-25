@@ -75,8 +75,11 @@
 "Click to type a zoom level" = "Cliquez pour saisir un niveau de zoom";
 "Clicking files in Locations:" = "Clic sur un fichier dans Emplacements :";
 "Close" = "Fermer";
+"Close Above" = "Fermer ceux au-dessus";
 "Close All" = "Tout fermer";
 "Close All Files" = "Fermer tous les fichiers";
+"Close Below" = "Fermer ceux en dessous";
+"Close Others" = "Fermer les autres";
 "Command" = "Commande";
 "Command line:" = "Ligne de commande :";
 "Comment" = "Commenter";

@@ -210,7 +210,7 @@ case "id":
     press(found)
     print("pressed: id=\(wanted) \"\(foundTitle)\"")
 
-case "select-row", "disclose", "rows":
+case "select-row", "disclose", "rows", "rowmenu":
     // Sidebar rows: SwiftUI lists discard pid-posted clicks and the
     // rows carry no AXPress, but the backing outline honors AX
     // selection — the background-tier replacement for global clicks.
@@ -304,6 +304,31 @@ case "select-row", "disclose", "rows":
         let error = AXUIElementSetAttributeValue(row, "AXDisclosing" as CFString, kCFBooleanTrue)
         guard error == .success else { fail("error: AXDisclosing set failed (AXError \(error.rawValue))") }
         print("disclosed: \"\(matchedText)\"")
+    } else if args[2] == "rowmenu" {
+        // Open the row's context menu without the global right-click
+        // tier: AXShowMenu on the row (or the first descendant that
+        // takes it). The menu appears as its own window (layer 101) —
+        // list/screenshot it, press its items with `press`.
+        var queue = [row]
+        var walked = 0
+        var shown = false
+        while !queue.isEmpty, walked < 200, !shown {
+            let candidate = queue.removeFirst()
+            walked += 1
+            var names: CFArray?
+            if AXUIElementCopyActionNames(candidate, &names) == .success,
+               let names = names as? [String], names.contains("AXShowMenu") {
+                // The perform BLOCKS while the menu tracks and then
+                // reports a timeout error even though the menu opened —
+                // performing at all is the success condition here.
+                _ = AXUIElementPerformAction(candidate, "AXShowMenu" as CFString)
+                shown = true
+                break
+            }
+            queue.append(contentsOf: children(candidate))
+        }
+        guard shown else { fail("error: no element under \"\(matchedText)\" takes AXShowMenu (\(walked) walked)") }
+        print("menu shown: \"\(matchedText)\"")
     } else {
         let error = AXUIElementSetAttributeValue(table, "AXSelectedRows" as CFString, [row] as CFArray)
         guard error == .success else { fail("error: AXSelectedRows set failed (AXError \(error.rawValue))") }

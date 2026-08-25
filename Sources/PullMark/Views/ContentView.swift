@@ -562,8 +562,13 @@ private struct SidebarFileRow: View {
             if isPreview {
                 Button("Keep Open") { state.pinFile(at: file.url) }
                 Button("Dismiss Preview") { state.dismissPreview() }
+                // Above ≡ Others for the last row and Below is always
+                // empty, so the preview slot carries Others alone.
+                Button("Close Others") { state.closeOpenFiles(.others, target: .preview) }
+                    .disabled(state.localFiles.isEmpty)
             } else {
                 Button("Remove from Sidebar") { state.removeLocalFile(file) }
+                bulkCloseItems
             }
             if state.folderRootContaining(file.url) != nil {
                 Button("Reveal in Location") { state.revealInLocation(file.url) }
@@ -573,6 +578,35 @@ private struct SidebarFileRow: View {
             Button("Copy Path") { SidebarActions.copyPath(file.url) }
             SidebarActions.copyGitHubLinkItems(url: file.url, state: state)
         }
+    }
+
+    /// Close Others / Close Above / Close Below on a pinned row (spec:
+    /// sidebar-section-affordances §8) — the tab bar's bulk closes,
+    /// vertical. Disabled (never hidden) when a direction is empty, so
+    /// the menu keeps a stable shape. Enablement reads render-time
+    /// state (rows re-render on any working-set change); the row's
+    /// index is re-resolved at CLICK time, since drag-reordering can
+    /// move it between render and click.
+    @ViewBuilder private var bulkCloseItems: some View {
+        let count = state.localFiles.count
+        let hasPreview = state.preview != nil
+        if let index = state.localFiles.firstIndex(where: { $0.url == file.url }) {
+            let disabled = { (scope: WorkingSetClose.Scope) in
+                WorkingSetClose.plan(scope, target: .pinned(index: index),
+                                     pinnedCount: count, hasPreview: hasPreview).isNoOp
+            }
+            Button("Close Others") { performBulkClose(.others) }
+                .disabled(disabled(.others))
+            Button("Close Above") { performBulkClose(.above) }
+                .disabled(disabled(.above))
+            Button("Close Below") { performBulkClose(.below) }
+                .disabled(disabled(.below))
+        }
+    }
+
+    private func performBulkClose(_ scope: WorkingSetClose.Scope) {
+        guard let index = state.localFiles.firstIndex(where: { $0.url == file.url }) else { return }
+        state.closeOpenFiles(scope, target: .pinned(index: index))
     }
 }
 
@@ -617,6 +651,9 @@ private struct RemotePreviewRow: View {
         .contextMenu {
             Button("Keep Open") { state.pinRemoteDoc(sessionID: sessionID, path: path) }
             Button("Dismiss Preview") { state.dismissPreview() }
+            // Same shape as the local preview slot: Others alone.
+            Button("Close Others") { state.closeOpenFiles(.others, target: .preview) }
+                .disabled(state.localFiles.isEmpty)
         }
     }
 }

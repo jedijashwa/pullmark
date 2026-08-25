@@ -78,8 +78,11 @@
 "Click to type a zoom level" = "点击可输入缩放比例";
 "Clicking files in Locations:" = "点击“位置”中的文件：";
 "Close" = "关闭";
+"Close Above" = "关闭上方";
 "Close All" = "全部关闭";
 "Close All Files" = "关闭所有文件";
+"Close Below" = "关闭下方";
+"Close Others" = "关闭其他";
 "Command" = "Command";
 "Command line:" = "命令行：";
 "Comment" = "评论";

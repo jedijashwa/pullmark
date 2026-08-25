@@ -78,8 +78,11 @@
 "Click to type a zoom level" = "クリックでズーム率を入力";
 "Clicking files in Locations:" = "「場所」内のファイルをクリックしたとき:";
 "Close" = "閉じる";
+"Close Above" = "これより上を閉じる";
 "Close All" = "すべて閉じる";
 "Close All Files" = "すべてのファイルを閉じる";
+"Close Below" = "これより下を閉じる";
+"Close Others" = "他を閉じる";
 "Command" = "コマンド";
 "Command line:" = "コマンドライン:";
 "Comment" = "コメント";

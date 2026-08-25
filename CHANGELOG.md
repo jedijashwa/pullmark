@@ -4,6 +4,16 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- **Close Others, Close Above, and Close Below** join the context menu
+  on every Open Files row. New documents append at the bottom of the
+  list, so Close Above sweeps away the stale ones that pile up over a
+  long session while keeping what you just opened; Close Others keeps
+  only the row you clicked. Items gray out when there's nothing in
+  their direction, and if the document you were reading gets closed,
+  the one you kept takes its place instead of leaving an empty window.
+
 ## 0.43.0 - 2026-08-25
 
 - **Copy GitHub Link knows what GitHub actually has.** The context-menu

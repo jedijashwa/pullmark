@@ -1367,6 +1367,51 @@ final class AppState: ObservableObject {
         if case .local(let url) = selection, closing.contains(url) { selection = nil }
     }
 
+    /// Row-scoped bulk closes — Close Others / Close Above / Close Below
+    /// on an Open Files row (spec: sidebar-section-affordances §8). The
+    /// what-closes decision lives in WorkingSetClose; this applies it.
+    /// If the closed set swallowed the selection, the invoked row —
+    /// which always survives — takes it, so the detail view never goes
+    /// blank under a document the user just chose to keep.
+    func closeOpenFiles(_ scope: WorkingSetClose.Scope,
+                        target: WorkingSetClose.Target) {
+        let plan = WorkingSetClose.plan(scope, target: target,
+                                        pinnedCount: localFiles.count,
+                                        hasPreview: preview != nil)
+        guard !plan.isNoOp else { return }
+        let keptSelection: SidebarSelection?
+        switch target {
+        case .pinned(let index):
+            keptSelection = localFiles.indices.contains(index)
+                ? .local(localFiles[index].url) : nil
+        case .preview:
+            switch preview {
+            case .local(let file): keptSelection = .local(file.url)
+            case .remote(let sessionID, let path): keptSelection = .remoteDoc(sessionID, path)
+            case nil: keptSelection = nil
+            }
+        }
+        let closing = Set(plan.pinnedIndicesToClose)
+        var closingSelections = Set(closing.compactMap { index in
+            localFiles.indices.contains(index)
+                ? SidebarSelection.local(localFiles[index].url) : nil
+        })
+        localFiles = localFiles.enumerated()
+            .filter { !closing.contains($0.offset) }
+            .map(\.element)
+        if plan.dismissesPreview {
+            switch preview {
+            case .local(let file): closingSelections.insert(.local(file.url))
+            case .remote(let sessionID, let path): closingSelections.insert(.remoteDoc(sessionID, path))
+            case nil: break
+            }
+            preview = nil
+        }
+        if let selection, closingSelections.contains(selection) {
+            self.selection = keptSelection
+        }
+    }
+
     /// The root of the open Location containing `url`, if any — gates the
     /// Reveal in Location menu item.
     func folderRootContaining(_ url: URL) -> URL? {

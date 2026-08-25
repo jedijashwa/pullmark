@@ -72,6 +72,10 @@ step.
   substring matches; `<nth>` picks among duplicates.
 - `ax.swift <pid> disclose <text>` — expand the matching row
   (AXDisclosing).
+- `ax.swift <pid> rowmenu [<nth>] <text>` — open the matching row's
+  context menu via AXShowMenu, no global right-click needed. The menu
+  is its own window (layer 101): find it with `winlist`, press items
+  with `press`, dismiss with Escape (`pkey 53`).
 - `ax.swift <pid> rows` — dump every sidebar row's text; discovery for
   select-row.
 - `ax.swift <pid> id <identifier>` — press by AXIdentifier, for system
