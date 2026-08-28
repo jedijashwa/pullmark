@@ -251,7 +251,7 @@ struct SidebarView: View {
             // ordered, plus the single italic preview entry last. Trees
             // answer "where does it live"; this section answers "what do
             // I have open" (Sublime's exact label for the same list).
-            CollapsibleSection(String(localized: "Open Files"), isExpanded: $filesExpanded,
+            CollapsibleSection(String(localized: "Open Files"), isExpanded: $filesExpanded.preloadingOutlineRowsBeforeCollapse(),
                                headerActions: state.hasOpenFiles ? [
                 SectionHeaderAction(id: "close-all", symbol: "xmark.circle.fill",
                                     help: String(localized: "Close All")) { state.closeAllOpenFiles() }
@@ -294,7 +294,7 @@ struct SidebarView: View {
             // Locations: browsable roots wherever they live — local folders
             // and GitHub repos share one section (Finder's word for exactly
             // this list); the icon and subtitle carry the origin.
-            CollapsibleSection(String(localized: "Locations"), isExpanded: $foldersExpanded,
+            CollapsibleSection(String(localized: "Locations"), isExpanded: $foldersExpanded.preloadingOutlineRowsBeforeCollapse(),
                                headerActions: [
                 SectionHeaderAction(id: "add-folder", symbol: "plus",
                                     help: String(localized: "Open Folder…")) { state.openFolderPanel() }
@@ -318,7 +318,7 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
             }
-            CollapsibleSection(String(localized: "Pull Requests"), isExpanded: $prsExpanded,
+            CollapsibleSection(String(localized: "Pull Requests"), isExpanded: $prsExpanded.preloadingOutlineRowsBeforeCollapse(),
                                headerActions: [
                 SectionHeaderAction(id: "add-pr", symbol: "plus",
                                     help: String(localized: "Open Pull Request…")) { state.showAddPR = true }
@@ -369,7 +369,7 @@ struct SidebarView: View {
                 }
             }
             if !recentItems.isEmpty {
-                CollapsibleSection(String(localized: "Recents"), isExpanded: $recentExpanded) {
+                CollapsibleSection(String(localized: "Recents"), isExpanded: $recentExpanded.preloadingOutlineRowsBeforeCollapse()) {
                     ForEach(recentItems) { item in
                         RecentRow(item: item,
                                   missing: state.missingRecentIDs.contains(item.id),
@@ -886,7 +886,7 @@ private struct FolderRootGroup: View {
         DisclosureGroup(isExpanded: Binding(
             get: { folder.expandedPaths.contains("") },
             set: { state.setFolderExpanded(folder.rootURL, path: "", $0) }
-        )) {
+        ).preloadingOutlineRowsBeforeCollapse()) {
             if folder.viewMode == .tree {
                 ForEach(folder.nodes) { node in
                     FolderNodeView(folder: folder, node: node, depth: 1)
@@ -1027,7 +1027,7 @@ private struct FolderNodeView: View {
             DisclosureGroup(isExpanded: Binding(
                 get: { folder.expandedPaths.contains(node.path) },
                 set: { state.setFolderExpanded(folder.rootURL, path: node.path, $0) }
-            )) {
+            ).preloadingOutlineRowsBeforeCollapse()) {
                 ForEach(node.children) { child in
                     FolderNodeView(folder: folder, node: child, depth: depth + 1)
                 }
@@ -1366,7 +1366,7 @@ private struct PRSidebarGroup: View {
     }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
+        DisclosureGroup(isExpanded: $expanded.preloadingOutlineRowsBeforeCollapse()) {
             ForEach(tree) { node in
                 PRNodeView(session: session, node: node,
                            statusByPath: statusByPath,
@@ -1453,7 +1453,7 @@ private struct PRNodeView: View {
                         collapsedDirs.insert(node.path)
                     }
                 }
-            )) {
+            ).preloadingOutlineRowsBeforeCollapse()) {
                 ForEach(node.children) { child in
                     PRNodeView(session: session, node: child,
                                statusByPath: statusByPath,
@@ -1562,7 +1562,7 @@ private struct RemoteRepoGroup: View {
     }
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
+        DisclosureGroup(isExpanded: $expanded.preloadingOutlineRowsBeforeCollapse()) {
             // The session's working set — kept docs, then the one preview —
             // sits above the tree so it never drowns under a big repo.
             ForEach(looseDocs, id: \.self) { path in
@@ -1671,7 +1671,7 @@ private struct RemoteNodeView: View {
                         collapsedDirs.insert(node.path)
                     }
                 }
-            )) {
+            ).preloadingOutlineRowsBeforeCollapse()) {
                 ForEach(node.children) { child in
                     RemoteNodeView(session: session, node: child,
                                    collapsedDirs: $collapsedDirs)

@@ -210,7 +210,7 @@ case "id":
     press(found)
     print("pressed: id=\(wanted) \"\(foundTitle)\"")
 
-case "select-row", "disclose", "rows", "rowmenu":
+case "select-row", "disclose", "collapse", "rows", "rowmenu":
     // Sidebar rows: SwiftUI lists discard pid-posted clicks and the
     // rows carry no AXPress, but the backing outline honors AX
     // selection — the background-tier replacement for global clicks.
@@ -300,10 +300,12 @@ case "select-row", "disclose", "rows", "rowmenu":
     }
     let (table, row) = matches[wantedIndex - 1]
     let matchedText = rowText(row)
-    if args[2] == "disclose" {
-        let error = AXUIElementSetAttributeValue(row, "AXDisclosing" as CFString, kCFBooleanTrue)
+    if args[2] == "disclose" || args[2] == "collapse" {
+        let open = args[2] == "disclose"
+        let error = AXUIElementSetAttributeValue(row, "AXDisclosing" as CFString,
+                                                 open ? kCFBooleanTrue : kCFBooleanFalse)
         guard error == .success else { fail("error: AXDisclosing set failed (AXError \(error.rawValue))") }
-        print("disclosed: \"\(matchedText)\"")
+        print("\(open ? "disclosed" : "collapsed"): \"\(matchedText)\"")
     } else if args[2] == "rowmenu" {
         // Open the row's context menu without the global right-click
         // tier: AXShowMenu on the row (or the first descendant that
@@ -387,6 +389,55 @@ case "menulist":
         let modifiers = (attribute(item, "AXMenuItemCmdModifiers") as? Int) ?? 0
         let key = cmdChar.isEmpty ? "" : "  [\(modifiers)+\(cmdChar)]"
         print("\"\(title(item))\"\(key)")
+    }
+
+case "chevron", "rowselect":
+    // chevron <rowIndex>: press the disclosure triangle of the sidebar's
+    // Nth row (0-based) by reaching it through the outline's AXRows —
+    // never by walking every row. Enumerating rows through accessibility
+    // makes NSOutlineView load each lazy row entry, which destroys the
+    // very condition (offscreen, never-loaded children) that collapse
+    // crashes need; `rows`, `select-row`, `list`, and `id` all walk.
+    // rowselect <rowIndex>: select that row the same lazy way.
+    guard args.count > 3, let index = Int(args[3]), index >= 0 else {
+        fail("usage: swift ax.swift <pid> \(args[2]) <rowIndex>")
+    }
+    guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else {
+        fail("error: no windows for pid \(pid)")
+    }
+    var queue = windows
+    var visited = 0
+    var outline: AXUIElement?
+    while !queue.isEmpty, visited < 20_000, outline == nil {
+        let element = queue.removeFirst()
+        visited += 1
+        let elementRole = role(element)
+        if elementRole == "AXWebArea" { continue }
+        if elementRole == "AXOutline" { outline = element; break }
+        queue.append(contentsOf: children(element))
+    }
+    guard let outline, let rows = attribute(outline, "AXRows") as? [AXUIElement] else {
+        fail("error: no sidebar outline (searched \(visited))")
+    }
+    guard index < rows.count else { fail("error: row \(index) out of range (\(rows.count) rows)") }
+    let row = rows[index]
+    if args[2] == "rowselect" {
+        let error = AXUIElementSetAttributeValue(outline, "AXSelectedRows" as CFString, [row] as CFArray)
+        guard error == .success else { fail("error: AXSelectedRows set failed (AXError \(error.rawValue))") }
+        print("selected row \(index)")
+    } else {
+        var stack = [row]
+        var triangle: AXUIElement?
+        while let element = stack.popLast(), triangle == nil {
+            if role(element) == "AXDisclosureTriangle", actions(element).contains(kAXPressAction) {
+                triangle = element
+            } else {
+                stack.append(contentsOf: children(element))
+            }
+        }
+        guard let triangle else { fail("error: row \(index) has no disclosure triangle") }
+        press(triangle)
+        print("pressed chevron of row \(index) (\(rows.count) rows)")
     }
 
 case "sidebar-state":

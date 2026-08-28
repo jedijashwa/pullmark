@@ -301,13 +301,19 @@ struct DocumentCommandRequest: Equatable {
 @MainActor
 final class AppState: ObservableObject {
     @Published var localFiles: [LocalFile] = [] {
-        didSet { scheduleNoteTracking() }
+        didSet { scheduleNoteTracking(); scheduleSessionSnapshot() }
     }
     /// Opened folder roots (spec §1) — closeable places with trees,
     /// alongside the individually opened documents in `localFiles`.
-    @Published var folders: [LocalFolder] = []
-    @Published var prSessions: [PRSession] = []
-    @Published var remoteSessions: [RemoteRepoSession] = []
+    @Published var folders: [LocalFolder] = [] {
+        didSet { scheduleSessionSnapshot() }
+    }
+    @Published var prSessions: [PRSession] = [] {
+        didSet { scheduleSessionSnapshot() }
+    }
+    @Published var remoteSessions: [RemoteRepoSession] = [] {
+        didSet { scheduleSessionSnapshot() }
+    }
     /// Set when a GitHub link is clicked while the policy is still `.ask` —
     /// drives the one-time choice alert.
     @Published var remoteLinkPrompt: RemoteLinkPrompt?
@@ -324,7 +330,7 @@ final class AppState: ObservableObject {
         case remote(sessionID: String, path: String)
     }
     @Published var preview: PreviewEntry? {
-        didSet { scheduleNoteTracking() }
+        didSet { scheduleNoteTracking(); scheduleSessionSnapshot() }
     }
 
     /// Margin-note counts for the working set (file path → count) — the
@@ -592,6 +598,12 @@ final class AppState: ObservableObject {
                 self?.installDemoSessionIfNeeded()
             } else {
                 self?.restoreSessionIfWanted()
+            }
+            // Only now may the session write itself back: the restore's
+            // own adds fire the same didSets, and a snapshot taken
+            // mid-restore would overwrite the one being restored from.
+            self?.sessionRestoreSettled = true
+            if !DemoMode.active {
                 await self?.refreshInboxIfDue()
             }
         }
@@ -756,7 +768,25 @@ final class AppState: ObservableObject {
         var remotePreview: RemotePreview? = nil
     }
 
+    /// Written after every working-set change — coalesced, so a rescan
+    /// storm or a burst of opens costs one write — and once more at quit.
+    /// The snapshot used to be quit-only, which a crash never reaches:
+    /// every relaunch after one restored a session days stale.
+    private var sessionRestoreSettled = false
+    private var snapshotTask: Task<Void, Never>?
+
+    private func scheduleSessionSnapshot() {
+        guard sessionRestoreSettled, Self.keyInstance === self else { return }
+        snapshotTask?.cancel()
+        snapshotTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.snapshotSession()
+        }
+    }
+
     func snapshotSession() {
+        snapshotTask?.cancel()
         let openPRs = prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" }
         let snapshot = SessionSnapshot(
             files: localFiles.map(\.url.path),

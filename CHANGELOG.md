@@ -4,6 +4,18 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Fixed a crash when collapsing a folder in the sidebar after files had
+  been added under one of its expanded subfolders that hadn't been
+  scrolled into view — the everyday shape being a restored session in a
+  growing repository, where the first collapse of the root took the app
+  down.
+- The session (open files, folders and their expansion, pull requests,
+  browsed repos) is now saved a second after every change, not only at
+  quit, so a crash or force-quit no longer restores a session from days
+  ago.
+
 ## 0.44.1 - 2026-08-25
 
 - Every toolbar item now carries a proper localized name in the

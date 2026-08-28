@@ -70,8 +70,22 @@ step.
   discard posted clicks and carry no AXPress; this is the background-
   tier replacement for clicking them. Exact matches rank before
   substring matches; `<nth>` picks among duplicates.
-- `ax.swift <pid> disclose <text>` — expand the matching row
-  (AXDisclosing).
+- `ax.swift <pid> disclose <text>` / `collapse <text>` — expand or
+  collapse the matching row (AXDisclosing). This is AppKit's own path:
+  the outline collapses first and SwiftUI learns afterwards — NOT what a
+  chevron click does (see `chevron`).
+- `ax.swift <pid> chevron <rowIndex>` — press the disclosure triangle of
+  the sidebar's Nth row (0-based), reached through the outline's AXRows.
+  A chevron press is what the user does: SwiftUI redirects it into the
+  row's binding and the next update collapses the outline. Row indices
+  shift whenever rows above change (a preview row appearing in Open
+  Files, for one) — count from `rows` output taken in the same state.
+- `ax.swift <pid> rowselect <rowIndex>` — select the Nth row the same way.
+- `rows`, `select-row`, `list`, and `id` walk every row through
+  accessibility, and NSOutlineView loads each lazy row entry it walks.
+  That destroys the condition behind lazy-outline collapse crashes
+  (expanded rows never displayed) — when a trial depends on it, drive
+  with `chevron`/`rowselect` only.
 - `ax.swift <pid> rowmenu [<nth>] <text>` — open the matching row's
   context menu via AXShowMenu, no global right-click needed. The menu
   is its own window (layer 101): find it with `winlist`, press items

@@ -641,9 +641,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // The session snapshot is written once, at quit, from the last key
-        // window — mid-session didSet snapshots proved racy (a restore's
-        // own adds overwrote the snapshot it was restoring from).
+        // The final snapshot, from the last key window — mid-session
+        // writes are coalesced (AppState.scheduleSessionSnapshot), so the
+        // last second of changes may still be pending here.
         AppState.keyInstance?.snapshotSession()
         // SwiftUI restores window frames but not full-screen state, so
         // remember it ourselves (⌘Q from full screen still has the window
