@@ -1,0 +1,13 @@
+export * as model from "prosemirror-model";
+export * as state from "prosemirror-state";
+export * as view from "prosemirror-view";
+export * as transform from "prosemirror-transform";
+export * as history from "prosemirror-history";
+export * as keymap from "prosemirror-keymap";
+export * as commands from "prosemirror-commands";
+export * as inputrules from "prosemirror-inputrules";
+export * as schemaList from "prosemirror-schema-list";
+export * as tables from "prosemirror-tables";
+export * as markdown from "prosemirror-markdown";
+import MarkdownIt from "markdown-it";
+export { MarkdownIt };

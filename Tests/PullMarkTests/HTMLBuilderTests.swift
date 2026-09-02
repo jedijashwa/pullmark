@@ -204,4 +204,20 @@ import Foundation
         #expect(ContentWidth.current == .standard)
         UserDefaults.standard.removeObject(forKey: ContentWidth.defaultsKey)
     }
+    @Test func everyRelativeAssetIsMirroredIntoTheRenderDirectory() {
+        let rich = RichEditorPayload.make(from: "# Hi\n\nBody", autosave: true)
+        let pages = [HTMLBuilder.documentPage(markdown: "# Hi"),
+                     HTMLBuilder.documentPage(markdown: "# Hi", editable: true),
+                     HTMLBuilder.documentPage(markdown: "# Hi", richEditor: rich)]
+        let pattern = try! NSRegularExpression(pattern: #"(?:src|href)="([^"]+)""#)
+        for page in pages {
+            let ns = page as NSString
+            for match in pattern.matches(in: page, range: NSRange(location: 0, length: ns.length)) {
+                let ref = ns.substring(with: match.range(at: 1))
+                if ref.hasPrefix("http") || ref.hasPrefix("data:") || ref.hasPrefix("#") { continue }
+                let head = ref.split(separator: "/").first.map(String.init) ?? ref
+                #expect(RenderPageStore.mirroredAssets.contains(head), "\(ref) is not mirrored")
+            }
+        }
+    }
 }

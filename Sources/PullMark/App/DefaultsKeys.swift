@@ -135,6 +135,10 @@ enum DefaultsKeys {
     /// "type" | "involvement" — how GitHub work groups in the sidebar
     /// (spec: github-work §6).
     static let githubGrouping = "pm.githubGrouping"
+    /// The rich editor beta (spec: rich-editor §11) and how its edits
+    /// reach disk: "auto" (default) | "manual" (⌘S).
+    static let richEditorEnabled = "pm.richEditorEnabled"
+    static let editSaveMode = "pm.editSaveMode"
     /// Pinned folders and files (spec: pinned-and-session-reopen §4) —
     /// a preference, always restored, never part of the session snapshot.
     static let pinnedEntries = "pm.pinnedEntries"

@@ -193,7 +193,10 @@ def collect_js_english():
 
 
 def collect_js_keys():
-    s = (SOURCES / "Resources" / "app.js").read_text(encoding="utf-8")
+    # Every page script that calls pmString: the renderer and the rich
+    # editor (spec: rich-editor) share one strings table.
+    s = "\n".join((SOURCES / "Resources" / name).read_text(encoding="utf-8")
+                  for name in ("app.js", "pm-editor.js"))
 
     def balanced(text, start):
         depth = 0

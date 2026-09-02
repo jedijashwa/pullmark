@@ -771,3 +771,28 @@
 "review requested" = "レビュー依頼";
 "yours" = "自分";
 "Comment on the issue" = "この Issue にコメント";
+
+// Rich editor beta (spec: rich-editor)
+"Automatically" = "自動";
+"Automatically writes each change to disk a moment after you make it; ⌘S waits for you" = "変更のたびに少し待ってから自動でディスクに書き込みます。⌘S はあなたの操作を待ちます";
+"Bold" = "太字";
+"Bullet list" = "箇条書き";
+"Code" = "コード";
+"Code block" = "コードブロック";
+"Divider" = "区切り線";
+"Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source" = "編集モードで文書全体をリッチエディタとして開きます（表・リスト・書式をその場で編集）。Markdown ソースをブロックごとに表示する代わりです";
+"Editing" = "編集";
+"Heading 1" = "見出し 1";
+"Heading 2" = "見出し 2";
+"Heading 3" = "見出し 3";
+"Italic" = "斜体";
+"Link" = "リンク";
+"Link address" = "リンク先アドレス";
+"Numbered list" = "番号付きリスト";
+"Paragraph" = "段落";
+"Quote" = "引用";
+"Rich editor (beta)" = "リッチエディタ（ベータ）";
+"Save edits:" = "編集の保存:";
+"Table" = "表";
+"Task list" = "タスクリスト";
+"When I press ⌘S" = "⌘S を押したとき";

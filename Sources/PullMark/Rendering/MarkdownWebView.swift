@@ -66,6 +66,10 @@ struct MarkdownWebView: NSViewRepresentable {
     /// ⌘E pressed inside a reveal — the focused text field beats the
     /// toolbar toggle's key equivalent, so the page forwards it.
     var onToggleEditMode: (() -> Void)?
+    /// The rich editor's whole-document save (spec: rich-editor §3):
+    /// the file text, assembled from untouched originals and serialized
+    /// edits.
+    var onRichEditorSave: ((String) -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -459,6 +463,10 @@ struct MarkdownWebView: NSViewRepresentable {
                 parent.onNoteIntroRequested?()
             case "toggleEditMode":
                 parent.onToggleEditMode?()
+            case "richEditorSave":
+                if let text = dict["text"] as? String {
+                    parent.onRichEditorSave?(text)
+                }
             case "lightboxRequest":
                 guard let kind = dict["kind"] as? String,
                       let x = dict["x"] as? Double, let y = dict["y"] as? Double,

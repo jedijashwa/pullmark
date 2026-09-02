@@ -18,6 +18,14 @@ components. PullMark exists because these do.
   (https://github.com/mermaid-js/mermaid)
 - **KaTeX** 0.18.1 (code and fonts) — © 2013–2020 Khan Academy and other
   contributors (https://github.com/KaTeX/KaTeX)
+- **ProseMirror** (prosemirror-model 1.25.11, -state 1.4.4, -view 1.42.3,
+  -transform 1.12.1, -history 1.5.0, -keymap 1.2.3, -commands 1.7.2,
+  -inputrules 1.5.1, -schema-list 1.5.1, -markdown 1.13.7) — © 2015–2017
+  Marijn Haverbeke and others (https://prosemirror.net)
+- **prosemirror-tables** 1.8.5 — © 2015–2016 Atlassian Pty Ltd, Marijn
+  Haverbeke, and others (https://github.com/ProseMirror/prosemirror-tables)
+- **markdown-it** 15.0.1 — © 2014 Vitaly Puzrin, Alex Kocharin
+  (https://github.com/markdown-it/markdown-it)
 - **github-markdown-css** — © Sindre Sorhus
   (https://github.com/sindresorhus/github-markdown-css)
 

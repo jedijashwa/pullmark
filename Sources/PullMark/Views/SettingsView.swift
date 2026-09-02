@@ -40,6 +40,8 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = false
     @AppStorage(DefaultsKeys.githubGrouping, store: UserDefaults.pullmark) private var githubGroupingRaw = GitHubWork.Grouping.type.rawValue
+    @AppStorage(DefaultsKeys.richEditorEnabled, store: UserDefaults.pullmark) private var richEditorEnabled = false
+    @AppStorage(DefaultsKeys.editSaveMode, store: UserDefaults.pullmark) private var editSaveMode = "auto"
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
@@ -122,6 +124,20 @@ struct GeneralSettingsTab: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Editing") {
+            Toggle("Rich editor (beta)", isOn: $richEditorEnabled)
+                .help("Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source")
+                .settingAnchor("rich-editor")
+            Picker("Save edits:", selection: $editSaveMode) {
+                Text("Automatically").tag("auto")
+                Text("When I press ⌘S").tag("manual")
+            }
+            .pickerStyle(.segmented)
+            .disabled(!richEditorEnabled)
+            .help("Automatically writes each change to disk a moment after you make it; ⌘S waits for you")
+            .settingAnchor("edit-save-mode")
             }
 
             Section("Reviewing") {

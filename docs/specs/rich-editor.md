@@ -45,6 +45,17 @@ existing page; one fixture document parsed, untouched, and serialized
 byte-identical; a one-word edit producing a one-line diff. If the
 spike fails, stop and rethink before building anything on it.
 
+Spike result (2026-08-28): PASSED in headless Chrome. esbuild bundles
+prosemirror-{model,state,view,transform,history,keymap,commands,
+inputrules,schema-list,tables,markdown} + markdown-it into one 520 KB
+IIFE (`PM`), no eval; an 8-block fixture (heading, emphasis/code/link
+paragraph, list, fenced code with a blank line, multi-line quote, HTML
+comment, double blank line, reference link + definition) reassembles
+byte-identical untouched and a one-word edit changes exactly one line.
+The splitter must keep the exact blank-line gaps between blocks
+(leading, between, trailing) — the Swift splitter drops them, so the
+payload carries gaps alongside blocks.
+
 ## §3 Source preservation — minimal diffs
 
 - The file splits into top-level blocks with line ranges via the

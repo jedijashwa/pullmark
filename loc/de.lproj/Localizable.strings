@@ -776,3 +776,28 @@
 "review requested" = "Review angefragt";
 "yours" = "von dir";
 "Comment on the issue" = "Kommentar zum Issue";
+
+// Rich editor beta (spec: rich-editor)
+"Automatically" = "Automatisch";
+"Automatically writes each change to disk a moment after you make it; ⌘S waits for you" = "Schreibt jede Änderung kurz nach der Eingabe automatisch auf die Festplatte; ⌘S wartet auf dich";
+"Bold" = "Fett";
+"Bullet list" = "Aufzählung";
+"Code" = "Code";
+"Code block" = "Codeblock";
+"Divider" = "Trennlinie";
+"Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source" = "Der Bearbeitungsmodus öffnet das ganze Dokument in einem Rich-Text-Editor – Tabellen, Listen und Formatierung direkt im Text – statt Markdown-Quelltext blockweise freizulegen";
+"Editing" = "Bearbeiten";
+"Heading 1" = "Überschrift 1";
+"Heading 2" = "Überschrift 2";
+"Heading 3" = "Überschrift 3";
+"Italic" = "Kursiv";
+"Link" = "Link";
+"Link address" = "Link-Adresse";
+"Numbered list" = "Nummerierte Liste";
+"Paragraph" = "Absatz";
+"Quote" = "Zitat";
+"Rich editor (beta)" = "Rich-Text-Editor (Beta)";
+"Save edits:" = "Änderungen sichern:";
+"Table" = "Tabelle";
+"Task list" = "Aufgabenliste";
+"When I press ⌘S" = "Wenn ich ⌘S drücke";

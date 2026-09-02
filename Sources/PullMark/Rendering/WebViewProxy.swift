@@ -212,6 +212,16 @@ final class WebViewProxy: ObservableObject {
         ) { value, _ in completion(value as? Int) }
     }
 
+    /// The rich editor's current document as Markdown (spec: rich-editor
+    /// §3) — nil when no editor is mounted. Read before any state flip
+    /// that re-renders the page, so nothing typed dies with it.
+    func richEditorText(_ completion: @escaping (String?) -> Void) {
+        guard let webView else { return completion(nil) }
+        webView.evaluateJavaScript(
+            "window.__pmRichEditorText ? window.__pmRichEditorText() : null;"
+        ) { value, _ in completion(value as? String) }
+    }
+
     /// Continues arrow-key editing navigation after a commit reload.
     func revealAtLine(_ signedLine: Int) {
         webView?.evaluateJavaScript(

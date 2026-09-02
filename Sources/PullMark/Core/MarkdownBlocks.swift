@@ -97,6 +97,46 @@ enum MarkdownBlocks {
         return blocks
     }
 
+    /// The text `split` drops: what sits before the first block, between
+    /// consecutive blocks (the blank-line runs, whitespace and all), and
+    /// after the last one. `leading + blocks[0].text + between[0] + … +
+    /// trailing` is the source again, byte for byte — the rich editor's
+    /// minimal-diff save rebuilds files from exactly this (spec:
+    /// rich-editor §3).
+    struct Gaps: Equatable {
+        var leading: String
+        var between: [String]
+        var trailing: String
+    }
+
+    static func gaps(of source: String, blocks: [MarkdownBlock]) -> Gaps {
+        let lines = source.components(separatedBy: "\n")
+        guard let first = blocks.first, let last = blocks.last else {
+            return Gaps(leading: source, between: [], trailing: "")
+        }
+        let before = lines[0..<(first.startLine - 1)]
+        let leading = before.isEmpty ? "" : before.joined(separator: "\n") + "\n"
+        var between: [String] = []
+        for (current, next) in zip(blocks, blocks.dropFirst()) {
+            let blank = lines[current.endLine..<(next.startLine - 1)]
+            between.append("\n" + blank.joined(separator: "\n") + (blank.isEmpty ? "" : "\n"))
+        }
+        let after = lines[last.endLine..<lines.count]
+        let trailing = after.isEmpty ? "" : "\n" + after.joined(separator: "\n")
+        return Gaps(leading: leading, between: between, trailing: trailing)
+    }
+
+    /// The inverse of `split` + `gaps`: block texts (edited or not) back
+    /// into a file with the original spacing.
+    static func assemble(blockTexts: [String], gaps: Gaps) -> String {
+        var out = gaps.leading
+        for (index, text) in blockTexts.enumerated() {
+            out += text
+            if index < gaps.between.count { out += gaps.between[index] }
+        }
+        return out + gaps.trailing
+    }
+
     /// True when a block produced by `split` is a leading YAML front matter
     /// fence. Used to skip word-level diffing (plain old/new metadata tables
     /// are clearer than word marks inside YAML).

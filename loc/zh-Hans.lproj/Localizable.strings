@@ -771,3 +771,28 @@
 "review requested" = "请求审查";
 "yours" = "你的";
 "Comment on the issue" = "评论此议题";
+
+// Rich editor beta (spec: rich-editor)
+"Automatically" = "自动";
+"Automatically writes each change to disk a moment after you make it; ⌘S waits for you" = "每次更改后稍等片刻自动写入磁盘；⌘S 则等待你手动保存";
+"Bold" = "粗体";
+"Bullet list" = "项目符号列表";
+"Code" = "代码";
+"Code block" = "代码块";
+"Divider" = "分隔线";
+"Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source" = "编辑模式将整篇文档打开为富文本编辑器——表格、列表和格式就地编辑——而不是逐块显示 Markdown 源码";
+"Editing" = "编辑";
+"Heading 1" = "标题 1";
+"Heading 2" = "标题 2";
+"Heading 3" = "标题 3";
+"Italic" = "斜体";
+"Link" = "链接";
+"Link address" = "链接地址";
+"Numbered list" = "编号列表";
+"Paragraph" = "段落";
+"Quote" = "引用";
+"Rich editor (beta)" = "富文本编辑器（测试版）";
+"Save edits:" = "保存编辑：";
+"Table" = "表格";
+"Task list" = "任务列表";
+"When I press ⌘S" = "当我按下 ⌘S 时";

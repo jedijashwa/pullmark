@@ -61,6 +61,10 @@ enum HTMLBuilder {
         /// Local documents: blocks grow a hover pencil that opens the
         /// block editor (bridge "editLocal").
         var editable: Bool?
+        /// The rich editor (spec: rich-editor): the document as blocks
+        /// plus the exact gaps between them, so untouched blocks save
+        /// byte-identical. Present ⇒ pm-editor.js mounts over the page.
+        var richEditor: RichEditorPayload?
         /// Blame gutter runs (document mode). The page renders the whole
         /// markdown normally (footnotes and reference links intact), then
         /// annotates block positions and draws a left gutter from these runs.
@@ -174,7 +178,8 @@ enum HTMLBuilder {
                              conversation: [ConversationEntryPayload]? = nil,
                              conversationUnavailable: Bool = false,
                              conversationComposer: Bool = false,
-                             conversationSubject: String? = nil) -> String {
+                             conversationSubject: String? = nil,
+                             richEditor: RichEditorPayload? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -183,6 +188,7 @@ enum HTMLBuilder {
                                     lineNumbers: lineNumberEligible ? nil : false,
                                     preview: preview ? true : nil,
                                     editable: editable ? true : nil,
+                                    richEditor: richEditor,
                                     blame: blame,
                                     blameNote: blameNote,
                                     threads: threads?.isEmpty == false ? threads : nil,
@@ -249,6 +255,13 @@ enum HTMLBuilder {
                                     patchLines: patchLines?.isEmpty == false ? patchLines : nil),
              title: title, customCSS: customCSS)
     }
+
+    /// The editor engine is half a megabyte: only pages that edit pay for
+    /// it (spec: rich-editor §2).
+    private static let richEditorScripts = """
+        <script src="vendor/prosemirror.min.js"></script>
+        <script src="pm-editor.js"></script>
+        """
 
     /// Encodes a value as a JSON literal safe to embed inside a <script> tag.
     /// JSONEncoder escapes "/" by default, so "</script>" cannot appear; "<"
@@ -380,8 +393,43 @@ enum HTMLBuilder {
         <script src="vendor/katex/katex.min.js"></script>
         <script src="pm-extensions.js"></script>
         <script src="app.js"></script>
+        \(payload.richEditor != nil ? richEditorScripts : "")
         </body>
         </html>
         """
+    }
+}
+
+
+/// What the rich editor needs to rebuild a file with minimal diffs (spec:
+/// rich-editor §3): the blocks the Swift splitter found, the exact text
+/// between them, and how saves should behave.
+struct RichEditorPayload: Encodable {
+    struct Block: Encodable {
+        let text: String
+        let start: Int
+        let end: Int
+    }
+    struct Gaps: Encodable {
+        let leading: String
+        let between: [String]
+        let trailing: String
+    }
+    let blocks: [Block]
+    let gaps: Gaps
+    let autosave: Bool
+    /// Lines of a leading YAML front matter block (0 = none) — the
+    /// editor keeps it as a raw island.
+    let frontMatterLines: Int
+
+    static func make(from source: String, autosave: Bool) -> RichEditorPayload {
+        let blocks = MarkdownBlocks.split(source)
+        let gaps = MarkdownBlocks.gaps(of: source, blocks: blocks)
+        let frontMatter = blocks.first.map { MarkdownBlocks.isFrontMatter($0) ? $0.endLine : 0 } ?? 0
+        return RichEditorPayload(
+            blocks: blocks.map { Block(text: $0.text, start: $0.startLine, end: $0.endLine) },
+            gaps: Gaps(leading: gaps.leading, between: gaps.between, trailing: gaps.trailing),
+            autosave: autosave,
+            frontMatterLines: frontMatter)
     }
 }

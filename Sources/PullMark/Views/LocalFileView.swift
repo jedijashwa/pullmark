@@ -70,6 +70,10 @@ struct LocalFileView: View {
     @State private var sessionSnapshotTaken = false
     /// ⌘E just enabled edit mode: auto-reveal once the editable page loads.
     @State private var pendingAutoReveal = false
+    /// The rich editor beta (spec: rich-editor §11): edit mode mounts the
+    /// whole-document editor instead of revealing blocks.
+    @AppStorage(DefaultsKeys.richEditorEnabled, store: UserDefaults.pullmark) private var richEditorEnabled = false
+    @AppStorage(DefaultsKeys.editSaveMode, store: UserDefaults.pullmark) private var editSaveMode = "auto"
     /// The first-use margin-notes intro is up, holding this request
     /// (spec: margin-notes-graduation). Keep Using resumes it exactly.
     @State private var noteIntroRequest: MarginNoteIntroRequest?
@@ -90,6 +94,7 @@ struct LocalFileView: View {
             onNoteDelete: handleNoteDelete,
             onNoteIntroRequested: handleNoteIntroRequested,
             onNextReveal: handleNextReveal,
+            onRichEditorSave: handleRichEditorSave,
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
             onLocalLinkFailed: { state.lastNotice = $0 },
@@ -466,6 +471,22 @@ struct LocalFileView: View {
     private func setEditMode(_ newValue: Bool) {
         // Entering edit mode is the clearest "I'm not just looking" signal.
         if newValue { state.pinPreviewIfNeeded(url: file.url) }
+        // Leaving the rich editor: take its text straight from the page
+        // and write it before the flip tears the editor down (a bridge
+        // message could still be in flight).
+        if !newValue, editMode, richEditorEnabled {
+            proxy.richEditorText { text in
+                Task { @MainActor in
+                    if let text { handleRichEditorSave(text) }
+                    finishSetEditMode(newValue)
+                }
+            }
+            return
+        }
+        finishSetEditMode(newValue)
+    }
+
+    private func finishSetEditMode(_ newValue: Bool) {
         proxy.commitInlineEdit()
         proxy.scrollFraction { fraction in
             proxy.firstVisibleLine { line in
@@ -510,6 +531,32 @@ struct LocalFileView: View {
         }
     }
 
+    /// The rich editor's whole-document save (spec: rich-editor §3/§10):
+    /// the page assembled the file from untouched originals and serialized
+    /// edits; here it keeps the file's line endings, takes one Revert
+    /// snapshot per edit session, and writes atomically. Identical text
+    /// never touches the file. `currentText` follows immediately — the
+    /// editor holds reloads off (editingState), so nothing else would.
+    private func handleRichEditorSave(_ text: String) {
+        guard compare == nil, !state.sourceViewVisible else { return }
+        state.pinPreviewIfNeeded(url: file.url)
+        var effective = text
+        if currentText.contains("\r\n") {
+            effective = effective.replacingOccurrences(of: "\n", with: "\r\n")
+        }
+        guard effective != currentText else { return }
+        do {
+            if !sessionSnapshotTaken {
+                EditHistory.snapshot(file.url)
+                sessionSnapshotTaken = true
+            }
+            try effective.write(to: file.url, atomically: true, encoding: .utf8)
+            currentText = effective
+        } catch {
+            state.lastError = String(localized: "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)")
+        }
+    }
+
     private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
         proxy.scrollFraction { fraction in
             Task { @MainActor in
@@ -541,16 +588,21 @@ struct LocalFileView: View {
         // only the authoring chrome — affordances and Edit/Delete.
         let notes = marginNotesVisible
             ? MarginNotePayload.payloads(from: MarginNotes.parse(currentText)) : []
+        let rich = editMode && richEditorEnabled
         return HTMLBuilder.documentPage(markdown: currentText,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
                                         theme: style.theme,
                                         customCSS: style.customCSS,
-                                        editable: editMode,
-                                        blame: blameVisible ? blamePayloads : nil,
-                                        blameNote: blameVisible ? blameNote : nil,
-                                        marginNotes: notes,
-                                        noteAuthoring: marginNotesVisible && marginNotesEnabled)
+                                        editable: editMode && !rich,
+                                        blame: blameVisible && !rich ? blamePayloads : nil,
+                                        blameNote: blameVisible && !rich ? blameNote : nil,
+                                        marginNotes: rich ? nil : notes,
+                                        noteAuthoring: !rich && marginNotesVisible && marginNotesEnabled,
+                                        richEditor: rich
+                                            ? RichEditorPayload.make(from: currentText,
+                                                                     autosave: editSaveMode != "manual")
+                                            : nil)
     }
 
     /// Block-editor apply: edit-mode commits write straight to disk — the

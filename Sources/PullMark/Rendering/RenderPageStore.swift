@@ -5,6 +5,12 @@ import Foundation
 /// So generated pages are written into a temp directory that also holds a
 /// copy of the rendering assets, and loaded from there.
 enum RenderPageStore {
+    /// Everything a generated page may reference relatively. A script the
+    /// page names but this list doesn't mirror fails to load silently
+    /// (CSP + file access), which is how the rich editor first shipped
+    /// its bundle without mounting — HTMLBuilderTests keeps them in sync.
+    static let mirroredAssets = ["vendor", "app.js", "app.css", "pm-extensions.js", "pm-editor.js"]
+
     static let directory: URL = {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("PullMarkRender", isDirectory: true)
@@ -18,7 +24,7 @@ enum RenderPageStore {
         }
 
         if let resources = HTMLBuilder.resourcesBaseURL {
-            for item in ["vendor", "app.js", "app.css", "pm-extensions.js"] {
+            for item in mirroredAssets {
                 let destination = dir.appendingPathComponent(item)
                 try? fm.removeItem(at: destination)
                 try? fm.copyItem(at: resources.appendingPathComponent(item), to: destination)

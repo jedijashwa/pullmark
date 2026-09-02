@@ -2001,3 +2001,75 @@ mark.pm-find.pm-find-current {
 :root[data-width="full"] .markdown-body.pm-wide {
   max-width: none;
 }
+
+/* ---- Rich editor (spec: rich-editor) ---- */
+.pm-rich-editing .ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 40vh;
+}
+.pm-rich-editing .ProseMirror pre.pm-raw {
+  font: 12.5px/1.6 ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  white-space: pre;
+  border-left: 3px solid var(--borderColor-muted, rgba(128, 128, 128, 0.35));
+}
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="frontmatter"] {
+  border-left-color: rgba(88, 166, 255, 0.55);
+}
+.pm-rich-editing .ProseMirror li.task-list-item {
+  list-style: none;
+  margin-left: -1.4em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45em;
+}
+.pm-rich-editing .ProseMirror li.task-list-item .pm-task-body { flex: 1; min-width: 0; }
+.pm-rich-editing .ProseMirror li.task-list-item .pm-task-body > p { margin: 0; }
+.pm-rich-editing .ProseMirror .selectedCell {
+  background: rgba(88, 166, 255, 0.18);
+}
+.pm-rich-editing .ProseMirror table td, .pm-rich-editing .ProseMirror table th {
+  min-width: 3em;
+}
+.pm-rich-editing .ProseMirror .ProseMirror-selectednode {
+  outline: 2px solid rgba(88, 166, 255, 0.7);
+}
+.pm-float-toolbar, .pm-slash-menu {
+  position: absolute;
+  z-index: 60;
+  background: var(--bgColor-default, #fff);
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+.pm-float-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+}
+.pm-float-toolbar button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: 600 12.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: default;
+}
+.pm-float-toolbar button.pm-tb-italic { font-style: italic; }
+.pm-float-toolbar button.pm-tb-code { font-family: ui-monospace, Menlo, monospace; font-weight: 500; }
+.pm-float-toolbar button:hover { background: rgba(128, 128, 128, 0.16); }
+.pm-float-toolbar button.is-active { background: rgba(88, 166, 255, 0.22); }
+.pm-slash-menu {
+  min-width: 180px;
+  padding: 4px;
+}
+.pm-slash-item {
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+.pm-slash-item.is-active, .pm-slash-item:hover {
+  background: rgba(88, 166, 255, 0.22);
+}
