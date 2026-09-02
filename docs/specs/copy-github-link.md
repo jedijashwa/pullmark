@@ -117,3 +117,44 @@ only new logic:
   file).
 - Live: context-menu presence/absence in and out of repos, the ⌥
   swap, the setting flip, detached-HEAD fallback, no-remote notice.
+
+## §8 Presence reasons and the tracked-set cap (added 2026-08-28)
+
+Josh (2026-08-28): the item still shows for files GitHub doesn't
+have, and the click then reports "Not tracked". The render-time gate
+in §3 goes blind on his monorepo: `RepoInfo` skips trackedness past
+50,000 tracked files (the sets were compared on the main thread on
+every activation), so every row offers the item and only the click
+checks. Two changes:
+
+**The cap goes.** `trackedPaths`/`trackedDirs` move into a reference
+box (`final class`) compared by identity, so `LocalFolder`/`RepoInfo`
+equality — and SwiftUI's diffing — never walk the sets. Trackedness is
+then known for every checkout that `ls-files` can list.
+
+**A reason, not a guess.** `RepoInfo` gains a GitHub-presence index,
+computed off-main at the moments it already refreshes (open, rescan,
+activation, in-app commit):
+
+| Reason (subtitle text)       | Source                                                              |
+|------------------------------|---------------------------------------------------------------------|
+| Ignored by .gitignore        | `git check-ignore -v -z --stdin` over the sidebar's own Markdown files; source path is a `.gitignore` |
+| Ignored locally              | same pass; source is `.git/info/exclude` or `core.excludesFile`     |
+| Not committed yet            | untracked (not in `ls-files`, not ignored) or staged-new (`git diff --cached --name-only --diff-filter=A`) |
+| Not pushed yet               | added since the upstream (`git diff --name-only --diff-filter=A @{upstream}...HEAD`); no upstream at all ⇒ every path on the branch |
+
+`GitHubPresence.classify(path:isDirectory:)` (Core, pure, unit-tested)
+answers `onGitHub`, `absent(reason)`, or `unknown`.
+
+**Menu.** Files: `onGitHub` ⇒ the item as today; `absent` ⇒ the item
+DISABLED with the reason as a menu subtitle (macOS 14 `Text` +
+`Text` label; verified live that the contextMenu bridge renders it —
+if it ever doesn't, the reason moves into the title in parentheses);
+`unknown` ⇒ offered, click checks (today's behavior). Directories:
+hidden when nothing under them is on GitHub, enabled otherwise. Loose
+files with no Location covering their repo keep the click-time check.
+The Location root's "Open on GitHub" opens the repo page without
+`/tree/<branch>` when the branch isn't on the remote.
+
+Verification: unit tests for the classifier and the check-ignore
+parser; a live trial in a demo checkout with one file per reason.
