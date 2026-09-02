@@ -701,6 +701,103 @@ enum DemoSession {
     /// nothing ever needs the network: document content comes from the
     /// demo-guarded fileData path. Gives captures (and demo explorers)
     /// the provenance bar and branch chip surface.
+    // MARK: - GitHub work (spec: github-work)
+
+    static let fieldKitRepo = "field-kit"
+    static let followedRepo = GitHubWork.FollowedRepo(owner: owner, repo: repo)
+    static let issueNumber = 77
+    static let issueRef = PullRequestRef(owner: owner, repo: repo, number: issueNumber)
+
+    private static func workItem(_ kind: GitHubWork.Kind, repo: String, number: Int, title: String,
+                                 author: String, updated: String, draft: Bool = false,
+                                 roles: Set<GitHubWork.Role> = []) -> GitHubWork.Item {
+        GitHubWork.Item(kind: kind, ref: PullRequestRef(owner: owner, repo: repo, number: number),
+                        title: title, author: author, draft: draft, updatedAt: updated, roles: roles)
+    }
+
+    /// The buckets and one followed repository, in the state the mockup
+    /// page showed: two review requests, a created PR and an assigned
+    /// issue, a mentioned issue, and the followed repo's queue.
+    static func makeWork() -> GitHubWork.Snapshot {
+        var snapshot = GitHubWork.Snapshot()
+        let requests = [
+            workItem(.pr, repo: repo, number: 131, title: "Export formats: add CSV appendix",
+                     author: prAuthor, updated: "2026-08-27T15:10:00Z"),
+            workItem(.pr, repo: fieldKitRepo, number: 48, title: "Field kit: torque table for the M6 mount",
+                     author: reviewer, updated: "2026-08-27T09:42:00Z", draft: true),
+        ]
+        GitHubWork.merge(requests, into: &snapshot, bucket: .reviewRequests, repoID: nil, page: 1, hasMore: false)
+        let created = [
+            workItem(.pr, repo: repo, number: 134, title: "Site survey: photograph every mount point",
+                     author: viewerLogin, updated: "2026-08-28T08:05:00Z"),
+            workItem(.pr, repo: "handbook", number: 12, title: "Glossary: define “drift” once",
+                     author: viewerLogin, updated: "2026-08-20T12:00:00Z"),
+        ]
+        GitHubWork.merge(created, into: &snapshot, bucket: .created, repoID: nil, page: 1, hasMore: false)
+        let assigned = [
+            workItem(.issue, repo: repo, number: issueNumber, title: "Calibration page renders the wrong unit table",
+                     author: reviewer, updated: "2026-08-28T07:30:00Z"),
+        ]
+        GitHubWork.merge(assigned, into: &snapshot, bucket: .assigned, repoID: nil, page: 1, hasMore: false)
+        let participating = [
+            workItem(.issue, repo: fieldKitRepo, number: 52, title: "Torque values disagree with the printed card",
+                     author: prAuthor, updated: "2026-08-26T18:20:00Z"),
+            workItem(.pr, repo: fieldKitRepo, number: 41, title: "Onboarding: firmware step before pairing",
+                     author: prAuthor, updated: "2026-08-19T10:00:00Z"),
+        ]
+        GitHubWork.merge(participating, into: &snapshot, bucket: .participating, repoID: nil, page: 1, hasMore: false)
+        let queue = [
+            workItem(.pr, repo: repo, number: 130, title: "Changelog: 2.4 release notes",
+                     author: reviewer, updated: "2026-08-27T20:00:00Z"),
+            workItem(.issue, repo: repo, number: 79, title: "Dark-mode screenshots are light-mode",
+                     author: prAuthor, updated: "2026-08-27T11:00:00Z"),
+            workItem(.pr, repo: repo, number: 127, title: "Quick start: pairing over USB-C",
+                     author: prAuthor, updated: "2026-08-25T16:30:00Z"),
+        ] + requests.filter { $0.ref.repo == repo } + created.filter { $0.ref.repo == repo } + assigned
+        GitHubWork.merge(queue, into: &snapshot, bucket: nil, repoID: followedRepo.id, page: 1, hasMore: true)
+        GitHubWork.settle(&snapshot)
+        return snapshot
+    }
+
+    static let issueCommentOneID = 9601
+    static let issueCommentTwoID = 9602
+
+    static func makeIssueSession() -> IssueSession {
+        let details = IssueDetails(
+            number: issueNumber,
+            title: "Calibration page renders the wrong unit table",
+            body: """
+            The humidity offsets table on the calibration page shows the **temperature** \
+            units column. Compare the printed card: it lists %RH, not °C.
+
+            - [ ] Swap the column header
+            - [ ] Re-check the three reference solutions
+            - [x] Confirm the printed card is the 2.4 revision
+            """,
+            state: "open", stateReason: nil,
+            htmlUrl: URL(string: "https://github.com/\(owner)/\(repo)/issues/\(issueNumber)")!,
+            user: .init(login: reviewer), createdAt: "2026-08-26T09:14:00Z",
+            labels: [.init(name: "docs", color: "0e8a16"), .init(name: "bug", color: "d73a4a")])
+        var session = IssueSession(ref: issueRef, details: details)
+        session.comments = [
+            IssueComment(id: issueCommentOneID,
+                         body: "Confirmed on the 2.4 card — the header is the only thing wrong.",
+                         user: .init(login: prAuthor, avatarUrl: demoAvatar(prAuthor)),
+                         createdAt: "2026-08-27T08:40:00Z", htmlUrl: nil,
+                         reactions: ReactionRollup(plusOne: 1)),
+            IssueComment(id: issueCommentTwoID,
+                         body: "Taking this one; the fix rides with the export-formats PR.",
+                         user: .init(login: viewerLogin, avatarUrl: demoAvatar(viewerLogin)),
+                         createdAt: "2026-08-28T07:30:00Z", htmlUrl: nil),
+        ]
+        session.commentMeta = [
+            issueCommentOneID: ReviewCommentMeta(nodeID: "IC_demo9601", viewerReacted: ["+1"],
+                                                 reactors: ["+1": ReactorRoster(logins: [viewerLogin], totalCount: 1)]),
+            issueCommentTwoID: ReviewCommentMeta(nodeID: "IC_demo9602"),
+        ]
+        return session
+    }
+
     static func makeRemoteSession() -> RemoteRepoSession {
         var session = RemoteRepoSession(ref: PullRequestRef(owner: owner, repo: repo, number: 0),
                                         displayRef: "main")

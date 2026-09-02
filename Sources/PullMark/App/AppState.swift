@@ -60,6 +60,22 @@ struct PRSession: Identifiable {
     var otherFileCount: Int { files.count - markdownFiles.count }
 }
 
+/// An issue opened as a document (spec: github-work §8): its body, its
+/// comment timeline, and the GraphQL-only viewer state the cards need
+/// (reaction tints, node ids, edit signals). No files, no reviews.
+struct IssueSession: Identifiable {
+    let ref: PullRequestRef
+    var details: IssueDetails
+    var comments: [IssueComment] = []
+    var commentMeta: [Int: ReviewCommentMeta] = [:]
+    /// ETag of the last single-page comments fetch — the quiet tick's
+    /// 304s are free. Nil once the list spills past one page.
+    var commentsETag: String?
+    /// The timeline failed to load and nothing older is on hand.
+    var conversationUnavailable = false
+    var id: String { "\(ref.owner)/\(ref.repo)#\(ref.number)" }
+}
+
 /// A GitHub repo opened for reading outside any PR: documents opened from
 /// links or ⌘K, plus an on-demand Markdown tree. `ref.number` is 0 — the
 /// established "just a repo" shape (BlameService uses the same).
@@ -128,6 +144,9 @@ enum SidebarSelection: Hashable {
     case prFile(String, String)
     /// A repo document browsed from PR content: (session id, repo path).
     case prDoc(String, String)
+    /// An issue opened as a document (spec: github-work §8): its session
+    /// id ("owner/repo#123").
+    case issue(String)
     /// A GitHub repo session's root row: (session id).
     case remoteRepo(String)
     /// A document in a GitHub repo session: (session id, repo path).
@@ -185,6 +204,7 @@ struct SurfaceToolbar {
         case prFile
         case prDoc
         case prOverview
+        case issue
     }
 
     /// Which surface these values belong to — must equal the id
@@ -249,6 +269,7 @@ struct RecentItem: Codable, Identifiable, Equatable {
         case file
         case folder
         case pr
+        case issue
     }
 
     var kind: Kind
@@ -265,11 +286,12 @@ struct RecentItem: Codable, Identifiable, Equatable {
         case .file: return "file:" + (path ?? "")
         case .folder: return "folder:" + (path ?? "")
         case .pr: return "pr:\(owner ?? "")/\(repo ?? "")#\(number ?? 0)"
+        case .issue: return "issue:\(owner ?? "")/\(repo ?? "")#\(number ?? 0)"
         }
     }
 
     var ref: PullRequestRef? {
-        guard kind == .pr, let owner, let repo, let number else { return nil }
+        guard kind == .pr || kind == .issue, let owner, let repo, let number else { return nil }
         return PullRequestRef(owner: owner, repo: repo, number: number)
     }
 }
@@ -608,6 +630,7 @@ final class AppState: ObservableObject {
         if !DemoMode.active {
             loadRecents()
             loadInboxCounts()
+            loadWorkPreferences()
         }
         Task { @MainActor [weak self] in
             // Brief grace so launch-time opens (CLI, Finder) land first —
@@ -653,17 +676,39 @@ final class AppState: ObservableObject {
         adoptionKnown.insert(session.id)
         prSessions = [session]
         remoteSessions = [DemoSession.makeRemoteSession()]
+        issueSessions = [DemoSession.makeIssueSession()]
+        followedRepos = [DemoSession.followedRepo]
+        work = DemoSession.makeWork()
         selection = .prOverview(session.id)
     }
 
-    // MARK: - Review-request inbox
+    // MARK: - GitHub work (spec: github-work)
 
-    @Published var inbox: [GitHubClient.InboxPR] = []
-    /// Markdown-file counts per inbox id, cached per update stamp.
+    /// The involvement buckets and followed-repository groups the
+    /// sidebar renders, refreshed as one unit. Empty until the first
+    /// search lands (or forever, signed out).
+    @Published var work = GitHubWork.Snapshot()
+    /// Repositories whose whole open queue shows (spec §3) — a
+    /// preference, always restored.
+    @Published var followedRepos: [GitHubWork.FollowedRepo] = [] {
+        didSet {
+            UserDefaults.pullmark.set(GitHubWork.FollowedRepo.encodeList(followedRepos),
+                                      forKey: DefaultsKeys.followedRepos)
+        }
+    }
+    /// Per-item unread choices (spec §4), by item id.
+    @Published var workUnreadOverrides: [String: GitHubWork.ItemUnreadOverride] = [:] {
+        didSet {
+            UserDefaults.pullmark.set(workUnreadOverrides.mapValues(\.rawValue),
+                                      forKey: DefaultsKeys.workUnreadOverrides)
+        }
+    }
+    /// Group keys with a Show more… fetch in flight.
+    @Published var workLoadingGroups: Set<String> = []
     /// Markdown-file counts keyed by PR id. A count from a previous
     /// updatedAt keeps serving as a placeholder while the refresh
     /// re-counts — invalidating on every activity bump made the whole
-    /// inbox flash unfiltered for a beat. Persisted so launches don't
+    /// list flash unfiltered for a beat. Persisted so launches don't
     /// flash either.
     @Published var inboxMDCounts: [String: Int] = [:]
     /// id → the updatedAt the count was computed for.
@@ -674,8 +719,23 @@ final class AppState: ObservableObject {
         UserDefaults.pullmark.object(forKey: DefaultsKeys.inboxEnabled) as? Bool ?? true
     }
 
+    /// Settings › Reviewing › Group GitHub work by (spec §6).
+    var workGrouping: GitHubWork.Grouping {
+        GitHubWork.Grouping(rawValue: UserDefaults.pullmark.string(forKey: DefaultsKeys.githubGrouping) ?? "")
+            ?? .type
+    }
+
+    func loadWorkPreferences() {
+        let defaults = UserDefaults.pullmark
+        followedRepos = GitHubWork.FollowedRepo.decodeList(defaults.data(forKey: DefaultsKeys.followedRepos))
+        if let raw = defaults.dictionary(forKey: DefaultsKeys.workUnreadOverrides) as? [String: String] {
+            workUnreadOverrides = raw.compactMapValues(GitHubWork.ItemUnreadOverride.init(rawValue:))
+        }
+    }
+
     /// Search-API rate limits are tight (30/min): refresh at most every
-    /// five minutes, quietly — an inbox should never produce error alerts.
+    /// five minutes, quietly — the sidebar should never produce error
+    /// alerts.
     func refreshInboxIfDue() async {
         // Only the key window polls — N windows sharing one rate limit
         // would multiply identical searches for identical results.
@@ -683,16 +743,42 @@ final class AppState: ObservableObject {
         guard !DemoMode.active, inboxEnabled, Self.keyInstance === self else { return }
         if let last = lastInboxRefresh, Date().timeIntervalSince(last) < 300 { return }
         lastInboxRefresh = Date()
-        guard let items = try? await client.reviewRequests() else { return }
+        await refreshWork()
+    }
+
+    /// Every bucket and followed repository, first page each — five
+    /// searches plus one per repository. A signed-out or offline pass
+    /// keeps the last-known snapshot rather than blanking the sidebar.
+    func refreshWork() async {
+        var snapshot = GitHubWork.Snapshot()
+        var landed = false
+        for bucket in GitHubWork.Bucket.allCases {
+            guard let page = try? await client.searchWork(GitHubWork.bucketQuery(bucket, kind: nil)) else { continue }
+            landed = true
+            GitHubWork.merge(page.items, into: &snapshot, bucket: bucket, repoID: nil,
+                             page: 1, hasMore: page.hasMore)
+        }
+        if let reviewed = try? await client.searchWork(GitHubWork.reviewedQuery) {
+            GitHubWork.append(reviewed.items, into: &snapshot, bucket: .participating)
+        }
+        for repo in followedRepos {
+            guard let page = try? await client.searchWork(GitHubWork.repoQuery(repo)) else { continue }
+            landed = true
+            GitHubWork.merge(page.items, into: &snapshot, bucket: nil, repoID: repo.id,
+                             page: 1, hasMore: page.hasMore)
+        }
+        guard landed else { return }
+        GitHubWork.settle(&snapshot)
         // Counts FIRST, list after, published together: the visible list
         // must never show an item its filter hasn't judged yet — that
         // was the flash of unfiltered requests on every refresh. Counts
-        // from an older updatedAt serve as placeholders (top 15 counted;
-        // the long tail shows uncounted by design).
-        let liveIDs = Set(items.map(\.id))
+        // from an older updatedAt serve as placeholders (top 15 review
+        // requests counted; the long tail shows uncounted by design).
+        let requests = snapshot.items(in: .reviewRequests, kind: .pr)
+        let liveIDs = Set(snapshot.items.keys)
         var counts = inboxMDCounts.filter { liveIDs.contains($0.key) }
         var stamps = inboxCountStamps.filter { liveIDs.contains($0.key) }
-        for item in items.prefix(15) where stamps[item.id] != item.updatedAt {
+        for item in requests.prefix(15) where stamps[item.id] != item.updatedAt {
             if let count = try? await client.markdownFileCount(item.ref) {
                 counts[item.id] = count
                 stamps[item.id] = item.updatedAt
@@ -700,11 +786,36 @@ final class AppState: ObservableObject {
         }
         inboxMDCounts = counts
         inboxCountStamps = stamps
-        inbox = items
+        work = snapshot
         persistInboxCounts()
     }
 
-    func inboxMDCount(_ item: GitHubClient.InboxPR) -> Int? {
+    /// Show more… on a group: the next page appends (spec §5).
+    func loadMoreWork(bucket: GitHubWork.Bucket?, repoID: String?) {
+        let key = bucket.map(GitHubWork.Snapshot.bucketKey) ?? GitHubWork.Snapshot.repoKey(repoID ?? "")
+        guard !workLoadingGroups.contains(key) else { return }
+        let next = (work.pages[key] ?? 1) + 1
+        let query: String
+        if let bucket {
+            query = GitHubWork.bucketQuery(bucket, kind: nil)
+        } else if let repo = followedRepos.first(where: { $0.id == repoID }) {
+            query = GitHubWork.repoQuery(repo)
+        } else {
+            return
+        }
+        workLoadingGroups.insert(key)
+        Task { @MainActor [weak self] in
+            defer { self?.workLoadingGroups.remove(key) }
+            guard let self, let page = try? await self.client.searchWork(query, page: next) else { return }
+            var snapshot = self.work
+            GitHubWork.merge(page.items, into: &snapshot, bucket: bucket, repoID: repoID,
+                             page: next, hasMore: page.hasMore)
+            GitHubWork.settle(&snapshot)
+            self.work = snapshot
+        }
+    }
+
+    func inboxMDCount(_ item: GitHubWork.Item) -> Int? {
         inboxMDCounts[item.id]
     }
 
@@ -723,32 +834,211 @@ final class AppState: ObservableObject {
         }
     }
 
-    func inboxIsUnread(_ item: GitHubClient.InboxPR) -> Bool {
-        let seen = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String]
-        return seen?[item.id] != item.updatedAt
+    /// The dot (spec §3–§4): the item's own override, else the followed
+    /// repository's rule when the row sits in that group, else "changed
+    /// since you last opened it".
+    func isUnread(_ item: GitHubWork.Item, inRepo repoID: String? = nil) -> Bool {
+        let seen = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
+        let rule = repoID.flatMap { id in followedRepos.first { $0.id == id }?.unread }
+        return GitHubWork.isUnread(item, seen: seen, viewer: viewerLogin,
+                                   override: workUnreadOverrides[item.id], repoRule: rule)
     }
 
-    func openInboxItem(_ item: GitHubClient.InboxPR) {
+    func unreadCount(_ items: [GitHubWork.Item], inRepo repoID: String? = nil) -> Int {
+        items.filter { isUnread($0, inRepo: repoID) }.count
+    }
+
+    func markWorkItemSeen(_ item: GitHubWork.Item) {
         var seen = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.inboxSeen) as? [String: String] ?? [:]
         seen[item.id] = item.updatedAt
-        // Bounded, but never pruned against the current (single-page) inbox
-        // — that resurrected read state for anything briefly absent.
-        if seen.count > 200 {
-            let live = Set(inbox.map(\.id))
+        // Bounded, but never pruned against the current (single-page)
+        // lists — that resurrected read state for anything briefly absent.
+        if seen.count > 400 {
+            let live = Set(work.items.keys)
             for key in seen.keys where !live.contains(key) {
                 seen[key] = nil
-                if seen.count <= 200 { break }
+                if seen.count <= 400 { break }
             }
         }
         UserDefaults.pullmark.set(seen, forKey: DefaultsKeys.inboxSeen)
         objectWillChange.send()
-        Task {
-            do {
-                try await addPR("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)")
-            } catch {
-                lastError = error.localizedDescription
+    }
+
+    /// Click on a bucket or repository row: mark seen, open as a session.
+    func openWorkItem(_ item: GitHubWork.Item) {
+        markWorkItemSeen(item)
+        switch item.kind {
+        case .pr:
+            Task {
+                do {
+                    try await addPR("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)")
+                } catch {
+                    lastError = error.localizedDescription
+                }
             }
+        case .issue:
+            Task { await openIssue(item.ref) }
         }
+    }
+
+    func setWorkUnreadOverride(_ override: GitHubWork.ItemUnreadOverride?, for itemID: String) {
+        workUnreadOverrides[itemID] = override
+    }
+
+    func followRepo(_ repo: GitHubWork.FollowedRepo) {
+        guard !followedRepos.contains(where: { $0.id == repo.id }) else { return }
+        followedRepos.append(repo)
+        // The new group deserves its first page now, not in five minutes.
+        lastInboxRefresh = nil
+        Task { await refreshInboxIfDue() }
+    }
+
+    func unfollowRepo(id: String) {
+        followedRepos.removeAll { $0.id == id }
+        work.repoGroups[id] = nil
+        work.moreAvailable.remove(GitHubWork.Snapshot.repoKey(id))
+    }
+
+    func setRepoUnreadRule(_ rule: GitHubWork.UnreadRule, for id: String) {
+        guard let index = followedRepos.firstIndex(where: { $0.id == id }) else { return }
+        followedRepos[index].unread = rule
+    }
+
+    /// Repositories already open somewhere — Follow Repository…'s pick
+    /// list: checkouts with a GitHub remote, pull requests, browsed
+    /// repos, and anything in the buckets — minus those already followed.
+    var knownRepositories: [GitHubWork.FollowedRepo] {
+        var seen: Set<String> = Set(followedRepos.map(\.id))
+        var result: [GitHubWork.FollowedRepo] = []
+        func add(_ owner: String, _ repo: String) {
+            let candidate = GitHubWork.FollowedRepo(owner: owner, repo: repo)
+            guard seen.insert(candidate.id).inserted else { return }
+            result.append(candidate)
+        }
+        for folder in folders { if let id = folder.git?.primaryGitHubRepo { add(id.owner, id.repo) } }
+        for session in prSessions { add(session.ref.owner, session.ref.repo) }
+        for session in issueSessions { add(session.ref.owner, session.ref.repo) }
+        for session in remoteSessions { add(session.ref.owner, session.ref.repo) }
+        for item in work.items.values.sorted(by: { $0.updatedAt > $1.updatedAt }) { add(item.ref.owner, item.ref.repo) }
+        return result
+    }
+
+    // MARK: - Issues (spec: github-work §8)
+
+    @Published var issueSessions: [IssueSession] = [] {
+        didSet { scheduleSessionSnapshot() }
+    }
+    /// Issues from the previous snapshot that haven't reopened yet —
+    /// kept in every new snapshot so an offline launch can't erase them.
+    private var pendingRestoreIssues: Set<String> = []
+
+    func issueSession(_ id: String) -> IssueSession? {
+        issueSessions.first { $0.id == id }
+    }
+
+    /// Opens an issue as a document: details, then its timeline, then the
+    /// viewer-relative comment state. A number that turns out to be a
+    /// pull request opens as one.
+    func openIssue(_ ref: PullRequestRef, select: Bool = true) async {
+        restoreOffer = false
+        if let existing = issueSessions.first(where: { $0.ref == ref }) {
+            if select { selection = .issue(existing.id) }
+            return
+        }
+        let label = "\(ref.owner)/\(ref.repo)#\(ref.number)"
+        do {
+            let details = try await client.issue(ref)
+            if details.pullRequest != nil {
+                try await addPR(label, select: select)
+                return
+            }
+            var session = IssueSession(ref: ref, details: details)
+            do {
+                let (comments, etag) = try await client.issueCommentsIfChanged(ref, etag: nil)
+                session.comments = comments ?? []
+                session.commentsETag = etag
+            } catch {
+                session.conversationUnavailable = true
+            }
+            session.commentMeta = (try? await client.issueCommentMeta(ref)) ?? [:]
+            if let existing = issueSessions.first(where: { $0.ref == ref }) {
+                if select { selection = .issue(existing.id) }
+                return
+            }
+            issueSessions.append(session)
+            pendingRestoreIssues.remove(session.id)
+            if select { selection = .issue(session.id) }
+            noteRecent(RecentItem(kind: .issue, owner: ref.owner, repo: ref.repo, number: ref.number,
+                                  title: details.title, lastOpened: Date()))
+        } catch {
+            lastError = Self.remoteFailureMessage(error, what: label)
+        }
+    }
+
+    func removeIssue(_ id: String) {
+        issueSessions.removeAll { $0.id == id }
+        pendingRestoreIssues.remove(id)
+        if case .issue(let s) = selection, s == id { selection = nil }
+    }
+
+    func closeAllIssueSessions() {
+        for session in issueSessions { removeIssue(session.id) }
+    }
+
+    /// The quiet tick for the issue on screen: comments by ETag (a 304
+    /// is free), meta alongside. Failures keep last-known state.
+    func refreshIssue(sessionID: String) async {
+        guard let session = issueSession(sessionID) else { return }
+        do {
+            let (comments, freshTag) = try await client.issueCommentsIfChanged(session.ref, etag: session.commentsETag)
+            guard let index = issueSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+            if let comments {
+                issueSessions[index].comments = comments
+                issueSessions[index].commentMeta = (try? await client.issueCommentMeta(session.ref))
+                    ?? issueSessions[index].commentMeta
+            }
+            issueSessions[index].commentsETag = freshTag
+            issueSessions[index].conversationUnavailable = false
+        } catch {
+            // Last-known timeline stays; the tick retries later.
+        }
+        if let details = try? await client.issue(session.ref),
+           let index = issueSessions.firstIndex(where: { $0.id == sessionID }) {
+            issueSessions[index].details = details
+        }
+    }
+
+    func applyPostedIssueComment(sessionID: String, comment: IssueComment) {
+        guard let index = issueSessions.firstIndex(where: { $0.id == sessionID }),
+              !issueSessions[index].comments.contains(where: { $0.id == comment.id })
+        else { return }
+        issueSessions[index].comments.append(comment)
+        issueSessions[index].conversationUnavailable = false
+    }
+
+    func applyIssueCommentEdit(sessionID: String, commentID: Int, body: String) {
+        guard let index = issueSessions.firstIndex(where: { $0.id == sessionID }),
+              let at = issueSessions[index].comments.firstIndex(where: { $0.id == commentID })
+        else { return }
+        issueSessions[index].comments[at].body = body
+        issueSessions[index].commentMeta[commentID]?.edited = true
+    }
+
+    func applyIssueCommentDelete(sessionID: String, commentID: Int) {
+        guard let index = issueSessions.firstIndex(where: { $0.id == sessionID }) else { return }
+        issueSessions[index].comments.removeAll { $0.id == commentID }
+    }
+
+    func applyIssueReaction(sessionID: String, commentID: Int, content: String, reacted: Bool) {
+        guard let index = issueSessions.firstIndex(where: { $0.id == sessionID }),
+              let at = issueSessions[index].comments.firstIndex(where: { $0.id == commentID })
+        else { return }
+        let updated = CommentReactions.applied(
+            rollup: issueSessions[index].comments[at].reactions ?? ReactionRollup(),
+            viewerReacted: issueSessions[index].commentMeta[commentID]?.viewerReacted ?? [],
+            content: content, reacted: reacted)
+        issueSessions[index].comments[at].reactions = updated.rollup
+        issueSessions[index].commentMeta[commentID]?.viewerReacted = updated.viewerReacted
     }
 
     // MARK: - Session restore
@@ -782,6 +1072,9 @@ final class AppState: ObservableObject {
         var files: [String]
         var folders: [Folder]
         var prs: [String]
+        /// Opened issues (spec: github-work §8); optional so older
+        /// snapshots keep decoding.
+        var issues: [String]? = nil
         /// Optional so pre-0.26 snapshots (and pre-0.26 apps reading newer
         /// snapshots) keep decoding. Refs restore unresolved — the SHA is
         /// re-resolved on first selection, never at launch.
@@ -827,6 +1120,7 @@ final class AppState: ObservableObject {
                       expanded: Array($0.expandedPaths), alias: $0.alias)
             },
             prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) },
+            issues: issueSessions.map(\.id) + pendingRestoreIssues.filter { id in !issueSessions.contains { $0.id == id } },
             remotes: remoteSessions.map {
                 .init(owner: $0.ref.owner, repo: $0.ref.repo, ref: $0.displayRef, docs: $0.docs)
             },
@@ -908,6 +1202,11 @@ final class AppState: ObservableObject {
             preview = .local(file)
         }
         selection = nil
+        pendingRestoreIssues = Set(snapshot.issues ?? [])
+        for id in pendingRestoreIssues where issueSession(id) == nil {
+            guard let ref = PullRequestRef.parse(id) else { continue }
+            Task { [weak self] in await self?.openIssue(ref, select: false) }
+        }
         pendingRestorePRs = Set(snapshot.prs)
         for pr in pendingRestorePRs {
             Task { [weak self] in
@@ -989,6 +1288,9 @@ final class AppState: ObservableObject {
         case .prDoc(let id, let path):
             guard session(id) != nil else { return nil }
             return (.prDoc, "prDoc:" + id + "|" + path)
+        case .issue(let id):
+            guard issueSession(id) != nil else { return nil }
+            return (.issue, "issue:" + id)
         case .remoteRepo(let id):
             guard let session = remoteSession(id),
                   let readme = session.treePaths.flatMap({ PathTree.readmePath(in: $0) })
@@ -1096,6 +1398,8 @@ final class AppState: ObservableObject {
             removeFolder(root)
         case .prOverview(let id):
             removePR(id)
+        case .issue(let id):
+            removeIssue(id)
         case .remoteRepo(let id):
             removeRemoteSession(id)
         case .recentItem(let id):
@@ -1218,6 +1522,9 @@ final class AppState: ObservableObject {
         case .prOverview(let id):
             guard let session = session(id) else { return nil }
             return ("\(session.ref.repo) #\(session.ref.number)", "arrow.triangle.pull")
+        case .issue(let id):
+            guard let session = issueSession(id) else { return nil }
+            return ("\(session.ref.repo) #\(session.ref.number)", "smallcircle.filled.circle")
         case .prFile(_, let path), .prDoc(_, let path):
             return ((path as NSString).lastPathComponent, "doc.text")
         case .remoteRepo(let id):
@@ -1240,6 +1547,7 @@ final class AppState: ObservableObject {
         }
         switch selection {
         case .prOverview: return ("Pull request", "arrow.triangle.pull")
+        case .issue: return ("Issue", "smallcircle.filled.circle")
         case .remoteRepo: return ("Repository", "book.closed")
         default: return ("Document", "doc.text")
         }
@@ -1319,6 +1627,13 @@ final class AppState: ObservableObject {
                 } catch {
                     lastError = error.localizedDescription
                 }
+            }
+        case .issue(let id):
+            guard issueSession(id) == nil, let ref = PullRequestRef.parse(id) else { return }
+            historyRevival = destination
+            Task {
+                defer { if historyRevival == destination { historyRevival = nil } }
+                await openIssue(ref, select: false)
             }
         case .remoteRepo(let id), .remoteDoc(let id, _):
             // The session ID is "owner/repo@ref" — recreate the session
@@ -2320,6 +2635,10 @@ final class AppState: ObservableObject {
     /// poll: N windows share one rate limit.
     func refreshCockpitIfDue() async {
         guard !DemoMode.active, Self.keyInstance === self else { return }
+        if case .issue(let id) = selection {
+            await refreshIssue(sessionID: id)
+            return
+        }
         guard let sessionID = frontmostPRSessionID() else { return }
         await refreshCockpit(sessionID: sessionID)
     }
@@ -2494,6 +2813,9 @@ final class AppState: ObservableObject {
                     lastError = error.localizedDescription
                 }
             }
+        case .issue:
+            guard let ref = item.ref else { return }
+            Task { await openIssue(ref) }
         }
     }
 

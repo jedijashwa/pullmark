@@ -206,7 +206,6 @@
 "Hide Markdown Source" = "Masquer la source Markdown";
 "Hide Outline" = "Masquer le plan";
 "Hide Resolved Conversations" = "Masquer les conversations résolues";
-"Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Masque les demandes de révision sans fichier Markdown — PullMark n'a rien à y montrer";
 "History" = "Historique";
 "History (25 most recent)" = "Historique (25 derniers)";
 "Home" = "Début";
@@ -271,7 +270,6 @@
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "Les notes sont écrites pour que les agents puissent les lire et agir dessus. Collez l'extrait dans le fichier d'instructions de votre agent (CLAUDE.md, AGENTS.md, …) et « traite les notes de marge de ce fichier » suffit comme passation.";
 "OK" = "OK";
 "Off shows a quiet banner instead — the notes stay one click away" = "Désactivé, une discrète bannière prend le relais — les notes restent à un clic";
-"Only requests that change Markdown" = "Uniquement les demandes qui modifient du Markdown";
 "Open" = "Ouvrir";
 "Open %@ Separately" = "Ouvrir %@ à part";
 "Open Branch Separately" = "Ouvrir la branche à part";
@@ -299,7 +297,6 @@
 "Open in PullMark" = "Ouvrir dans PullMark";
 "Open local Markdown files or a folder" = "Ouvrir des fichiers Markdown locaux ou un dossier";
 "Open on GitHub" = "Ouvrir sur GitHub";
-"Open pull requests where your review is requested" = "Les pull requests ouvertes où votre révision est demandée";
 "Open the review — pending comments, summary, and verdict" = "Ouvre la révision — commentaires en attente, résumé et verdict";
 "Opens the release page on GitHub" = "Ouvre la page de la version sur GitHub";
 "Opens the release page on GitHub to update manually" = "Ouvre la page de la version sur GitHub pour mettre à jour manuellement";
@@ -419,7 +416,6 @@
 "Show hidden files" = "Afficher les fichiers cachés";
 "Show or hide the document outline" = "Afficher ou masquer le plan du document";
 "Show review discussion on the PR overview" = "Afficher la discussion de révision dans la vue d'ensemble de la PR";
-"Show review requests in the sidebar" = "Afficher les demandes de révision dans la barre latérale";
 "Show the next document" = "Affiche le document suivant";
 "Show the previous document" = "Affiche le document précédent";
 "Show the raw Markdown behind the rendered document" = "Affiche le Markdown brut derrière le document rendu";
@@ -695,7 +691,6 @@
 "Recent" = "Récent";
 "Recording — press the new shortcut" = "Enregistrement — appuyez sur le nouveau raccourci";
 "Reload this document" = "Recharger ce document";
-"Review requested · %@/%@#%lld" = "Révision demandée · %@/%@#%lld";
 "Review these changes — summary, verdict, and your pending comments" = "Réviser ces modifications — résumé, verdict et vos commentaires en attente";
 "Save As…" = "Enregistrer sous…";
 "Share a link to this document on GitHub" = "Partager un lien vers ce document sur GitHub";
@@ -733,3 +728,43 @@
 "%@ is no longer at %@." = "%@ n'est plus dans %@.";
 "Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "Les fichiers, dossiers, pull requests et dépôts parcourus reviennent tels quels ; les éléments épinglés reviennent toujours";
 "PullMark didn't quit normally. Restore the previous session?" = "PullMark ne s'est pas fermé normalement. Restaurer la session précédente ?";
+
+// GitHub work: buckets, followed repositories, issues (spec: github-work)
+"%lld items" = "%lld éléments";
+"Already open" = "Déjà ouverts";
+"Always" = "Toujours";
+"Assigned" = "Assignés";
+"Could not post the comment — the issue is no longer open in PullMark. Your text was kept as a draft." = "Impossible de publier le commentaire : l'issue n'est plus ouverte dans PullMark. Votre texte a été conservé comme brouillon.";
+"Created" = "Créés";
+"Every open pull request and issue in the repository joins the sidebar, most recently updated first." = "Chaque pull request et issue ouverte du dépôt rejoint la barre latérale, les plus récemment mises à jour d'abord.";
+"Everything" = "Tout";
+"Follow" = "Suivre";
+"Follow Repository" = "Suivre le dépôt";
+"Follow Repository…" = "Suivre le dépôt…";
+"Group GitHub work by:" = "Grouper le travail GitHub par :";
+"Hide pull requests with no Markdown files — PullMark has nothing to show for them" = "Masquer les pull requests sans fichiers Markdown — PullMark n'a rien à en montrer";
+"Involvement" = "Implication";
+"Issue" = "Issue";
+"Issues" = "Issues";
+"Never" = "Jamais";
+"Only Mine" = "Seulement les miens";
+"Only pull requests that change Markdown" = "Seulement les pull requests qui modifient du Markdown";
+"Participating" = "Participation";
+"Reaction state unavailable — try again in a moment." = "État des réactions indisponible — réessayez dans un instant.";
+"Review requests, what you created or are assigned, threads you take part in — and any repositories you follow" = "Demandes de relecture, ce que vous avez créé ou qui vous est assigné, les fils où vous intervenez — et les dépôts que vous suivez";
+"Share a link to this issue" = "Partager un lien vers cette issue";
+"Show more…" = "Afficher plus…";
+"Show pull requests and issues that involve you" = "Afficher les pull requests et issues qui vous concernent";
+"Type" = "Type";
+"Type keeps a Pull Requests section and an Issues section; Involvement mixes both kinds in one GitHub section" = "Type garde une section Pull requests et une section Issues ; Implication mélange les deux dans une seule section GitHub";
+"Unfollow" = "Ne plus suivre";
+"Unread" = "Non lu";
+"Use Repository Setting" = "Utiliser le réglage du dépôt";
+"assigned" = "assigné";
+"closed" = "fermée";
+"draft" = "brouillon";
+"owner/repository or github.com URL" = "propriétaire/dépôt ou URL github.com";
+"participating" = "participation";
+"review requested" = "relecture demandée";
+"yours" = "à vous";
+"Comment on the issue" = "Commenter l'issue";

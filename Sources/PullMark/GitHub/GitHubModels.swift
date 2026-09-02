@@ -20,6 +20,39 @@ struct PullRequestDetails: Decodable {
     let user: User?
 }
 
+/// An issue opened as a document (spec: github-work §8) — the REST
+/// `/issues/{n}` shape the issue view needs: body, state, author,
+/// labels, and the page to share.
+struct IssueDetails: Decodable, Equatable {
+    struct User: Decodable, Equatable {
+        let login: String
+    }
+    struct Label: Decodable, Equatable, Identifiable {
+        let name: String
+        /// Six hex digits, no "#".
+        let color: String?
+        var id: String { name }
+    }
+    let number: Int
+    let title: String
+    let body: String?
+    /// "open" / "closed".
+    let state: String
+    /// "completed" / "not_planned" / "reopened" / null.
+    let stateReason: String?
+    let htmlUrl: URL
+    let user: User?
+    let createdAt: String?
+    var labels: [Label]? = nil
+    /// Present when a "pull request" came back from the issues endpoint
+    /// — the issue view must never open one of those.
+    var pullRequest: PullRequestMarker? = nil
+
+    struct PullRequestMarker: Decodable, Equatable {}
+
+    var isClosed: Bool { state.lowercased() == "closed" }
+}
+
 struct PullRequestFile: Decodable, Identifiable, Equatable {
     let filename: String
     let status: String

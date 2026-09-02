@@ -3685,7 +3685,9 @@
     root.className = "pm-reply-composer pm-conversation-composer";
     var ta = document.createElement("textarea");
     ta.className = "pm-composer-text";
-    ta.placeholder = pmString("Comment on the pull request conversation");
+    ta.placeholder = payload.conversationSubject === "issue"
+      ? pmString("Comment on the issue")
+      : pmString("Comment on the pull request conversation");
     ta.rows = 2;
     var actions = document.createElement("div");
     actions.className = "pm-composer-actions";

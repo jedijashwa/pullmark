@@ -199,6 +199,7 @@ struct SearchPalette: View {
         case .local: return "doc.text"
         case .folder, .folderNode: return "folder"
         case .prFile, .prDoc, .prOverview: return "arrow.triangle.pull"
+        case .issue: return "smallcircle.filled.circle"
         case .remoteRepo, .remoteDoc: return "book.closed"
         case .inboxItem, .recentItem: return "clock"
         case .pinnedFile: return "pin"

@@ -209,7 +209,6 @@
 "Hide Markdown Source" = "Markdown ソースを非表示";
 "Hide Outline" = "アウトラインを非表示";
 "Hide Resolved Conversations" = "解決済みの会話を非表示";
-"Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Markdown ファイルを含まないレビューリクエストを隠します — PullMark に見せられるものがないからです";
 "History" = "履歴";
 "History (25 most recent)" = "履歴 (最近の 25 件)";
 "Home" = "Home";
@@ -274,7 +273,6 @@
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "ノートは、エージェントが読んで対応できるように書かれています。スニペットをエージェントの指示ファイル（CLAUDE.md、AGENTS.md、…）に貼り付ければ、「このファイルのマージンノートに対応して」だけで受け渡しが完結します。";
 "OK" = "OK";
 "Off shows a quiet banner instead — the notes stay one click away" = "オフにすると控えめなバナーに変わります — ノートはワンクリック先のままです";
-"Only requests that change Markdown" = "Markdown を変更するリクエストのみ";
 "Open" = "開く";
 "Open %@ Separately" = "%@ を別に開く";
 "Open Branch Separately" = "ブランチを別に開く";
@@ -302,7 +300,6 @@
 "Open in PullMark" = "PullMark で開く";
 "Open local Markdown files or a folder" = "ローカルの Markdown ファイルまたはフォルダを開きます";
 "Open on GitHub" = "GitHub で開く";
-"Open pull requests where your review is requested" = "あなたのレビューが求められているオープンなプルリクエスト";
 "Open the review — pending comments, summary, and verdict" = "レビューを開きます — 保留中のコメント、要約、判定";
 "Opens the release page on GitHub" = "GitHub のリリースページを開きます";
 "Opens the release page on GitHub to update manually" = "手動で更新するために GitHub のリリースページを開きます";
@@ -422,7 +419,6 @@
 "Show hidden files" = "隠しファイルを表示";
 "Show or hide the document outline" = "文書のアウトラインを表示／非表示にします";
 "Show review discussion on the PR overview" = "PR の概要にレビューの議論を表示する";
-"Show review requests in the sidebar" = "サイドバーにレビューリクエストを表示する";
 "Show the next document" = "次の文書を表示します";
 "Show the previous document" = "前の文書を表示します";
 "Show the raw Markdown behind the rendered document" = "レンダリングされた文書の背後にある生の Markdown を表示します";
@@ -698,7 +694,6 @@
 "Recent" = "最近使った項目";
 "Recording — press the new shortcut" = "記録中 — 新しいショートカットを押してください";
 "Reload this document" = "この文書を再読み込みします";
-"Review requested · %@/%@#%lld" = "レビュー依頼 · %@/%@#%lld";
 "Review these changes — summary, verdict, and your pending comments" = "これらの変更をレビューします — 要約、判定、そしてあなたの保留中のコメント";
 "Save As…" = "別名で保存…";
 "Share a link to this document on GitHub" = "GitHub 上のこの文書へのリンクを共有します";
@@ -736,3 +731,43 @@
 "%@ is no longer at %@." = "%@ は %@ にはもうありません。";
 "Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "ファイル、フォルダ、プルリクエスト、閲覧したリポジトリを前回のまま開き直します。ピン留めした項目は常に復元されます";
 "PullMark didn't quit normally. Restore the previous session?" = "PullMark は正常に終了しませんでした。前回のセッションを復元しますか？";
+
+// GitHub work: buckets, followed repositories, issues (spec: github-work)
+"%lld items" = "%lld 件";
+"Already open" = "開いているもの";
+"Always" = "常に";
+"Assigned" = "担当";
+"Could not post the comment — the issue is no longer open in PullMark. Your text was kept as a draft." = "コメントを投稿できませんでした。この Issue は PullMark で開かれていません。入力内容は下書きとして保持しました。";
+"Created" = "作成";
+"Every open pull request and issue in the repository joins the sidebar, most recently updated first." = "リポジトリ内の開いているプルリクエストと Issue がすべてサイドバーに表示されます（更新が新しい順）。";
+"Everything" = "すべて";
+"Follow" = "フォロー";
+"Follow Repository" = "リポジトリをフォロー";
+"Follow Repository…" = "リポジトリをフォロー…";
+"Group GitHub work by:" = "GitHub の作業をグループ化:";
+"Hide pull requests with no Markdown files — PullMark has nothing to show for them" = "Markdown ファイルのないプルリクエストを非表示にします。PullMark には表示するものがありません";
+"Involvement" = "関わり";
+"Issue" = "Issue";
+"Issues" = "Issue";
+"Never" = "しない";
+"Only Mine" = "自分のもののみ";
+"Only pull requests that change Markdown" = "Markdown を変更するプルリクエストのみ";
+"Participating" = "参加中";
+"Reaction state unavailable — try again in a moment." = "リアクションの状態を取得できません。しばらくしてからもう一度お試しください。";
+"Review requests, what you created or are assigned, threads you take part in — and any repositories you follow" = "レビュー依頼、作成または担当しているもの、参加しているスレッド、そしてフォロー中のリポジトリ";
+"Share a link to this issue" = "この Issue へのリンクを共有";
+"Show more…" = "さらに表示…";
+"Show pull requests and issues that involve you" = "自分に関わるプルリクエストと Issue を表示";
+"Type" = "種類";
+"Type keeps a Pull Requests section and an Issues section; Involvement mixes both kinds in one GitHub section" = "「種類」はプルリクエストと Issue を別々のセクションに分け、「関わり」は両方をひとつの GitHub セクションにまとめます";
+"Unfollow" = "フォロー解除";
+"Unread" = "未読";
+"Use Repository Setting" = "リポジトリの設定を使用";
+"assigned" = "担当";
+"closed" = "クローズ";
+"draft" = "ドラフト";
+"owner/repository or github.com URL" = "owner/repository または github.com の URL";
+"participating" = "参加中";
+"review requested" = "レビュー依頼";
+"yours" = "自分";
+"Comment on the issue" = "この Issue にコメント";

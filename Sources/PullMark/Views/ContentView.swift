@@ -200,6 +200,7 @@ struct ContentView: View {
         case .prFile: return "main-pr-file"
         case .prDoc: return "main-pr-doc"
         case .prOverview: return "main-pr-overview"
+        case .issue: return "main-issue"
         case nil: return "main"
         }
     }
@@ -240,6 +241,8 @@ struct SidebarView: View {
     @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
     @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
     @SceneStorage(DefaultsKeys.sidebarPinnedExpanded) private var pinnedExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarIssuesExpanded) private var issuesExpanded = true
+    @State private var showFollowRepo = false
     /// Space → Quick Look on the selected local row (spec §8.2).
     @State private var quickLookURL: URL?
 
@@ -349,53 +352,44 @@ struct SidebarView: View {
                 }
                 .onMove { from, to in state.remoteSessions.move(fromOffsets: from, toOffset: to) }
             }
-            CollapsibleSection(String(localized: "Pull Requests"), isExpanded: $prsExpanded.preloadingOutlineRowsBeforeCollapse(),
-                               headerActions: [
-                SectionHeaderAction(id: "add-pr", symbol: "plus",
-                                    help: String(localized: "Open Pull Request…")) { state.showAddPR = true }
-            ], headerMenu: {
-                AnyView(Group {
-                    Button("Open Pull Request…") { state.showAddPR = true }
-                    Button("Close All") { state.closeAllPRSessions() }
-                        .disabled(state.prSessions.isEmpty)
-                })
-            }) {
-                if state.prSessions.isEmpty {
-                    Button("Open Pull Request…") { state.showAddPR = true }
-                        .font(fonts.callout)
+            // GitHub work (spec: github-work): opened sessions, involvement
+            // buckets, followed repositories — grouped by type (a Pull
+            // Requests section and an Issues section) or by involvement
+            // (one GitHub section, both kinds mixed, glyph per row).
+            if state.workGrouping == .involvement {
+                CollapsibleSection(String(localized: "GitHub"),
+                                   isExpanded: $prsExpanded.preloadingOutlineRowsBeforeCollapse(),
+                                   headerActions: [addPRAction],
+                                   headerMenu: { AnyView(githubHeaderMenu) }) {
+                    if state.prSessions.isEmpty, state.issueSessions.isEmpty {
+                        Button("Open Pull Request…") { state.showAddPR = true }
+                            .font(fonts.callout)
+                    }
+                    openedPRSessions
+                    openedIssueSessions
+                    workBuckets(kind: nil)
+                    followedRepoGroups(kind: nil)
                 }
-                ForEach(state.prSessions) { session in
-                    PRSidebarGroup(session: session)
+            } else {
+                CollapsibleSection(String(localized: "Pull Requests"),
+                                   isExpanded: $prsExpanded.preloadingOutlineRowsBeforeCollapse(),
+                                   headerActions: [addPRAction],
+                                   headerMenu: { AnyView(prHeaderMenu) }) {
+                    if state.prSessions.isEmpty {
+                        Button("Open Pull Request…") { state.showAddPR = true }
+                            .font(fonts.callout)
+                    }
+                    openedPRSessions
+                    workBuckets(kind: .pr)
+                    followedRepoGroups(kind: .pr)
                 }
-                .onMove { from, to in state.prSessions.move(fromOffsets: from, toOffset: to) }
-                // The inbox is a facet of pull requests, not its own
-                // category — a subgroup whose unread count keeps demotion
-                // honest even collapsed.
-                if inboxEnabled, !visibleInbox.isEmpty {
-                    DisclosureGroup(isExpanded: $inboxExpanded) {
-                        ForEach(visibleInbox) { item in
-                            InboxRow(item: item)
-                                .tag(SidebarSelection.inboxItem(item.id))
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Label {
-                                Text("Review Requests")
-                                    .font(fonts.row)
-                            } icon: {
-                                Image(systemName: "tray")
-                                    .foregroundStyle(.secondary)
-                            }
-                            let unread = visibleInbox.filter(state.inboxIsUnread).count
-                            if unread > 0 {
-                                Spacer(minLength: 2)
-                                Text("\(unread)")
-                                    .font(fonts.caption)
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityLabel("\(unread) unread")
-                            }
-                        }
+                if !state.issueSessions.isEmpty || hasIssueWork {
+                    CollapsibleSection(String(localized: "Issues"),
+                                       isExpanded: $issuesExpanded.preloadingOutlineRowsBeforeCollapse(),
+                                       headerMenu: { AnyView(issuesHeaderMenu) }) {
+                        openedIssueSessions
+                        workBuckets(kind: .issue)
+                        followedRepoGroups(kind: .issue)
                     }
                 }
             }
@@ -417,6 +411,7 @@ struct SidebarView: View {
         // Return renames the selected root or pinned file (spec: pinned-
         // and-session-reopen §2).
         .background(RenameKeyMonitor(state: state))
+        .sheet(isPresented: $showFollowRepo) { FollowRepoSheet() }
         // ⌫ removes the selected removable item (spec §4).
         .onDeleteCommand { state.removeSelectedSidebarItem() }
         .modifier(SpaceQuickLook(url: $quickLookURL, selected: selectedLocalURL))
@@ -431,9 +426,104 @@ struct SidebarView: View {
     /// With Markdown-only on (default), review requests PullMark can't
     /// render stay hidden; a PR whose file count is still loading shows
     /// until the count proves it Markdown-free.
-    private var visibleInbox: [GitHubClient.InboxPR] {
-        guard inboxMarkdownOnly else { return state.inbox }
-        return state.inbox.filter { (state.inboxMDCount($0) ?? 1) > 0 }
+    // MARK: GitHub work (spec: github-work)
+
+    private var addPRAction: SectionHeaderAction {
+        SectionHeaderAction(id: "add-pr", symbol: "plus",
+                            help: String(localized: "Open Pull Request…")) { state.showAddPR = true }
+    }
+
+    @ViewBuilder private var prHeaderMenu: some View {
+        Button("Open Pull Request…") { state.showAddPR = true }
+        Button("Follow Repository…") { showFollowRepo = true }
+        Button("Close All") { state.closeAllPRSessions() }
+            .disabled(state.prSessions.isEmpty)
+    }
+
+    @ViewBuilder private var issuesHeaderMenu: some View {
+        Button("Follow Repository…") { showFollowRepo = true }
+        Button("Close All") { state.closeAllIssueSessions() }
+            .disabled(state.issueSessions.isEmpty)
+    }
+
+    @ViewBuilder private var githubHeaderMenu: some View {
+        Button("Open Pull Request…") { state.showAddPR = true }
+        Button("Follow Repository…") { showFollowRepo = true }
+        Button("Close All") {
+            state.closeAllPRSessions()
+            state.closeAllIssueSessions()
+        }
+        .disabled(state.prSessions.isEmpty && state.issueSessions.isEmpty)
+    }
+
+    private var openedPRSessions: some View {
+        ForEach(state.prSessions) { session in
+            PRSidebarGroup(session: session)
+        }
+        .onMove { from, to in state.prSessions.move(fromOffsets: from, toOffset: to) }
+    }
+
+    private var openedIssueSessions: some View {
+        ForEach(state.issueSessions) { session in
+            IssueSidebarRow(session: session)
+        }
+        .onMove { from, to in state.issueSessions.move(fromOffsets: from, toOffset: to) }
+    }
+
+    /// A bucket's visible rows: pull requests honor the Markdown-only
+    /// filter (issues have no files to filter by).
+    private func bucketItems(_ bucket: GitHubWork.Bucket, kind: GitHubWork.Kind?) -> [GitHubWork.Item] {
+        let items = kind.map { state.work.items(in: bucket, kind: $0) } ?? state.work.items(in: bucket)
+        guard inboxMarkdownOnly else { return items }
+        return items.filter { $0.kind == .issue || (state.inboxMDCount($0) ?? 1) > 0 }
+    }
+
+    /// Empty buckets stay hidden (spec §2).
+    @ViewBuilder private func workBuckets(kind: GitHubWork.Kind?) -> some View {
+        if inboxEnabled {
+            let buckets = kind.map(GitHubWork.Bucket.buckets(for:)) ?? GitHubWork.Bucket.allCases
+            ForEach(buckets) { bucket in
+                let items = bucketItems(bucket, kind: kind)
+                if !items.isEmpty {
+                    WorkGroup(title: Self.bucketTitle(bucket), systemImage: Self.bucketSymbol(bucket),
+                              items: items, bucket: bucket, showsKind: kind == nil,
+                              moreKey: GitHubWork.Snapshot.bucketKey(bucket))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func followedRepoGroups(kind: GitHubWork.Kind?) -> some View {
+        if inboxEnabled {
+            ForEach(state.followedRepos) { repo in
+                FollowedRepoGroup(repo: repo, kind: kind)
+            }
+        }
+    }
+
+    /// Whether the type layout has an Issues section to show at all.
+    private var hasIssueWork: Bool {
+        guard inboxEnabled else { return false }
+        return GitHubWork.Bucket.buckets(for: .issue).contains { !state.work.items(in: $0, kind: .issue).isEmpty }
+            || state.followedRepos.contains { !state.work.items(inRepo: $0.id, kind: .issue).isEmpty }
+    }
+
+    static func bucketTitle(_ bucket: GitHubWork.Bucket) -> String {
+        switch bucket {
+        case .reviewRequests: return String(localized: "Review Requests")
+        case .created: return String(localized: "Created")
+        case .assigned: return String(localized: "Assigned")
+        case .participating: return String(localized: "Participating")
+        }
+    }
+
+    static func bucketSymbol(_ bucket: GitHubWork.Bucket) -> String {
+        switch bucket {
+        case .reviewRequests: return "tray"
+        case .created: return "pencil.circle"
+        case .assigned: return "person.crop.circle"
+        case .participating: return "bubble.left.and.bubble.right"
+        }
     }
 
     /// Recents not already visible in the sidebar — a file under an open
@@ -450,6 +540,9 @@ struct SidebarView: View {
             case .pr:
                 guard let ref = item.ref else { return false }
                 return !state.prSessions.contains { $0.ref == ref }
+            case .issue:
+                guard let ref = item.ref else { return false }
+                return !state.issueSessions.contains { $0.ref == ref }
             }
         }
     }
@@ -1370,59 +1463,6 @@ private struct CollapsibleSection<Content: View>: View {
     }
 }
 
-/// A review-requested PR: unread dot, title over repo#number, and a
-/// Markdown-file badge. A real selectable row (spec §1): click opens,
-/// arrow keys merely select, the context menu offers Open and GitHub.
-private struct InboxRow: View {
-    @EnvironmentObject private var state: AppState
-    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
-    let item: GitHubClient.InboxPR
-
-    var body: some View {
-        let fonts = ChromeFonts(zoom: zoom)
-        HStack(spacing: 6) {
-            Circle()
-                .fill(Color.accentColor)
-                .frame(width: 6, height: 6)
-                .opacity(state.inboxIsUnread(item) ? 1 : 0)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(item.title)
-                    .lineLimit(1)
-                    .font(fonts.row)
-                    .fontWeight(state.inboxIsUnread(item) ? .semibold : .regular)
-                Text("\(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"
-                    + (item.draft ? " · draft" : ""))
-                    .font(fonts.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if let count = state.inboxMDCount(item), count > 0 {
-                Label("\(count)", systemImage: "doc.text")
-                    .font(fonts.caption)
-                    .foregroundStyle(.secondary)
-                    .labelStyle(.titleAndIcon)
-                    .help(count == 1 ? String(localized: "1 Markdown file") : String(localized: "\(count) Markdown files"))
-            }
-        }
-        .contentShape(Rectangle())
-        // Click opens; the gesture rides alongside List selection so the
-        // row still highlights and arrow keys merely select.
-        .simultaneousGesture(TapGesture().onEnded { state.openInboxItem(item) })
-        .help(state.inboxMDCount(item) == 0
-            ? String(localized: "No Markdown files in this pull request") : item.title)
-        .contextMenu {
-            Button("Open") { state.openInboxItem(item) }
-            Button("Reveal on GitHub") {
-                let ref = item.ref
-                if let url = URL(string:
-                    "https://github.com/\(ref.owner)/\(ref.repo)/pull/\(ref.number)") {
-                    NSWorkspace.shared.open(url)
-                }
-            }
-        }
-    }
-}
-
 /// A recent file, folder, or PR. Dead local entries dim instead of
 /// vanishing and revive when their path returns (spec §6); clicking a
 /// dead entry raises the quiet notice with a removal action.
@@ -1469,6 +1509,9 @@ private struct RecentRow: View {
                     let status = item.prStatus ?? .open
                     Image(systemName: status.systemImage)
                         .foregroundStyle(status.color.opacity(0.75))
+                case .issue:
+                    Image(systemName: "smallcircle.filled.circle")
+                        .foregroundStyle(.secondary)
                 }
             }
             .foregroundStyle(missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
@@ -1495,7 +1538,7 @@ private struct RecentRow: View {
         case .file, .folder:
             let path = item.path.map { PathAbbreviator.abbreviate($0) } ?? item.title
             return missing ? String(localized: "File not found — last seen at \(path)") : path
-        case .pr:
+        case .pr, .issue:
             let status = item.prStatus.map { " — \($0.label)" } ?? ""
             return "\(item.owner ?? "")/\(item.repo ?? "")#\(item.number ?? 0)\(status)"
         }
@@ -1907,6 +1950,13 @@ struct DetailView: View {
             } else {
                 unavailable(for: .prOverview(id),
                             reason: "Couldn’t load this pull request.")
+            }
+        case .issue(let id):
+            if state.issueSession(id) != nil {
+                IssueView(sessionID: id)
+                    .id(id)
+            } else {
+                unavailable(for: .issue(id), reason: "Couldn’t load this issue.")
             }
         case .prFile(let id, let path):
             if state.session(id) != nil {

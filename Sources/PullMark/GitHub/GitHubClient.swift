@@ -865,6 +865,134 @@ final class GitHubClient {
 
     /// How many Markdown files a PR touches — the inbox badge. Cheap-ish
     /// (one files page is enough for a badge; capped at 100).
+    // MARK: - GitHub work (spec: github-work)
+
+    /// One page of `/search/issues` for a bucket or followed-repository
+    /// query, most recently updated first. Returns nothing while signed
+    /// out — every viewer query needs `@me`, and the sidebar simply
+    /// stays quiet.
+    func searchWork(_ query: String, page: Int = 1) async throws
+        -> (items: [GitHubWork.Item], hasMore: Bool) {
+        guard await viewerIdentity() != nil else { return ([], false) }
+        let data = try await request(
+            "GET", "/search/issues",
+            query: [URLQueryItem(name: "q", value: query),
+                    URLQueryItem(name: "sort", value: "updated"),
+                    URLQueryItem(name: "per_page", value: "\(GitHubWork.pageSize)"),
+                    URLQueryItem(name: "page", value: "\(page)")])
+        return try GitHubWork.parseSearch(data, page: page)
+    }
+
+    /// An issue's document shape (spec: github-work §8).
+    func issue(_ ref: PullRequestRef) async throws -> IssueDetails {
+        let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/issues/\(ref.number)")
+        return try Self.decoder.decode(IssueDetails.self, from: data)
+    }
+
+    /// Viewer-relative state for an issue's comments — node ids for
+    /// reaction writes, what the viewer pressed, edit signals — the
+    /// issue counterpart of the cockpit's comment meta. Failures leave
+    /// comments read-only for reactions, never unrendered.
+    func issueCommentMeta(_ ref: PullRequestRef) async throws -> [Int: ReviewCommentMeta] {
+        let query = """
+        query($owner: String!, $repo: String!, $number: Int!, $after: String) {
+          repository(owner: $owner, name: $repo) {
+            issue(number: $number) {
+              comments(first: 100, after: $after) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  id databaseId lastEditedAt
+                  reactionGroups {
+                    content viewerHasReacted
+                    reactors(first: 10) {
+                      totalCount
+                      nodes {
+                        ... on User { login }
+                        ... on Bot { login }
+                        ... on Organization { login }
+                        ... on Mannequin { login }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        var meta: [Int: ReviewCommentMeta] = [:]
+        var cursor: String?
+        for _ in 1...30 {
+            var variables: [String: Any] = ["owner": ref.owner, "repo": ref.repo,
+                                            "number": ref.number]
+            if let cursor { variables["after"] = cursor }
+            let data = try await graphQL(query, variables: variables)
+            let page = try Self.parseIssueMetaPage(data)
+            meta.merge(page.meta) { _, new in new }
+            guard let next = page.nextCursor else { break }
+            cursor = next
+        }
+        return meta
+    }
+
+    /// Pure parser for one page of the issue-comment meta query.
+    nonisolated static func parseIssueMetaPage(_ data: Data) throws
+        -> (meta: [Int: ReviewCommentMeta], nextCursor: String?) {
+        struct Response: Decodable {
+            struct DataBox: Decodable { let repository: Repo? }
+            struct Repo: Decodable { let issue: Issue? }
+            struct Issue: Decodable { let comments: CommentsPage? }
+            struct CommentsPage: Decodable {
+                struct PageInfo: Decodable {
+                    let hasNextPage: Bool
+                    let endCursor: String?
+                }
+                let pageInfo: PageInfo?
+                let nodes: [MetaNode]?
+            }
+            struct MetaNode: Decodable {
+                struct ReactionGroup: Decodable {
+                    struct Reactors: Decodable {
+                        struct Node: Decodable { let login: String? }
+                        let totalCount: Int
+                        let nodes: [Node]?
+                    }
+                    let content: String
+                    let viewerHasReacted: Bool
+                    let reactors: Reactors?
+                }
+                let id: String
+                let databaseId: Int?
+                let lastEditedAt: String?
+                let reactionGroups: [ReactionGroup]?
+            }
+            let data: DataBox?
+        }
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard let comments = response.data?.repository?.issue?.comments else { return ([:], nil) }
+        var meta: [Int: ReviewCommentMeta] = [:]
+        for node in comments.nodes ?? [] {
+            guard let databaseID = node.databaseId else { continue }
+            let reacted = (node.reactionGroups ?? [])
+                .filter(\.viewerHasReacted)
+                .compactMap { ReactionKind(graphQL: $0.content)?.rawValue }
+            var reactors: [String: ReactorRoster] = [:]
+            for group in node.reactionGroups ?? [] {
+                guard let kind = ReactionKind(graphQL: group.content),
+                      let who = group.reactors, who.totalCount > 0 else { continue }
+                reactors[kind.rawValue] = ReactorRoster(
+                    logins: (who.nodes ?? []).compactMap(\.login),
+                    totalCount: who.totalCount)
+            }
+            meta[databaseID] = ReviewCommentMeta(nodeID: node.id,
+                                                 viewerReacted: Set(reacted),
+                                                 edited: node.lastEditedAt != nil,
+                                                 reactors: reactors)
+        }
+        let next = comments.pageInfo?.hasNextPage == true ? comments.pageInfo?.endCursor : nil
+        return (meta, next)
+    }
+
     func markdownFileCount(_ ref: PullRequestRef) async throws -> Int {
         let data = try await request("GET", "/repos/\(ref.owner)/\(ref.repo)/pulls/\(ref.number)/files",
                                      query: [URLQueryItem(name: "per_page", value: "100")])

@@ -133,6 +133,17 @@ setting labels, the banner-free flows — nothing user-visible bypasses
   and Show more…; an issue session with a comment posted to the
   disposable livetest repo (never the main repo).
 
+## §10a Implementation notes (2026-08-28)
+
+- The unread rule's "None" is `UnreadRule.silent` in code — an enum
+  case named `none` reads as `Optional.none` wherever the rule is
+  optional (a test caught it passing nil).
+- Adding a sixth surface kind to the toolbar's builder switch tipped
+  SwiftUI's type-checker over its budget; issues share the overview's
+  branch with an `isIssue` flag (share only, different help text).
+- Opening an issue by pasted URL is not built (follow-up); issues open
+  from buckets, followed repositories, Recents, and history.
+
 ## §11 Release
 
 One release — buckets, followed repos, grouping setting, and issues

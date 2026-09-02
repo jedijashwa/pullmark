@@ -209,7 +209,6 @@
 "Hide Markdown Source" = "隐藏 Markdown 源码";
 "Hide Outline" = "隐藏大纲";
 "Hide Resolved Conversations" = "隐藏已解决的会话";
-"Hide review requests with no Markdown files — PullMark has nothing to show for them" = "隐藏不含 Markdown 文件的审查请求——PullMark 对它们无可展示";
 "History" = "历史";
 "History (25 most recent)" = "历史（最近 25 条）";
 "Home" = "Home";
@@ -274,7 +273,6 @@
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "批注的写法便于智能体读取并据此行动。把这段片段粘贴到智能体的指令文件（CLAUDE.md、AGENTS.md……）中，一句“处理这个文件里的页边批注”就是一次完整的交接。";
 "OK" = "好";
 "Off shows a quiet banner instead — the notes stay one click away" = "关闭时改为显示一条安静的横幅——批注依然一键可达";
-"Only requests that change Markdown" = "仅显示改动 Markdown 的请求";
 "Open" = "打开";
 "Open %@ Separately" = "单独打开 %@";
 "Open Branch Separately" = "单独打开分支";
@@ -302,7 +300,6 @@
 "Open in PullMark" = "在 PullMark 中打开";
 "Open local Markdown files or a folder" = "打开本地 Markdown 文件或文件夹";
 "Open on GitHub" = "在 GitHub 上打开";
-"Open pull requests where your review is requested" = "请求你审查的开放拉取请求";
 "Open the review — pending comments, summary, and verdict" = "打开审查——待提交评论、总结和结论";
 "Opens the release page on GitHub" = "在 GitHub 上打开发布页面";
 "Opens the release page on GitHub to update manually" = "在 GitHub 上打开发布页面以手动更新";
@@ -422,7 +419,6 @@
 "Show hidden files" = "显示隐藏文件";
 "Show or hide the document outline" = "显示或隐藏文档大纲";
 "Show review discussion on the PR overview" = "在 PR 总览上显示审查讨论";
-"Show review requests in the sidebar" = "在边栏中显示审查请求";
 "Show the next document" = "显示下一篇文档";
 "Show the previous document" = "显示上一篇文档";
 "Show the raw Markdown behind the rendered document" = "显示渲染文档背后的原始 Markdown";
@@ -698,7 +694,6 @@
 "Recent" = "最近使用";
 "Recording — press the new shortcut" = "正在录制——请按下新的快捷键";
 "Reload this document" = "重新载入这篇文档";
-"Review requested · %@/%@#%lld" = "请求审查 · %@/%@#%lld";
 "Review these changes — summary, verdict, and your pending comments" = "审查这些更改——总结、结论，以及你待提交的评论";
 "Save As…" = "存储为…";
 "Share a link to this document on GitHub" = "共享指向 GitHub 上这篇文档的链接";
@@ -736,3 +731,43 @@
 "%@ is no longer at %@." = "%@ 已不在 %@。";
 "Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "文件、文件夹、拉取请求和浏览过的仓库会恢复原状；固定的项目始终会恢复";
 "PullMark didn't quit normally. Restore the previous session?" = "PullMark 未正常退出。要恢复上一次的会话吗？";
+
+// GitHub work: buckets, followed repositories, issues (spec: github-work)
+"%lld items" = "%lld 项";
+"Already open" = "已打开";
+"Always" = "总是";
+"Assigned" = "已分配";
+"Could not post the comment — the issue is no longer open in PullMark. Your text was kept as a draft." = "无法发布评论——该议题已不在 PullMark 中打开。你的文字已保留为草稿。";
+"Created" = "已创建";
+"Every open pull request and issue in the repository joins the sidebar, most recently updated first." = "仓库中所有打开的拉取请求和议题都会显示在侧栏中，按最近更新排序。";
+"Everything" = "全部";
+"Follow" = "关注";
+"Follow Repository" = "关注仓库";
+"Follow Repository…" = "关注仓库…";
+"Group GitHub work by:" = "GitHub 工作分组方式：";
+"Hide pull requests with no Markdown files — PullMark has nothing to show for them" = "隐藏没有 Markdown 文件的拉取请求——PullMark 无法展示它们";
+"Involvement" = "参与方式";
+"Issue" = "议题";
+"Issues" = "议题";
+"Never" = "从不";
+"Only Mine" = "仅我的";
+"Only pull requests that change Markdown" = "仅显示更改 Markdown 的拉取请求";
+"Participating" = "参与中";
+"Reaction state unavailable — try again in a moment." = "反应状态不可用——请稍后再试。";
+"Review requests, what you created or are assigned, threads you take part in — and any repositories you follow" = "审查请求、你创建或被分配的内容、你参与的讨论，以及你关注的仓库";
+"Share a link to this issue" = "分享此议题的链接";
+"Show more…" = "显示更多…";
+"Show pull requests and issues that involve you" = "显示与你相关的拉取请求和议题";
+"Type" = "类型";
+"Type keeps a Pull Requests section and an Issues section; Involvement mixes both kinds in one GitHub section" = "“类型”保留拉取请求和议题两个分区；“参与方式”将两者合并到一个 GitHub 分区";
+"Unfollow" = "取消关注";
+"Unread" = "未读";
+"Use Repository Setting" = "使用仓库设置";
+"assigned" = "已分配";
+"closed" = "已关闭";
+"draft" = "草稿";
+"owner/repository or github.com URL" = "owner/repository 或 github.com 网址";
+"participating" = "参与中";
+"review requested" = "请求审查";
+"yours" = "你的";
+"Comment on the issue" = "评论此议题";

@@ -45,6 +45,7 @@ enum PageStrings {
         "Comment on new lines {a}–{b}",
         "Comment on old line {n} — shift-click extends the range",
         "Comment on old lines {a}–{b}",
+        "Comment on the issue",
         "Comment on the pull request conversation",
         "Conversation",
         "Copy full SHA",

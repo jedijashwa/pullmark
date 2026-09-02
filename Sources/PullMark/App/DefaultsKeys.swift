@@ -127,6 +127,14 @@ enum DefaultsKeys {
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
     static let sidebarRecentExpanded = "pm.sidebar.recentExpanded"
     static let sidebarPinnedExpanded = "pm.sidebar.pinnedExpanded"
+    static let sidebarIssuesExpanded = "pm.sidebar.issuesExpanded"
+    /// Followed repositories and per-item unread choices (spec:
+    /// github-work §3–§4) — preferences, always restored.
+    static let followedRepos = "pm.followedRepos"
+    static let workUnreadOverrides = "pm.workUnreadOverrides"
+    /// "type" | "involvement" — how GitHub work groups in the sidebar
+    /// (spec: github-work §6).
+    static let githubGrouping = "pm.githubGrouping"
     /// Pinned folders and files (spec: pinned-and-session-reopen §4) —
     /// a preference, always restored, never part of the session snapshot.
     static let pinnedEntries = "pm.pinnedEntries"

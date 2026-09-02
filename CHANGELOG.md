@@ -6,6 +6,21 @@ section current as features land.
 
 ## Unreleased
 
+- **Pull requests and issues that involve you.** The sidebar's single
+  "Review Requests" list grows into involvement buckets — Review
+  Requests, Created, Assigned, Participating — for pull requests and
+  for issues, plus **followed repositories**: Follow Repository… in the
+  section header lists everything open in a repository, most recently
+  updated first, with its own unread rule (Everything, Only Mine,
+  None) and Unfollow on its menu. Any row can override its unread
+  behavior; every group loads the 30 most recent with Show more….
+  Settings › Reviewing › Group GitHub work by chooses the layout: Type
+  (a Pull Requests section and an Issues section) or Involvement (one
+  GitHub section mixing both, with a glyph per row).
+- **Issues open as documents.** Clicking an issue opens it in PullMark:
+  the rendered body, labels, the comment timeline with reactions, and
+  a composer — comment, react, edit or delete your own. Issues sit in
+  Recents and reopen with the session.
 - **Pinned.** A new sidebar section above Locations for the folders and
   files you keep coming back to. Pin… on any folder or file row (or Pin
   on a Location root) adds it there, as its own root with its own tree

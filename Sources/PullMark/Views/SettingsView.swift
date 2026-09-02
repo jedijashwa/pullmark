@@ -39,6 +39,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = false
+    @AppStorage(DefaultsKeys.githubGrouping, store: UserDefaults.pullmark) private var githubGroupingRaw = GitHubWork.Grouping.type.rawValue
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
@@ -132,13 +133,21 @@ struct GeneralSettingsTab: View {
             .pickerStyle(.segmented)
             .settingAnchor("diff-layout")
 
-            Toggle("Show review requests in the sidebar", isOn: $inboxEnabled)
-                .help("Open pull requests where your review is requested")
+            Toggle("Show pull requests and issues that involve you", isOn: $inboxEnabled)
+                .help("Review requests, what you created or are assigned, threads you take part in — and any repositories you follow")
                 .settingAnchor("review-requests")
-            Toggle("Only requests that change Markdown", isOn: $inboxMarkdownOnly)
+            Toggle("Only pull requests that change Markdown", isOn: $inboxMarkdownOnly)
                 .disabled(!inboxEnabled)
                 .padding(.leading, 20)
-                .help("Hide review requests with no Markdown files — PullMark has nothing to show for them")
+                .help("Hide pull requests with no Markdown files — PullMark has nothing to show for them")
+            Picker("Group GitHub work by:", selection: $githubGroupingRaw) {
+                Text("Type").tag(GitHubWork.Grouping.type.rawValue)
+                Text("Involvement").tag(GitHubWork.Grouping.involvement.rawValue)
+            }
+            .pickerStyle(.segmented)
+            .disabled(!inboxEnabled)
+            .help("Type keeps a Pull Requests section and an Issues section; Involvement mixes both kinds in one GitHub section")
+            .settingAnchor("github-grouping")
 
             // Graduated from Experimental (beta) in the cockpit wave —
             // on by default; stored choices from the beta days stand.

@@ -74,8 +74,11 @@ struct AppToolbar: CustomizableToolbarContent {
                 PRFileToolbarItems(state: state, surface: surface)
             case .prDoc:
                 PRDocToolbarItems(state: state)
-            case .prOverview:
-                PROverviewToolbarItems(state: state, surface: surface)
+            case .prOverview, .issue:
+                // One branch for both: a sixth case tipped the builder's
+                // type-checker over its budget (verified: "unable to
+                // type-check this expression in reasonable time").
+                PROverviewToolbarItems(state: state, surface: surface, isIssue: kind == .issue)
             }
         }
         windowItems
@@ -441,11 +444,15 @@ private struct PRDocToolbarItems: CustomizableToolbarContent {
 private struct PROverviewToolbarItems: CustomizableToolbarContent {
     let state: AppState
     let surface: SurfaceToolbar?
+    /// An issue document (spec: github-work §8) shares the overview's
+    /// shape: share only — no review control, nothing to compare.
+    var isIssue = false
 
     var body: some CustomizableToolbarContent {
         ToolbarItem(id: "overview-share") {
             ShareSheetButton(mode: .link, state: state, surface: surface,
-                             help: String(localized: "Share a link to this pull request"))
+                             help: isIssue ? String(localized: "Share a link to this issue")
+                                           : String(localized: "Share a link to this pull request"))
         }
     }
 }

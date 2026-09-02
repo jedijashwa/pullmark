@@ -209,7 +209,6 @@
 "Hide Markdown Source" = "Verberg Markdown-bron";
 "Hide Outline" = "Verberg outline";
 "Hide Resolved Conversations" = "Verberg opgeloste conversaties";
-"Hide review requests with no Markdown files — PullMark has nothing to show for them" = "Verbergt reviewverzoeken zonder Markdown-bestanden — PullMark heeft er niets voor te tonen";
 "History" = "Geschiedenis";
 "History (25 most recent)" = "Geschiedenis (laatste 25)";
 "Home" = "Home";
@@ -274,7 +273,6 @@
 "Notes are written so agents can read and act on them. Paste the snippet into your agent's instructions file (CLAUDE.md, AGENTS.md, …) and \"address the margin notes in this file\" becomes a complete handoff." = "Notities zijn zo geschreven dat agents ze kunnen lezen en verwerken. Plak het fragment in het instructiebestand van je agent (CLAUDE.md, AGENTS.md, …) en \"verwerk de margin notes in dit bestand\" is een complete overdracht.";
 "OK" = "OK";
 "Off shows a quiet banner instead — the notes stay one click away" = "Uit toont in plaats daarvan een rustige banner — de notes blijven één klik verderop";
-"Only requests that change Markdown" = "Alleen verzoeken die Markdown wijzigen";
 "Open" = "Open";
 "Open %@ Separately" = "Open %@ apart";
 "Open Branch Separately" = "Open branch apart";
@@ -302,7 +300,6 @@
 "Open in PullMark" = "Open in PullMark";
 "Open local Markdown files or a folder" = "Open lokale Markdown-bestanden of een map";
 "Open on GitHub" = "Open op GitHub";
-"Open pull requests where your review is requested" = "Openstaande pull requests waar jouw review gevraagd is";
 "Open the review — pending comments, summary, and verdict" = "Open de review — pending comments, samenvatting en oordeel";
 "Opens the release page on GitHub" = "Opent de releasepagina op GitHub";
 "Opens the release page on GitHub to update manually" = "Opent de releasepagina op GitHub om handmatig bij te werken";
@@ -422,7 +419,6 @@
 "Show hidden files" = "Toon verborgen bestanden";
 "Show or hide the document outline" = "Toon of verberg de outline van het document";
 "Show review discussion on the PR overview" = "Toon reviewdiscussie op het PR-overzicht";
-"Show review requests in the sidebar" = "Toon reviewverzoeken in de zijbalk";
 "Show the next document" = "Toon het volgende document";
 "Show the previous document" = "Toon het vorige document";
 "Show the raw Markdown behind the rendered document" = "Toon de ruwe Markdown achter het gerenderde document";
@@ -698,7 +694,6 @@
 "Recent" = "Recent";
 "Recording — press the new shortcut" = "Opnemen — druk op de nieuwe sneltoets";
 "Reload this document" = "Herlaad dit document";
-"Review requested · %@/%@#%lld" = "Review gevraagd · %@/%@#%lld";
 "Review these changes — summary, verdict, and your pending comments" = "Review deze wijzigingen — samenvatting, oordeel en je pending comments";
 "Save As…" = "Bewaar als…";
 "Share a link to this document on GitHub" = "Deel een link naar dit document op GitHub";
@@ -736,3 +731,43 @@
 "%@ is no longer at %@." = "%@ staat niet meer in %@.";
 "Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "Bestanden, mappen, pull requests en bekeken repo's komen terug zoals ze waren; vastgezette items altijd";
 "PullMark didn't quit normally. Restore the previous session?" = "PullMark is niet normaal afgesloten. Vorige sessie herstellen?";
+
+// GitHub work: buckets, followed repositories, issues (spec: github-work)
+"%lld items" = "%lld items";
+"Already open" = "Al geopend";
+"Always" = "Altijd";
+"Assigned" = "Toegewezen";
+"Could not post the comment — the issue is no longer open in PullMark. Your text was kept as a draft." = "Kon de reactie niet plaatsen — de issue is niet meer open in PullMark. Je tekst is als concept bewaard.";
+"Created" = "Aangemaakt";
+"Every open pull request and issue in the repository joins the sidebar, most recently updated first." = "Elke open pull request en issue in de repository verschijnt in de zijbalk, meest recent bijgewerkt eerst.";
+"Everything" = "Alles";
+"Follow" = "Volgen";
+"Follow Repository" = "Repository volgen";
+"Follow Repository…" = "Repository volgen…";
+"Group GitHub work by:" = "GitHub-werk groeperen op:";
+"Hide pull requests with no Markdown files — PullMark has nothing to show for them" = "Verberg pull requests zonder Markdown-bestanden — PullMark heeft er niets van te tonen";
+"Involvement" = "Betrokkenheid";
+"Issue" = "Issue";
+"Issues" = "Issues";
+"Never" = "Nooit";
+"Only Mine" = "Alleen de mijne";
+"Only pull requests that change Markdown" = "Alleen pull requests die Markdown wijzigen";
+"Participating" = "Betrokken";
+"Reaction state unavailable — try again in a moment." = "Reactiestatus niet beschikbaar — probeer het zo opnieuw.";
+"Review requests, what you created or are assigned, threads you take part in — and any repositories you follow" = "Reviewverzoeken, wat je hebt aangemaakt of toegewezen kreeg, gesprekken waaraan je deelneemt — en de repository's die je volgt";
+"Share a link to this issue" = "Een link naar deze issue delen";
+"Show more…" = "Meer tonen…";
+"Show pull requests and issues that involve you" = "Toon pull requests en issues waarbij je betrokken bent";
+"Type" = "Type";
+"Type keeps a Pull Requests section and an Issues section; Involvement mixes both kinds in one GitHub section" = "Type houdt een Pull requests-sectie en een Issues-sectie; Betrokkenheid mengt beide in één GitHub-sectie";
+"Unfollow" = "Ontvolgen";
+"Unread" = "Ongelezen";
+"Use Repository Setting" = "Repository-instelling gebruiken";
+"assigned" = "toegewezen";
+"closed" = "gesloten";
+"draft" = "concept";
+"owner/repository or github.com URL" = "eigenaar/repository of github.com-URL";
+"participating" = "betrokken";
+"review requested" = "review gevraagd";
+"yours" = "van jou";
+"Comment on the issue" = "Reageer op de issue";

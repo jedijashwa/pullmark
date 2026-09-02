@@ -151,13 +151,14 @@ struct OpenQuicklyPalette: View {
                     action: { state.selection = .prFile(session.id, file.filename) }))
             }
         }
-        for item in state.inbox {
+        for item in state.work.items.values.sorted(by: { $0.updatedAt > $1.updatedAt }) {
+            let what = item.kind == .pr ? String(localized: "Pull request") : String(localized: "Issue")
             items.append(QuickItem(
                 id: "in:" + item.id,
                 title: item.title,
-                subtitle: String(localized: "Review requested · \(item.ref.owner)/\(item.ref.repo)#\(item.ref.number)"),
-                icon: "tray",
-                action: { state.openInboxItem(item) }))
+                subtitle: "\(what) · \(item.id)",
+                icon: item.kind == .pr ? "arrow.triangle.pull" : "smallcircle.filled.circle",
+                action: { state.openWorkItem(item) }))
         }
         for recent in state.recents {
             items.append(QuickItem(

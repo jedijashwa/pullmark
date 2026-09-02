@@ -109,6 +109,9 @@ enum HTMLBuilder {
         /// the timeline is empty — a PR overview always offers the
         /// comment box; other pages never do.
         var conversationComposer: Bool?
+        /// "issue" when the page is an issue document (spec:
+        /// github-work §8) — the composer's placeholder says so.
+        var conversationSubject: String?
         /// Localized UI strings for the page (PageStrings.table) —
         /// keyed by the English string, consumed by app.js's pmString.
         /// Stamped centrally in page(payload:); previews skip it (they
@@ -170,7 +173,8 @@ enum HTMLBuilder {
                              discussion: [ReviewDiscussion.FileGroup]? = nil,
                              conversation: [ConversationEntryPayload]? = nil,
                              conversationUnavailable: Bool = false,
-                             conversationComposer: Bool = false) -> String {
+                             conversationComposer: Bool = false,
+                             conversationSubject: String? = nil) -> String {
         page(payload: RenderPayload(mode: "document", markdown: markdown,
                                     localResources: localResources ? true : nil,
                                     remoteResources: remote != nil ? true : nil,
@@ -190,7 +194,8 @@ enum HTMLBuilder {
                                     discussion: discussion?.isEmpty == false ? discussion : nil,
                                     conversation: conversation?.isEmpty == false ? conversation : nil,
                                     conversationUnavailable: conversationUnavailable ? true : nil,
-                                    conversationComposer: conversationComposer ? true : nil),
+                                    conversationComposer: conversationComposer ? true : nil,
+                                    conversationSubject: conversationSubject),
              title: title, customCSS: customCSS)
     }
 
