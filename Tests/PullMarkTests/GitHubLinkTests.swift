@@ -109,41 +109,4 @@ struct GitHubLinkTests {
         #expect(GitHubLink.nearestRepoRoot(root.appendingPathComponent("plain/a.md"),
                                            isDirectory: false) == nil)
     }
-
-    // MARK: - offersLink (tracked-set gate)
-
-    private let files: Set<String> = ["README.md", "docs/setup.md"]
-    private let dirs: Set<String> = ["docs"]
-
-    @Test func trackedFileOffers() {
-        #expect(GitHubLink.offersLink(relativePath: "docs/setup.md", isDirectory: false,
-                                      trackedFiles: files, trackedDirs: dirs))
-    }
-
-    @Test func untrackedFileDoesNot() {
-        #expect(!GitHubLink.offersLink(relativePath: "scratch.md", isDirectory: false,
-                                       trackedFiles: files, trackedDirs: dirs))
-    }
-
-    @Test func directoryWithTrackedContentOffers() {
-        #expect(GitHubLink.offersLink(relativePath: "docs", isDirectory: true,
-                                      trackedFiles: files, trackedDirs: dirs))
-    }
-
-    @Test func ignoredDirectoryDoesNot() {
-        #expect(!GitHubLink.offersLink(relativePath: "node_modules", isDirectory: true,
-                                       trackedFiles: files, trackedDirs: dirs))
-    }
-
-    @Test func repoRootAlwaysOffers() {
-        #expect(GitHubLink.offersLink(relativePath: "", isDirectory: true,
-                                      trackedFiles: [], trackedDirs: []))
-    }
-
-    @Test func unknownTrackednessDefersToTheClick() {
-        // Nil sets = no opened folder covers this repo (or it was too
-        // large to index) — the item must keep appearing, as before.
-        #expect(GitHubLink.offersLink(relativePath: "scratch.md", isDirectory: false,
-                                      trackedFiles: nil, trackedDirs: nil))
-    }
 }

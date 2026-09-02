@@ -720,3 +720,9 @@
 "the working file" = "工作区文件";
 "editing" = "编辑中";
 "pr-status-open" = "开启";
+
+// Copy GitHub Link reasons (spec: copy-github-link §8)
+"Ignored by .gitignore" = "已被 .gitignore 忽略";
+"Ignored locally" = "已在本地忽略";
+"Not committed yet" = "尚未提交";
+"Not pushed yet" = "尚未推送";

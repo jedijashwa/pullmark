@@ -155,15 +155,18 @@ struct PullMarkApp: App {
     }
 
     /// The selection's URL when Copy GitHub Link can act on it: local,
-    /// inside a git checkout, and tracked by it — the same walk + set
-    /// lookup the context menus use, no subprocess at menu render
-    /// (spec: copy-github-link §4).
+    /// inside a git checkout, and on GitHub (or presence unknown) — the
+    /// same walk + index lookup the context menus use, no subprocess at
+    /// menu render (spec: copy-github-link §4/§8). A menu-bar command
+    /// has no subtitle to explain itself with, so an absent row simply
+    /// leaves it disabled.
     private var selectionGitHubLinkURL: URL? {
-        guard let state, let url = state.selectionLocalURL,
-              SidebarActions.offersGitHubLink(url: url, isDirectory: state.selectionIsDirectory,
-                                              state: state)
-        else { return nil }
-        return url
+        guard let state, let url = state.selectionLocalURL else { return nil }
+        switch SidebarActions.gitHubPresence(url: url, isDirectory: state.selectionIsDirectory,
+                                             state: state) {
+        case .onGitHub, .unknown: return url
+        case .absent, nil: return nil
+        }
     }
 
     private func copyGitHubLink(permalink: Bool) {

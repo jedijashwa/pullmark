@@ -1547,7 +1547,7 @@ final class AppState: ObservableObject {
             let nodes = PathTree.build(scan.paths)
             // Flattened here too — 20k leaves have no business on main.
             let filePaths = nodes.flatMap(PathTree.leafPaths)
-            let git = exists ? LocalGit.repoInfo(forDirectory: root) : nil
+            let git = exists ? LocalGit.repoInfo(forDirectory: root, markdownPaths: filePaths) : nil
             guard let self else { return }
             await MainActor.run {
                 self.finishRescan(root: root, exists: exists, nodes: nodes,
@@ -1654,8 +1654,9 @@ final class AppState: ObservableObject {
     func refreshFolderGitIdentities() {
         for folder in folders where !folder.missing {
             let root = folder.rootURL
+            let paths = folder.filePaths
             Task.detached(priority: .utility) { [weak self] in
-                let git = LocalGit.repoInfo(forDirectory: root)
+                let git = LocalGit.repoInfo(forDirectory: root, markdownPaths: paths)
                 guard let self else { return }
                 await MainActor.run {
                     guard let index = self.folders.firstIndex(where: { $0.rootURL == root }),

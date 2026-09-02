@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Copy GitHub Link now knows what GitHub actually has. Files that
+  aren't on GitHub show the item disabled with the reason beneath it —
+  ignored by .gitignore, ignored locally, not committed yet, or not
+  pushed yet — instead of copying a link that 404s; folders with
+  nothing on GitHub under them don't offer it at all. The check used
+  to give up on checkouts past 50,000 tracked files, which is exactly
+  where it mattered most. Open on GitHub on a Location root no longer
+  points at a branch the remote has never seen.
+
 ## 0.44.2 - 2026-08-28
 
 - Fixed a crash when collapsing a folder in the sidebar after files had

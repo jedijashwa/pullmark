@@ -720,3 +720,9 @@
 "the working file" = "het werkbestand";
 "editing" = "wordt bewerkt";
 "pr-status-open" = "Open";
+
+// Copy GitHub Link reasons (spec: copy-github-link §8)
+"Ignored by .gitignore" = "Genegeerd door .gitignore";
+"Ignored locally" = "Lokaal genegeerd";
+"Not committed yet" = "Nog niet gecommit";
+"Not pushed yet" = "Nog niet gepusht";

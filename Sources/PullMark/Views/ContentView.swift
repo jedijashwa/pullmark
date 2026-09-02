@@ -716,19 +716,22 @@ extension SidebarActions {
     /// git checkout; the primary copies what Settings says, the
     /// alternate names the other flavor. macOS 13/14 lack
     /// modifierKeyAlternate and show only the primary item.
-    /// Render-time eligibility for Copy GitHub Link: inside a checkout,
-    /// AND tracked by it (spec: copy-github-link §3). The `.git` walk
-    /// stays pure filesystem; trackedness comes from the RepoInfo an
-    /// opened folder already holds — no subprocess at row render, ever.
-    /// No folder covers the repo (loose file, symlinked open path whose
+    /// Render-time presence for Copy GitHub Link: inside a checkout, and
+    /// what GitHub has of the row (spec: copy-github-link §3/§8). The
+    /// `.git` walk stays pure filesystem; presence comes from the
+    /// RepoInfo an opened folder already holds — no subprocess at row
+    /// render, ever. Nil means no item at all: outside any checkout, or
+    /// a directory with nothing on GitHub under it. `.unknown` when no
+    /// folder covers the repo (loose file, symlinked open path whose
     /// string form differs from git's toplevel): offer the item, the
     /// pre-cache behavior, and the click's own git check catches lies.
     /// A nested checkout's nearest root matches no toplevel the same
     /// way — its rows stay offered and resolve against the inner repo.
     @MainActor
-    static func offersGitHubLink(url: URL, isDirectory: Bool, state: AppState) -> Bool {
+    static func gitHubPresence(url: URL, isDirectory: Bool,
+                               state: AppState) -> GitHubPresence.State? {
         guard let root = GitHubLink.nearestRepoRoot(url, isDirectory: isDirectory) else {
-            return false
+            return nil
         }
         // toplevel comes from git as a realpath ("/private/tmp/…"); the
         // walk standardizes NSString-style ("/tmp/…") — normalize the
@@ -737,21 +740,45 @@ extension SidebarActions {
         // offering, which the click's own check backstops.
         guard let info = state.folders.lazy.compactMap(\.git)
             .first(where: { ($0.toplevel as NSString).standardizingPath == root })
-        else { return true }
+        else { return .unknown }
         // Both paths standardized the same way, so the prefix relation
         // the walk established holds; dropFirst eats the "/" separator
         // (already absent when the row IS the root).
         let full = (url.path as NSString).standardizingPath
         let rel = String(full.dropFirst(min(root.count + 1, full.count)))
-        return GitHubLink.offersLink(relativePath: rel, isDirectory: isDirectory,
-                                     trackedFiles: info.trackedPaths,
-                                     trackedDirs: info.trackedDirs)
+        let presence = GitHubPresence.classify(relativePath: rel, isDirectory: isDirectory,
+                                               index: info.presence)
+        // A directory with nothing on GitHub has no page to link and no
+        // single reason to give: the item stays out of its menu.
+        if isDirectory, case .absent = presence { return nil }
+        return presence
+    }
+
+    static func reasonText(_ reason: GitHubPresence.Reason) -> String {
+        switch reason {
+        case .ignoredByGitignore: return String(localized: "Ignored by .gitignore")
+        case .ignoredLocally: return String(localized: "Ignored locally")
+        case .notCommitted: return String(localized: "Not committed yet")
+        case .notPushed: return String(localized: "Not pushed yet")
+        }
     }
 
     @MainActor @ViewBuilder
     static func copyGitHubLinkItems(url: URL, isDirectory: Bool = false,
                                     state: AppState) -> some View {
-        if offersGitHubLink(url: url, isDirectory: isDirectory, state: state) {
+        switch gitHubPresence(url: url, isDirectory: isDirectory, state: state) {
+        case nil:
+            EmptyView()
+        case .absent(let reason):
+            // Disabled, reason in the title. A menu subtitle (a second
+            // Text in the label) was the plan; the contextMenu bridge
+            // drops it on macOS 26 — verified live: the item renders
+            // with an empty line beneath — so the title carries it.
+            Button {} label: {
+                Text(verbatim: String(localized: "Copy GitHub Link") + " (" + reasonText(reason) + ")")
+            }
+            .disabled(true)
+        case .onGitHub, .unknown:
             // The setting is read at CLICK time — context menu content
             // builds at row render, and a builder-time read would copy
             // a stale flavor after Settings changes. Only the alternate
@@ -870,7 +897,9 @@ private struct FolderRootGroup: View {
         }
         if let repoID = git.primaryGitHubRepo {
             menu.addItem(.separator())
-            let branch = git.branch
+            // A branch the remote never saw would 404 at tree/<branch>;
+            // the repo page is the honest target then.
+            let branch = git.upstreamExists ? git.branch : nil
             item(String(localized: "Open on GitHub"), in: menu) {
                 let ref = branch.map { "/tree/\($0)" } ?? ""
                 if let url = URL(string: "https://github.com/\(repoID.owner)/\(repoID.repo)\(ref)") {
@@ -981,7 +1010,7 @@ private struct FolderRootGroup: View {
                 }
                 if let repoID = git.primaryGitHubRepo {
                     Button("Open on GitHub") {
-                        let ref = git.branch.map { "/tree/\($0)" } ?? ""
+                        let ref = (git.upstreamExists ? git.branch : nil).map { "/tree/\($0)" } ?? ""
                         if let url = URL(string: "https://github.com/\(repoID.owner)/\(repoID.repo)\(ref)") {
                             NSWorkspace.shared.open(url)
                         }

@@ -327,18 +327,19 @@ enum LocalGit {
         var branch: String?
         var gitHubRepos: [GitHubRepoID] = []
         var worktrees: [Worktree] = []
-        /// Repo-relative paths the index tracks, and every directory on
-        /// the way to one — the render-time gate for Copy GitHub Link
-        /// (untracked/ignored rows don't offer it; spec:
-        /// copy-github-link §3). Nil when unknown: ls-files failed, or
-        /// the repo is past `trackedPathsLimit` — the gate then offers
-        /// the item and defers to the click, never the other way
-        /// around. Computed here because RepoInfo already refreshes at
-        /// every moment trackedness can change under the app (open,
-        /// rescan, activation, in-app commit) — menus read it without
-        /// spawning git at row render.
-        var trackedPaths: Set<String>?
-        var trackedDirs: Set<String>?
+        /// Whether the checked-out branch has an upstream — without one,
+        /// `tree/<branch>` links 404 and Open on GitHub falls back to the
+        /// repo page.
+        var upstreamExists = false
+        /// What GitHub has of this checkout, per path (spec:
+        /// copy-github-link §8): the render-time gate and the reason
+        /// behind a disabled Copy GitHub Link. Nil when unknown (ls-files
+        /// failed) — the menu then offers the item and defers to the
+        /// click, never the other way around. Computed here because
+        /// RepoInfo already refreshes at every moment presence can
+        /// change under the app (open, rescan, activation, in-app
+        /// commit); menus read it without spawning git at row render.
+        var presence: GitHubPresence.Index?
 
         var primaryGitHubRepo: GitHubRepoID? { gitHubRepos.first }
     }
@@ -346,7 +347,10 @@ enum LocalGit {
     /// Everything the sidebar needs about a folder's checkout, in one
     /// background-safe call. Worktrees resolve `.git`-file indirection via
     /// git itself, so a linked worktree reports exactly like a clone.
-    static func repoInfo(forDirectory dir: URL) -> RepoInfo? {
+    /// `markdownPaths` — the folder's scanned files, relative to `dir` —
+    /// bound the ignore probe: `check-ignore` answers for exactly those,
+    /// so a monorepo's node_modules is never enumerated.
+    static func repoInfo(forDirectory dir: URL, markdownPaths: [String] = []) -> RepoInfo? {
         guard let out = run(["rev-parse", "--show-toplevel"], in: dir.path) else { return nil }
         let toplevel = out.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !toplevel.isEmpty else { return nil }
@@ -358,20 +362,46 @@ enum LocalGit {
         if let list = run(["worktree", "list", "--porcelain"], in: toplevel) {
             info.worktrees = parseWorktreeList(list)
         }
+        let upstream = run(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+                           in: toplevel)
+        info.upstreamExists = upstream != nil
         if let files = run(["ls-files", "-z"], in: toplevel) {
             let tracked = parseTrackedPaths(files)
-            // A monorepo far past the sidebar's own 20k-file cap would
-            // put six-figure sets through main-thread equality on every
-            // activation heartbeat — leave trackedness unknown instead.
-            if tracked.files.count <= trackedPathsLimit {
-                info.trackedPaths = tracked.files
-                info.trackedDirs = tracked.dirs
+            let stagedOut = run(["diff", "--cached", "--name-only", "--diff-filter=A", "-z"],
+                                in: toplevel) ?? ""
+            // Files added by commits the upstream lacks; a branch with no
+            // upstream marks everything as not pushed instead.
+            let unpushedOut = upstream == nil ? "" :
+                run(["diff", "--name-only", "--diff-filter=A", "-z", "@{upstream}...HEAD"],
+                    in: toplevel) ?? ""
+            // check-ignore exits 1 when nothing matched — `run` maps that
+            // to nil, which reads correctly as "no ignored paths".
+            var ignoredOut = ""
+            if !markdownPaths.isEmpty,
+               let prefix = run(["rev-parse", "--show-prefix"], in: dir.path)?
+                   .trimmingCharacters(in: .whitespacesAndNewlines) {
+                let input = markdownPaths.map { prefix + $0 }.joined(separator: "\0") + "\0"
+                ignoredOut = run(["check-ignore", "-v", "-z", "--stdin"], input: input,
+                                 in: toplevel) ?? ""
             }
+            // Hashed once here, off main: RepoInfo equality on the
+            // activation heartbeat compares this number, never the sets.
+            var hasher = Hasher()
+            hasher.combine(files)
+            hasher.combine(stagedOut)
+            hasher.combine(upstream ?? "")
+            hasher.combine(unpushedOut)
+            hasher.combine(ignoredOut)
+            info.presence = GitHubPresence.Index(
+                trackedFiles: tracked.files, trackedDirs: tracked.dirs,
+                stagedNew: GitHubPresence.parsePathList(stagedOut),
+                unpushed: GitHubPresence.parsePathList(unpushedOut),
+                branchUnpushed: upstream == nil,
+                ignored: GitHubPresence.parseCheckIgnore(ignoredOut),
+                fingerprint: hasher.finalize())
         }
         return info
     }
-
-    nonisolated static let trackedPathsLimit = 50_000
 
     /// Pure parser for `git ls-files -z`: the tracked files, plus every
     /// ancestor directory of one (git tracks no directories itself, so
@@ -486,13 +516,29 @@ enum LocalGit {
         return message.isEmpty ? "git \(args.first ?? "") failed" : message
     }
 
-    private static func run(_ args: [String], in directory: String) -> String? {
+    /// `run` with data on stdin (`--stdin` commands). The input is
+    /// written from a background queue while stdout drains here: writing
+    /// first would deadlock once git fills the output pipe answering
+    /// paths it has already read.
+    private static func run(_ args: [String], input: String, in directory: String) -> String? {
+        let stdin = Pipe()
+        let data = Data(input.utf8)
+        DispatchQueue.global(qos: .utility).async {
+            stdin.fileHandleForWriting.write(data)
+            try? stdin.fileHandleForWriting.close()
+        }
+        return run(args, in: directory, standardInput: stdin)
+    }
+
+    private static func run(_ args: [String], in directory: String,
+                            standardInput: Pipe? = nil) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["git", "-C", directory] + args
         var env = ProcessInfo.processInfo.environment
         env["GIT_TERMINAL_PROMPT"] = "0"
         process.environment = env
+        if let standardInput { process.standardInput = standardInput }
         let stdout = Pipe()
         process.standardOutput = stdout
         // Discard rather than Pipe(): an undrained pipe can fill and

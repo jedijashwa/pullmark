@@ -719,3 +719,9 @@
 "the working file" = "o arquivo de trabalho";
 "editing" = "editando";
 "pr-status-open" = "Aberto";
+
+// Copy GitHub Link reasons (spec: copy-github-link §8)
+"Ignored by .gitignore" = "Ignorado pelo .gitignore";
+"Ignored locally" = "Ignorado localmente";
+"Not committed yet" = "Ainda não commitado";
+"Not pushed yet" = "Ainda não enviado";

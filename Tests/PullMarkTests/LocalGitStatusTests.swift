@@ -82,7 +82,7 @@ struct LocalGitStatusTests {
         let root = try makeRepo()
         defer { try? FileManager.default.removeItem(at: root) }
         let info = try #require(LocalGit.repoInfo(forDirectory: root))
-        let tracked = try #require(info.trackedPaths)
+        let tracked = try #require(info.presence).trackedFiles
         // The rename is staged: moved.md is in the index, base.md is not.
         #expect(tracked.contains("moved.md"))
         #expect(!tracked.contains("base.md"))

@@ -56,21 +56,6 @@ enum GitHubLink {
         }
     }
 
-    /// Whether a row should offer Copy GitHub Link, given what the
-    /// index tracks (spec: copy-github-link §3). Untracked and ignored
-    /// content has no page on GitHub, so the item stays out of the
-    /// menu. Nil sets mean the tracked list isn't known (no opened
-    /// folder covers this repo, or it was too large to hold) — offer
-    /// the item and let the click resolve, which is the pre-cache
-    /// behavior. The repo root itself always links (bare tree/<ref>).
-    static func offersLink(relativePath: String, isDirectory: Bool,
-                           trackedFiles: Set<String>?, trackedDirs: Set<String>?) -> Bool {
-        guard let trackedFiles, let trackedDirs else { return true }
-        if relativePath.isEmpty { return true }
-        return isDirectory ? trackedDirs.contains(relativePath)
-                           : trackedFiles.contains(relativePath)
-    }
-
     /// Unreserved characters only — everything else, including "/",
     /// percent-encodes. Segments that need their slashes call
     /// `encodeKeepingSlashes`.

@@ -720,3 +720,9 @@
 "the working file" = "作業中のファイル";
 "editing" = "編集中";
 "pr-status-open" = "オープン";
+
+// Copy GitHub Link reasons (spec: copy-github-link §8)
+"Ignored by .gitignore" = ".gitignore で無視されています";
+"Ignored locally" = "ローカルで無視されています";
+"Not committed yet" = "まだコミットされていません";
+"Not pushed yet" = "まだプッシュされていません";

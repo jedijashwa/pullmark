@@ -147,10 +147,12 @@ activation, in-app commit):
 answers `onGitHub`, `absent(reason)`, or `unknown`.
 
 **Menu.** Files: `onGitHub` ⇒ the item as today; `absent` ⇒ the item
-DISABLED with the reason as a menu subtitle (macOS 14 `Text` +
-`Text` label; verified live that the contextMenu bridge renders it —
-if it ever doesn't, the reason moves into the title in parentheses);
-`unknown` ⇒ offered, click checks (today's behavior). Directories:
+DISABLED with the reason in the title — "Copy GitHub Link (Not pushed
+yet)". A menu subtitle (macOS 14 `Text` + `Text` label) was the first
+choice; verified live 2026-08-28 that SwiftUI's contextMenu bridge
+drops the second Text on macOS 26 (the item renders with an empty
+line beneath), so the title carries the reason. `unknown` ⇒ offered,
+click checks (today's behavior). Directories:
 hidden when nothing under them is on GitHub, enabled otherwise. Loose
 files with no Location covering their repo keep the click-time check.
 The Location root's "Open on GitHub" opens the repo page without
