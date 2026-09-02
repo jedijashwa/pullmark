@@ -365,7 +365,6 @@
 "Remove the PullMark disk image?" = "PullMark のディスクイメージを取り除きますか？";
 "Rendered" = "レンダリング";
 "Rendered Diff" = "レンダリング差分";
-"Reopen what was in the sidebar when PullMark last quit" = "PullMark を最後に終了したとき、サイドバーにあったものを開き直します";
 "Reopening…" = "開き直しています…";
 "Report a Bug…" = "バグを報告…";
 "Report an Issue…" = "問題を報告…";
@@ -375,7 +374,6 @@
 "Restore Defaults" = "デフォルトに戻す";
 "Restore Defaults…" = "デフォルトに戻す…";
 "Restore all keyboard shortcuts to their defaults?" = "すべてのキーボードショートカットをデフォルトに戻しますか？";
-"Restore files and pull requests from the last session" = "前回のセッションのファイルとプルリクエストを復元する";
 "Restore the default" = "デフォルトに戻す";
 "Restore the file as it was before PullMark's last edit" = "PullMark の最後の編集より前の状態にファイルを戻します";
 "Result" = "結果";
@@ -726,3 +724,15 @@
 "Ignored locally" = "ローカルで無視されています";
 "Not committed yet" = "まだコミットされていません";
 "Not pushed yet" = "まだプッシュされていません";
+
+// Pinned entries, rename, session reopen (spec: pinned-and-session-reopen)
+"Pinned" = "ピン留め済み";
+"Pin" = "ピン留め";
+"Pin…" = "ピン留め…";
+"Unpin" = "ピン留めを解除";
+"Rename…" = "名称変更…";
+"Reopen previous session at launch" = "起動時に前回のセッションを開き直す";
+"Restore" = "復元";
+"%@ is no longer at %@." = "%@ は %@ にはもうありません。";
+"Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "ファイル、フォルダ、プルリクエスト、閲覧したリポジトリを前回のまま開き直します。ピン留めした項目は常に復元されます";
+"PullMark didn't quit normally. Restore the previous session?" = "PullMark は正常に終了しませんでした。前回のセッションを復元しますか？";

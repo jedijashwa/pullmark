@@ -572,6 +572,12 @@ enum LaunchArguments {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
+        // The unclean-exit marker (spec: pinned-and-session-reopen §6):
+        // still set from the last run means it never reached
+        // applicationWillTerminate.
+        let defaults = UserDefaults.pullmark
+        AppState.launchedAfterUncleanExit = defaults.bool(forKey: DefaultsKeys.sessionOpen)
+        defaults.set(true, forKey: DefaultsKeys.sessionOpen)
         // Before any window (and so any toolbar) exists: scrub saved
         // toolbar arrangements that a sidebar-section drop corrupted, so
         // SwiftUI only ever restores a clean one. See ToolbarArrangement.
@@ -648,6 +654,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // writes are coalesced (AppState.scheduleSessionSnapshot), so the
         // last second of changes may still be pending here.
         AppState.keyInstance?.snapshotSession()
+        AppState.keyInstance?.savePinsNow()
+        UserDefaults.pullmark.set(false, forKey: DefaultsKeys.sessionOpen)
         // SwiftUI restores window frames but not full-screen state, so
         // remember it ourselves (⌘Q from full screen still has the window
         // alive here; closing the window first leaves full screen anyway).

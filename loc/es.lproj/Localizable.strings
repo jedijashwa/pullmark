@@ -366,7 +366,6 @@
 "Remove the PullMark disk image?" = "¿Quitar la imagen de disco de PullMark?";
 "Rendered" = "Renderizado";
 "Rendered Diff" = "Diff renderizado";
-"Reopen what was in the sidebar when PullMark last quit" = "Reabre lo que había en la barra lateral la última vez que PullMark se cerró";
 "Reopening…" = "Reabriendo…";
 "Report a Bug…" = "Informar de un error…";
 "Report an Issue…" = "Informar de un problema…";
@@ -376,7 +375,6 @@
 "Restore Defaults" = "Restablecer valores por defecto";
 "Restore Defaults…" = "Restablecer valores por defecto…";
 "Restore all keyboard shortcuts to their defaults?" = "¿Restablecer todos los atajos de teclado a sus valores por defecto?";
-"Restore files and pull requests from the last session" = "Restaurar los archivos y los pull requests de la última sesión";
 "Restore the default" = "Restablecer el valor por defecto";
 "Restore the file as it was before PullMark's last edit" = "Restaura el archivo tal como estaba antes de la última edición de PullMark";
 "Result" = "Resultado";
@@ -727,3 +725,15 @@
 "Ignored locally" = "Ignorado localmente";
 "Not committed yet" = "Aún sin commit";
 "Not pushed yet" = "Aún sin push";
+
+// Pinned entries, rename, session reopen (spec: pinned-and-session-reopen)
+"Pinned" = "Fijados";
+"Pin" = "Fijar";
+"Pin…" = "Fijar…";
+"Unpin" = "Desfijar";
+"Rename…" = "Renombrar…";
+"Reopen previous session at launch" = "Reabrir la sesión anterior al iniciar";
+"Restore" = "Restaurar";
+"%@ is no longer at %@." = "%@ ya no está en %@.";
+"Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "Los archivos, carpetas, pull requests y repos explorados vuelven como estaban; los elementos fijados siempre vuelven";
+"PullMark didn't quit normally. Restore the previous session?" = "PullMark no se cerró correctamente. ¿Restaurar la sesión anterior?";

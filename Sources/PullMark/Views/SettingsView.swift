@@ -38,7 +38,7 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.inboxEnabled, store: UserDefaults.pullmark) private var inboxEnabled = true
     @AppStorage(DefaultsKeys.inboxMarkdownOnly, store: UserDefaults.pullmark) private var inboxMarkdownOnly = true
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
-    @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = true
+    @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = false
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
@@ -96,8 +96,8 @@ struct GeneralSettingsTab: View {
             }
 
             Section("Reading") {
-            Toggle("Restore files and pull requests from the last session", isOn: $restoreSession)
-                .help("Reopen what was in the sidebar when PullMark last quit")
+            Toggle("Reopen previous session at launch", isOn: $restoreSession)
+                .help("Files, folders, pull requests and browsed repos come back as they were; pinned items always do")
                 .settingAnchor("restore-session")
 
             Toggle("Show hidden files", isOn: $showHiddenFiles)

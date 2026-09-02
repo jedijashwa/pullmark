@@ -137,6 +137,10 @@ enum SidebarSelection: Hashable {
     /// not on arrow-selection.
     case inboxItem(String)
     case recentItem(String)
+    /// A pinned file bookmark (spec: pinned-and-session-reopen §1): the
+    /// pin's id. A launcher row, like Recents — clicking previews the
+    /// file; the document area itself follows `.local`.
+    case pinnedFile(String)
 }
 
 struct MessageError: LocalizedError {
@@ -306,8 +310,23 @@ final class AppState: ObservableObject {
     /// Opened folder roots (spec §1) — closeable places with trees,
     /// alongside the individually opened documents in `localFiles`.
     @Published var folders: [LocalFolder] = [] {
-        didSet { scheduleSessionSnapshot() }
+        didSet { scheduleSessionSnapshot(); schedulePinsSave() }
     }
+    /// The Pinned section, in its drag order (spec: pinned-and-session-
+    /// reopen §1). Folder pins also have a `LocalFolder` in `folders`;
+    /// the Locations section shows only the roots that aren't pinned.
+    @Published var pins: [Pin] = [] {
+        didSet { schedulePinsSave() }
+    }
+    /// The row currently renaming inline (spec §2): a pin id, or
+    /// "root:" + path for a Locations root. Set by Pin… and Rename….
+    @Published var renamingEntry: String?
+    /// The crash-recovery banner (spec §6): the last run didn't quit
+    /// normally, reopening is off, and a session snapshot is waiting.
+    @Published var restoreOffer = false
+    /// Read by the app delegate before any window exists: the previous
+    /// launch's `sessionOpen` marker was still set.
+    static var launchedAfterUncleanExit = false
     @Published var prSessions: [PRSession] = [] {
         didSet { scheduleSessionSnapshot() }
     }
@@ -596,13 +615,22 @@ final class AppState: ObservableObject {
             try? await Task.sleep(nanoseconds: 300_000_000)
             if DemoMode.active {
                 self?.installDemoSessionIfNeeded()
-            } else {
+            }
+            // A named demo suite persists, so it exercises the real
+            // launch paths too (see DemoMode.namedSuite).
+            let persists = !DemoMode.active || DemoMode.namedSuite != nil
+            if persists {
+                self?.migrateReopenSetting()
+                self?.restorePins()
                 self?.restoreSessionIfWanted()
             }
             // Only now may the session write itself back: the restore's
             // own adds fire the same didSets, and a snapshot taken
             // mid-restore would overwrite the one being restored from.
             self?.sessionRestoreSettled = true
+            if persists {
+                self?.offerRestoreIfUnclean()
+            }
             if !DemoMode.active {
                 await self?.refreshInboxIfDue()
             }
@@ -742,6 +770,8 @@ final class AppState: ObservableObject {
             var path: String
             var viewMode: LocalFolder.ViewMode
             var expanded: [String]
+            /// Optional so older snapshots keep decoding.
+            var alias: String? = nil
         }
         struct RemoteRepo: Codable {
             var owner: String
@@ -790,9 +820,11 @@ final class AppState: ObservableObject {
         let openPRs = prSessions.map { "\($0.ref.owner)/\($0.ref.repo)#\($0.ref.number)" }
         let snapshot = SessionSnapshot(
             files: localFiles.map(\.url.path),
-            folders: folders.map {
+            // Pinned roots restore through their pins (spec: pinned-and-
+            // session-reopen §4), so the session lists only the rest.
+            folders: folders.filter { !isPinned($0.rootURL) }.map {
                 .init(path: $0.rootURL.path, viewMode: $0.viewMode,
-                      expanded: Array($0.expandedPaths))
+                      expanded: Array($0.expandedPaths), alias: $0.alias)
             },
             prs: openPRs + pendingRestorePRs.filter { !openPRs.contains($0) },
             remotes: remoteSessions.map {
@@ -828,12 +860,21 @@ final class AppState: ObservableObject {
 
     private func restoreSessionIfWanted() {
         // Only the first window restores — ⌘N must open EMPTY windows,
-        // not clones of the last session.
+        // not clones of the last session. Pinned roots are already in
+        // place by now and don't count as "something open".
         guard Self.keyInstance === self,
-              UserDefaults.pullmark.object(forKey: DefaultsKeys.restoreSession) as? Bool ?? true,
-              localFiles.isEmpty, folders.isEmpty, prSessions.isEmpty, remoteSessions.isEmpty,
+              UserDefaults.pullmark.bool(forKey: DefaultsKeys.restoreSession),
+              localFiles.isEmpty, prSessions.isEmpty, remoteSessions.isEmpty,
+              folders.allSatisfy({ isPinned($0.rootURL) }),
               let snapshot = Self.loadSnapshot()
         else { return }
+        restoreSession(snapshot)
+    }
+
+    /// Reopens a snapshot's contents alongside whatever is already
+    /// present (pinned roots, or the crash-recovery banner's late
+    /// restore): duplicates are skipped, never doubled.
+    private func restoreSession(_ snapshot: SessionSnapshot) {
         for saved in snapshot.remotes ?? [] {
             var session = RemoteRepoSession(
                 ref: PullRequestRef(owner: saved.owner, repo: saved.repo, number: 0),
@@ -844,11 +885,12 @@ final class AppState: ObservableObject {
         for path in snapshot.files where FileManager.default.fileExists(atPath: path) {
             add(url: URL(fileURLWithPath: path))
         }
-        for saved in snapshot.folders {
+        for saved in snapshot.folders where folder(for: URL(fileURLWithPath: saved.path)) == nil {
             let root = URL(fileURLWithPath: saved.path)
             var folder = LocalFolder(rootURL: root)
             folder.viewMode = saved.viewMode
             folder.expandedPaths = Set(saved.expanded)
+            folder.alias = saved.alias
             folder.scanning = true
             // A missing root restores dimmed rather than vanishing —
             // rescan marks it missing and later activation revives it.
@@ -923,7 +965,7 @@ final class AppState: ObservableObject {
     /// where view-lifecycle registration provably is not.
     var surfaceExpectation: (kind: SurfaceToolbar.Kind, id: String)? {
         switch selection {
-        case nil, .inboxItem, .recentItem:
+        case nil, .inboxItem, .recentItem, .pinnedFile:
             return nil
         case .local(let url):
             guard localFile(for: url) != nil else { return nil }
@@ -1058,6 +1100,8 @@ final class AppState: ObservableObject {
             removeRemoteSession(id)
         case .recentItem(let id):
             removeRecent(id: id)
+        case .pinnedFile(let id):
+            unpin(id: id)
         default:
             break
         }
@@ -1066,6 +1110,7 @@ final class AppState: ObservableObject {
     func add(url: URL) {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
+        restoreOffer = false
         if isDirectory.boolValue {
             addFolder(url)
             noteRecent(RecentItem(kind: .folder, path: url.path,
@@ -1180,7 +1225,7 @@ final class AppState: ObservableObject {
             return ("\(session.ref.owner)/\(session.ref.repo)", "book.closed")
         case .remoteDoc(_, let path):
             return ((path as NSString).lastPathComponent, "doc.text")
-        case .inboxItem, .recentItem:
+        case .inboxItem, .recentItem, .pinnedFile:
             return nil
         }
     }
@@ -1292,7 +1337,7 @@ final class AppState: ObservableObject {
             if case .remoteRepo = destination {
                 Task { await loadRemoteTree(sessionID: id) }
             }
-        case .inboxItem, .recentItem:
+        case .inboxItem, .recentItem, .pinnedFile:
             break
         }
     }
@@ -1369,7 +1414,9 @@ final class AppState: ObservableObject {
     /// (watchers torn down, nothing touched on disk, everything
     /// revivable from Recents or by reopening).
     func closeAllLocations() {
-        for folder in folders { removeFolder(folder.rootURL) }
+        // The Locations header's gesture: pinned roots live in Pinned and
+        // stay.
+        for folder in unpinnedFolders { removeFolder(folder.rootURL) }
         for session in remoteSessions { removeRemoteSession(session.id) }
     }
 
@@ -1465,6 +1512,177 @@ final class AppState: ObservableObject {
         selection = .local(url)
     }
 
+    // MARK: - Pinned entries (spec: pinned-and-session-reopen)
+
+    func isPinned(_ root: URL) -> Bool {
+        pins.contains { $0.kind == .folder && $0.url == root }
+    }
+
+    func pin(id: String) -> Pin? {
+        pins.first { $0.id == id }
+    }
+
+    /// Pin… on a folder row, or Pin on a Locations root: the folder
+    /// becomes (or stays) a root, joins the bottom of Pinned, and the
+    /// row opens for renaming.
+    func addPin(folderAt url: URL) {
+        if folder(for: url) == nil { addFolder(url) }
+        guard !isPinned(url), let folder = folder(for: url) else { return }
+        let pin = Pin(kind: .folder, path: url.path, alias: folder.alias,
+                      viewMode: folder.viewMode.rawValue, expanded: Array(folder.expandedPaths))
+        pins.append(pin)
+        renamingEntry = pin.id
+    }
+
+    /// Pin… on any file row: a bookmark at the bottom of Pinned, opened
+    /// for renaming. Pinning never opens the file.
+    func addPin(fileAt url: URL) {
+        let pin = Pin(kind: .file, path: url.path)
+        guard !pins.contains(where: { $0.id == pin.id }) else { return }
+        pins.append(pin)
+        renamingEntry = pin.id
+    }
+
+    /// Unpin: a folder root moves to the bottom of Locations keeping its
+    /// name; a file bookmark just goes (an open file stays open).
+    func unpin(id: String) {
+        guard let index = pins.firstIndex(where: { $0.id == id }) else { return }
+        let pin = pins.remove(at: index)
+        if pin.kind == .folder, let at = folders.firstIndex(where: { $0.rootURL == pin.url }) {
+            var folder = folders.remove(at: at)
+            folder.alias = pin.alias
+            folders.append(folder)
+        }
+        if renamingEntry == id { renamingEntry = nil }
+        if case .pinnedFile(id) = selection { selection = nil }
+    }
+
+    func setAlias(_ raw: String, forPin id: String) {
+        guard let index = pins.firstIndex(where: { $0.id == id }) else { return }
+        pins[index].alias = SidebarNaming.normalizedAlias(raw, name: pins[index].name)
+    }
+
+    func setAlias(_ raw: String, forRoot root: URL) {
+        guard let index = folders.firstIndex(where: { $0.rootURL == root }) else { return }
+        folders[index].alias = SidebarNaming.normalizedAlias(raw, name: root.lastPathComponent)
+    }
+
+    /// Drag reordering inside Locations, which shows only unpinned roots:
+    /// the move happens on that subset and the pinned roots keep their
+    /// places at the front of `folders` (their order lives in `pins`).
+    func moveLocations(fromOffsets: IndexSet, toOffset: Int) {
+        var unpinned = folders.filter { !isPinned($0.rootURL) }
+        unpinned.move(fromOffsets: fromOffsets, toOffset: toOffset)
+        folders = folders.filter { isPinned($0.rootURL) } + unpinned
+    }
+
+    /// The Locations section's contents, in drag order.
+    var unpinnedFolders: [LocalFolder] {
+        folders.filter { !isPinned($0.rootURL) }
+    }
+
+    /// Single-click on a pinned file: preview it the way a tree click
+    /// does. A file outside every Location resolves its images against
+    /// its own directory.
+    func previewPinnedFile(_ pin: Pin) {
+        let url = pin.url
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            lastNotice = String(localized: "\(pin.name) is no longer at \(PathAbbreviator.abbreviate(url.path)).")
+            return
+        }
+        if localFiles.contains(where: { $0.url == url }) {
+            selection = .local(url)
+            return
+        }
+        let file = treeFile(for: url) ?? LocalFile(url: url, displayName: url.lastPathComponent,
+                                                   resourceRoot: url.deletingLastPathComponent())
+        if preview != .local(file) { preview = .local(file) }
+        selection = .local(url)
+    }
+
+    /// Keep Open from a pinned file (double-click or menu).
+    func openPinnedFile(_ pin: Pin) {
+        guard FileManager.default.fileExists(atPath: pin.url.path) else { return }
+        if treeFile(for: pin.url) != nil {
+            pinFile(at: pin.url)
+        } else {
+            add(url: pin.url)
+        }
+    }
+
+    private var pinsSaveTask: Task<Void, Never>?
+
+    private func schedulePinsSave() {
+        guard sessionRestoreSettled else { return }
+        pinsSaveTask?.cancel()
+        pinsSaveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.savePinsNow()
+        }
+    }
+
+    /// Folder pins carry their live tree state (view mode, expansion) so
+    /// a pinned root restores whole without the session snapshot.
+    func savePinsNow() {
+        pinsSaveTask?.cancel()
+        let current = pins.map { pin -> Pin in
+            guard pin.kind == .folder, let folder = folder(for: pin.url) else { return pin }
+            var copy = pin
+            copy.viewMode = folder.viewMode.rawValue
+            copy.expanded = Array(folder.expandedPaths)
+            return copy
+        }
+        UserDefaults.pullmark.set(Pin.encodeList(current), forKey: DefaultsKeys.pinnedEntries)
+    }
+
+    /// At launch, before any session restore: pinned roots come back as
+    /// folders with their saved tree state; file pins need nothing.
+    private func restorePins() {
+        pins = Pin.decodeList(UserDefaults.pullmark.data(forKey: DefaultsKeys.pinnedEntries))
+        for pin in pins where pin.kind == .folder && folder(for: pin.url) == nil {
+            var folder = LocalFolder(rootURL: pin.url)
+            folder.viewMode = LocalFolder.ViewMode(rawValue: pin.viewMode ?? "") ?? .tree
+            folder.expandedPaths = Set(pin.expanded ?? [""])
+            folder.scanning = true
+            folders.append(folder)
+            watchFolder(pin.url)
+            rescanFolder(root: pin.url)
+        }
+    }
+
+    // MARK: - Session reopen setting and crash recovery (spec §5–§6)
+
+    /// The default flipped to off in 0.45; a user who already has a
+    /// session snapshot and never set the key keeps reopening.
+    private func migrateReopenSetting() {
+        let defaults = UserDefaults.pullmark
+        guard defaults.object(forKey: DefaultsKeys.restoreSession) == nil else { return }
+        let hasSnapshot = defaults.object(forKey: DefaultsKeys.sessionSnapshot) != nil
+        defaults.set(SessionReopen.migratedValue(storedSetting: nil, hasSnapshot: hasSnapshot),
+                     forKey: DefaultsKeys.restoreSession)
+    }
+
+    private func offerRestoreIfUnclean() {
+        guard Self.launchedAfterUncleanExit, Self.keyInstance === self,
+              !UserDefaults.pullmark.bool(forKey: DefaultsKeys.restoreSession),
+              let snapshot = Self.loadSnapshot(),
+              !(snapshot.files.isEmpty && snapshot.folders.isEmpty && snapshot.prs.isEmpty
+                && (snapshot.remotes ?? []).isEmpty)
+        else { return }
+        restoreOffer = true
+    }
+
+    func acceptRestoreOffer() {
+        restoreOffer = false
+        guard let snapshot = Self.loadSnapshot() else { return }
+        restoreSession(snapshot)
+    }
+
+    func declineRestoreOffer() {
+        restoreOffer = false
+    }
+
     // MARK: - Folder roots (spec §2)
 
     func folder(for root: URL) -> LocalFolder? {
@@ -1493,6 +1711,7 @@ final class AppState: ObservableObject {
     /// "close the folder" operation (spec §4).
     func removeFolder(_ root: URL) {
         folders.removeAll { $0.rootURL == root }
+        pins.removeAll { $0.kind == .folder && $0.url == root }
         folderWatchers[root] = nil
         // The preview belongs to the place it was browsed from.
         if case .local(let p) = preview, p.url.path.hasPrefix(root.path + "/") {
@@ -1754,6 +1973,7 @@ final class AppState: ObservableObject {
     /// history revival (spec back-forward-navigation §4) already sits on
     /// its destination and must not record a detour to the overview.
     func addPR(_ input: String, select: Bool = true) async throws {
+        restoreOffer = false
         guard let ref = PullRequestRef.parse(input) else {
             throw MessageError(message: "Could not parse a pull request from “\(input)”. "
                 + "Expected something like https://github.com/owner/repo/pull/123 or owner/repo#123.")

@@ -25,9 +25,12 @@ struct LocalFolder: Identifiable, Equatable {
     /// Git identity of the root, computed off-main at open/rescan and on
     /// app activation — never during rendering. Nil outside a repo.
     var git: LocalGit.RepoInfo?
+    /// A user-given name for the row (spec: pinned-and-session-reopen
+    /// §2); nil shows the folder name.
+    var alias: String?
 
     var id: URL { rootURL }
-    var displayName: String { rootURL.lastPathComponent }
+    var displayName: String { alias ?? rootURL.lastPathComponent }
 
     func fileURL(for relativePath: String) -> URL {
         rootURL.appendingPathComponent(relativePath)

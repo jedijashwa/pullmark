@@ -28,6 +28,7 @@ struct ContentView: View {
                 AppUpdateBanner()
                 UpdatedBanner()
                 DefaultAppBanner()
+                RestoreOfferBanner()
                 DetailView()
                     .overlay(alignment: .top) { ZoomHUD().padding(.top, 10) }
             }
@@ -238,8 +239,24 @@ struct SidebarView: View {
     @SceneStorage(DefaultsKeys.sidebarPRsExpanded) private var prsExpanded = true
     @SceneStorage(DefaultsKeys.sidebarInboxExpanded) private var inboxExpanded = true
     @SceneStorage(DefaultsKeys.sidebarRecentExpanded) private var recentExpanded = true
+    @SceneStorage(DefaultsKeys.sidebarPinnedExpanded) private var pinnedExpanded = true
     /// Space → Quick Look on the selected local row (spec §8.2).
     @State private var quickLookURL: URL?
+
+    /// Which rows show their true path beneath the title (spec: pinned-
+    /// and-session-reopen §2): aliased ones, and title twins within the
+    /// same section.
+    private var pinnedPathLineIDs: Set<String> {
+        SidebarNaming.entriesNeedingPath(state.pins.map {
+            .init(id: $0.id, title: $0.title, aliased: $0.alias != nil)
+        })
+    }
+
+    private var locationPathLineIDs: Set<String> {
+        SidebarNaming.entriesNeedingPath(state.unpinnedFolders.map {
+            .init(id: $0.rootURL.path, title: $0.displayName, aliased: $0.alias != nil)
+        })
+    }
 
     // What you opened yourself outranks what was assigned to you: the
     // review-request subgroup sits below the opened pull requests.
@@ -291,6 +308,19 @@ struct SidebarView: View {
                     EmptyView()
                 }
             }
+            // Pinned: what you keep, above where you browse (spec: pinned-
+            // and-session-reopen §1). Folder pins are full roots with their
+            // own trees; file pins are bookmarks. Hidden while empty.
+            if !state.pins.isEmpty {
+                let pathIDs = pinnedPathLineIDs
+                CollapsibleSection(String(localized: "Pinned"),
+                                   isExpanded: $pinnedExpanded.preloadingOutlineRowsBeforeCollapse()) {
+                    ForEach(state.pins) { pin in
+                        PinnedEntryView(pin: pin, showsPath: pathIDs.contains(pin.id))
+                    }
+                    .onMove { from, to in state.pins.move(fromOffsets: from, toOffset: to) }
+                }
+            }
             // Locations: browsable roots wherever they live — local folders
             // and GitHub repos share one section (Finder's word for exactly
             // this list); the icon and subtitle carry the origin.
@@ -305,14 +335,15 @@ struct SidebarView: View {
                         .disabled(state.folders.isEmpty && state.remoteSessions.isEmpty)
                 })
             }) {
-                if state.folders.isEmpty, state.remoteSessions.isEmpty {
+                if state.unpinnedFolders.isEmpty, state.remoteSessions.isEmpty {
                     Button("Open Folder…") { state.openFolderPanel() }
                         .font(fonts.callout)
                 }
-                ForEach(state.folders) { folder in
-                    FolderRootGroup(folder: folder)
+                let pathIDs = locationPathLineIDs
+                ForEach(state.unpinnedFolders) { folder in
+                    FolderRootGroup(folder: folder, showsPath: pathIDs.contains(folder.rootURL.path))
                 }
-                .onMove { from, to in state.folders.move(fromOffsets: from, toOffset: to) }
+                .onMove { from, to in state.moveLocations(fromOffsets: from, toOffset: to) }
                 ForEach(state.remoteSessions) { session in
                     RemoteRepoGroup(session: session)
                 }
@@ -383,6 +414,9 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        // Return renames the selected root or pinned file (spec: pinned-
+        // and-session-reopen §2).
+        .background(RenameKeyMonitor(state: state))
         // ⌫ removes the selected removable item (spec §4).
         .onDeleteCommand { state.removeSelectedSidebarItem() }
         .modifier(SpaceQuickLook(url: $quickLookURL, selected: selectedLocalURL))
@@ -573,6 +607,7 @@ private struct SidebarFileRow: View {
             if state.folderRootContaining(file.url) != nil {
                 Button("Reveal in Location") { state.revealInLocation(file.url) }
             }
+            Button("Pin…") { state.addPin(fileAt: file.url) }
             Divider()
             Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([file.url]) }
             Button("Copy Path") { SidebarActions.copyPath(file.url) }
@@ -811,6 +846,14 @@ private struct FolderRootGroup: View {
     @EnvironmentObject private var state: AppState
     @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
     let folder: LocalFolder
+    /// Set when this root lives in the Pinned section: the pin owns the
+    /// alias and the Unpin action (spec: pinned-and-session-reopen §1).
+    var pin: Pin? = nil
+    /// Show the true path beneath the title (aliased, or a title twin).
+    var showsPath = false
+
+    private var renameID: String { pin?.id ?? "root:" + folder.rootURL.path }
+    private var title: String { pin?.title ?? folder.displayName }
     @State private var ghBranches: [String] = []
     @State private var menuAnchor = MenuAnchorBox()
     @State private var menuPresenter = MenuActionPresenter()
@@ -953,9 +996,23 @@ private struct FolderRootGroup: View {
         RemovableRow(help: "Remove from Sidebar",
                      remove: { state.removeFolder(folder.rootURL) }) {
             Label {
-                Text(folder.displayName)
-                    .lineLimit(1)
-                    .font(fonts.row)
+                VStack(alignment: .leading, spacing: 1) {
+                    RenamableTitle(id: renameID, title: title,
+                                   name: folder.rootURL.lastPathComponent, font: fonts.row) { draft in
+                        if let pin {
+                            state.setAlias(draft, forPin: pin.id)
+                        } else {
+                            state.setAlias(draft, forRoot: folder.rootURL)
+                        }
+                    }
+                    if showsPath {
+                        Text(PathAbbreviator.abbreviate(folder.rootURL.path))
+                            .font(fonts.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
             } icon: {
                 Image(systemName: folder.missing ? "folder.badge.questionmark" : "folder")
                     .foregroundStyle(.secondary)
@@ -985,6 +1042,12 @@ private struct FolderRootGroup: View {
             ? String(localized: "Folder not found — last seen at \(PathAbbreviator.abbreviate(folder.rootURL.path))")
             : PathAbbreviator.abbreviate(folder.rootURL.path))
         .contextMenu {
+            if let pin {
+                Button("Unpin") { state.unpin(id: pin.id) }
+            } else {
+                Button("Pin") { state.addPin(folderAt: folder.rootURL) }
+            }
+            Button("Rename…") { state.renamingEntry = renameID }
             Button("Remove from Sidebar") { state.removeFolder(folder.rootURL) }
             Divider()
             Button("Reveal in Finder") {
@@ -1032,10 +1095,84 @@ private struct FolderRootGroup: View {
     @ViewBuilder
     private func fileMenu(_ url: URL) -> some View {
         Button("Keep Open") { state.pinFile(at: url) }
+        Button("Pin…") { state.addPin(fileAt: url) }
         Divider()
         Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         Button("Copy Path") { SidebarActions.copyPath(url) }
         SidebarActions.copyGitHubLinkItems(url: url, state: state)
+    }
+}
+
+/// One Pinned row (spec: pinned-and-session-reopen §1): a pinned folder
+/// is a full root with its own tree, exactly like a Location; a pinned
+/// file is a bookmark that previews on click and keeps open on
+/// double-click.
+private struct PinnedEntryView: View {
+    @EnvironmentObject private var state: AppState
+    let pin: Pin
+    let showsPath: Bool
+
+    var body: some View {
+        switch pin.kind {
+        case .folder:
+            if let folder = state.folder(for: pin.url) {
+                FolderRootGroup(folder: folder, pin: pin, showsPath: showsPath)
+            }
+        case .file:
+            PinnedFileRow(pin: pin, showsPath: showsPath)
+        }
+    }
+}
+
+private struct PinnedFileRow: View {
+    @EnvironmentObject private var state: AppState
+    @AppStorage(DefaultsKeys.zoom, store: UserDefaults.pullmark) private var zoom = 1.0
+    let pin: Pin
+    let showsPath: Bool
+
+    var body: some View {
+        let fonts = ChromeFonts(zoom: zoom)
+        let missing = !FileManager.default.fileExists(atPath: pin.path)
+        Label {
+            VStack(alignment: .leading, spacing: 1) {
+                RenamableTitle(id: pin.id, title: pin.title, name: pin.name, font: fonts.row) { draft in
+                    state.setAlias(draft, forPin: pin.id)
+                }
+                if showsPath {
+                    Text(PathAbbreviator.abbreviate((pin.path as NSString).deletingLastPathComponent))
+                        .font(fonts.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+        } icon: {
+            Image(systemName: "doc.text")
+                .foregroundStyle(.secondary)
+                .drawingGroup()
+        }
+        .foregroundStyle(missing ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
+        .tag(SidebarSelection.pinnedFile(pin.id))
+        .contentShape(Rectangle())
+        // Click previews, like a tree row; the gesture rides alongside
+        // List selection so the row still highlights. Not while its own
+        // title is being edited.
+        .simultaneousGesture(TapGesture().onEnded {
+            if state.renamingEntry != pin.id { state.previewPinnedFile(pin) }
+        })
+        .overlay(DoubleClickCatcher { state.openPinnedFile(pin) })
+        .help(missing
+            ? String(localized: "File not found — last seen at \(PathAbbreviator.abbreviate(pin.path))")
+            : PathAbbreviator.abbreviate(pin.path))
+        .contextMenu {
+            Button("Keep Open") { state.openPinnedFile(pin) }
+            Button("Rename…") { state.renamingEntry = pin.id }
+            Button("Unpin") { state.unpin(id: pin.id) }
+            Divider()
+            Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([pin.url]) }
+            Button("Copy Path") { SidebarActions.copyPath(pin.url) }
+            SidebarActions.copyGitHubLinkItems(url: pin.url, state: state)
+        }
     }
 }
 
@@ -1076,6 +1213,7 @@ private struct FolderNodeView: View {
                     )
                     .contextMenu {
                         Button("Expand All") { expandSubtree(node) }
+                        Button("Pin…") { state.addPin(folderAt: folder.fileURL(for: node.path)) }
                         Divider()
                         Button("Reveal in Finder") {
                             NSWorkspace.shared.activateFileViewerSelecting(
@@ -1106,6 +1244,7 @@ private struct FolderNodeView: View {
                     Button("Keep Open") {
                         state.pinFile(at: folder.fileURL(for: node.path))
                     }
+                    Button("Pin…") { state.addPin(fileAt: folder.fileURL(for: node.path)) }
                     Divider()
                     Button("Reveal in Finder") {
                         NSWorkspace.shared.activateFileViewerSelecting(
@@ -1837,7 +1976,7 @@ struct DetailView: View {
             } else {
                 placeholder
             }
-        case .inboxItem, .recentItem:
+        case .inboxItem, .recentItem, .pinnedFile:
             // Navigational rows: selecting them highlights and enables
             // keyboard actions; the document area shows the empty state.
             placeholder

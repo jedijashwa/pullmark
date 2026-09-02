@@ -25,7 +25,23 @@ enum DemoMode {
     /// every launch nuked every other instance's live state (@AppStorage
     /// observed the wipe and reset blame mid-scene). Demo state is
     /// throwaway by definition, so nothing is lost by never sharing it.
-    static let defaultsSuiteName = "app.pullmark.PullMark.demo.\(ProcessInfo.processInfo.processIdentifier)"
+    static let defaultsSuiteName: String = {
+        if let named = namedSuite { return "app.pullmark.PullMark.demo.\(named)" }
+        return "app.pullmark.PullMark.demo.\(ProcessInfo.processInfo.processIdentifier)"
+    }()
+
+    /// `PM_DEMO_SUITE=<name>`: a demo suite that is NOT wiped at launch
+    /// and NOT swept by the janitor (its stem is no pid), so trials of
+    /// persistence — pins across relaunches, the unclean-exit banner —
+    /// can run against demo content without touching the real domain.
+    /// Such launches also run the launch-time persistence paths the
+    /// per-pid demo skips (pins restore, session reopen, the offer).
+    static let namedSuite: String? = {
+        guard active, let named = ProcessInfo.processInfo.environment["PM_DEMO_SUITE"],
+              !named.isEmpty, named.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" })
+        else { return nil }
+        return named
+    }()
 }
 
 extension UserDefaults {
@@ -59,7 +75,9 @@ extension UserDefaults {
         }
         let name = DemoMode.defaultsSuiteName
         guard let suite = UserDefaults(suiteName: name) else { return .standard }
-        suite.removePersistentDomain(forName: name)
+        if DemoMode.namedSuite == nil {
+            suite.removePersistentDomain(forName: name)
+        }
         return suite
     }()
 }

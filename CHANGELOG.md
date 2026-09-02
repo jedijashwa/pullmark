@@ -6,6 +6,19 @@ section current as features land.
 
 ## Unreleased
 
+- **Pinned.** A new sidebar section above Locations for the folders and
+  files you keep coming back to. Pin… on any folder or file row (or Pin
+  on a Location root) adds it there, as its own root with its own tree
+  or as a file bookmark, and opens it for renaming: Return or Rename…
+  renames any pinned entry or Location root in place, Finder-style, and
+  a renamed entry shows its true path beneath the name — as does any
+  pair of roots that share a name. Pinned entries always come back at
+  launch.
+- **Reopen previous session at launch** is now a General setting, off
+  for new installs (pinned things still return); anyone who already had
+  a session keeps reopening. When PullMark didn't quit normally — a
+  crash, a force-quit, a power cut — a banner offers the previous
+  session back instead of silently dropping it.
 - Copy GitHub Link now knows what GitHub actually has. Files that
   aren't on GitHub show the item disabled with the reason beneath it —
   ignored by .gitignore, ignored locally, not committed yet, or not

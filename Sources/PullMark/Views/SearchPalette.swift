@@ -201,6 +201,7 @@ struct SearchPalette: View {
         case .prFile, .prDoc, .prOverview: return "arrow.triangle.pull"
         case .remoteRepo, .remoteDoc: return "book.closed"
         case .inboxItem, .recentItem: return "clock"
+        case .pinnedFile: return "pin"
         }
     }
 

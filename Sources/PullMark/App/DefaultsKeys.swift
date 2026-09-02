@@ -126,6 +126,14 @@ enum DefaultsKeys {
     static let sidebarPRsExpanded = "pm.sidebar.prsExpanded"
     static let sidebarInboxExpanded = "pm.sidebar.inboxExpanded"
     static let sidebarRecentExpanded = "pm.sidebar.recentExpanded"
+    static let sidebarPinnedExpanded = "pm.sidebar.pinnedExpanded"
+    /// Pinned folders and files (spec: pinned-and-session-reopen §4) —
+    /// a preference, always restored, never part of the session snapshot.
+    static let pinnedEntries = "pm.pinnedEntries"
+    /// Set at launch, cleared on a normal quit: still set at the next
+    /// launch means the last run ended in a crash, force-quit, or power
+    /// loss, and the previous session is offered back (spec §6).
+    static let sessionOpen = "pm.sessionOpen"
     /// "branch" | "commit" — which flavor Copy GitHub Link copies by
     /// default (spec: copy-github-link §2). ⌥ in menus copies the other.
     static let githubLinkStyle = "pm.githubLinkStyle"

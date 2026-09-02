@@ -103,3 +103,10 @@ restore (like Chrome)".
   for `pm.restoreSession`.
 - Live (demo mode): pin a deep folder, rename, twin-name path lines,
   unpin ordering, banner after a `kill -9`, Return-to-rename.
+  Persistence needs a demo suite that survives relaunch:
+  `PM_DEMO=1 PM_DEMO_SUITE=<name>` keeps a named suite (not wiped, not
+  swept) and runs the launch-time persistence paths the per-pid demo
+  skips. Verified 2026-08-28: pin + inline rename, path lines, Unpin to
+  the bottom of Locations, Return-to-rename, file pin surviving a clean
+  quit with the session dropped (setting off), and the banner after
+  SIGKILL restoring the killed session on Restore.

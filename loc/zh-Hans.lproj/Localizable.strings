@@ -365,7 +365,6 @@
 "Remove the PullMark disk image?" = "要移除 PullMark 磁盘映像吗？";
 "Rendered" = "渲染后";
 "Rendered Diff" = "渲染差异";
-"Reopen what was in the sidebar when PullMark last quit" = "重新打开 PullMark 上次退出时边栏里的内容";
 "Reopening…" = "正在重新打开…";
 "Report a Bug…" = "报告 Bug…";
 "Report an Issue…" = "报告问题…";
@@ -375,7 +374,6 @@
 "Restore Defaults" = "恢复默认";
 "Restore Defaults…" = "恢复默认…";
 "Restore all keyboard shortcuts to their defaults?" = "要将所有键盘快捷键恢复为默认吗？";
-"Restore files and pull requests from the last session" = "恢复上次会话中的文件和拉取请求";
 "Restore the default" = "恢复默认";
 "Restore the file as it was before PullMark's last edit" = "把文件恢复到 PullMark 上次编辑之前的样子";
 "Result" = "结果";
@@ -726,3 +724,15 @@
 "Ignored locally" = "已在本地忽略";
 "Not committed yet" = "尚未提交";
 "Not pushed yet" = "尚未推送";
+
+// Pinned entries, rename, session reopen (spec: pinned-and-session-reopen)
+"Pinned" = "已固定";
+"Pin" = "固定";
+"Pin…" = "固定…";
+"Unpin" = "取消固定";
+"Rename…" = "重命名…";
+"Reopen previous session at launch" = "启动时重新打开上一次的会话";
+"Restore" = "恢复";
+"%@ is no longer at %@." = "%@ 已不在 %@。";
+"Files, folders, pull requests and browsed repos come back as they were; pinned items always do" = "文件、文件夹、拉取请求和浏览过的仓库会恢复原状；固定的项目始终会恢复";
+"PullMark didn't quit normally. Restore the previous session?" = "PullMark 未正常退出。要恢复上一次的会话吗？";
