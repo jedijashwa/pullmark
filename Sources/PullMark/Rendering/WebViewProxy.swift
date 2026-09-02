@@ -222,6 +222,19 @@ final class WebViewProxy: ObservableObject {
         ) { value, _ in completion(value as? String) }
     }
 
+    /// Answers a rich-editor image paste/drop with the Markdown link to
+    /// insert (nil = nothing was written; the editor drops the request).
+    func richEditorImageSaved(token: String, path: String?, alt: String) {
+        func lit(_ value: String?) -> String {
+            guard let value, let data = try? JSONSerialization.data(withJSONObject: [value]),
+                  let text = String(data: data, encoding: .utf8) else { return "null" }
+            return String(text.dropFirst().dropLast())
+        }
+        webView?.evaluateJavaScript(
+            "window.__pmRichEditorImageSaved && window.__pmRichEditorImageSaved(\(lit(token)), \(lit(path)), \(lit(alt)));",
+            completionHandler: nil)
+    }
+
     /// Continues arrow-key editing navigation after a commit reload.
     func revealAtLine(_ signedLine: Int) {
         webView?.evaluateJavaScript(

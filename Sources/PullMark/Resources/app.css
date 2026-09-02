@@ -2009,6 +2009,16 @@ mark.pm-find.pm-find-current {
   word-wrap: break-word;
   min-height: 40vh;
 }
+/* The editor is the document: its first block sits where the rendered
+   page's first block sat. */
+.pm-rich-editing .ProseMirror > *:first-child { margin-top: 0 !important; }
+/* Note cards and the composer are chrome inside the editable flow. */
+.pm-rich-editing .ProseMirror .pm-note,
+.pm-rich-editing .ProseMirror .pm-note-composer {
+  white-space: normal;
+  cursor: default;
+}
+.pm-rich-editing .ProseMirror li .pm-note { margin-top: 6px; }
 .pm-rich-editing .ProseMirror pre.pm-raw {
   font: 12.5px/1.6 ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   white-space: pre;
@@ -2073,3 +2083,108 @@ mark.pm-find.pm-find-current {
 .pm-slash-item.is-active, .pm-slash-item:hover {
   background: rgba(88, 166, 255, 0.22);
 }
+/* Raw islands (spec: rich-editor §4): monospace blocks with a language
+   label; a Mermaid fence shows its preview under the source. */
+.pm-rich-editing .ProseMirror .pm-island { position: relative; margin-bottom: 16px; }
+.pm-rich-editing .ProseMirror .pm-island > pre { margin: 0; }
+.pm-rich-editing .ProseMirror pre[data-params]::before,
+.pm-rich-editing .ProseMirror pre.pm-raw::before {
+  content: attr(data-params);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font: 500 10.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fgColor-muted, #6e7781);
+  pointer-events: none;
+}
+.pm-rich-editing .ProseMirror pre.pm-raw { position: relative; }
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="html"]::before { content: "HTML"; }
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="frontmatter"]::before { content: "front matter"; }
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="math"]::before { content: "math"; }
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="markdown"]::before { content: "markdown"; }
+.pm-rich-editing .ProseMirror pre.pm-raw[data-kind="markdown"] { border-left-color: rgba(163, 113, 247, 0.6); }
+.pm-rich-editing .ProseMirror .pm-island-preview {
+  padding: 12px 8px 4px;
+  text-align: center;
+  overflow-x: auto;
+}
+.pm-rich-editing .ProseMirror .pm-island-preview:empty { display: none; }
+.pm-rich-editing .ProseMirror .pm-island-preview.is-broken { opacity: 0.4; }
+.pm-rich-editing .ProseMirror .pm-island.is-editing .pm-island-preview { opacity: 0.55; }
+.pm-rich-editing .ProseMirror .pm-soft { white-space: pre; }
+/* Table bar, context menu, inline prompt, image fields (spec §7/§8). */
+/* Table handles: a bar above the caret's column, one beside its row
+   (each opens a menu), and "+" pills on the right and bottom edges. */
+.pm-table-chrome button {
+  position: absolute;
+  z-index: 55;
+  border: 0;
+  padding: 0;
+  cursor: default;
+  color: var(--fgColor-muted, #6e7781);
+  background: transparent;
+}
+.pm-table-chrome .pm-table-handle {
+  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.28);
+}
+.pm-table-chrome .pm-table-handle-col { height: 6px; }
+.pm-table-chrome .pm-table-handle-row { width: 6px; }
+.pm-table-chrome .pm-table-handle:hover,
+.pm-table-chrome .pm-table-handle:focus-visible { background: rgba(88, 166, 255, 0.6); }
+.pm-table-chrome .pm-table-add {
+  font: 600 14px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.12);
+  opacity: 0.7;
+}
+.pm-table-chrome .pm-table-add-col { width: 16px; }
+.pm-table-chrome .pm-table-add-row { height: 16px; }
+.pm-table-chrome .pm-table-add:hover { opacity: 1; background: rgba(88, 166, 255, 0.24); color: inherit; }
+.pm-menu-separator { height: 1px; margin: 4px 6px; background: var(--borderColor-default, rgba(128, 128, 128, 0.3)); }
+.pm-menu-danger { color: #cf222e; }
+.pm-context-menu { min-width: 200px; }
+.pm-prompt { padding: 8px 10px; min-width: 260px; }
+.pm-prompt-label { font-size: 11.5px; color: var(--fgColor-muted, #6e7781); margin-bottom: 4px; }
+.pm-prompt-input, .pm-image-field input {
+  width: 100%;
+  box-sizing: border-box;
+  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  padding: 4px 6px;
+  border: 1px solid var(--borderColor-default, rgba(128, 128, 128, 0.35));
+  border-radius: 5px;
+  background: var(--bgColor-default, #fff);
+  color: inherit;
+}
+.pm-image-form { display: flex; gap: 8px; padding: 6px 8px; }
+.pm-image-field { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.pm-image-field span { color: var(--fgColor-muted, #6e7781); white-space: nowrap; }
+.pm-image-field input { width: 160px; }
+.pm-rich-editing .ProseMirror .pm-footnote-ref {
+  font-size: 0.75em;
+  color: var(--fgColor-accent, #0969da);
+  padding: 0 1px;
+}
+.pm-rich-editing .ProseMirror .pm-footnote-def {
+  display: flex;
+  gap: 8px;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+.pm-rich-editing .ProseMirror .pm-footnote-def > p { margin: 0; flex: 1; min-width: 0; }
+.pm-rich-editing .ProseMirror .pm-footnote-label {
+  color: var(--fgColor-muted, #6e7781);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  padding-top: 0.15em;
+}
+.pm-rich-editing .ProseMirror .markdown-alert-title { cursor: default; user-select: none; }
+.pm-rich-editing .ProseMirror .markdown-alert-title::after {
+  content: "▾";
+  margin-left: 6px;
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+.pm-rich-editing .ProseMirror .pm-alert-body > *:last-child { margin-bottom: 0; }

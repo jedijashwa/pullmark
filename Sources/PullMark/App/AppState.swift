@@ -487,6 +487,66 @@ final class AppState: ObservableObject {
     /// view to the raw text. Deliberately not persisted — reading stays the
     /// default on every launch.
     @Published var sourceViewVisible = false
+
+    // MARK: Images folder (spec: rich-editor §9)
+
+    /// The Location root whose images folder is being edited (the sheet).
+    @Published var imagesFolderPrompt: ImagesFolderPrompt?
+    struct ImagesFolderPrompt: Identifiable {
+        let root: URL
+        var id: String { root.path }
+    }
+    private var detectedImagesFolders: [String: String?] = [:]
+
+    /// The Location (opened folder) containing `url`, if any.
+    func location(containing url: URL) -> LocalFolder? {
+        let path = url.standardizedFileURL.path
+        return folders
+            .filter { ImagesFolder.isInside(url, root: $0.rootURL) }
+            .max { $0.rootURL.path.count < $1.rootURL.path.count }
+            .flatMap { path.hasPrefix($0.rootURL.standardizedFileURL.path) ? $0 : nil }
+    }
+
+    func imagesFolderOverride(forRoot root: URL) -> String? {
+        let dict = UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.imagesFolders) as? [String: String]
+        let value = dict?[root.standardizedFileURL.path]?.trimmingCharacters(in: .whitespaces)
+        return value?.isEmpty == false ? value : nil
+    }
+
+    func setImagesFolderOverride(_ folder: String?, forRoot root: URL) {
+        var dict = (UserDefaults.pullmark.dictionary(forKey: DefaultsKeys.imagesFolders) as? [String: String]) ?? [:]
+        let key = root.standardizedFileURL.path
+        let cleaned = folder?.trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/")) ?? ""
+        if cleaned.isEmpty { dict.removeValue(forKey: key) } else { dict[key] = cleaned }
+        UserDefaults.pullmark.set(dict, forKey: DefaultsKeys.imagesFolders)
+        objectWillChange.send()
+    }
+
+    /// Where the Location's Markdown already keeps its images (most
+    /// referenced folder), scanned once per launch per Location.
+    func detectedImagesFolder(for folder: LocalFolder) -> String? {
+        let key = folder.rootURL.standardizedFileURL.path
+        if let cached = detectedImagesFolders[key] { return cached }
+        var files: [(path: String, text: String)] = []
+        for path in folder.filePaths.prefix(400) where path.lowercased().hasSuffix(".md") || path.lowercased().hasSuffix(".markdown") {
+            let url = folder.rootURL.appendingPathComponent(path)
+            if let text = try? String(contentsOf: url, encoding: .utf8), text.contains("![") || text.contains("<img") {
+                files.append((path, text))
+            }
+        }
+        let detected = ImagesFolder.detect(files: files)
+        detectedImagesFolders[key] = detected
+        return detected
+    }
+
+    /// The folder pasted/dropped images are written into for `document`.
+    func imagesDestination(for document: URL) -> URL {
+        let location = self.location(containing: document)
+        return ImagesFolder.destination(document: document, root: location?.rootURL,
+                                        override: location.flatMap { imagesFolderOverride(forRoot: $0.rootURL) },
+                                        detected: location.flatMap { detectedImagesFolder(for: $0) })
+    }
     /// Show Resolved Conversations (Result-view thread markers, spec §1).
     /// Transient and default-off — resolved threads leave the reading
     /// surface on every launch; the in-page control and the View menu item

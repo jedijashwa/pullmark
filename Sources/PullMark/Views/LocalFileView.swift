@@ -77,6 +77,9 @@ struct LocalFileView: View {
     /// The first-use margin-notes intro is up, holding this request
     /// (spec: margin-notes-graduation). Keep Using resumes it exactly.
     @State private var noteIntroRequest: MarginNoteIntroRequest?
+    /// Rich-editor text waiting on the unsaved-changes prompt (manual
+    /// save mode, leaving edit mode with changes).
+    @State private var unsavedRichText: String?
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
@@ -95,6 +98,8 @@ struct LocalFileView: View {
             onNoteIntroRequested: handleNoteIntroRequested,
             onNextReveal: handleNextReveal,
             onRichEditorSave: handleRichEditorSave,
+            onRichEditorImage: handleRichEditorImage,
+            onRichEditorLinkFile: handleRichEditorLinkFile,
             localResourceRoot: file.resourceRoot,
             onOpenLocalFile: handleOpenLocalFile,
             onLocalLinkFailed: { state.lastNotice = $0 },
@@ -238,6 +243,21 @@ struct LocalFileView: View {
                                                 lineStart: request.lineStart,
                                                 lineEnd: request.lineEnd)
             }
+        }
+        .alert(String(localized: "Save changes to \(file.url.lastPathComponent)?"),
+               isPresented: Binding(get: { unsavedRichText != nil }, set: { if !$0 { unsavedRichText = nil } })) {
+            Button(String(localized: "Save")) {
+                if let text = unsavedRichText { handleRichEditorSave(text) }
+                unsavedRichText = nil
+                finishSetEditMode(false)
+            }
+            Button(String(localized: "Don't Save"), role: .destructive) {
+                unsavedRichText = nil
+                finishSetEditMode(false)
+            }
+            Button(String(localized: "Cancel"), role: .cancel) { unsavedRichText = nil }
+        } message: {
+            Text(String(localized: "Your edits haven't been saved. You can save them now or discard them."))
         }
         .sheet(item: $noteIntroRequest) { request in
             MarginNotesIntroSheet(
@@ -477,6 +497,12 @@ struct LocalFileView: View {
         if !newValue, editMode, richEditorEnabled {
             proxy.richEditorText { text in
                 Task { @MainActor in
+                    // Save edits: When I press ⌘S — leaving with unsaved
+                    // changes asks first (spec: rich-editor §10).
+                    if let text, editSaveMode == "manual", richEditorTextDiffers(text) {
+                        unsavedRichText = text
+                        return
+                    }
                     if let text { handleRichEditorSave(text) }
                     finishSetEditMode(newValue)
                 }
@@ -484,6 +510,16 @@ struct LocalFileView: View {
             return
         }
         finishSetEditMode(newValue)
+    }
+
+    /// The editor's text against the file, with the file's own line
+    /// endings (a CRLF file compares as CRLF).
+    private func richEditorTextDiffers(_ text: String) -> Bool {
+        var effective = text
+        if currentText.contains("\r\n") {
+            effective = effective.replacingOccurrences(of: "\n", with: "\r\n")
+        }
+        return effective != currentText
     }
 
     private func finishSetEditMode(_ newValue: Bool) {
@@ -557,6 +593,52 @@ struct LocalFileView: View {
         }
     }
 
+    // MARK: Images (spec: rich-editor §9)
+
+    /// Writes pasted/dropped image bytes into the Location's images
+    /// folder and hands the editor the relative link.
+    private func handleRichEditorImage(_ token: String, name: String, mime: String, base64: String) {
+        guard let data = Data(base64Encoded: base64, options: .ignoreUnknownCharacters) else {
+            proxy.richEditorImageSaved(token: token, path: nil, alt: "")
+            return
+        }
+        let folder = state.imagesDestination(for: file.url)
+        let preferred = name.isEmpty ? ImagesFolder.pastedName(type: mime) : name
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let existing = Set((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
+            let target = folder.appendingPathComponent(ImagesFolder.uniqueName(preferred, existing: existing))
+            try data.write(to: target, options: .atomic)
+            state.pinPreviewIfNeeded(url: file.url)
+            proxy.richEditorImageSaved(token: token, path: ImagesFolder.relativeLink(from: file.url, to: target),
+                                       alt: altText(for: target))
+        } catch {
+            proxy.richEditorImageSaved(token: token, path: nil, alt: "")
+            state.lastError = String(localized: "Couldn't save the image: \(error.localizedDescription)")
+        }
+    }
+
+    /// A file dropped from Finder: linked in place when it already lives
+    /// inside the Location (or beside the document), copied otherwise.
+    private func handleRichEditorLinkFile(_ token: String, url: URL) {
+        let root = state.location(containing: file.url)?.rootURL ?? file.url.deletingLastPathComponent()
+        if ImagesFolder.isInside(url, root: root) {
+            proxy.richEditorImageSaved(token: token, path: ImagesFolder.relativeLink(from: file.url, to: url),
+                                       alt: altText(for: url))
+            return
+        }
+        guard let data = try? Data(contentsOf: url) else {
+            proxy.richEditorImageSaved(token: token, path: nil, alt: "")
+            return
+        }
+        handleRichEditorImage(token, name: url.lastPathComponent, mime: "", base64: data.base64EncodedString())
+    }
+
+    private func altText(for url: URL) -> String {
+        url.deletingPathExtension().lastPathComponent
+            .replacingOccurrences(of: "[-_]+", with: " ", options: .regularExpression)
+    }
+
     private func handleEditLocal(_ start: Int, _ end: Int, seed: String, replacement: String) {
         proxy.scrollFraction { fraction in
             Task { @MainActor in
@@ -600,8 +682,15 @@ struct LocalFileView: View {
                                         marginNotes: rich ? nil : notes,
                                         noteAuthoring: !rich && marginNotesVisible && marginNotesEnabled,
                                         richEditor: rich
-                                            ? RichEditorPayload.make(from: currentText,
-                                                                     autosave: editSaveMode != "manual")
+                                            // The editor works in LF; the save path restores
+                                            // the file's CRLF (untouched blocks would otherwise
+                                            // carry a stray \r into the doubled ending).
+                                            ? RichEditorPayload.make(
+                                                from: currentText.replacingOccurrences(of: "\r\n", with: "\n"),
+                                                autosave: editSaveMode != "manual",
+                                                noteAuthor: MarginNoteAuthor.current(viewerLogin: state.viewerLogin),
+                                                notesVisible: marginNotesVisible,
+                                                noteAuthoring: marginNotesVisible && marginNotesEnabled)
                                             : nil)
     }
 

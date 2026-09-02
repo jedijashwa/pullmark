@@ -1,0 +1,20 @@
+{
+  "notes": {
+    "noteCards": 6,
+    "rawBlocks": 1
+  },
+  "kitchen-sink": {
+    "noteCards": 1
+  },
+  "callouts": {
+    "callouts": 2,
+    "rawBlocks": 0
+  },
+  "footnotes": {
+    "footnoteRefs": 2,
+    "footnoteDefs": 2
+  },
+  "tables": {
+    "pastedOK": true
+  }
+}

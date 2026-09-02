@@ -421,8 +421,16 @@ struct RichEditorPayload: Encodable {
     /// Lines of a leading YAML front matter block (0 = none) — the
     /// editor keeps it as a raw island.
     let frontMatterLines: Int
+    /// Margin notes while editing (spec: rich-editor §6): the name new
+    /// notes are signed with, whether cards render at all, and whether
+    /// the authoring chrome (bubble, Edit/Delete) is on.
+    let noteAuthor: String
+    let notesVisible: Bool
+    let noteAuthoring: Bool
 
-    static func make(from source: String, autosave: Bool) -> RichEditorPayload {
+    static func make(from source: String, autosave: Bool,
+                     noteAuthor: String = "", notesVisible: Bool = true,
+                     noteAuthoring: Bool = false) -> RichEditorPayload {
         let blocks = MarkdownBlocks.split(source)
         let gaps = MarkdownBlocks.gaps(of: source, blocks: blocks)
         let frontMatter = blocks.first.map { MarkdownBlocks.isFrontMatter($0) ? $0.endLine : 0 } ?? 0
@@ -430,6 +438,9 @@ struct RichEditorPayload: Encodable {
             blocks: blocks.map { Block(text: $0.text, start: $0.startLine, end: $0.endLine) },
             gaps: Gaps(leading: gaps.leading, between: gaps.between, trailing: gaps.trailing),
             autosave: autosave,
-            frontMatterLines: frontMatter)
+            frontMatterLines: frontMatter,
+            noteAuthor: noteAuthor,
+            notesVisible: notesVisible,
+            noteAuthoring: noteAuthoring)
     }
 }

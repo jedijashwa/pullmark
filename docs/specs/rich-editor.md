@@ -148,3 +148,66 @@ inside compare/diff views, WYSIWYG for HTML blocks.
 - Live taste trials with the drive scripts (floating toolbar, slash
   menu, table handles, note rail in edit mode), then Josh's own live
   check before release.
+
+## §14 Implementation notes (2026-09-02)
+
+- **Notes ride on nodes, not on ids.** §6 planned to anchor the note
+  rail by block id; instead every block-level node carries a `notes`
+  attribute (the parsed `<!-- note -->` comments that follow it, or
+  precede it for a file-level note). Cards are widget decorations after
+  the owner; add/edit/delete are transactions on that attribute, so
+  undo restores block and notes together and a moved block takes its
+  notes along. A block that is nothing but notes merges into the block
+  before it (or after it, at the top of the file) so the pair is one
+  range — untouched together, written back verbatim together.
+- **Soft breaks are nodes.** A hard-wrapped paragraph keeps its line
+  breaks as `soft_break` nodes (rendered as a space) rather than "\n"
+  in the text, which the DOM re-read on typing would turn into spaces
+  and re-flow the whole paragraph into one line. A one-word edit in a
+  wrapped paragraph stays a one-line diff.
+- **Islands.** Fenced code renders through a node view with a language
+  label; a Mermaid fence keeps a preview under the source that
+  re-renders when the caret leaves. `$$…$$` blocks stay raw ("math").
+  The node view ignores mutations outside its content — the preview's
+  own DOM changes must not trigger a re-read.
+- **Tables.** No icon bar (Josh 2026-09-02: icons weren't clear before
+  hovering). Like Notion, Craft, and Pages: a handle above the caret's
+  column and one beside its row, each opening a menu of words (add
+  left/right or above/below, delete, align, sort), "+" pills on the
+  table's right and bottom edges that append a column or row, and the
+  same words in the right-click menu. Column alignment writes every
+  cell in the column (the serializer reads the header row); sort
+  rebuilds the table node (numeric when both keys parse). Spreadsheet
+  paste (tab-separated text) fills from the current cell, growing the
+  table, or inserts a new table.
+- **Escape hatch.** "Edit as Markdown" (right-click, ⇧⌘M) turns the
+  caret's block into a raw island holding its own source (the original
+  text when the block is untouched, its notes staying as cards);
+  "Render Markdown" parses it back. This replaces §1's whole-file "Edit
+  Source", which never existed as an editable surface (the source view
+  is read-only).
+- **Images (§9).** Pasted bytes and dropped files go to Swift over the
+  bridge; `ImagesFolder` (Core) picks the destination — the Location's
+  override (context menu › Images Folder…), else the folder the
+  Location's Markdown references most, else `<document>.assets/` — and
+  the editor inserts the relative link. A Finder drop of a file already
+  inside the Location links it in place. The editor displays relative
+  images through the same local scheme the renderer uses.
+- **Manual save (§10).** Leaving edit mode with unsaved changes asks
+  Save / Don't Save / Cancel; switching documents still saves.
+- **Callouts** are `blockquote` nodes with a `kind`; the title is a
+  type picker. **Footnotes** are `footnote_ref` (inline atom) and
+  `footnote_def` (block) nodes; consecutive definitions arrive from
+  markdown-it as one paragraph and are split on soft breaks. **Images**
+  show an alt/title strip when selected; resizing is not built.
+- The page has no `window.prompt` (Swift implements no JS panel), so
+  link and image addresses use an inline prompt.
+- `RenderPageStore` mirrors a fixed list of assets into the render
+  directory; the editor script was missing from it and loaded silently
+  as nothing — a test now keeps the list in step with the pages.
+- Verification: `scripts/editor-check.sh` (headless Chrome) runs every
+  fixture under `scripts/editor-check/fixtures` through the editor:
+  untouched byte-identical, a one-word edit changing one line, plus
+  per-fixture expectations (`expect.json`: note cards, callouts,
+  footnotes, a scripted spreadsheet paste). `VERBOSE=1` prints the
+  probe output.

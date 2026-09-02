@@ -139,6 +139,9 @@ enum DefaultsKeys {
     /// reach disk: "auto" (default) | "manual" (⌘S).
     static let richEditorEnabled = "pm.richEditorEnabled"
     static let editSaveMode = "pm.editSaveMode"
+    /// Per-Location images folder override (spec: rich-editor §9):
+    /// [root path: root-relative folder].
+    static let imagesFolders = "pm.imagesFolders"
     /// Pinned folders and files (spec: pinned-and-session-reopen §4) —
     /// a preference, always restored, never part of the session snapshot.
     static let pinnedEntries = "pm.pinnedEntries"

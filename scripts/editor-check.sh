@@ -73,7 +73,14 @@ else:
 fm_lines = blocks[0]["end"] if close is not None else 0
 payload = {"mode": "document", "markdown": src, "strings": {},
            "richEditor": {"blocks": blocks, "gaps": {"leading": leading, "between": between, "trailing": trailing},
-                          "autosave": False, "frontMatterLines": fm_lines}}
+                          "autosave": False, "frontMatterLines": fm_lines,
+                          "noteAuthor": "tester", "notesVisible": True, "noteAuthoring": True}}
+import os
+expect_path = os.path.join(os.path.dirname(sys.argv[1]), "..", "expect.json")
+expect = {}
+if os.path.exists(expect_path):
+    name = os.path.splitext(os.path.basename(sys.argv[1]))[0]
+    expect = json.load(open(expect_path)).get(name, {})
 lit = json.dumps(payload).replace("</", "<\\/")
 fixture_lit = json.dumps(src).replace("</", "<\\/")
 page = f"""<!doctype html><meta charset="utf-8"><title>editor-check</title>
@@ -86,11 +93,13 @@ page = f"""<!doctype html><meta charset="utf-8"><title>editor-check</title>
 <script src="vendor/mermaid.min.js"></script><script src="vendor/katex/katex.min.js"></script>
 <script src="pm-extensions.js"></script><script src="app.js"></script>
 <script src="vendor/prosemirror.min.js"></script><script src="pm-editor.js"></script>
-<script>window.__pmFixture = JSON.parse(document.getElementById("pm-fixture").textContent); window.__pmEditWord = "emphasis";</script>
+<script>window.__pmFixture = JSON.parse(document.getElementById("pm-fixture").textContent); window.__pmEditWord = "emphasis"; window.__pmExpect = {json.dumps(expect)};</script>
 <script src="probe.js"></script>"""
 open(sys.argv[2], "w", encoding="utf-8").write(page)
 PY
-  "$CHROME" --headless --disable-gpu --virtual-time-budget=4000 --dump-dom "file://$WORK/$name.html" 2>/dev/null > "$WORK/$name.dom" || true
+  # A hung page (a render that never settles) is a failure, not a stall.
+  perl -e 'alarm shift; exec @ARGV' 60 "$CHROME" --headless --disable-gpu \
+    --virtual-time-budget=4000 --dump-dom "file://$WORK/$name.html" 2>/dev/null > "$WORK/$name.dom" || true
   result=$(python3 -c "
 import sys,re,html
 dom=open(sys.argv[1],encoding='utf-8').read()
@@ -98,6 +107,7 @@ m=re.search(r'<pre id=\"out\">(.*?)</pre>', dom, re.S)
 print(html.unescape(m.group(1)) if m else '{\"error\": \"no result\"}')" "$WORK/$name.dom")
   if echo "$result" | python3 -c "import sys,json; sys.exit(0 if json.load(sys.stdin).get('ok') else 1)"; then
     echo "PASS $name"
+    [ -n "${VERBOSE:-}" ] && echo "     $result" | cut -c1-400
   else
     echo "FAIL $name: $result" | cut -c1-600
     fail=1

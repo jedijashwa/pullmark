@@ -412,6 +412,7 @@ struct SidebarView: View {
         // and-session-reopen §2).
         .background(RenameKeyMonitor(state: state))
         .sheet(isPresented: $showFollowRepo) { FollowRepoSheet() }
+        .sheet(item: $state.imagesFolderPrompt) { prompt in ImagesFolderSheet(root: prompt.root) }
         // ⌫ removes the selected removable item (spec §4).
         .onDeleteCommand { state.removeSelectedSidebarItem() }
         .modifier(SpaceQuickLook(url: $quickLookURL, selected: selectedLocalURL))
@@ -1149,6 +1150,7 @@ private struct FolderRootGroup: View {
             Button("Copy Path") { SidebarActions.copyPath(folder.rootURL) }
             SidebarActions.copyGitHubLinkItems(url: folder.rootURL, isDirectory: true, state: state)
             Button("Refresh Folder") { state.rescanFolder(root: folder.rootURL) }
+            Button("Images Folder…") { state.imagesFolderPrompt = AppState.ImagesFolderPrompt(root: folder.rootURL) }
             // Right-click parity with the branch chip (SwiftUI context
             // menus rebuild per open, so live content is safe here).
             if let git = folder.git {
@@ -2129,5 +2131,52 @@ struct DetailView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Images folder (spec: rich-editor §9)
+
+/// Where pasted and dropped images land for one Location: a root-relative
+/// folder, or automatic (the folder the Location's Markdown already
+/// references most, else `<document>.assets/`).
+private struct ImagesFolderSheet: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
+    let root: URL
+    @State private var folder = ""
+
+    private var detected: String? {
+        state.folders.first { $0.rootURL == root }.flatMap { state.detectedImagesFolder(for: $0) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Images Folder").font(.headline)
+            Text("Pasted and dropped images are saved here, relative to \(root.lastPathComponent). Leave it empty to use the folder this Location's documents already reference.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            TextField(detected ?? "images", text: $folder)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit(save)
+            if let detected {
+                Text("Detected: \(detected)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Save", action: save).keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
+        .onAppear { folder = state.imagesFolderOverride(forRoot: root) ?? "" }
+    }
+
+    private func save() {
+        state.setImagesFolderOverride(folder, forRoot: root)
+        dismiss()
     }
 }

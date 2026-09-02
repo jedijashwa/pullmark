@@ -70,6 +70,13 @@ struct MarkdownWebView: NSViewRepresentable {
     /// the file text, assembled from untouched originals and serialized
     /// edits.
     var onRichEditorSave: ((String) -> Void)?
+    /// An image pasted or dropped into the rich editor (spec: rich-editor
+    /// §9): token, suggested name, MIME type, base64 bytes. The host
+    /// writes it and answers through proxy.richEditorImageSaved.
+    var onRichEditorImage: ((String, String, String, String) -> Void)?
+    /// A file dropped from Finder (file URL): linked in place when it
+    /// already lives inside the Location, copied otherwise.
+    var onRichEditorLinkFile: ((String, URL) -> Void)?
     /// Directory that relative resources (images, linked files) in the
     /// rendered Markdown may be loaded from. Local documents only.
     var localResourceRoot: URL?
@@ -466,6 +473,16 @@ struct MarkdownWebView: NSViewRepresentable {
             case "richEditorSave":
                 if let text = dict["text"] as? String {
                     parent.onRichEditorSave?(text)
+                }
+            case "richEditorImage":
+                if let token = dict["token"] as? String, let data = dict["data"] as? String {
+                    parent.onRichEditorImage?(token, dict["name"] as? String ?? "",
+                                              dict["mime"] as? String ?? "", data)
+                }
+            case "richEditorLinkFile":
+                if let token = dict["token"] as? String, let raw = dict["url"] as? String,
+                   let url = URL(string: raw), url.isFileURL {
+                    parent.onRichEditorLinkFile?(token, url)
                 }
             case "lightboxRequest":
                 guard let kind = dict["kind"] as? String,
