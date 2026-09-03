@@ -272,3 +272,16 @@ end-to-end on livetest.
   rebuild proves visibly disruptive under the 60s tick.
 - Whether the checks popover wants workflow-run grouping once a real
   monorepo PR shows 30+ checks (flat list until proven otherwise).
+
+## Implementation note (2026-09-03): file view renders from a snapshot
+
+The PR file view's threads, pending comments, queued ids, and
+review-in-progress flag render from a `FilePageState` snapshot that
+changes ONLY through `mutatePreservingScroll` (the overview's
+conversation rule), because the session mutates from many places —
+the in-page composer queueing a review comment, the review popover
+removing one, a sync, a refetch after a post — and rebuilding the page
+straight from the session reloaded the reader to the top every time.
+`pullmark://capture/comment?line=N` (capture-chrome builds only) opens
+the Result view's review composer on a line so drive scripts can
+exercise the flow without the mouse.

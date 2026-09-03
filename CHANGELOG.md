@@ -42,6 +42,11 @@ section current as features land.
   to give up on checkouts past 50,000 tracked files, which is exactly
   where it mattered most. Open on GitHub on a Location root no longer
   points at a branch the remote has never seen.
+- **Fixed:** adding a comment to a pending review no longer jumps the
+  file back to the top. Every session change now re-renders the PR file
+  view with the reader kept in place — queueing a review comment,
+  posting a single comment, removing one from the review popover, a
+  sync.
 
 ## 0.44.2 - 2026-08-28
 

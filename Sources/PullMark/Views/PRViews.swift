@@ -572,11 +572,38 @@ struct PRFileView: View {
         Set((session?.queuedComments ?? []).map(\.id))
     }
 
+    /// Everything on the page that comes from the review session. The
+    /// page renders from this snapshot and it changes ONLY through
+    /// mutatePreservingScroll (the overview's conversation rule): the
+    /// session mutates from many places — the in-page composer queueing
+    /// a review comment, the review popover removing one, a sync, a
+    /// refetch after posting — and rebuilding the page straight from it
+    /// reloaded the reader to the top every time (Josh, 2026-09-03).
+    struct FilePageState: Equatable {
+        var threads: [ReviewThread] = []
+        var meta: [Int: ThreadMeta] = [:]
+        var pending: [PendingComment] = []
+        var queuedIDs: Set<String> = []
+        var reviewPending = false
+    }
+    @State private var filePage: FilePageState?
+
+    private var currentFilePage: FilePageState {
+        FilePageState(threads: fileThreadGroups,
+                      meta: session?.threadMeta ?? [:],
+                      pending: filePendingComments,
+                      queuedIDs: queuedCommentIDs,
+                      reviewPending: session?.reviewInProgress ?? false)
+    }
+
     private var html: String {
         guard let file else { return "" }
         let style = ThemeSelection.pageStyle(from: themeRaw)
         let theme = style.theme
-        let reviewPending = session?.reviewInProgress ?? false
+        // Review threads and pending comments render from the snapshot
+        // (see FilePageState), never straight from the session.
+        let page = filePage ?? currentFilePage
+        let reviewPending = page.reviewPending
         switch mode {
         case .result:
             let markdown = file.status == "removed"
@@ -595,13 +622,13 @@ struct PRFileView: View {
                                             blameNote: blameVisible ? blameNote : nil,
                                             threads: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultAnchored(
-                                                    fileThreadGroups,
-                                                    meta: session?.threadMeta ?? [:],
+                                                    page.threads,
+                                                    meta: page.meta,
                                                     viewer: state.viewerLogin),
                                             pending: file.status == "removed" ? nil
                                                 : ThreadVisibility.resultPending(
-                                                    filePendingComments, path: path,
-                                                    queuedIDs: queuedCommentIDs),
+                                                    page.pending, path: path,
+                                                    queuedIDs: page.queuedIDs),
                                             commentableLines: file.status == "removed" ? nil
                                                 : CommentableLines.payload(patch: file.patch),
                                             reviewPending: reviewPending)
@@ -612,26 +639,26 @@ struct PRFileView: View {
                 title: path,
                 theme: theme,
                 customCSS: style.customCSS,
-                threads: PatchAnchors.place(threads: fileThreadGroups,
-                                            meta: session?.threadMeta ?? [:],
-                                            pending: filePendingComments,
+                threads: PatchAnchors.place(threads: page.threads,
+                                            meta: page.meta,
+                                            pending: page.pending,
                                             patch: file.patch ?? "",
                                             viewer: state.viewerLogin,
-                                            queuedIDs: queuedCommentIDs),
+                                            queuedIDs: page.queuedIDs),
                 patchLines: file.patch.map(PatchComposerLines.payloads(patch:)),
                 reviewPending: reviewPending
             )
         case .renderedDiff:
             var segments = DiffPageBuilder.segments(old: baseText ?? "", new: headText ?? "")
-            let threads = fileThreadGroups
+            let threads = page.threads
             let viewer = state.viewerLogin
             let placed = ReviewThreads.place(threads, in: segments,
-                                             meta: session?.threadMeta ?? [:],
+                                             meta: page.meta,
                                              viewer: viewer)
-            segments = PendingAnchors.place(filePendingComments, in: placed.segments,
-                                            queuedIDs: queuedCommentIDs)
+            segments = PendingAnchors.place(page.pending, in: placed.segments,
+                                            queuedIDs: page.queuedIDs)
             func payload(_ thread: ReviewThread) -> ThreadPayload {
-                let meta = session?.threadMeta[thread.root.id]
+                let meta = page.meta[thread.root.id]
                 return ThreadPayload(lineLabel: thread.lineLabel,
                                      comments: thread.comments.map {
                                          CommentPayload($0, meta: meta, viewer: viewer)
@@ -730,6 +757,15 @@ struct PRFileView: View {
         // the page (re)loads.
         .onAppear { consumeRevealModeSwitch() }
         .onChange(of: state.pendingThreadReveal) { _ in consumeRevealModeSwitch() }
+        // The first snapshot is the live value the page already rendered
+        // from (no reload); every later session change reaches the page
+        // through the scroll-preserving wrapper, never as a bare reload.
+        .onAppear { if filePage == nil { filePage = currentFilePage } }
+        .onChange(of: currentFilePage) { fresh in
+            guard fresh != filePage else { return }
+            if filePage == nil { filePage = fresh; return }
+            mutatePreservingScroll { filePage = fresh }
+        }
     }
 
     private func consumeRevealModeSwitch() {

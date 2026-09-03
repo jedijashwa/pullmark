@@ -82,17 +82,22 @@ enum CaptureChrome {
     /// Routed only when the capture flag is set (see AppLinkRouter).
     @MainActor
     static func handleCaptureURL(_ url: URL) {
-        guard url.path == "/reveal",
-              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let lineText = components.queryItems?.first(where: { $0.name == "line" })?.value,
               let line = Int(lineText)
         else { return }
+        // /reveal opens the section editor on the block at `line`;
+        // /comment opens the PR result view's review composer there.
+        let script: String
+        switch url.path {
+        case "/reveal": script = "window.__pmRevealBlock && __pmRevealBlock(\(line));"
+        case "/comment": script = "window.__pmOpenResultComposer && __pmOpenResultComposer(\(line));"
+        default: return
+        }
         let webView = NSApp.orderedWindows.lazy
             .compactMap { $0.contentView.flatMap(findWebView) }
             .first
-        webView?.evaluateJavaScript(
-            "window.__pmRevealBlock && __pmRevealBlock(\(line));",
-            completionHandler: nil)
+        webView?.evaluateJavaScript(script, completionHandler: nil)
     }
 
     private static func findWebView(in view: NSView) -> WKWebView? {

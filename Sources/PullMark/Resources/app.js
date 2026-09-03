@@ -2905,6 +2905,23 @@
     }
   }
 
+  // Every commentable block's opener by source range — the capture
+  // channel (pullmark://capture/comment?line=N) drives the composer
+  // through this where no keyboard path reaches it.
+  var resultOpeners = [];
+  window.__pmOpenResultComposer = function (line) {
+    var hit = null;
+    resultOpeners.forEach(function (o) {
+      if (line >= o.start && line <= o.end) { hit = o; }
+    });
+    if (!hit) {
+      resultOpeners.forEach(function (o) {
+        if (!hit || Math.abs(o.start - line) < Math.abs(hit.start - line)) { hit = o; }
+      });
+    }
+    if (hit) { hit.open(false); }
+    return !!hit;
+  };
   function attachResultAffordance(layer, el, blockStart, blockEnd, docLines, block) {
     el.classList.add("pm-commentable");
     var mapped = clampRangeToRuns("RIGHT", blockStart, blockEnd);
@@ -3005,6 +3022,7 @@
       event.stopPropagation();
       open(false);
     });
+    resultOpeners.push({ start: blockStart, end: blockEnd, open: open });
     // One affordance: the bubble. Suggestion editing lives inside the
     // composer (pm-composer-suggest) — a second hover button doubled it
     // and the stacked pair collided with short neighbors.
