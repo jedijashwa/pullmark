@@ -64,10 +64,15 @@ section current as features land.
   to give up on checkouts past 50,000 tracked files, which is exactly
   where it mattered most. Open on GitHub on a Location root no longer
   points at a branch the remote has never seen.
-- Toolbar polish, measured against Safari and Preview on macOS 27: Back
-  and Forward share their capsule with a hairline between them, and
-  the Outline button shows when the outline is open, the way Blame and
-  Edit already do.
+- **Built for macOS 27 Golden Gate.** PullMark now ships against the
+  macOS 27 SDK, so on Golden Gate the window takes the new design the
+  way Safari and Preview do: a uniform toolbar with grouped capsule
+  items, the sidebar edge to edge with its divider running to the top,
+  and inactive windows that dim like theirs. Back and Forward share
+  their capsule with a hairline between them, and the Outline button
+  shows when the outline is open, as Blame and Edit already did. The
+  same build keeps its Liquid Glass toolbar on macOS 26 and still runs
+  on macOS 13 and later.
 - **Fixed:** adding a comment to a pending review no longer jumps the
   file back to the top. Every session change now re-renders the PR file
   view with the reader kept in place — queueing a review comment,
