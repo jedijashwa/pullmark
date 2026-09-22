@@ -20,6 +20,9 @@ enum AppLinks {
         "settings/keyboard",
         "settings/experimental",
         "settings/experimental/margin-notes",
+        // The rich editor (alpha, 0.45.0) and its save-mode picker.
+        "settings/experimental/rich-editor",
+        "settings/experimental/edit-save-mode",
         // Review discussion graduated to General in the cockpit wave;
         // the old experimental link stays a promise — settingsTarget
         // remaps it to the toggle's new home.
@@ -47,9 +50,10 @@ enum AppLinks {
 
     /// Experimental features currently at the ALPHA level — a deep link
     /// straight to one offers the "Show alpha features" switch when
-    /// alpha is hidden (a link to the tab alone never does). Empty
-    /// since margin notes graduated to beta (0.35.0).
-    static let alphaFeatures: Set<String> = []
+    /// alpha is hidden (a link to the tab alone never does). Margin
+    /// notes graduated to beta in 0.35.0; the rich editor arrived as
+    /// alpha in 0.45.0.
+    static let alphaFeatures: Set<String> = ["rich-editor", "edit-save-mode"]
 
     /// Parses a settings deep link: pullmark://settings/<tab>[/<anchor>].
     static func settingsTarget(_ url: URL) -> (tab: String, anchor: String?)? {

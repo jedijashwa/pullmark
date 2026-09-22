@@ -80,6 +80,13 @@ struct LocalFileView: View {
     /// Rich-editor text waiting on the unsaved-changes prompt (manual
     /// save mode, leaving edit mode with changes).
     @State private var unsavedRichText: String?
+    /// The text the open rich editor was mounted from. While it is set the
+    /// page renders from it, not from `currentText`: every autosave
+    /// updates `currentText`, and a page rebuilt from the new text is a
+    /// reload — the editor remounted at the top of the document on each
+    /// keystroke pause (Josh, 2026-09-22). The editor owns the document
+    /// until Done; the file on disk is the truth in between.
+    @State private var richEditorSource: String?
 
     // Blame annotations
     @AppStorage(DefaultsKeys.blame, store: UserDefaults.pullmark) private var blameVisible = false
@@ -530,6 +537,10 @@ struct LocalFileView: View {
                     let scrolled = (fraction ?? 0) > 0.02
                     if scrolled, let fraction { pendingScrollRestore = fraction }
                     editMode = newValue
+                    // Freeze the page's source for the editor's lifetime
+                    // (see richEditorSource); reading mode renders the
+                    // saved text again.
+                    richEditorSource = newValue && richEditorEnabled ? currentText : nil
                     if newValue {
                         sessionSnapshotTaken = false
                         // From a scrolled position, auto-reveal the block
@@ -671,7 +682,8 @@ struct LocalFileView: View {
         let notes = marginNotesVisible
             ? MarginNotePayload.payloads(from: MarginNotes.parse(currentText)) : []
         let rich = editMode && richEditorEnabled
-        return HTMLBuilder.documentPage(markdown: currentText,
+        let source = rich ? (richEditorSource ?? currentText) : currentText
+        return HTMLBuilder.documentPage(markdown: source,
                                         title: file.url.lastPathComponent,
                                         localResources: true,
                                         theme: style.theme,
@@ -686,7 +698,7 @@ struct LocalFileView: View {
                                             // the file's CRLF (untouched blocks would otherwise
                                             // carry a stray \r into the doubled ending).
                                             ? RichEditorPayload.make(
-                                                from: currentText.replacingOccurrences(of: "\r\n", with: "\n"),
+                                                from: source.replacingOccurrences(of: "\r\n", with: "\n"),
                                                 autosave: editSaveMode != "manual",
                                                 noteAuthor: MarginNoteAuthor.current(viewerLogin: state.viewerLogin),
                                                 notesVisible: marginNotesVisible,

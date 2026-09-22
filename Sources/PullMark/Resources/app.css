@@ -2070,6 +2070,8 @@ mark.pm-find.pm-find-current {
 }
 .pm-float-toolbar button.pm-tb-italic { font-style: italic; }
 .pm-float-toolbar button.pm-tb-code { font-family: ui-monospace, Menlo, monospace; font-weight: 500; }
+.pm-float-toolbar button svg { display: block; width: 15px; height: 15px; }
+.pm-float-toolbar .pm-tb-separator { width: 1px; height: 16px; margin: 0 3px; background: var(--pm-border, rgba(127,127,127,0.35)); align-self: center; }
 .pm-float-toolbar button:hover { background: rgba(128, 128, 128, 0.16); }
 .pm-float-toolbar button.is-active { background: rgba(88, 166, 255, 0.22); }
 .pm-slash-menu {

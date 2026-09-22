@@ -16,5 +16,8 @@
   },
   "tables": {
     "pastedOK": true
+  },
+  "plain": {
+    "togglesOK": true
   }
 }

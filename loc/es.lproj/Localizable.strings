@@ -774,6 +774,9 @@
 "Comment on the issue" = "Comentar en el issue";
 
 // Rich editor beta (spec: rich-editor)
+"Rich Editor" = "Editor enriquecido";
+"Enable the rich editor" = "Activar el editor enriquecido";
+"Edit (⌘E) opens the whole document in the rich editor; off, Edit reveals one block of Markdown source at a time" = "Editar (⌘E) abre todo el documento en el editor enriquecido; desactivado, Editar muestra un bloque de código Markdown a la vez";
 "Automatically" = "Automáticamente";
 "Automatically writes each change to disk a moment after you make it; ⌘S waits for you" = "Guarda cada cambio en el disco un momento después de hacerlo; ⌘S espera a que tú lo hagas";
 "Bold" = "Negrita";
@@ -782,7 +785,6 @@
 "Code block" = "Bloque de código";
 "Divider" = "Separador";
 "Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source" = "El modo de edición abre todo el documento en un editor enriquecido (tablas, listas y formato en su sitio) en lugar de mostrar bloques de código Markdown";
-"Editing" = "Edición";
 "Heading 1" = "Título 1";
 "Heading 2" = "Título 2";
 "Heading 3" = "Título 3";
@@ -792,7 +794,6 @@
 "Numbered list" = "Lista numerada";
 "Paragraph" = "Párrafo";
 "Quote" = "Cita";
-"Rich editor (beta)" = "Editor enriquecido (beta)";
 "Save edits:" = "Guardar cambios:";
 "Table" = "Tabla";
 "Task list" = "Lista de tareas";

@@ -211,3 +211,12 @@ inside compare/diff views, WYSIWYG for HTML blocks.
   per-fixture expectations (`expect.json`: note cards, callouts,
   footnotes, a scripted spreadsheet paste). `VERBOSE=1` prints the
   probe output.
+- **Settings home and tier (2026-09-22).** The toggle and Save edits
+  live under Settings › Experimental, not General › Editing as §10–§11
+  said, and the feature ships as ALPHA behind the alpha switch, not
+  beta: Josh's live trial found the editor rough (caret reset on every
+  autosave — fixed the same day; no way back to a quote or task item
+  once removed — toolbar and context-menu toggles added), and he is
+  weighing a native (non-web-view) rewrite. Alpha carries no
+  compatibility promise, which is the honest label until that is
+  decided.

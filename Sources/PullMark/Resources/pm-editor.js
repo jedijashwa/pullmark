@@ -955,6 +955,15 @@
     return true;
   }
   var blockActions = [
+    { key: "quote", title: pmString("Quote"), run: function () { return toggleQuote; },
+      available: function (st) { return !!blockOf(st) && !tables.isInTable(st); } },
+    { key: "bullets", title: pmString("Bullet list"), run: function () { return toggleList("bullet_list", null); },
+      available: function (st) { return !!blockOf(st) && !tables.isInTable(st); } },
+    { key: "numbers", title: pmString("Numbered list"), run: function () { return toggleList("ordered_list", null); },
+      available: function (st) { return !!blockOf(st) && !tables.isInTable(st); } },
+    { key: "tasks", title: pmString("Task list"), run: function () { return toggleList("bullet_list", false); },
+      available: function (st) { return !!blockOf(st) && !tables.isInTable(st); } },
+    { separator: true, available: function (st) { return !!blockOf(st) && !tables.isInTable(st); } },
     { key: "edit-markdown", title: pmString("Edit as Markdown"), run: function () { return editAsMarkdown; },
       available: function (st) { var b = topBlockAt(st); return !!b && b.node.type.name !== "raw_block"; } },
     { key: "render-markdown", title: pmString("Render Markdown"), run: function () { return renderMarkdown; },
@@ -1092,7 +1101,24 @@
       function (m, node) { return node.childCount + node.attrs.order === +m[1]; }),
     inputrules.wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list,
       function (m) { return { bullet: m[1] }; }),
-    inputrules.wrappingInputRule(/^\s*[-*]\s\[( |x)\]\s$/, schema.nodes.bullet_list),
+    // "- [ ] " / "- [x] ": the wrapper rule creates the list, then the new
+    // item gets its task box — wrappingInputRule's attrs reach only the
+    // list node, which is why a typed task used to come out as a bullet.
+    new inputrules.InputRule(/^\s*[-*]\s\[( |x)\]\s$/, function (st, match, start, end) {
+      var checked = match[1] === "x";
+      var tr = st.tr.delete(start, end);
+      var $pos = tr.doc.resolve(start);
+      var range = $pos.blockRange();
+      if (!range) { return null; }
+      var wrapping = range && PM.transform.findWrapping(range, schema.nodes.bullet_list, { bullet: "-" });
+      if (!wrapping) { return null; }
+      tr.wrap(range, wrapping);
+      var $item = tr.doc.resolve(start);
+      for (var d = $item.depth; d > 0; d--) {
+        if ($item.node(d).type.name === "list_item") { tr.setNodeMarkup($item.before(d), null, { checked: checked }); break; }
+      }
+      return tr;
+    }),
     inputrules.textblockTypeInputRule(/^```(\w*)\s$/, schema.nodes.code_block,
       function (m) { return { params: m[1] || "" }; }),
     headingRule(1), headingRule(2), headingRule(3), headingRule(4),
@@ -1115,6 +1141,81 @@
   }
 
   // ---------------------------------------------------------------------
+  // Monochrome inline icons for toolbar buttons that have no glyph of
+  // their own — an emoji sat colored among the text labels.
+  var ICON_ATTRS = 'viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  var ICON_LINK = '<svg ' + ICON_ATTRS + '><path d="M6.5 9.5a3 3 0 0 0 4.24 0l2-2a3 3 0 0 0-4.24-4.24l-1 1"/><path d="M9.5 6.5a3 3 0 0 0-4.24 0l-2 2a3 3 0 0 0 4.24 4.24l1-1"/></svg>';
+  var ICON_QUOTE = '<svg ' + ICON_ATTRS + '><path d="M3 3.5v9"/><path d="M6.5 5h6.5M6.5 8h6.5M6.5 11h4.5"/></svg>';
+  var ICON_BULLETS = '<svg ' + ICON_ATTRS + '><circle cx="3.5" cy="4" r="0.9" fill="currentColor" stroke="none"/><circle cx="3.5" cy="8" r="0.9" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="0.9" fill="currentColor" stroke="none"/><path d="M6.5 4h6.5M6.5 8h6.5M6.5 12h6.5"/></svg>';
+  var ICON_NUMBERS = '<svg ' + ICON_ATTRS + '><path d="M6.5 4h6.5M6.5 8h6.5M6.5 12h6.5"/><path d="M2.6 3l1.1-.6V6M2.4 9.4c.2-.5 1.5-.8 1.9 0 .3.6-.4 1-1.9 2.6h2.2" stroke-width="1.1"/></svg>';
+  var ICON_TASKS = '<svg ' + ICON_ATTRS + '><rect x="2" y="2.5" width="4.5" height="4.5" rx="1"/><path d="M3 4.9l.9.9 1.6-1.8"/><rect x="2" y="9" width="4.5" height="4.5" rx="1"/><path d="M9 4.75h4.5M9 11.25h4.5"/></svg>';
+
+  // Where the selection sits, in block terms.
+  function blockOf(st) {
+    var $from = st.selection.$from;
+    return $from.depth ? $from.parent : null;
+  }
+  function wrapperOf(st, typeName) {
+    var $from = st.selection.$from;
+    for (var d = $from.depth; d > 0; d--) {
+      var n = $from.node(d);
+      if (n.type.name === typeName && !(typeName === "blockquote" && n.attrs.kind)) { return { node: n, depth: d }; }
+    }
+    return null;
+  }
+  function listItemOf(st) {
+    var $from = st.selection.$from;
+    for (var d = $from.depth; d > 0; d--) {
+      if ($from.node(d).type.name === "list_item" && d > 0) {
+        return { item: $from.node(d), depth: d, list: $from.node(d - 1) };
+      }
+    }
+    return null;
+  }
+  // Quote: wrap the selected blocks, or lift them out of the quote they
+  // are in (callouts keep their kind and are left alone).
+  function toggleQuote(st, dispatch, v) {
+    if (wrapperOf(st, "blockquote")) { return commands.lift(st, dispatch, v); }
+    return commands.wrapIn(schema.nodes.blockquote)(st, dispatch, v);
+  }
+  // Lists: `checked === null` is a plain item, false/true a task box. The
+  // same list type with the same task-ness toggles OFF (lift); anything
+  // else converts in place, wrapping a paragraph first when needed.
+  function toggleList(listType, checked) {
+    return function (st, dispatch, v) {
+      var li = listItemOf(st);
+      if (li && li.list.type.name === listType && (li.item.attrs.checked === null) === (checked === null)) {
+        return listCmds.liftListItem(schema.nodes.list_item)(st, dispatch, v);
+      }
+      if (li) {
+        if (!dispatch) { return true; }
+        var tr = st.tr;
+        var listPos = st.selection.$from.before(li.depth - 1);
+        if (li.list.type.name !== listType) {
+          tr.setNodeMarkup(listPos, schema.nodes[listType], listType === "ordered_list" ? { order: 1 } : { bullet: "-" });
+        }
+        var itemPos = st.selection.$from.before(li.depth);
+        tr.setNodeMarkup(itemPos, null, Object.assign({}, li.item.attrs, { checked: checked }));
+        dispatch(tr.scrollIntoView());
+        return true;
+      }
+      var wrap = listCmds.wrapInList(schema.nodes[listType], listType === "ordered_list" ? { order: 1 } : { bullet: "-" });
+      if (checked === null) { return wrap(st, dispatch, v); }
+      return wrap(st, dispatch && function (tr) {
+        // The fresh items become task boxes.
+        var $from = tr.selection.$from;
+        for (var d = $from.depth; d > 0; d--) {
+          if ($from.node(d).type.name === "list_item") {
+            tr.setNodeMarkup($from.before(d), null, { checked: false });
+            break;
+          }
+        }
+        dispatch(tr);
+      }, v);
+    };
+  }
+
+  // ---------------------------------------------------------------------
   // Floating toolbar on a text selection (spec §5).
   var toolbar = document.createElement("div");
   toolbar.className = "pm-float-toolbar";
@@ -1123,16 +1224,30 @@
     { label: "B", title: pmString("Bold"), cls: "pm-tb-bold", run: function () { return commands.toggleMark(schema.marks.strong); }, active: function (st) { return markActive(st, schema.marks.strong); } },
     { label: "I", title: pmString("Italic"), cls: "pm-tb-italic", run: function () { return commands.toggleMark(schema.marks.em); }, active: function (st) { return markActive(st, schema.marks.em); } },
     { label: "<>", title: pmString("Code"), cls: "pm-tb-code", run: function () { return commands.toggleMark(schema.marks.code); }, active: function (st) { return markActive(st, schema.marks.code); } },
-    { label: "🔗", title: pmString("Link"), cls: "pm-tb-link", run: function () { return toggleLink; }, active: function (st) { return markActive(st, schema.marks.link); } },
+    { icon: ICON_LINK, title: pmString("Link"), cls: "pm-tb-link", run: function () { return toggleLink; }, active: function (st) { return markActive(st, schema.marks.link); } },
     { label: "H1", title: pmString("Heading 1"), run: function () { return commands.setBlockType(schema.nodes.heading, { level: 1 }); } },
     { label: "H2", title: pmString("Heading 2"), run: function () { return commands.setBlockType(schema.nodes.heading, { level: 2 }); } },
     { label: "H3", title: pmString("Heading 3"), run: function () { return commands.setBlockType(schema.nodes.heading, { level: 3 }); } },
-    { label: "¶", title: pmString("Paragraph"), run: function () { return commands.setBlockType(schema.nodes.paragraph); } },
+    { label: "¶", title: pmString("Paragraph"), run: function () { return commands.setBlockType(schema.nodes.paragraph); }, active: function (st) { var b = blockOf(st); return !!b && b.type.name === "paragraph" && !wrapperOf(st, "blockquote") && !listItemOf(st); } },
+    // Block wrappers the typed shortcuts can create but nothing could
+    // restore once removed (Josh, 2026-09-22): the same four the "/"
+    // menu inserts, as toggles on whatever is selected.
+    { separator: true },
+    { icon: ICON_QUOTE, title: pmString("Quote"), run: function () { return toggleQuote; }, active: function (st) { return !!wrapperOf(st, "blockquote"); } },
+    { icon: ICON_BULLETS, title: pmString("Bullet list"), run: function () { return toggleList("bullet_list", null); }, active: function (st) { var li = listItemOf(st); return !!li && li.list.type.name === "bullet_list" && li.item.attrs.checked === null; } },
+    { icon: ICON_NUMBERS, title: pmString("Numbered list"), run: function () { return toggleList("ordered_list", null); }, active: function (st) { var li = listItemOf(st); return !!li && li.list.type.name === "ordered_list"; } },
+    { icon: ICON_TASKS, title: pmString("Task list"), run: function () { return toggleList("bullet_list", false); }, active: function (st) { var li = listItemOf(st); return !!li && li.item.attrs.checked !== null; } },
   ];
   toolbarItems.forEach(function (item) {
+    if (item.separator) {
+      var gap = document.createElement("span");
+      gap.className = "pm-tb-separator";
+      toolbar.append(gap);
+      return;
+    }
     var b = document.createElement("button");
     b.type = "button";
-    b.textContent = item.label;
+    if (item.icon) { b.innerHTML = item.icon; } else { b.textContent = item.label; }
     b.title = item.title;
     if (item.cls) { b.className = item.cls; }
     b.addEventListener("mousedown", function (e) { e.preventDefault(); });
@@ -1967,6 +2082,9 @@
     return rows ? pasteRows(editorView, rows) : false;
   };
   window.__pmRichEditorFlush = function () { requestSave(true); };
+  // Block toggles for the harness (scripts/editor-check): the same
+  // commands the floating toolbar and the context menu run.
+  window.__pmRichEditorBlockToggles = { quote: toggleQuote, list: toggleList };
   var previousCommit = window.__pmCommitNow;
   window.__pmCommitNow = function () { requestSave(true); if (previousCommit) { previousCommit(); } };
   window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge

@@ -773,6 +773,9 @@
 "Comment on the issue" = "Reageer op de issue";
 
 // Rich editor beta (spec: rich-editor)
+"Rich Editor" = "Rich editor";
+"Enable the rich editor" = "Zet de rich editor aan";
+"Edit (⌘E) opens the whole document in the rich editor; off, Edit reveals one block of Markdown source at a time" = "Bewerken (⌘E) opent het hele document in de rich editor; uit laat Bewerken één blok Markdown-bron tegelijk zien";
 "Automatically" = "Automatisch";
 "Automatically writes each change to disk a moment after you make it; ⌘S waits for you" = "Schrijft elke wijziging kort daarna automatisch naar schijf; ⌘S wacht op jou";
 "Bold" = "Vet";
@@ -781,7 +784,6 @@
 "Code block" = "Codeblok";
 "Divider" = "Scheidingslijn";
 "Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source" = "Bewerkmodus opent het hele document als rich editor — tabellen, lijsten en opmaak ter plekke — in plaats van blokken Markdown-bron te tonen";
-"Editing" = "Bewerken";
 "Heading 1" = "Kop 1";
 "Heading 2" = "Kop 2";
 "Heading 3" = "Kop 3";
@@ -791,7 +793,6 @@
 "Numbered list" = "Genummerde lijst";
 "Paragraph" = "Alinea";
 "Quote" = "Citaat";
-"Rich editor (beta)" = "Rich editor (bèta)";
 "Save edits:" = "Wijzigingen bewaren:";
 "Table" = "Tabel";
 "Task list" = "Takenlijst";

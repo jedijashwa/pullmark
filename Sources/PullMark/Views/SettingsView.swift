@@ -40,8 +40,6 @@ struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKeys.prDiscussionEnabled, store: UserDefaults.pullmark) private var prDiscussionEnabled = true
     @AppStorage(DefaultsKeys.restoreSession, store: UserDefaults.pullmark) private var restoreSession = false
     @AppStorage(DefaultsKeys.githubGrouping, store: UserDefaults.pullmark) private var githubGroupingRaw = GitHubWork.Grouping.type.rawValue
-    @AppStorage(DefaultsKeys.richEditorEnabled, store: UserDefaults.pullmark) private var richEditorEnabled = false
-    @AppStorage(DefaultsKeys.editSaveMode, store: UserDefaults.pullmark) private var editSaveMode = "auto"
     @AppStorage(DefaultsKeys.remoteLinkPolicy, store: UserDefaults.pullmark) private var remoteLinkPolicyRaw = RemoteLinkPolicy.ask.rawValue
     @AppStorage(DefaultsKeys.folderClickAction, store: UserDefaults.pullmark) private var folderClickRaw = FolderClickAction.preview.rawValue
     @AppStorage(DefaultsKeys.showHiddenFiles, store: UserDefaults.pullmark) private var showHiddenFiles = false
@@ -124,20 +122,6 @@ struct GeneralSettingsTab: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Section("Editing") {
-            Toggle("Rich editor (beta)", isOn: $richEditorEnabled)
-                .help("Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source")
-                .settingAnchor("rich-editor")
-            Picker("Save edits:", selection: $editSaveMode) {
-                Text("Automatically").tag("auto")
-                Text("When I press ⌘S").tag("manual")
-            }
-            .pickerStyle(.segmented)
-            .disabled(!richEditorEnabled)
-            .help("Automatically writes each change to disk a moment after you make it; ⌘S waits for you")
-            .settingAnchor("edit-save-mode")
             }
 
             Section("Reviewing") {
@@ -408,14 +392,18 @@ struct ExperimentalSettingsTab: View {
     @AppStorage(DefaultsKeys.marginNotesEnabled, store: UserDefaults.pullmark) private var marginNotesEnabled = true
     @AppStorage(DefaultsKeys.marginNotesIntroSeen, store: UserDefaults.pullmark) private var marginNotesIntroSeen = false
     @AppStorage(DefaultsKeys.marginNoteAuthor, store: UserDefaults.pullmark) private var marginNoteAuthor = ""
+    @AppStorage(DefaultsKeys.richEditorEnabled, store: UserDefaults.pullmark) private var richEditorEnabled = false
+    @AppStorage(DefaultsKeys.editSaveMode, store: UserDefaults.pullmark) private var editSaveMode = "auto"
     @State private var confirmingAlpha = false
     @State private var copiedSnippet = false
 
     /// The current roster, by level. The empty states below cover the
     /// day either level empties out again. (Review discussion
     /// graduated to General ▸ Reviewing in 0.34.0; margin notes
-    /// graduated alpha → beta in 0.35.0.)
-    private static let alphaFeatureCount = 0
+    /// graduated alpha → beta in 0.35.0; the rich editor arrived as
+    /// alpha in 0.45.0 — a web-view editor that may yet be rebuilt
+    /// natively, so no compatibility promise.)
+    private static let alphaFeatureCount = 1
     private static let betaFeatureCount = 1
 
     var body: some View {
@@ -452,10 +440,13 @@ struct ExperimentalSettingsTab: View {
             }
 
             marginNotesSection
+            if showAlphaFeatures {
+                richEditorSection
+            }
         }
         .formStyle(.grouped)
         .frame(height: 560)
-        .consumesSettingAnchors(["margin-notes"], proxy: scroll)
+        .consumesSettingAnchors(["margin-notes", "rich-editor", "edit-save-mode"], proxy: scroll)
         .onAppear {
             // A deep link that landed here wants something alpha —
             // don't let the tab look empty; offer the switch directly.
@@ -562,6 +553,36 @@ struct ExperimentalSettingsTab: View {
             HStack(spacing: 8) {
                 Text("Margin Notes")
                 ExperimentalBadge(level: .beta)
+            }
+        }
+    }
+
+    /// The rich editor, alpha (spec: rich-editor §11 and the 2026-09-22
+    /// note). Behind the alpha switch: it may change incompatibly or be
+    /// replaced outright, and the alpha contract says so.
+    private var richEditorSection: some View {
+        Section {
+            Text("Edit mode opens the whole document as a rich editor — tables, lists and formatting in place — instead of revealing blocks of Markdown source")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .settingAnchor("rich-editor")
+
+            Toggle("Enable the rich editor", isOn: $richEditorEnabled)
+                .help("Edit (⌘E) opens the whole document in the rich editor; off, Edit reveals one block of Markdown source at a time")
+
+            Picker("Save edits:", selection: $editSaveMode) {
+                Text("Automatically").tag("auto")
+                Text("When I press ⌘S").tag("manual")
+            }
+            .pickerStyle(.segmented)
+            .disabled(!richEditorEnabled)
+            .help("Automatically writes each change to disk a moment after you make it; ⌘S waits for you")
+            .settingAnchor("edit-save-mode")
+        } header: {
+            HStack(spacing: 8) {
+                Text("Rich Editor")
+                ExperimentalBadge(level: .alpha)
             }
         }
     }

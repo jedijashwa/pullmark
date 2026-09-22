@@ -117,6 +117,60 @@
         if (!out.hatchRoundTrip) { out.hatchAfter = window.__pmRichEditorText().slice(0, 500); }
       }
     }
+    // Block toggles (the floating toolbar's quote / bullet / numbered /
+    // task buttons): each wraps the first paragraph, the saved text shows
+    // the marker, and the same toggle again lifts it back to a paragraph.
+    if ((window.__pmExpect || {}).togglesOK !== undefined && window.__pmRichEditorBlockToggles) {
+      var T = window.__pmRichEditorBlockToggles;
+      var toggleBase = window.__pmRichEditorText();
+      var pIndex = -1, pPos = null, pNode = null;
+      v.state.doc.forEach(function (node, offset, index) { if (pNode === null && node.type.name === "paragraph") { pNode = node; pPos = offset; pIndex = index; } });
+      var steps = [];
+      // The paragraph moves deeper as wrappers come and go, so find its
+      // text afresh each time and select inside it, as a click would.
+      function selectPara() {
+        var tp = null;
+        v.state.doc.descendants(function (node, pos) { if (tp === null && node.isText) { tp = pos; } return tp === null; });
+        v.dispatch(v.state.tr.setSelection(window.PM.state.TextSelection.create(v.state.doc, tp, tp + 4)));
+      }
+      function blockAt() { return v.state.doc.child(pIndex); }
+      function firstWords() { return pNode.textContent.slice(0, 12); }
+      function lineWith(prefix) {
+        return window.__pmRichEditorText().split("\n").some(function (l) { return l.indexOf(prefix + firstWords()) === 0; });
+      }
+      function run(name, cmd, wrapperType, prefix, itemChecked) {
+        selectPara();
+        var did = cmd(v.state, v.dispatch, v);
+        var b = blockAt();
+        var wrapped = !!did && b.type.name === wrapperType && lineWith(prefix);
+        if (itemChecked !== undefined && wrapped) {
+          wrapped = b.firstChild && b.firstChild.type.name === "list_item" && b.firstChild.attrs.checked === itemChecked;
+        }
+        selectPara();
+        var undid = cmd(v.state, v.dispatch, v);
+        var lifted = !!undid && blockAt().type.name === "paragraph" && window.__pmRichEditorText() === toggleBase;
+        steps.push(name + ":" + (wrapped ? "wrap" : "WRAP-FAILED") + "/" + (lifted ? "lift" : "LIFT-FAILED"));
+        return wrapped && lifted;
+      }
+      var okQuote = run("quote", T.quote, "blockquote", "> ");
+      var okBullets = run("bullets", T.list("bullet_list", null), "bullet_list", "- ", null);
+      var okNumbers = run("numbers", T.list("ordered_list", null), "ordered_list", "1. ", null);
+      var okTasks = run("tasks", T.list("bullet_list", false), "bullet_list", "- [ ] ", false);
+      // Converting in place: bullet → numbered → task → bullet, then lift.
+      selectPara(); T.list("bullet_list", null)(v.state, v.dispatch, v);
+      selectPara(); T.list("ordered_list", null)(v.state, v.dispatch, v);
+      var toNumbered = blockAt().type.name === "ordered_list" && lineWith("1. ");
+      selectPara(); T.list("bullet_list", false)(v.state, v.dispatch, v);
+      var toTasks = blockAt().type.name === "bullet_list" && blockAt().firstChild.attrs.checked === false && lineWith("- [ ] ");
+      selectPara(); T.list("bullet_list", null)(v.state, v.dispatch, v);
+      var toBullets = blockAt().type.name === "bullet_list" && blockAt().firstChild.attrs.checked === null && lineWith("- ");
+      selectPara(); T.list("bullet_list", null)(v.state, v.dispatch, v);
+      var converted = toNumbered && toTasks && toBullets && blockAt().type.name === "paragraph" && window.__pmRichEditorText() === toggleBase;
+      steps.push("convert:" + (converted ? "ok" : "FAILED"));
+      out.toggleSteps = steps;
+      out.togglesOK = okQuote && okBullets && okNumbers && okTasks && converted;
+      if (!out.togglesOK) { out.toggleText = window.__pmRichEditorText().slice(0, 400); }
+    }
     var expect = window.__pmExpect || {};
     out.expectOK = Object.keys(expect).every(function (k) { return out[k] === expect[k]; });
     if (!out.expectOK) { out.expected = expect; }
