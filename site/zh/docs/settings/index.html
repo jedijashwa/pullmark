@@ -72,10 +72,14 @@
       <h3>阅读</h3>
       <table>
         <tr><th>设置</th><th>选项 · <em>默认</em></th><th>作用</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="在 PullMark 中打开此设置（0.28.3+）">恢复上次会话中的文件和拉取请求</a></td>
-          <td>开/关 — <em>开</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="在 PullMark 中打开此设置（0.28.3+）">启动时重新打开上一次的会话</a></td>
+          <td>开/关 — 新安装默认为<em>关</em></td>
           <td>重新打开 PullMark 上次退出时侧边栏里的内容——文件、文件夹、
-          PR、浏览中的仓库，以及预览条目（依旧作为预览）。</td></tr>
+          PR、议题、浏览中的仓库，以及预览条目（依旧作为预览）。关闭时，
+          只有<a href="/zh/docs/sidebar/#pinned">已固定</a>的内容会回来。
+          在 0.45.0 之前就已经有会话的人会继续自动重新打开。崩溃或强制
+          退出后，无论这项设置是开是关，都会有一条横幅提供恢复上一次
+          会话的选项——在你选择“以后”之前，什么都不会丢失。</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="在 PullMark 中打开此设置（0.28.3+）">显示隐藏文件</a></td><td>开/关 — <em>关</em></td>
           <td>在“位置”中显示点文件和隐藏文件夹——<code>.github/</code>
           文档之类。也可用 <kbd>⇧⌘.</kbd>（Finder 同款组合键）或
@@ -101,12 +105,18 @@
         <tr><th>设置</th><th>选项 · <em>默认</em></th><th>作用</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="在 PullMark 中打开此设置（0.28.3+）">默认差异布局</a></td><td>内联 · 并排 — <em>内联</em></td>
           <td>PR 渲染差异的打开方式。可用 ⌥⌘L 按文件翻转。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="在 PullMark 中打开此设置（0.28.3+）">在边栏中显示审查请求</a></td><td>开/关 — <em>开</em></td>
-          <td>“审查请求”子分组：请求你审查的开放 PR。未登录时无论
-          如何都不显示。</td></tr>
-        <tr><td>仅显示改动 Markdown 的请求</td><td>开/关 — <em>开</em></td>
-          <td>隐藏不含 Markdown 文件的审查请求——PullMark 对它们无可
-          展示。</td></tr>
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="在 PullMark 中打开此设置（0.28.3+）">显示与你相关的拉取请求和议题</a></td><td>开/关 — <em>开</em></td>
+          <td><a href="/zh/docs/sidebar/#pull-requests">拉取请求</a>和
+          <a href="/zh/docs/sidebar/#issues">议题</a>分区里的参与方式
+          分组，以及关注的仓库。未登录时无论如何都不显示。</td></tr>
+        <tr><td>仅显示更改 Markdown 的拉取请求</td><td>开/关 — <em>开</em></td>
+          <td>隐藏没有 Markdown 文件的拉取请求——PullMark 无法展示
+          它们。</td></tr>
+        <tr><td id="github-grouping">GitHub 工作分组方式</td><td>类型 ·
+          参与方式 — <em>类型</em></td>
+          <td><em>类型</em>会保留“拉取请求”分区和“议题”分区。
+          <em>参与方式</em>把两者合并成一个 GitHub 分区，其中的分组
+          混合两种类型，并为每一行配一个图标。</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="在 PullMark 中打开此设置（0.28.3+）">在 PR 总览上显示审查讨论</a></td><td>开/关 — <em>开</em></td>
           <td>在总览的会话里，把行内审查会话嵌在所属审查之下——每条会话
           都在，包括 PullMark 不渲染的文件，被评论的段落一并显示。关闭则

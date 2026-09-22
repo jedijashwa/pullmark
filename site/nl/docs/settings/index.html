@@ -73,11 +73,16 @@
       <h3>Lezen</h3>
       <table>
         <tr><th>Instelling</th><th>Opties · <em>standaard</em></th><th>Wat het doet</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Open deze instelling in PullMark (0.28.3+)">Herstel bestanden en pull requests uit de vorige sessie</a></td>
-          <td>aan/uit — <em>aan</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Open deze instelling in PullMark (0.28.3+)">Vorige sessie bij het starten opnieuw openen</a></td>
+          <td>aan/uit — <em>uit</em> voor nieuwe installaties</td>
           <td>Heropent wat er in de zijbalk stond toen PullMark voor het
-          laatst afsloot — bestanden, mappen, PR's, doorbladerde repo's en
-          de preview-regel (nog steeds als preview).</td></tr>
+          laatst afsloot — bestanden, mappen, PR's, issues, doorbladerde
+          repo's en de preview-regel (nog steeds als preview). Uit komt
+          alleen <a href="/nl/docs/sidebar/#pinned">Vastgezet</a> terug.
+          Wie al vóór 0.45.0 een sessie had, blijft heropenen. Na een
+          crash of geforceerd stoppen biedt een banner de vorige sessie
+          hoe dan ook aan — er gaat niets verloren totdat je Niet nu
+          zegt.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Open deze instelling in PullMark (0.28.3+)">Toon verborgen bestanden</a></td><td>aan/uit — <em>uit</em></td>
           <td>Dotfiles en verborgen mappen in Locaties —
           <code>.github/</code>-docs en verwanten. Ook te schakelen met
@@ -107,13 +112,19 @@
         <tr><th>Instelling</th><th>Opties · <em>standaard</em></th><th>Wat het doet</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Open deze instelling in PullMark (0.28.3+)">Standaard diff-indeling</a></td><td>Inline · Naast elkaar — <em>Inline</em></td>
           <td>Hoe gerenderde PR-diffs openen. Per bestand om te draaien met ⌥⌘L.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Open deze instelling in PullMark (0.28.3+)">Toon reviewverzoeken in de zijbalk</a></td><td>aan/uit — <em>aan</em></td>
-          <td>De subgroep Reviewverzoeken: open PR's waar jouw review
-          gevraagd is. Hoe dan ook verborgen wanneer je niet bent
-          ingelogd.</td></tr>
-        <tr><td>Alleen verzoeken die Markdown wijzigen</td><td>aan/uit — <em>aan</em></td>
-          <td>Verbergt reviewverzoeken zonder Markdown-bestanden — PullMark
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Open deze instelling in PullMark (0.28.3+)">Toon pull requests en issues waarbij je betrokken bent</a></td><td>aan/uit — <em>aan</em></td>
+          <td>De betrokkenheidsgroepen en gevolgde repositories in de
+          secties <a href="/nl/docs/sidebar/#pull-requests">Pull
+          requests</a> en <a href="/nl/docs/sidebar/#issues">Issues</a>.
+          Hoe dan ook verborgen wanneer je niet bent ingelogd.</td></tr>
+        <tr><td>Alleen pull requests die Markdown wijzigen</td><td>aan/uit — <em>aan</em></td>
+          <td>Verbergt pull requests zonder Markdown-bestanden — PullMark
           heeft er niets voor te tonen.</td></tr>
+        <tr><td id="github-grouping">GitHub-werk groeperen op</td><td>Type · Betrokkenheid — <em>Type</em></td>
+          <td><em>Type</em> houdt een Pull requests-sectie en een
+          Issues-sectie apart. <em>Betrokkenheid</em> maakt er één
+          GitHub-sectie van, met groepen die beide soorten mengen en een
+          glyph per rij.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Open deze instelling in PullMark (0.28.3+)">Toon reviewdiscussie op het PR-overzicht</a></td><td>aan/uit — <em>aan</em></td>
           <td>Inline reviewthreads genest onder hun review in de conversatie
           van het overzicht — elke thread, ook van bestanden die PullMark

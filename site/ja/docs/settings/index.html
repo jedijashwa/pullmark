@@ -72,10 +72,14 @@
       <h3>読む</h3>
       <table>
         <tr><th>設定</th><th>選択肢 ・ <em>デフォルト</em></th><th>はたらき</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="この設定を PullMark で開く（0.28.3 以降）">前回のセッションのファイルとプルリクエストを復元する</a></td>
-          <td>on/off — <em>on</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="この設定を PullMark で開く（0.28.3 以降）">起動時に前回のセッションを開き直す</a></td>
+          <td>on/off — 新規インストールでは <em>off</em></td>
           <td>PullMark を最後に終了したとき、サイドバーにあったものを開き直します——ファイル、
-          フォルダ、PR、ブラウズ中のリポジトリ、そしてプレビューの項目も（プレビューのまま）。</td></tr>
+          フォルダ、PR、Issue、ブラウズ中のリポジトリ、そしてプレビューの項目も（プレビューのまま）。
+          オフの場合、戻ってくるのは<a href="/ja/docs/sidebar/#pinned">ピン留め済み</a>だけです。
+          0.45.0 より前からセッションを使っていた人は、引き続き自動的に開き直されます。クラッシュや
+          強制終了のあとは、どちらの設定でもバナーが前回のセッションを差し出します——
+          「今はしない」と答えるまでは何も失われません。</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="この設定を PullMark で開く（0.28.3 以降）">隠しファイルを表示</a></td><td>on/off — <em>off</em></td>
           <td>「場所」の中のドットファイルと隠しフォルダ——<code>.github/</code> のドキュメントや
           その仲間たち。<kbd>⇧⌘.</kbd>（Finder と同じ組み合わせ）や 表示 →「隠しファイルを表示」でも
@@ -100,12 +104,17 @@
         <tr><th>設定</th><th>選択肢 ・ <em>デフォルト</em></th><th>はたらき</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="この設定を PullMark で開く（0.28.3 以降）">差分の初期レイアウト</a></td><td>インライン ・ 並べて表示 — <em>インライン</em></td>
           <td>PR のレンダリングされた差分をどう開くか。ファイルごとに ⌥⌘L で切り替えられます。</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="この設定を PullMark で開く（0.28.3 以降）">サイドバーにレビューリクエストを表示する</a></td><td>on/off — <em>on</em></td>
-          <td>「レビューリクエスト」のサブグループ——あなたのレビューが求められているオープンな PR です。
-          サインインしていないときは、どちらにせよ現れません。</td></tr>
-        <tr><td>Markdown を変更するリクエストのみ</td><td>on/off — <em>on</em></td>
-          <td>Markdown ファイルを含まないレビューリクエストを隠します——PullMark に見せられるものが
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="この設定を PullMark で開く（0.28.3 以降）">自分に関わるプルリクエストと Issue を表示</a></td><td>on/off — <em>on</em></td>
+          <td><a href="/ja/docs/sidebar/#pull-requests">プルリクエスト</a>セクションと
+          <a href="/ja/docs/sidebar/#issues">Issue</a>セクションにある関わり別のグループと、
+          フォロー中のリポジトリです。サインインしていないときは、どちらにせよ現れません。</td></tr>
+        <tr><td>Markdown を変更するプルリクエストのみ</td><td>on/off — <em>on</em></td>
+          <td>Markdown ファイルを含まないプルリクエストを隠します——PullMark に見せられるものが
           何もないからです。</td></tr>
+        <tr><td id="github-grouping">GitHub の作業をグループ化</td><td>種類 ・ 関わり — <em>種類</em></td>
+          <td><em>種類</em>なら「プルリクエスト」セクションと「Issue」セクションが別々のままです。
+          <em>関わり</em>なら両方の種類が混在するグループを持つ、ひとつの GitHub セクションに
+          まとまり、行ごとにグリフが付きます。</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="この設定を PullMark で開く（0.28.3 以降）">PR の概要にレビューの議論を表示する</a></td><td>on/off — <em>on</em></td>
           <td>概要の会話の中に、インラインのレビュースレッドをそのレビューの下へネストして
           表示します——PullMark がレンダリングしないファイルのものも含めてすべてのスレッドを、

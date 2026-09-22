@@ -73,11 +73,16 @@
       <h3>Lectura</h3>
       <table>
         <tr><th>Ajuste</th><th>Opciones · <em>por defecto</em></th><th>Qué hace</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Abre este ajuste en PullMark (0.28.3+)">Restaurar los archivos y los pull requests de la última sesión</a></td>
-          <td>on/off — <em>on</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Abre este ajuste en PullMark (0.28.3+)">Reabrir la sesión anterior al iniciar</a></td>
+          <td>on/off — <em>off</em> para instalaciones nuevas</td>
           <td>Reabre lo que había en la barra lateral la última vez que
-          PullMark se cerró — archivos, carpetas, PRs, repos navegados y la
-          entrada de vista previa (aún como vista previa).</td></tr>
+          PullMark se cerró — archivos, carpetas, PRs, issues, repos
+          navegados y la entrada de vista previa (aún como vista previa).
+          Desactivado, solo vuelve <a href="/es/docs/sidebar/#pinned">Fijados</a>.
+          Quien ya tuviera una sesión antes de la 0.45.0 sigue
+          reabriéndola. Si PullMark no se cierra correctamente, un aviso
+          ofrece la sesión anterior de todos modos — nada se pierde hasta
+          que pulsas Ahora no.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Abre este ajuste en PullMark (0.28.3+)">Mostrar los archivos ocultos</a></td><td>on/off — <em>off</em></td>
           <td>Los dotfiles y carpetas ocultas en Ubicaciones — los docs de
           <code>.github/</code> y compañía. También se alterna con
@@ -107,13 +112,19 @@
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Abre este ajuste en PullMark (0.28.3+)">Disposición del diff por defecto</a></td><td>En línea · Lado a lado — <em>En línea</em></td>
           <td>Cómo se abren los diffs renderizados de PR. Conmutable por
           archivo con ⌥⌘L.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Abre este ajuste en PullMark (0.28.3+)">Mostrar las solicitudes de revisión en la barra lateral</a></td><td>on/off — <em>on</em></td>
-          <td>El subgrupo Solicitudes de revisión: los PR abiertos donde se solicita
-          tu revisión. Oculto en cualquier caso si no has iniciado
-          sesión.</td></tr>
-        <tr><td>Solo las solicitudes que cambian Markdown</td><td>on/off — <em>on</em></td>
-          <td>Oculta las solicitudes de revisión sin archivos Markdown —
-          PullMark no tiene nada que mostrar de ellas.</td></tr>
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Abre este ajuste en PullMark (0.28.3+)">Mostrar pull requests e issues que te involucran</a></td><td>on/off — <em>on</em></td>
+          <td>Las categorías de participación y los repositorios seguidos en
+          las secciones <a href="/es/docs/sidebar/#pull-requests">Pull
+          Requests</a> e <a href="/es/docs/sidebar/#issues">Issues</a>. Oculto en
+          cualquier caso si no has iniciado sesión.</td></tr>
+        <tr><td>Solo pull requests que cambian Markdown</td><td>on/off — <em>on</em></td>
+          <td>Oculta los pull requests sin archivos Markdown — PullMark no
+          tiene nada que mostrar de ellos.</td></tr>
+        <tr><td id="github-grouping">Agrupar el trabajo de GitHub por</td><td>Tipo · Participación — <em>Tipo</em></td>
+          <td><em>Tipo</em> mantiene una sección de Pull Requests y una
+          sección de Issues. <em>Participación</em> forma una sola sección
+          GitHub cuyas categorías mezclan ambos tipos, con un glifo por
+          fila.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Abre este ajuste en PullMark (0.28.3+)">Mostrar la discusión de la revisión en el resumen del PR</a></td><td>on/off — <em>on</em></td>
           <td>Los hilos de revisión en línea anidados bajo su revisión en la
           conversación del resumen — todos los hilos, incluidos los de

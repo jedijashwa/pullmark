@@ -61,10 +61,11 @@
     <article>
       <p class="kicker">docs</p>
       <h1>De zijbalk</h1>
-      <p class="article-lede">Vier secties, geordend naar wat dingen
+      <p class="article-lede">Secties, geordend naar wat dingen
       <em>betekenen</em> in plaats van waar ze vandaan komen: wat je open
-      hebt, de plekken waar je bladert, de pull requests die je reviewt, en
-      waar je bent geweest.</p>
+      hebt, de plekken die je bewaart, de plekken waar je bladert, de pull
+      requests en issues waarbij je betrokken bent, en waar je bent
+      geweest.</p>
 
       <h2 id="open-files">Geopende bestanden</h2>
       <p>De werkset: elk document dat je expliciet hebt geopend — vanuit de
@@ -109,6 +110,29 @@
       <p>Elke rij in Geopende bestanden die binnen een open Locatie woont krijgt
       <strong>Toon in Locaties</strong> in zijn rechtsklikmenu — de sprong
       terug van "wat ik aan het lezen ben" naar "waar het woont".</p>
+
+      <h2 id="pinned">Vastgezet</h2>
+      <p>De mappen en bestanden waar je steeds naar teruggaat, boven
+      Locaties — zoals de Finder Favorieten boven al het andere houdt.
+      Rechtsklik op een map of bestand in een willekeurige boom en kies
+      <strong>Vastzetten…</strong>: een map wordt haar eigen startpunt met
+      een eigen boom, een bestand wordt een bladwijzerregel die bij een
+      klik previewt, en het nieuwe item landt onderaan de sectie, meteen
+      in de naam-wijzigen-modus. Een Locatie-startpunt krijgt
+      <strong>Vastzetten</strong> (het verhuist hierheen) en een vastgezet
+      startpunt krijgt <strong>Losmaken</strong> (het verhuist naar
+      onderaan Locaties, met behoud van zijn naam).</p>
+      <p><strong>Naam wijzigen</strong> werkt zoals in de Finder: kies
+      <strong>Naam wijzigen…</strong> of druk op Return op de
+      geselecteerde rij, typ, en Return, ergens anders klikken, of
+      verdergaan bevestigt het; Esc annuleert; een leeggemaakt veld gaat
+      terug naar de echte naam. Een hernoemd item toont zijn werkelijke
+      pad in kleine tekst onder de naam, net als elk paar startpunten dat
+      dezelfde naam deelt, zodat twee mappen die <code>docs</code> heten
+      er nooit hetzelfde uitzien. Vastgezette items zijn een voorkeur,
+      geen deel van de sessie: ze komen terug bij elke start, wat
+      <a href="/nl/docs/settings/#restore-session">Vorige sessie bij het
+      starten opnieuw openen</a> ook zegt.</p>
 
       <h2 id="locations">Locaties</h2>
       <p>Doorbladerbare startpunten, waar ze ook wonen. Twee soorten delen
@@ -157,11 +181,33 @@
       <p>Elke geopende PR is een groep: de overzichtsrij (statusicoon +
       aantal gewijzigde Markdown-bestanden), dan de gewijzigde
       Markdown-bestanden — een tekstballonnetje met teller markeert
-      bestanden met onopgeloste reviewthreads. Onder je geopende PR's
-      verzamelt <strong>Reviewverzoeken</strong> de PR's die op jouw review
-      wachten, met een ongelezen-teller die ook ingeklapt zichtbaar blijft
-      (te verbergen in de instellingen, en te filteren tot alleen PR's die
-      Markdown raken).</p>
+      bestanden met onopgeloste reviewthreads. Onder je geopende PR's komen
+      de pull requests waarbij je <em>betrokken</em> bent, in groepen:
+      <strong>Reviewverzoeken</strong>, <strong>Aangemaakt</strong>,
+      <strong>Toegewezen</strong> en <strong>Betrokken</strong> (je hebt
+      gereageerd, gereviewd of bent genoemd). Lege groepen blijven
+      verborgen, concepten tonen <em>· concept</em>, en een rij legt uit
+      waarom hij er staat (<em>· toegewezen</em>, <em>· genoemd</em>)
+      wanneer de groep alleen dat niet al duidelijk maakt. Elke groep
+      laadt de 30 meest recent bijgewerkte en eindigt in
+      <strong>Meer tonen…</strong>. Ongelezen-tellers blijven zichtbaar op
+      ingeklapte koppen; het geheel is optioneel in
+      <a href="/nl/docs/settings/#review-requests">Instellingen</a>, en te
+      filteren tot PR's die Markdown raken.</p>
+      <p><strong>Volg een repository</strong> om alles te zien wat erin
+      open staat, nieuwste eerst: <strong>Repository volgen…</strong> in de
+      sectiekop biedt de repositories die je al open hebt, of neemt een
+      getypte <code>owner/repo</code> aan. Een gevolgde repository is haar
+      eigen groep met haar eigen ongelezen-regel — rechtsklik erop voor
+      <strong>Alles</strong>, <strong>Alleen de mijne</strong> of
+      <strong>Geen</strong>, en voor <strong>Ontvolgen</strong>. Elke
+      afzonderlijke PR- of issue-rij kan die regel overschrijven vanuit
+      haar eigen rechtsklikmenu.</p>
+      <p>Liever één lijst?
+      <a href="/nl/docs/settings/#github-grouping">GitHub-werk groeperen
+      op</a> <em>Betrokkenheid</em> voegt deze sectie en Issues samen tot
+      één sectie <strong>GitHub</strong>, met groepen die beide soorten
+      mengen en een glyph per rij.</p>
       <p>Statusiconen op PR-rijen:</p>
       <table>
         <tr><th>Status</th><th>Icoon</th></tr>
@@ -175,6 +221,18 @@
       cirkel (groen) voor toegevoegd, <strong>−</strong> in cirkel (rood)
       voor verwijderd, <strong>→</strong> in cirkel voor hernoemd, potlood
       in cirkel voor gewijzigd.</p>
+
+      <h2 id="issues">Issues</h2>
+      <p>Hetzelfde idee voor issues — <strong>Aangemaakt</strong>,
+      <strong>Toegewezen</strong>, <strong>Betrokken</strong>, en de
+      issues van gevolgde repositories — omdat het document dat je wordt
+      gevraagd te reviewen vaak een issue is, geen pull request. Klik op
+      een issue en hij opent als document: de gerenderde inhoud, de
+      labels, de commenttijdlijn met reacties, en een commentaarvak aan
+      het einde. Plaats een comment, geef een reactie, en bewerk of
+      verwijder je eigen comments zonder de app te verlaten. Een open
+      issue staat bovenaan de sectie als losse rij, komt in Recent en ⌘K
+      Open snel terecht, en komt terug met de sessie.</p>
 
       <h2 id="recents">Recent</h2>
       <p>Recent geopende bestanden, mappen en pull requests die hierboven
@@ -203,10 +261,14 @@
           als klein teken erachter: deze lokale map is er een checkout van)</td></tr>
         <tr><td>Branch-teken + naam</td><td>De branch-chip — klik voor branches en worktrees</td></tr>
         <tr><td>Pull request-pijlen</td><td>Een pull request</td></tr>
-        <tr><td>Bakje</td><td>Reviewverzoeken — PR's die op jouw review wachten</td></tr>
+        <tr><td>Cirkel met stip</td><td>Een issue</td></tr>
+        <tr><td>Bakje · potlood in cirkel · persoon in cirkel · twee tekstballonnen</td><td>De
+          groepen: Reviewverzoeken · Aangemaakt · Toegewezen · Betrokken</td></tr>
+        <tr><td>Klein pad onder een naam</td><td>De werkelijke locatie van een vastgezet of hernoemd
+          startpunt (ook getoond wanneer twee startpunten dezelfde naam delen)</td></tr>
         <tr><td>Tekstballon + teller</td><td>Op een PR-bestand: onopgeloste reviewcomments. Op een rij in Geopende
           bestanden: <a href="/nl/docs/experimental/margin-notes/">margin notes</a> die nog in het document staan</td></tr>
-        <tr><td>Gekleurde stip (linkerrand)</td><td>Een ongelezen reviewverzoek</td></tr>
+        <tr><td>Gekleurde stip (linkerrand)</td><td>Een ongelezen pull request of issue</td></tr>
         <tr><td>✕ in een cirkel (bij hover)</td><td>Verwijderen uit de zijbalk / preview sluiten</td></tr>
       </table>
       <p class="table-note">Het branch-teken verschijnt alleen op echte

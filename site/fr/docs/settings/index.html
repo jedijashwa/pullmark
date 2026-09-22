@@ -73,11 +73,16 @@
       <h3>Lecture</h3>
       <table>
         <tr><th>Réglage</th><th>Options · <em>défaut</em></th><th>Effet</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Restaurer les fichiers et pull requests de la dernière session</a></td>
-          <td>activé/désactivé — <em>activé</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Rouvrir la session précédente au lancement</a></td>
+          <td>activé/désactivé — <em>désactivé</em> pour les nouvelles installations</td>
           <td>Rouvre ce qui était dans la barre latérale au dernier arrêt de
-          PullMark — fichiers, dossiers, PR, dépôts parcourus, et l'entrée d'aperçu
-          (toujours en aperçu).</td></tr>
+          PullMark — fichiers, dossiers, PR, issues, dépôts parcourus, et
+          l'entrée d'aperçu (toujours en aperçu). Désactivé, seul
+          <a href="/fr/docs/sidebar/#pinned">Épinglés</a> revient. Qui avait déjà
+          une session avant la 0.45.0 continue de la voir se rouvrir. Après un
+          plantage ou une fermeture forcée, une bannière propose la session
+          précédente dans tous les cas — rien n'est perdu tant que vous ne
+          cliquez pas sur Pas maintenant.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Afficher les fichiers cachés</a></td><td>activé/désactivé — <em>désactivé</em></td>
           <td>Les dotfiles et dossiers cachés dans Emplacements — les docs de
           <code>.github/</code> et compagnie. Se bascule aussi avec <kbd>⇧⌘.</kbd> (le
@@ -105,12 +110,19 @@
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Disposition par défaut des diffs</a></td><td>En ligne · Côte à côte — <em>En ligne</em></td>
           <td>Comment s'ouvrent les diffs rendus de PR. Inversable par fichier avec
           ⌥⌘L.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Afficher les demandes de révision dans la barre latérale</a></td><td>activé/désactivé — <em>activé</em></td>
-          <td>Le sous-groupe Demandes de révision&nbsp;: les PR ouvertes où votre révision
-          est demandée. Masqué dans tous les cas quand vous n'êtes pas connecté.</td></tr>
-        <tr><td>Uniquement les demandes qui modifient du Markdown</td><td>activé/désactivé — <em>activé</em></td>
-          <td>Masque les demandes de révision sans fichier Markdown — PullMark n'a
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Afficher les pull requests et issues qui vous concernent</a></td><td>activé/désactivé — <em>activé</em></td>
+          <td>Les groupes d'implication et les dépôts suivis dans les sections
+          <a href="/fr/docs/sidebar/#pull-requests">Pull Requests</a> et
+          <a href="/fr/docs/sidebar/#issues">Issues</a>. Masqué dans tous les
+          cas quand vous n'êtes pas connecté.</td></tr>
+        <tr><td>Seulement les pull requests qui modifient du Markdown</td><td>activé/désactivé — <em>activé</em></td>
+          <td>Masque les pull requests sans fichier Markdown — PullMark n'a
           rien à montrer pour elles.</td></tr>
+        <tr><td id="github-grouping">Grouper le travail GitHub par</td><td>Type · Implication — <em>Type</em></td>
+          <td><em>Type</em> garde une section Pull Requests et une section
+          Issues distinctes. <em>Implication</em> ne fait qu'une seule
+          section GitHub dont les groupes mélangent les deux genres, avec un
+          glyphe par ligne.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Ouvrir ce réglage dans PullMark (0.28.3+)">Afficher la discussion de révision dans la vue d'ensemble de la PR</a></td><td>activé/désactivé — <em>activé</em></td>
           <td>Les fils de révision en ligne, imbriqués sous leur révision dans la
           conversation de la vue d'ensemble — chaque fil, y compris pour les fichiers

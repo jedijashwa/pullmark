@@ -61,9 +61,10 @@
     <article>
       <p class="kicker">docs</p>
       <h1>La barre latérale</h1>
-      <p class="article-lede">Quatre sections, organisées selon ce que les choses
+      <p class="article-lede">Sections organisées selon ce que les choses
       <em>signifient</em> plutôt que leur provenance&nbsp;: ce que vous avez ouvert, les
-      lieux que vous parcourez, les pull requests que vous révisez, et là où vous êtes
+      lieux que vous gardez, les lieux que vous parcourez, les pull requests et issues
+      qui vous concernent, et là où vous êtes
       passé.</p>
 
       <h2 id="open-files">Fichiers ouverts</h2>
@@ -110,6 +111,29 @@
       son menu contextuel — le saut retour de «&nbsp;ce que je lis&nbsp;» vers
       «&nbsp;là où ça vit&nbsp;».</p>
 
+      <h2 id="pinned">Épinglés</h2>
+      <p>Les dossiers et fichiers auxquels vous revenez sans cesse, au-dessus
+      d'Emplacements — comme le Finder garde ses Favoris au-dessus de tout le
+      reste. Clic droit sur un dossier ou un fichier dans n'importe quelle
+      arborescence et choisissez <strong>Épingler…</strong>&nbsp;: un dossier
+      devient sa propre racine avec sa propre arborescence, un fichier devient
+      une ligne de signet qui s'affiche en aperçu au clic, et la nouvelle
+      entrée atterrit en bas de la section, déjà en mode renommage. Une racine
+      d'Emplacements gagne <strong>Épingler</strong> (elle se déplace ici) et
+      une racine épinglée gagne <strong>Désépingler</strong> (elle se déplace
+      en bas d'Emplacements, en gardant son nom).</p>
+      <p><strong>Le renommage</strong> fonctionne comme dans le Finder&nbsp;:
+      choisissez <strong>Renommer…</strong> ou appuyez sur Retour sur la ligne
+      sélectionnée, tapez le nouveau nom&nbsp;: Retour, un clic ailleurs, ou le
+      fait de passer à autre chose valide la saisie&nbsp;; Échap annule&nbsp;;
+      un champ vidé revient au vrai nom. Une entrée renommée affiche son vrai
+      chemin en petit texte sous le nom, tout comme toute paire de racines qui
+      partagent un nom, pour que deux dossiers appelés <code>docs</code> ne se
+      ressemblent jamais. Les entrées épinglées sont une préférence, pas une
+      partie de la session&nbsp;: elles reviennent à chaque lancement quoi que
+      dise <a href="/fr/docs/settings/#restore-session">Rouvrir la session
+      précédente</a>.</p>
+
       <h2 id="locations">Emplacements</h2>
       <p>La section Emplacements regroupe les racines navigables, où qu'elles
       vivent. Deux espèces partagent la section, distinguées par l'icône&nbsp;:</p>
@@ -154,10 +178,32 @@
       <p>Chaque PR ouverte est un groupe&nbsp;: la ligne de vue d'ensemble (icône
       d'état + nombre de fichiers Markdown modifiés), puis ses fichiers Markdown
       modifiés — une bulle avec compteur marque les fichiers aux fils de révision non
-      résolus. Sous vos PR ouvertes, <strong>Demandes de révision</strong>
-      rassemble les PR qui attendent votre révision, avec un compteur non lu
-      qui reste visible même replié (masquable dans Réglages, et filtrable aux seules
-      PR touchant du Markdown).</p>
+      résolus. Sous vos PR ouvertes viennent les pull requests qui vous
+      <em>concernent</em>, réparties en groupes&nbsp;: <strong>Demandes de
+      révision</strong>, <strong>Créés</strong>, <strong>Assignés</strong>, et
+      <strong>Participation</strong> (vous avez commenté, révisé, ou été
+      mentionné). Les groupes vides restent masqués, les brouillons indiquent
+      <em>· brouillon</em>, et une ligne précise pourquoi elle est là
+      (<em>· assigné</em>, <em>· mentionné</em>) quand le groupe seul n'y
+      suffit pas. Chaque groupe charge les 30 mises à jour les plus récentes
+      et se termine par <strong>Afficher plus…</strong>. Les compteurs non lus
+      restent visibles sur les en-têtes repliés&nbsp;; le tout est optionnel
+      dans <a href="/fr/docs/settings/#review-requests">Réglages</a>, et
+      filtrable aux seules PR touchant du Markdown.</p>
+      <p><strong>Suivez un dépôt</strong> pour voir tout ce qui y est ouvert,
+      du plus récent au plus ancien&nbsp;: <strong>Suivre le dépôt…</strong>
+      dans l'en-tête de section propose les dépôts que vous avez déjà ouverts,
+      ou accepte un <code>owner/repo</code> tapé directement. Un dépôt suivi
+      est son propre groupe avec sa propre règle de non-lu — clic droit dessus
+      pour <strong>Tout</strong>, <strong>Seulement les miens</strong>, ou
+      <strong>Aucun</strong>, et pour <strong>Ne plus suivre</strong>. Toute
+      ligne de PR ou d'issue peut modifier cette règle depuis son propre menu
+      contextuel.</p>
+      <p>Vous préférez une seule liste&nbsp;?
+      <a href="/fr/docs/settings/#github-grouping">Grouper le travail GitHub
+      par</a> <em>Implication</em> fusionne cette section avec Issues en une
+      seule section <strong>GitHub</strong>, les groupes mélangeant les deux
+      genres avec un glyphe par ligne.</p>
       <p>Icônes d'état sur les lignes de PR&nbsp;:</p>
       <table>
         <tr><th>État</th><th>Icône</th></tr>
@@ -170,6 +216,18 @@
       <p>Marqueurs par fichier dans une PR&nbsp;: cercle <strong>+</strong> (vert)
       pour ajouté, cercle <strong>−</strong> (rouge) pour supprimé, cercle
       <strong>→</strong> pour renommé, cercle crayon pour modifié.</p>
+
+      <h2 id="issues">Issues</h2>
+      <p>Même logique pour les issues — <strong>Créés</strong>,
+      <strong>Assignés</strong>, <strong>Participation</strong>, et les
+      issues des dépôts suivis — parce que le document qu'on vous demande de
+      réviser est souvent une issue, pas une pull request. Cliquez-en une et
+      elle s'ouvre comme un document&nbsp;: le corps rendu, ses étiquettes, la
+      chronologie des commentaires avec réactions, et un champ de commentaire
+      à la fin. Commentez, réagissez, et modifiez ou supprimez vos propres
+      commentaires sans quitter l'app. Une issue ouverte occupe le haut de la
+      section en une seule ligne, rejoint Récents et ⌘K Ouvrir rapidement, et
+      revient avec la session.</p>
 
       <h2 id="recents">Récents</h2>
       <p>Récents&nbsp;: les fichiers, dossiers et pull requests récemment
@@ -198,10 +256,14 @@
           en petite marque de fin de ligne&nbsp;: ce dossier local en est une copie de travail)</td></tr>
         <tr><td>Glyphe de branche + nom</td><td>La pastille de branche — cliquez pour branches et worktrees</td></tr>
         <tr><td>Flèches de pull request</td><td>Une pull request</td></tr>
-        <tr><td>Bac de réception</td><td>Demandes de révision — les PR qui attendent votre révision</td></tr>
+        <tr><td>Cercle avec un point</td><td>Une issue</td></tr>
+        <tr><td>Bac de réception · cercle crayon · cercle personne · deux bulles</td><td>Les
+          groupes&nbsp;: Demandes de révision · Créés · Assignés · Participation</td></tr>
+        <tr><td>Petit chemin sous un nom</td><td>L'emplacement réel d'une racine
+          épinglée ou renommée (affiché aussi quand deux racines partagent un nom)</td></tr>
         <tr><td>Bulle + compteur</td><td>Sur un fichier de PR&nbsp;: commentaires de révision non résolus. Sur
           une ligne de Fichiers ouverts&nbsp;: des <a href="/fr/docs/experimental/margin-notes/">notes de marge</a> encore dans le document</td></tr>
-        <tr><td>Point coloré (bord gauche)</td><td>Une demande de révision non lue</td></tr>
+        <tr><td>Point coloré (bord gauche)</td><td>Une pull request ou une issue non lue</td></tr>
         <tr><td>✕ dans un cercle (au survol)</td><td>Retirer de la barre latérale / congédier l'aperçu</td></tr>
       </table>
       <p class="table-note">Le glyphe de branche n'apparaît que sur de vraies refs git

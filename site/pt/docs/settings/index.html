@@ -72,11 +72,16 @@
       <h3>Leitura</h3>
       <table>
         <tr><th>Ajuste</th><th>Opções · <em>padrão</em></th><th>O que faz</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Abrir este ajuste no PullMark (0.28.3+)">Restaurar arquivos e pull requests da última sessão</a></td>
-          <td>on/off — <em>on</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Abrir este ajuste no PullMark (0.28.3+)">Reabrir a sessão anterior ao iniciar</a></td>
+          <td>on/off — <em>off</em> para novas instalações</td>
           <td>Reabre o que estava na barra lateral quando o PullMark foi
-          encerrado — arquivos, pastas, PRs, repositórios navegados e a
-          entrada de prévia (ainda como prévia).</td></tr>
+          encerrado — arquivos, pastas, PRs, issues, repositórios
+          navegados e a entrada de prévia (ainda como prévia). Desligado,
+          só <a href="/pt/docs/sidebar/#pinned">Fixados</a> volta. Quem já
+          tinha uma sessão antes da 0.45.0 continua reabrindo. Depois de
+          um crash ou encerramento forçado, um banner oferece a sessão
+          anterior de volta de qualquer jeito — nada se perde até você
+          dizer Agora Não.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Abrir este ajuste no PullMark (0.28.3+)">Mostrar arquivos ocultos</a></td><td>on/off — <em>off</em></td>
           <td>Dotfiles e pastas ocultas em Localizações — docs em
           <code>.github/</code> e afins. Também alternável com
@@ -104,13 +109,18 @@
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Abrir este ajuste no PullMark (0.28.3+)">Layout padrão do diff</a></td><td>Em linha · Lado a lado — <em>Em linha</em></td>
           <td>Como os diffs renderizados de PR abrem. Alternável por arquivo
           com ⌥⌘L.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Abrir este ajuste no PullMark (0.28.3+)">Mostrar solicitações de revisão na barra lateral</a></td><td>on/off — <em>on</em></td>
-          <td>O subgrupo Solicitações de Revisão: PRs abertos onde sua revisão foi
-          solicitada. Oculto de qualquer forma quando você não está
-          conectado.</td></tr>
-        <tr><td>Apenas solicitações que mudam Markdown</td><td>on/off — <em>on</em></td>
-          <td>Esconde solicitações de revisão sem arquivos Markdown — o
-          PullMark não tem nada a mostrar para elas.</td></tr>
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Abrir este ajuste no PullMark (0.28.3+)">Mostrar pull requests e issues que envolvem você</a></td><td>on/off — <em>on</em></td>
+          <td>Os grupos de envolvimento e os repositórios seguidos nas
+          seções <a href="/pt/docs/sidebar/#pull-requests">Pull Requests</a> e
+          <a href="/pt/docs/sidebar/#issues">Issues</a>. Oculto de qualquer
+          forma quando você não está conectado.</td></tr>
+        <tr><td>Só pull requests que alteram Markdown</td><td>on/off — <em>on</em></td>
+          <td>Esconde pull requests sem arquivos Markdown — o
+          PullMark não tem nada a mostrar para eles.</td></tr>
+        <tr><td id="github-grouping">Agrupar trabalho do GitHub por</td><td>Tipo · Participação — <em>Tipo</em></td>
+          <td><em>Tipo</em> mantém uma seção Pull Requests e uma seção
+          Issues. <em>Participação</em> cria uma única seção GitHub cujos
+          grupos misturam os dois tipos, com um glifo por linha.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Abrir este ajuste no PullMark (0.28.3+)">Mostrar a discussão da revisão na visão geral do PR</a></td><td>on/off — <em>on</em></td>
           <td>Threads de revisão inline aninhadas sob sua revisão na conversa
           da visão geral — todas as threads, incluindo arquivos que o

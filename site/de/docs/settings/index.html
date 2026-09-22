@@ -72,11 +72,17 @@
       <h3>Lesen</h3>
       <table>
         <tr><th>Einstellung</th><th>Optionen · <em>Standard</em></th><th>Was sie tut</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Dateien und Pull Requests der letzten Session wiederherstellen</a></td>
-          <td>an/aus — <em>an</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Vorherige Sitzung beim Start wieder öffnen</a></td>
+          <td>an/aus — <em>aus</em> für Neuinstallationen</td>
           <td>Öffnet wieder, was beim letzten Beenden in der Seitenleiste stand
-          — Dateien, Ordner, PRs, durchstöberte Repos und den Vorschau-Eintrag
-          (weiterhin als Vorschau).</td></tr>
+          — Dateien, Ordner, PRs, Issues, durchstöberte Repos und den
+          Vorschau-Eintrag (weiterhin als Vorschau). Aus: Nur
+          <a href="/de/docs/sidebar/#pinned">Angeheftet</a> kommt zurück. Für
+          alle, die schon vor 0.45.0 eine Sitzung hatten, öffnet sie sich
+          weiterhin automatisch wieder. Nach einem Absturz oder erzwungenen
+          Beenden bietet ein Banner die vorherige Sitzung so oder so wieder an
+          — nichts geht verloren, solange du nicht „Jetzt nicht“
+          wählst.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Versteckte Dateien zeigen</a></td><td>an/aus — <em>aus</em></td>
           <td>Dotfiles und versteckte Ordner in „Orte“ —
           <code>.github/</code>-Docs und Konsorten. Auch mit <kbd>⇧⌘.</kbd>
@@ -106,13 +112,19 @@
         <tr><th>Einstellung</th><th>Optionen · <em>Standard</em></th><th>Was sie tut</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Standard-Diff-Layout</a></td><td>Inline · Nebeneinander — <em>Inline</em></td>
           <td>Wie gerenderte PR-Diffs aufgehen. Pro Datei mit ⌥⌘L umschaltbar.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Review-Anfragen in der Seitenleiste zeigen</a></td><td>an/aus — <em>an</em></td>
-          <td>Die Untergruppe Review-Anfragen: offene PRs, bei denen dein
-          Review angefragt ist. So oder so ausgeblendet, solange du nicht
-          angemeldet bist.</td></tr>
-        <tr><td>Nur Anfragen, die Markdown ändern</td><td>an/aus — <em>an</em></td>
-          <td>Blendet Review-Anfragen ohne Markdown-Dateien aus — PullMark hat
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Pull Requests und Issues anzeigen, die dich betreffen</a></td><td>an/aus — <em>an</em></td>
+          <td>Die Beteiligungsgruppen und gefolgten Repositorys in den
+          Bereichen <a href="/de/docs/sidebar/#pull-requests">Pull
+          Requests</a> und <a href="/de/docs/sidebar/#issues">Issues</a>. So
+          oder so ausgeblendet, solange du nicht angemeldet bist.</td></tr>
+        <tr><td>Nur Pull Requests, die Markdown ändern</td><td>an/aus — <em>an</em></td>
+          <td>Blendet Pull Requests ohne Markdown-Dateien aus — PullMark hat
           dazu nichts zu zeigen.</td></tr>
+        <tr><td id="github-grouping">GitHub-Arbeit gruppieren nach</td><td>Typ · Beteiligung — <em>Typ</em></td>
+          <td><em>Typ</em> behält einen eigenen Pull-Requests- und einen
+          Issues-Bereich. <em>Beteiligung</em> macht daraus einen
+          gemeinsamen GitHub-Bereich, dessen Gruppen beide Arten mischen, mit
+          einer eigenen Glyphe pro Zeile.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Diese Einstellung in PullMark öffnen (ab 0.28.3)">Review-Diskussion in der PR-Übersicht zeigen</a></td><td>an/aus — <em>an</em></td>
           <td>Inline-Review-Threads, verschachtelt unter ihrem Review in der
           Unterhaltung der Übersicht — jeder Thread, auch zu Dateien, die

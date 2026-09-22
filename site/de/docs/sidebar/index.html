@@ -61,10 +61,11 @@
     <article>
       <p class="kicker">docs</p>
       <h1>Die Seitenleiste</h1>
-      <p class="article-lede">Vier Bereiche, geordnet danach, was Dinge
+      <p class="article-lede">Bereiche, geordnet danach, was Dinge
       <em>bedeuten</em>, nicht woher sie kommen: was du offen hast (Geöffnete
-      Dateien), die Ordner und Repos, die du durchstöberst (Orte), die Pull
-      Requests, die du reviewst — und wo du gewesen bist (Zuletzt benutzt).</p>
+      Dateien), die Orte, die du behältst (Angeheftet), die Ordner und Repos,
+      die du durchstöberst (Orte), die Pull Requests und Issues, die dich
+      betreffen, und wo du gewesen bist (Zuletzt benutzt).</p>
 
       <h2 id="open-files">Geöffnete Dateien</h2>
       <p>Das Arbeitsset: jedes Dokument, das du ausdrücklich geöffnet hast — aus
@@ -109,6 +110,29 @@
       <p>Jede Zeile unter „Geöffnete Dateien“, die in einem offenen Ort liegt,
       bekommt <strong>Im Ort zeigen</strong> ins Rechtsklick-Menü — der
       Sprung zurück von „was ich lese“ zu „wo es wohnt“.</p>
+
+      <h2 id="pinned">Angeheftet</h2>
+      <p>Die Ordner und Dateien, zu denen du immer wieder zurückkehrst, über
+      „Orte“ — so wie der Finder seine Favoriten über allem anderen hält.
+      Rechtsklick auf einen Ordner oder eine Datei in einem beliebigen Baum
+      und wähl <strong>Anheften…</strong>: Ein Ordner wird zu einer eigenen
+      Wurzel mit eigenem Baum, eine Datei wird zu einer Lesezeichen-Zeile,
+      die per Klick previewt, und der neue Eintrag landet am Ende des
+      Bereichs, schon im Umbenennen-Modus. Eine „Orte“-Wurzel bekommt
+      <strong>Anheften</strong> (sie wandert hierher), eine angeheftete
+      Wurzel bekommt <strong>Lösen</strong> (sie wandert ans Ende von „Orte“
+      und behält ihren Namen).</p>
+      <p><strong>Umbenennen</strong> funktioniert wie im Finder: wähl
+      <strong>Umbenennen…</strong> oder drück Return auf der ausgewählten
+      Zeile, tipp, und Return, ein Klick anderswo oder das Weitergehen
+      übernimmt; Escape bricht ab; ein leer gelassenes Feld geht zurück zum
+      echten Namen. Ein umbenannter Eintrag zeigt seinen wahren Pfad in
+      kleiner Schrift unter dem Namen, genau wie jedes Paar Wurzeln, das
+      sich einen Namen teilt — damit sehen zwei Ordner namens
+      <code>docs</code> nie gleich aus. Angeheftete Einträge sind eine
+      Präferenz, kein Teil der Sitzung: Sie kommen bei jedem Start zurück,
+      egal was <a href="/de/docs/settings/#restore-session">Vorherige
+      Sitzung wieder öffnen</a> sagt.</p>
 
       <h2 id="locations">Orte</h2>
       <p>Durchstöberbare Wurzeln, wo immer sie liegen. Zwei Arten teilen sich
@@ -155,11 +179,34 @@
       <p>Jeder geöffnete PR ist eine Gruppe: die Übersichtszeile (Status-Icon +
       Zahl geänderter Markdown-Dateien), dann seine geänderten
       Markdown-Dateien — eine Sprechblase mit Zahl markiert Dateien mit
-      unaufgelösten Review-Threads. Unter deinen geöffneten PRs sammelt der
-      Bereich <strong>Review-Anfragen</strong> die PRs, die auf dein
-      Review warten, mit einer Ungelesen-Zahl, die auch eingeklappt sichtbar
-      bleibt (in den Einstellungen ausblendbar — und filterbar auf PRs, die
-      Markdown anfassen).</p>
+      unaufgelösten Review-Threads. Unter deinen geöffneten PRs kommen die
+      Pull Requests, die dich <em>betreffen</em>, in Gruppen:
+      <strong>Review-Anfragen</strong>, <strong>Erstellt</strong>,
+      <strong>Zugewiesen</strong> und <strong>Beteiligt</strong> (du hast
+      kommentiert, reviewt oder wurdest erwähnt). Leere Gruppen bleiben
+      verborgen, Entwürfe zeigen <em>· Entwurf</em>, und eine Zeile nennt den
+      Grund, warum sie da ist (<em>· zugewiesen</em>, <em>· erwähnt</em>),
+      wenn die Gruppe allein es nicht sagt. Jede Gruppe lädt die 30 zuletzt
+      aktualisierten und endet mit <strong>Mehr anzeigen…</strong>.
+      Ungelesen-Zahlen bleiben an eingeklappten Kopfzeilen sichtbar; das
+      Ganze ist optional in den
+      <a href="/de/docs/settings/#review-requests">Einstellungen</a> und
+      filterbar auf PRs, die Markdown anfassen.</p>
+      <p><strong>Einem Repository folgen</strong>, um alles zu sehen, was
+      darin offen ist, neueste zuerst: <strong>Repository folgen…</strong>
+      in der Bereichsüberschrift bietet die Repositorys an, die du schon
+      offen hast, oder nimmt eingetipptes <code>owner/repo</code> entgegen.
+      Ein gefolgtes Repository ist seine eigene Gruppe mit eigener
+      Ungelesen-Regel — Rechtsklick darauf für <strong>Alles</strong>,
+      <strong>Nur meine</strong> oder <strong>Ohne</strong>, und für
+      <strong>Nicht mehr folgen</strong>. Jede einzelne PR- oder
+      Issue-Zeile kann diese Regel über ihr eigenes Rechtsklick-Menü
+      überschreiben.</p>
+      <p>Lieber eine Liste? <a href="/de/docs/settings/#github-grouping">GitHub-Arbeit
+      gruppieren nach</a> <em>Beteiligung</em> führt diesen Bereich und
+      Issues zu einem einzigen <strong>GitHub</strong>-Bereich zusammen,
+      dessen Gruppen beide Arten mischen, mit einer eigenen Glyphe pro
+      Zeile.</p>
       <p>Status-Icons auf PR-Zeilen:</p>
       <table>
         <tr><th>Status</th><th>Icon</th></tr>
@@ -172,6 +219,18 @@
       <p>Datei-Marker innerhalb eines PRs: <strong>+</strong>-Kreis (grün) für
       hinzugefügt, <strong>−</strong>-Kreis (rot) für entfernt,
       <strong>→</strong>-Kreis für umbenannt, Stift-Kreis für geändert.</p>
+
+      <h2 id="issues">Issues</h2>
+      <p>Dieselbe Idee für Issues — <strong>Erstellt</strong>,
+      <strong>Zugewiesen</strong>, <strong>Beteiligt</strong> und die
+      Issues gefolgter Repositorys — weil das Dokument, das du reviewen
+      sollst, oft ein Issue ist, kein Pull Request. Klick eines an und es
+      öffnet sich als Dokument: der gerenderte Text, seine Labels, die
+      Kommentar-Timeline mit Reaktionen und am Ende ein Kommentarfeld.
+      Kommentiere, reagiere und bearbeite oder lösche eigene Kommentare,
+      ohne die App zu verlassen. Ein offenes Issue sitzt als einzelne Zeile
+      oben im Bereich, landet unter „Zuletzt benutzt“ und in ⌘K Schnell
+      öffnen, und kommt mit der Sitzung zurück.</p>
 
       <h2 id="recents">Zuletzt benutzt</h2>
       <p>Kürzlich geöffnete Dateien, Ordner und Pull Requests, die oben nicht
@@ -200,10 +259,15 @@
           als kleine nachgestellte Marke: dieser lokale Ordner ist ein Checkout davon)</td></tr>
         <tr><td>Branch-Glyphe + Name</td><td>Der Branch-Chip — Klick für Branches und Worktrees</td></tr>
         <tr><td>Pull-Request-Pfeile</td><td>Ein Pull Request</td></tr>
-        <tr><td>Ablagefach</td><td>Review-Anfragen — PRs, die auf dein Review warten</td></tr>
+        <tr><td>Kreis mit Punkt</td><td>Ein Issue</td></tr>
+<tr><td>Ablagefach · Stift-Kreis · Personen-Kreis · zwei Sprechblasen</td><td>Die
+Gruppen: Review-Anfragen · Erstellt · Zugewiesen · Beteiligt</td></tr>
+<tr><td>Kleiner Pfad unter dem Namen</td><td>Der echte Pfad einer
+angehefteten oder umbenannten Wurzel (auch sichtbar, wenn sich zwei
+Wurzeln einen Namen teilen)</td></tr>
         <tr><td>Sprechblase + Zahl</td><td>An einer PR-Datei: unaufgelöste Review-Kommentare. An einer
           Zeile unter „Geöffnete Dateien“: <a href="/de/docs/experimental/margin-notes/">Randnotizen</a>, die noch im Dokument sind</td></tr>
-        <tr><td>Farbiger Punkt (linke Kante)</td><td>Eine ungelesene Review-Anfrage</td></tr>
+        <tr><td>Farbiger Punkt (linke Kante)</td><td>Ein ungelesener Pull Request oder ein ungelesenes Issue</td></tr>
         <tr><td>✕ im Kreis (bei Hover)</td><td>Aus der Seitenleiste entfernen / Vorschau verwerfen</td></tr>
       </table>
       <p class="table-note">Die Branch-Glyphe erscheint nur an echten Git-Refs

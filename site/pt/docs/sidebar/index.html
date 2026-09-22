@@ -61,10 +61,10 @@
     <article>
       <p class="kicker">docs</p>
       <h1>A barra lateral</h1>
-      <p class="article-lede">Quatro seções, organizadas pelo que as coisas
+      <p class="article-lede">Seções organizadas pelo que as coisas
       <em>significam</em>, não pela origem: o que você tem aberto, os lugares
-      pelos quais navega, os pull requests que está revisando e por onde você
-      já passou.</p>
+      que você guarda, os lugares pelos quais navega, os pull requests e
+      issues que envolvem você e por onde você já passou.</p>
 
       <h2 id="open-files">Arquivos Abertos</h2>
       <p>O conjunto de trabalho: cada documento que você
@@ -112,6 +112,30 @@
       menu do botão direito — o salto de volta de “o que estou lendo” para
       “onde isso mora”.</p>
 
+      <h2 id="pinned">Fixados</h2>
+      <p>As pastas e arquivos aos quais você sempre volta, acima de
+      Localizações do jeito que o Finder mantém os Favoritos acima de tudo
+      o mais. Clique com o botão direito numa pasta ou arquivo em qualquer
+      árvore e escolha <strong>Fixar…</strong>: uma pasta vira sua própria
+      raiz com sua própria árvore, um arquivo vira uma linha de marcador
+      que faz prévia ao clicar, e a nova entrada aparece no fim da seção
+      já em modo de renomear. Uma raiz de Localização ganha
+      <strong>Fixar</strong> (ela se move para cá) e uma raiz fixada ganha
+      <strong>Desafixar</strong> (ela se move para o fim de Localizações,
+      mantendo o nome).</p>
+      <p><strong>Renomear</strong> funciona do jeito do Finder: escolha
+      <strong>Renomear…</strong> ou pressione Return na linha selecionada,
+      digite o novo nome e confirme com Return, um clique em qualquer
+      outro lugar, ou saindo do campo; Esc cancela; um campo deixado em
+      branco volta ao nome real. Uma entrada renomeada mostra o caminho
+      verdadeiro em texto pequeno abaixo do nome, o mesmo vale para
+      qualquer par de raízes que compartilhem um nome, para que duas
+      pastas chamadas <code>docs</code> nunca pareçam iguais. Entradas
+      fixadas são uma preferência, não parte da sessão: elas voltam a
+      cada abertura, não importa o que
+      <a href="/pt/docs/settings/#restore-session">Reabrir a sessão anterior</a>
+      diga.</p>
+
       <h2 id="locations">Localizações</h2>
       <p>Raízes navegáveis, onde quer que morem. Dois tipos dividem
       a seção, distinguidos pelo ícone:</p>
@@ -157,11 +181,33 @@
       <p>Cada PR aberto é um grupo: a linha da visão geral (ícone de status +
       contagem de Markdown alterado), depois seus arquivos Markdown
       alterados — um balão de fala com um número marca arquivos com threads
-      de revisão não resolvidas. Abaixo dos seus PRs abertos,
-      <strong>Solicitações de Revisão</strong> reúne PRs esperando pela sua
-      revisão, com um contador de não lidos que permanece
-      visível mesmo recolhido (ocultável nos Ajustes, e filtrável para só
-      PRs que tocam Markdown).</p>
+      de revisão não resolvidas. Abaixo dos seus PRs abertos vêm os pull
+      requests que <em>envolvem</em> você, em grupos:
+      <strong>Solicitações de Revisão</strong>, <strong>Criados</strong>,
+      <strong>Atribuídos</strong> e <strong>Participando</strong> (você
+      comentou, revisou, ou foi mencionado). Grupos vazios ficam ocultos,
+      rascunhos dizem <em>· rascunho</em>, e uma linha explica por que
+      está ali (<em>· atribuído</em>, <em>· mencionado</em>) quando o
+      grupo sozinho não deixa claro. Cada grupo carrega os 30 atualizados
+      mais recentemente e termina em <strong>Mostrar mais…</strong>.
+      Contadores de não lidos permanecem visíveis em cabeçalhos
+      recolhidos; a coisa toda é opcional nos
+      <a href="/pt/docs/settings/#review-requests">Ajustes</a>, e filtrável
+      para PRs que tocam Markdown.</p>
+      <p><strong>Siga um repositório</strong> para ver tudo o que está
+      aberto nele, dos mais novos aos mais antigos:
+      <strong>Seguir repositório…</strong> no cabeçalho da seção oferece
+      os repositórios que você já tem abertos, ou aceita
+      <code>owner/repo</code> digitado. Um repositório seguido é seu
+      próprio grupo com sua própria regra de não lidos — clique com o
+      botão direito nele para <strong>Tudo</strong>, <strong>Só os
+      meus</strong> ou <strong>Nenhum</strong>, e para <strong>Deixar de
+      seguir</strong>. Qualquer linha de PR ou issue pode sobrepor essa
+      regra a partir do próprio menu de botão direito.</p>
+      <p>Prefere uma lista só? <a href="/pt/docs/settings/#github-grouping">Agrupar
+      trabalho do GitHub por</a> <em>Participação</em> mescla esta seção e
+      Issues numa única seção <strong>GitHub</strong>, com grupos
+      misturando os dois tipos e um glifo por linha.</p>
       <p>Ícones de status nas linhas de PR:</p>
       <table>
         <tr><th>Status</th><th>Ícone</th></tr>
@@ -175,6 +221,18 @@
       (verde) para adicionado, círculo <strong>−</strong> (vermelho) para
       removido, círculo <strong>→</strong> para renomeado, círculo com lápis
       para modificado.</p>
+
+      <h2 id="issues">Issues</h2>
+      <p>A mesma ideia para issues — <strong>Criados</strong>,
+      <strong>Atribuídos</strong>, <strong>Participando</strong> e as
+      issues dos repositórios seguidos — porque o documento que pedem
+      para você revisar muitas vezes é uma issue, não um pull request.
+      Clique numa e ela abre como um documento: o corpo renderizado, suas
+      labels, a linha do tempo de comentários com reações, e uma caixa de
+      comentário no fim. Comente, reaja, e edite ou exclua seus próprios
+      comentários sem sair do app. Uma issue aberta fica no topo da seção
+      como uma única linha, entra em Recentes e no Abrir Rapidamente
+      (⌘K), e volta com a sessão.</p>
 
       <h2 id="recents">Recentes</h2>
       <p>Arquivos, pastas e pull requests abertos recentemente que
@@ -203,10 +261,14 @@
           remotamente; como pequena marca no fim: esta pasta local é um checkout de um)</td></tr>
         <tr><td>Glifo de branch + nome</td><td>O chip de branch — clique para branches e worktrees</td></tr>
         <tr><td>Setas de pull request</td><td>Um pull request</td></tr>
-        <tr><td>Bandeja</td><td>Solicitações de Revisão — PRs aguardando a sua revisão</td></tr>
+        <tr><td>Círculo com um ponto</td><td>Uma issue</td></tr>
+        <tr><td>Bandeja · círculo com lápis · círculo de pessoa · dois balões</td><td>Os
+          grupos: Solicitações de Revisão · Criados · Atribuídos · Participando</td></tr>
+        <tr><td>Caminho pequeno abaixo de um nome</td><td>O local real de uma raiz
+          fixada ou renomeada (também mostrado quando duas raízes compartilham um nome)</td></tr>
         <tr><td>Balão de fala + número</td><td>Num arquivo de PR: comentários de revisão não resolvidos.
           Numa linha de Arquivos Abertos: <a href="/pt/docs/experimental/margin-notes/">notas de margem</a> ainda no documento</td></tr>
-        <tr><td>Ponto colorido (borda esquerda)</td><td>Uma solicitação de revisão não lida</td></tr>
+        <tr><td>Ponto colorido (borda esquerda)</td><td>Um pull request ou issue não lido</td></tr>
         <tr><td>✕ num círculo (ao passar o mouse)</td><td>Remover da barra lateral / dispensar a prévia</td></tr>
       </table>
       <p class="table-note">O glifo de branch aparece apenas em refs git de
