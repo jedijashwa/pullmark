@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.45.0 - 2026-09-22
 
 - **Pull requests and issues that involve you.** The sidebar's single
   "Review Requests" list grows into involvement buckets — Review
