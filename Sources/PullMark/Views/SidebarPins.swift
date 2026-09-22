@@ -35,6 +35,12 @@ struct RenamableTitle: View {
                 .onChange(of: focused) { isFocused in
                     if !isFocused { finish(commit: true) }
                 }
+                // Finder commits on any click outside the field. FocusState
+                // only reports focus moving to another focusable view; a
+                // click on the document, the toolbar, or empty sidebar takes
+                // the field's first-responder status without flipping the
+                // binding (verified live: the rename stuck until Return).
+                .background(RenameBlurMonitor { finish(commit: true) })
         } else {
             Text(title)
                 .lineLimit(1)
@@ -46,6 +52,48 @@ struct RenamableTitle: View {
         guard state.renamingEntry == id else { return }
         if shouldCommit { commit(draft) }
         state.renamingEntry = nil
+    }
+}
+
+/// Commits an in-progress rename on any mouse-down outside the field —
+/// Finder's rule — regardless of where SwiftUI's focus goes. A local
+/// monitor sees every click before dispatch; the click itself proceeds
+/// untouched, so a click on a row both commits and selects.
+private struct RenameBlurMonitor: NSViewRepresentable {
+    let onClickOutside: () -> Void
+
+    final class Coordinator {
+        var monitor: Any?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        let outside = onClickOutside
+        context.coordinator.monitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { [weak view] event in
+            guard let view else { return event }
+            var inside = false
+            if let window = view.window, event.window === window {
+                inside = view.bounds.contains(view.convert(event.locationInWindow, from: nil))
+            }
+            if !inside {
+                DispatchQueue.main.async { outside() }
+            }
+            return event
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        if let monitor = coordinator.monitor {
+            NSEvent.removeMonitor(monitor)
+            coordinator.monitor = nil
+        }
     }
 }
 
