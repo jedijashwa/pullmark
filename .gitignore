@@ -11,3 +11,4 @@ dist/
 !.claude/settings.json
 CLAUDE.local.md
 scripts/screenshots/out/
+.scratch/
