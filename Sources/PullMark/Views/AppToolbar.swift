@@ -231,6 +231,15 @@ struct ToolbarSectionEnforcer: NSViewRepresentable {
     /// sweep: each surface switch creates a fresh NSToolbar with SwiftUI's
     /// own delegate, and the proxy must be re-applied to the new one.
     static func installVeto(on toolbar: NSToolbar?, coordinator: Coordinator?) {
+        // Demo instances read AND write the toolbar arrangement of the
+        // real defaults domain: NSToolbar autosaves through
+        // UserDefaults.standard, not the demo suite, so a display-mode
+        // switch or palette drop in a capture run lands in the human's
+        // own configuration (verified 2026-09-22). Don't guard it with
+        // `autosavesConfiguration = false` — flipping that makes SwiftUI
+        // re-sync the toolbar to its full default set, resurrecting every
+        // item the human removed (also verified). Capture runs simply
+        // must not customize the toolbar.
         guard let toolbar, let coordinator,
               let delegate = toolbar.delegate, !(delegate is ToolbarDropVeto) else { return }
         let veto = ToolbarDropVeto(wrapping: delegate)

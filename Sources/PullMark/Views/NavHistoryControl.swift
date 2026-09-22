@@ -18,12 +18,18 @@ struct NavHistoryControl: View {
         Label {
             Text("Back/Forward")
         } icon: {
-            HStack(spacing: 2) {
+            HStack(spacing: 4) {
                 NavHistoryButton(
                     state: state, direction: -1,
                     symbol: "chevron.backward", label: String(localized: "Back"),
                     enabled: state.canGoBack,
                     help: String(localized: "Show the previous document\(shortcuts.hint(.goBack)) — click and hold to see history"))
+                // Safari's pair sits in one capsule with a hairline between
+                // the two directions (an AppKit item group draws it). Ours
+                // is one custom item, so the line is drawn here; without it
+                // the capsule reads as a single wide button.
+                Divider()
+                    .frame(height: 16)
                 NavHistoryButton(
                     state: state, direction: 1,
                     symbol: "chevron.forward", label: String(localized: "Forward"),

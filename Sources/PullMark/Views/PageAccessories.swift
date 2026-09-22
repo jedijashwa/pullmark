@@ -280,9 +280,11 @@ struct OutlineToggle: View {
     @Binding var visible: Bool
 
     var body: some View {
-        Button {
-            visible.toggle()
-        } label: {
+        // A Toggle, not a Button: the toolbar tints a toggle that is on
+        // with the accent (Blame and Edit already do; Preview's markup
+        // toggle is the system reference), so an open outline shows on
+        // the button that opened it.
+        Toggle(isOn: $visible) {
             Label("Outline", systemImage: "sidebar.right")
         }
         .help("Show or hide the document outline")
