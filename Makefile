@@ -9,6 +9,11 @@ TEST_FLAGS := -Xswiftc -F$(TESTING_DIR)/Frameworks \
 	-Xlinker -rpath -Xlinker $(TESTING_DIR)/usr/lib
 endif
 
+# Every swift invocation carries the SDK stamp — see scripts/sdk-flags.sh
+# (Xcode 27's linker records the deployment target as the SDK version,
+# which puts the app into macOS's pre-Liquid-Glass compatibility look).
+SWIFT_FLAGS := $(shell ./scripts/sdk-flags.sh)
+
 # Prefer the Homebrew bin (user-writable on Apple Silicon), else /usr/local.
 BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /usr/local/bin)
 
@@ -24,11 +29,11 @@ define LINK_LPROJ
 endef
 
 build:
-	swift build
+	swift build $(SWIFT_FLAGS)
 	$(LINK_LPROJ)
 
 test:
-	swift test $(TEST_FLAGS)
+	swift test $(TEST_FLAGS) $(SWIFT_FLAGS)
 	python3 scripts/check-strings.py
 
 app:
@@ -45,9 +50,9 @@ perf-check:
 	./scripts/perf-check.sh
 
 run:
-	swift build
+	swift build $(SWIFT_FLAGS)
 	$(LINK_LPROJ)
-	swift run PullMark
+	swift run $(SWIFT_FLAGS) PullMark
 
 install-cli:
 	install -m 0755 scripts/pullmark-cli $(BIN_DIR)/pullmark

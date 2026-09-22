@@ -13,7 +13,10 @@ if [ "$SIGN_IDENTITY" != "-" ]; then
   SIGN_FLAGS=(--options runtime --timestamp)
 fi
 
-swift build -c release
+# The SDK stamp (scripts/sdk-flags.sh): without it Xcode 27's linker
+# records the deployment target as the SDK and macOS 26/27 render the
+# toolbar in the pre-Liquid-Glass compatibility look.
+swift build -c release $(./scripts/sdk-flags.sh)
 
 APP="dist/PullMark.app"
 rm -rf "$APP"
