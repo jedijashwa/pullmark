@@ -34,6 +34,26 @@ section current as features land.
   a session keeps reopening. When PullMark didn't quit normally — a
   crash, a force-quit, a power cut — a banner offers the previous
   session back instead of silently dropping it.
+- **Rich editor (beta).** Settings › Editing › Rich editor (beta) makes
+  Edit (⌘E, the toolbar button, or a double-click) open the whole
+  document as a rich editor in place — headings, lists, task lists,
+  tables, callouts, footnotes and images edited as what they are, with
+  a floating toolbar on selection, a "/" insert menu on an empty line,
+  and the typed shortcuts you already know (`# `, `- `, `**bold**`).
+  Tables get real editing: a handle above the caret's column and one
+  beside its row open menus of words, "+" pills on the edges add a
+  column or row, paste from a spreadsheet fills cells, and any column
+  sorts or aligns. Margin notes stay live while you edit — add, reply,
+  resolve — and undo restores a block and its notes together. Fenced
+  code, Mermaid, math, HTML and front matter stay raw islands (a
+  Mermaid fence keeps its preview); "Edit as Markdown" (⇧⌘M) drops any
+  block to its source and back. Pasted or dropped images are saved
+  into the Location's images folder — Images Folder… on the Location
+  overrides the guess — and linked relatively. Saves are minimal: a
+  block you didn't touch is written back byte for byte, so a one-word
+  edit is a one-line diff. Save automatically (the default) or only on
+  ⌘S, per the new Save edits setting. Off by default; the section
+  editor is untouched until you switch.
 - Copy GitHub Link now knows what GitHub actually has. Files that
   aren't on GitHub show the item disabled with the reason beneath it —
   ignored by .gitignore, ignored locally, not committed yet, or not
