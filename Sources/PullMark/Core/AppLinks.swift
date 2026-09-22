@@ -36,6 +36,7 @@ enum AppLinks {
         "settings/general/clicking-files",
         "settings/general/diff-layout",
         "settings/general/review-requests",
+        "settings/general/github-grouping",
         "settings/general/whats-new",
         "settings/general/check-updates",
         "settings/general/default-app",
