@@ -68,7 +68,31 @@ enum CaptureChrome {
                 }
             }
         }
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in blessAll() }
+        // macOS 27: real key status no longer implies key APPEARANCE. The
+        // theme frame and the traffic-light widgets consult
+        // _hasKeyAppearance / _hasActiveAppearanceForStandardWindowButton:,
+        // which stay NO for a window whose app never activated — every
+        // capture came back with gray lights while isKeyWindow read true.
+        // The private acquireKeyAppearance flips both (verified live with
+        // lldb on 27.0, 2026-09-22); it is asserted only while the getter
+        // reads false, so the timer re-applies it whenever AppKit takes it
+        // back without redrawing chrome that is already active.
+        let acquireKeyAppearance = NSSelectorFromString("acquireKeyAppearance")
+        let hasKeyAppearance = NSSelectorFromString("_hasKeyAppearance")
+        typealias BoolGetter = @convention(c) (AnyObject, Selector) -> Bool
+        let keyAppearanceGetter = class_getInstanceMethod(NSWindow.self, hasKeyAppearance)
+            .map { unsafeBitCast(method_getImplementation($0), to: BoolGetter.self) }
+        let assertKeyAppearance = { (window: NSWindow) in
+            guard window.responds(to: acquireKeyAppearance) else { return }
+            if let getter = keyAppearanceGetter, getter(window, hasKeyAppearance) { return }
+            _ = window.perform(acquireKeyAppearance)
+        }
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+            blessAll()
+            for window in NSApp.windows where window.isVisible && window.canBecomeKey {
+                assertKeyAppearance(window)
+            }
+        }
     }
 
     private static func forceTrue(_ cls: AnyClass, _ selector: Selector) {
