@@ -83,7 +83,7 @@ restore_blame() {
 # The EXIT trap reaps stray capture instances and restores the shared
 # flag — no Launch Services registration exists to undo (delivery is
 # pid-addressed).
-trap 'pkill -f "$PWD/dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true; restore_blame' EXIT
+trap 'pkill -f "(^|/)dist/PullMark.app/Contents/MacOS/PullMark" 2>/dev/null || true; restore_blame' EXIT
 
 launch() { # $1 = appearance, $2 = window x, $3 = window y, $4 = scene
   # Published screenshots wear the classic Mac BLUE accent (Josh's
@@ -138,14 +138,17 @@ launch() { # $1 = appearance, $2 = window x, $3 = window y, $4 = scene
 }
 
 # The folder Location is in place when the sidebar shows TWO plain
-# meridian-docs headings (folder + demo remote repo; the closing quote
-# in the pattern excludes the "meridian-docs #128" PR row). Folder
-# names are fixture data, so this is locale-proof.
+# meridian-docs headings (folder + demo remote repo). Root rows read
+# `meridian-docs, Branch: main` to accessibility since the branch chip
+# joined the row's label, so the pattern accepts a comma or the closing
+# quote right after the name — either way the "meridian-docs #128" PR
+# row is excluded. Folder names are fixture data, so this is
+# locale-proof.
 location_present() {
   for _ in {1..8}; do
     local count
     count=$(swift $DRIVE/ax.swift $APP_PID list 10 2>/dev/null \
-      | grep -Fc 'AXHeading "meridian-docs"') || count=0
+      | grep -Ec 'AXHeading "meridian-docs(,|")') || count=0
     (( count >= 2 )) && return 0
     sleep 0.8
   done
