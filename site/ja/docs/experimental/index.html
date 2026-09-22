@@ -24,6 +24,8 @@
 <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf8">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#10151c">
+<script>/* Language preference: jump to the reader's chosen variant before first paint. Set in /i18n.js */
+(function(){try{var P={"zh-Hans":"zh","ja":"ja","fr":"fr","de":"de","nl":"nl","es":"es","pt-BR":"pt"},c=localStorage.getItem("pm-lang");if(!c||(c!=="en"&&!P[c]))return;var p=location.pathname,l="en";for(var k in P){var x="/"+P[k]+"/";if(p===x.slice(0,-1)){p="/";l=k;break}if(p.indexOf(x)===0){p=p.slice(x.length-1);l=k;break}}if(c===l)return;var t=(c==="en"?p:"/"+P[c]+p);if(t!==location.pathname)location.replace(t+location.search+location.hash)}catch(e){}})();</script>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/docs/docs.css">
 <link rel="stylesheet" href="/i18n.css">

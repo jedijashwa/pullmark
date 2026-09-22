@@ -9,6 +9,10 @@ so every invariant the localized site depends on is asserted here:
   * every variant declares the right <html lang>, its own canonical,
     the full hreflang matrix, the switcher (aria-current on itself),
     and the i18n.css/i18n.js includes
+  * every variant carries the pre-paint language redirect, byte for
+    byte and ahead of theme.js — a page that misses it strands a
+    reader with a preference on the wrong variant, and a page that
+    carries a drifted copy redirects somewhere else than its siblings
   * locale pages reference shared assets absolutely (no ../ or bare
     relative src/href that would resolve inside the locale dir)
   * app screenshots are served in the page's own language: localized
@@ -29,6 +33,23 @@ ORIGIN = "https://pullmark.app"
 # locale code -> path prefix; English is the root.
 LOCALES = {"zh-Hans": "zh", "ja": "ja", "fr": "fr", "de": "de",
            "nl": "nl", "es": "es", "pt-BR": "pt"}
+
+# The pre-paint redirect, inlined in every variant's <head>. It has to
+# be inline (an external file costs a round trip before first paint) and
+# it has to be identical everywhere, so this literal is the source of
+# truth: change it here, then re-run with --fix-redirect to restamp.
+REDIRECT = (
+    '<script>/* Language preference: jump to the reader\'s chosen variant '
+    'before first paint. Set in /i18n.js */\n'
+    '(function(){try{var P={"zh-Hans":"zh","ja":"ja","fr":"fr","de":"de",'
+    '"nl":"nl","es":"es","pt-BR":"pt"},c=localStorage.getItem("pm-lang");'
+    'if(!c||(c!=="en"&&!P[c]))return;var p=location.pathname,l="en";'
+    'for(var k in P){var x="/"+P[k]+"/";if(p===x.slice(0,-1)){p="/";l=k;break}'
+    'if(p.indexOf(x)===0){p=p.slice(x.length-1);l=k;break}}if(c===l)return;'
+    'var t=(c==="en"?p:"/"+P[c]+p);if(t!==location.pathname)'
+    'location.replace(t+location.search+location.hash)}catch(e){}})();</script>\n'
+)
+THEME_JS = '<script src="/theme.js"></script>'
 
 # Base (English) paths of every localized page.
 BASES = [
@@ -95,6 +116,14 @@ def check_page(code, base):
     if '<script src="/i18n.js" defer></script>' not in s:
         problem(f"{rel}: i18n.js include missing")
 
+    if REDIRECT not in s:
+        problem(f"{rel}: pre-paint language redirect missing or drifted "
+                f"(re-run with --fix-redirect)")
+    elif s.index(REDIRECT) > s.index(THEME_JS):
+        problem(f"{rel}: pre-paint language redirect sits after theme.js; "
+                f"it must run first so a redirected page never pays for "
+                f"work it throws away")
+
     if 'class="lang-switch"' not in s:
         problem(f"{rel}: language switcher missing")
     else:
@@ -141,7 +170,33 @@ def check_sitemap():
         problem(f"sitemap: unexpected {url}")
 
 
+def restamp_redirect():
+    """Bring every variant's inlined redirect back in line with REDIRECT."""
+    stamped = 0
+    for base in BASES:
+        for code in ["en", *LOCALES]:
+            path = page_file(variant_url(code, base)[len(ORIGIN):])
+            if not path.exists():
+                continue
+            s = path.read_text(encoding="utf-8")
+            if REDIRECT in s:
+                continue
+            # Drop any older copy, then stamp the current one ahead of theme.js.
+            s = re.sub(r"<script>/\* Language preference:.*?</script>\n",
+                       "", s, flags=re.S)
+            if THEME_JS not in s:
+                print(f"{path}: no theme.js to anchor to")
+                return 1
+            path.write_text(s.replace(THEME_JS, REDIRECT + THEME_JS, 1),
+                            encoding="utf-8")
+            stamped += 1
+    print(f"restamped the pre-paint redirect on {stamped} page(s).")
+    return 0
+
+
 def main():
+    if "--fix-redirect" in sys.argv:
+        return restamp_redirect()
     for base in BASES:
         for code in ["en", *LOCALES]:
             check_page(code, base)

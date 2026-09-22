@@ -1,7 +1,23 @@
-/* Detected-language suggestion banner (spec: site-localization).
-   Distinct URLs per language; this only SUGGESTS — never redirects.
-   Included solely on pages that have translated variants, so its
-   presence is also the "variants exist" gate. */
+/* Language switcher memory + detected-language suggestion banner
+   (spec: site-localization). Included solely on pages that have
+   translated variants, so its presence is also the "variants exist"
+   gate — the pre-paint redirect in each page's <head> relies on that.
+
+   Two mechanisms, deliberately kept apart:
+
+   - The PREFERENCE (`pm-lang`) is written here, only by an explicit
+     pick — a click in the footer switcher or on the banner's link. It
+     is read only by the inline redirect in <head>, which sends the
+     reader to that variant before first paint. Selecting a language is
+     the only thing that sets it; selecting another is the only thing
+     that changes it.
+
+   - The BANNER follows navigator.languages and nothing else. On a page
+     the reader was redirected to, that means it offers their browser's
+     language as the way back — one click, which is also the way to
+     change the preference. It never reads `pm-lang`: a preference that
+     could also drive the banner would let one switcher click paper the
+     whole site in a language the browser never asked for. */
 (function () {
   "use strict";
 
@@ -37,7 +53,8 @@
   var pageLocale = document.documentElement.getAttribute("lang") || "en";
 
   // The page's path with any locale prefix stripped — the English
-  // address of this content.
+  // address of this content. Mirrors the <head> redirect's own copy;
+  // check-site-i18n.py holds the two to the same behaviour.
   function basePath() {
     var path = location.pathname;
     for (var code in LOCALES) {
@@ -53,7 +70,10 @@
     return code === "en" ? base : "/" + LOCALES[code] + base;
   }
 
-  // Best supported locale for this visitor's browser languages.
+  // Best supported locale for this visitor's browser languages. The list
+  // is in the reader's own order of preference, so the first supported
+  // tag wins — and a reader whose top language is this page's gets the
+  // page's own locale back, which suppresses the banner.
   function detect() {
     var langs = navigator.languages || [navigator.language || ""];
     for (var i = 0; i < langs.length; i++) {
@@ -72,8 +92,10 @@
     return null;
   }
 
-  // Any switcher click is a durable language choice.
-  function rememberClicks() {
+  // Picking a language in the switcher is the deliberate act the
+  // preference is built on. The write is synchronous, so it lands
+  // before the click's own navigation.
+  function rememberPicks() {
     document.querySelectorAll(".lang-switch a[hreflang]").forEach(function (a) {
       a.addEventListener("click", function () {
         store(CHOICE_KEY, a.getAttribute("hreflang"));
@@ -92,12 +114,17 @@
     var link = document.createElement("a");
     link.href = urlFor(target);
     link.textContent = strings.link;
+    // Taking the offer is a pick, same as the switcher — and it is how a
+    // reader who was redirected here gets back out for good.
     link.addEventListener("click", function () { store(CHOICE_KEY, target); });
     msg.append(link);
     var close = document.createElement("button");
     close.className = "lang-banner-close";
     close.setAttribute("aria-label", strings.close);
     close.textContent = "×";
+    // Dismissal answers the banner, not the preference: a reader sitting
+    // on their chosen variant is saying "yes, I know" — silencing the
+    // offer must not quietly send them back.
     close.addEventListener("click", function () {
       store(DISMISS_KEY, "1");
       banner.remove();
@@ -107,10 +134,9 @@
   }
 
   function init() {
-    rememberClicks();
+    rememberPicks();
     if (read(DISMISS_KEY)) { return; }
-    var choice = read(CHOICE_KEY);
-    var target = (choice && STRINGS[choice]) ? choice : detect();
+    var target = detect();
     if (!target || target === pageLocale) { return; }
     showBanner(target);
   }

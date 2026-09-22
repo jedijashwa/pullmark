@@ -27,12 +27,17 @@ Locales and paths:
 Portuguese ships as pt-BR (the larger audience; pt-PT can follow on
 demand). Spanish is generic `es`.
 
-## Addressing: distinct URLs, suggest, never redirect
+## Addressing: distinct URLs, suggest, redirect only on an explicit pick
 
 Every variant is its own page at a mirror path (`/ja/docs/shortcuts/`).
 No server-side language negotiation and no automatic redirects — Josh's
 call: "different pages with the address but then we show switcher and
 suggest switching in the detected language if it's supported."
+
+Amended 2026-09-22: still no server-side negotiation, and still nothing
+automatic for a visitor who has not chosen. A reader who *has* picked a
+language is redirected client-side to it — see **Language preference**
+below for why and what it costs.
 
 - **hreflang matrix**: every page (English included) carries
   `<link rel="alternate" hreflang="…">` for all eight variants plus
@@ -41,13 +46,56 @@ suggest switching in the detected language if it's supported."
   language by its own name, linking to the same page in that locale.
   Present tense, no flags (flags ≠ languages).
 - **Suggestion banner**: shared `site/i18n.js`. Reads
-  `navigator.languages`; when the page's language differs from the
-  visitor's best supported match, shows a dismissible top bar written
-  in the *target* language offering that locale's version of the same
-  page. Dismissal persists in `localStorage` (`pm-lang-suggest`);
-  choosing a language also remembers it so the banner later offers the
-  chosen language from English pages, never nags after a dismissal,
-  and never fires when the languages already match.
+  `navigator.languages` — and nothing else; when the page's language
+  differs from the visitor's best supported match, shows a dismissible
+  top bar written in the *target* language offering that locale's
+  version of the same page. Dismissal persists in `localStorage`
+  (`pm-lang-suggest`); the banner never nags after a dismissal, and
+  never fires when the languages already match.
+- **Language preference**: picking a language — in the footer switcher
+  or by taking the banner's offer — writes it to `localStorage`
+  (`pm-lang`). A tiny script inlined in every variant's `<head>`, ahead
+  of `theme.js`, reads it and `location.replace()`s to that variant
+  before first paint. Only an explicit pick sets it; only another pick
+  changes it.
+
+  Amended 2026-09-22, reversing the "no automatic redirects" line
+  above for readers who have chosen. Original shape: a switcher click
+  was remembered and fed the *banner*, which then offered the chosen
+  language from English pages. That misfired badly — an English reader
+  who had once clicked 中文 to look at it got a bar of Chinese on every
+  English page afterwards, which reads as a broken site, and one click
+  is indistinguishable from sampling a translation. Rather than weaken
+  the signal, the preference was promoted: an explicit pick now takes
+  you there instead of offering.
+
+  What holds the design together:
+
+  - **The preference drives the redirect; the browser drives the
+    banner.** They are never crossed. On a variant you were sent to,
+    detection offers your browser's language as the way back — one
+    click, which is also how you change the preference.
+  - **No preference, no redirect.** A first-time visitor, and every
+    crawler (no `localStorage`), gets exactly the URL it asked for, so
+    the hreflang matrix keeps doing the routing it was built for.
+  - **`location.replace`, not an assignment.** The requested URL never
+    enters history, so Back leaves the site instead of bouncing.
+  - **Inline and pre-paint**, so there is no flash of the wrong
+    language. It is duplicated on all 96 pages by necessity;
+    `check-site-i18n.py` holds every copy byte-identical and restamps
+    them with `--fix-redirect`.
+  - **No cookie, no Function.** The preference stays in
+    `localStorage`, which keeps `/privacy/`'s "no cookies" accurate,
+    keeps `_redirects` working (Pages ignores it for any path a
+    Function serves), and keeps the site on Pages' free unlimited
+    static requests.
+
+  Accepted cost: while you hold a preference you cannot open another
+  language's page by URL — a link to `/zh/docs/cli/` sent to a reader
+  whose preference is English lands them on `/docs/cli/`. The switcher
+  still works (it sets the preference before navigating), and the
+  banner is the one-click way back. Josh's call 2026-09-22, over the
+  alternative of leaving it a suggestion.
 
 ## Typography and correctness details
 
