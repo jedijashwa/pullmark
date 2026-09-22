@@ -72,11 +72,15 @@
       <h3>Reading</h3>
       <table>
         <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/restore-session" title="Open this setting in PullMark (0.28.3+)">Restore files and pull requests from the last session</a></td>
-          <td>on/off — <em>on</em></td>
+        <tr><td id="restore-session"><a class="setting-link" href="pullmark://settings/general/restore-session" title="Open this setting in PullMark (0.28.3+)">Reopen previous session at launch</a></td>
+          <td>on/off — <em>off</em> for new installs</td>
           <td>Reopens what was in the sidebar when PullMark last quit —
-          files, folders, PRs, browsed repos, and the preview entry (still
-          as a preview).</td></tr>
+          files, folders, PRs, issues, browsed repos, and the preview
+          entry (still as a preview). Off, only
+          <a href="../sidebar/#pinned">Pinned</a> comes back. Anyone who
+          had a session before 0.45.0 keeps reopening. After a crash or
+          force-quit a banner offers the previous session back either
+          way — nothing is lost until you say Not Now.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/show-hidden-files" title="Open this setting in PullMark (0.28.3+)">Show hidden files</a></td><td>on/off — <em>off</em></td>
           <td>Dotfiles and hidden folders in Locations — <code>.github/</code>
           docs and friends. Also toggled with <kbd>⇧⌘.</kbd> (Finder's own
@@ -103,12 +107,18 @@
         <tr><th>Setting</th><th>Options · <em>default</em></th><th>What it does</th></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/diff-layout" title="Open this setting in PullMark (0.28.3+)">Default diff layout</a></td><td>Inline · Side by Side — <em>Inline</em></td>
           <td>How PR rendered diffs open. Flippable per file with ⌥⌘L.</td></tr>
-        <tr><td><a class="setting-link" href="pullmark://settings/general/review-requests" title="Open this setting in PullMark (0.28.3+)">Show review requests in the sidebar</a></td><td>on/off — <em>on</em></td>
-          <td>The Review Requests subgroup: open PRs where your review is
-          requested. Hidden either way when you're not signed in.</td></tr>
-        <tr><td>Only requests that change Markdown</td><td>on/off — <em>on</em></td>
-          <td>Hides review requests with no Markdown files — PullMark has
+        <tr><td id="review-requests"><a class="setting-link" href="pullmark://settings/general/review-requests" title="Open this setting in PullMark (0.28.3+)">Show pull requests and issues that involve you</a></td><td>on/off — <em>on</em></td>
+          <td>The involvement buckets and followed repositories in the
+          <a href="../sidebar/#pull-requests">Pull Requests</a> and
+          <a href="../sidebar/#issues">Issues</a> sections. Hidden either
+          way when you're not signed in.</td></tr>
+        <tr><td>Only pull requests that change Markdown</td><td>on/off — <em>on</em></td>
+          <td>Hides pull requests with no Markdown files — PullMark has
           nothing to show for them.</td></tr>
+        <tr><td id="github-grouping">Group GitHub work by</td><td>Type · Involvement — <em>Type</em></td>
+          <td><em>Type</em> keeps a Pull Requests section and an Issues
+          section. <em>Involvement</em> makes one GitHub section whose
+          buckets mix both kinds, with a glyph per row.</td></tr>
         <tr><td><a class="setting-link" href="pullmark://settings/general/pr-discussion" title="Open this setting in PullMark (0.28.3+)">Show review discussion on the PR overview</a></td><td>on/off — <em>on</em></td>
           <td>Inline review threads nested under their review in the
           overview's conversation — every thread, including files

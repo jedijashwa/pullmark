@@ -61,10 +61,10 @@
     <article>
       <p class="kicker">docs</p>
       <h1>The sidebar</h1>
-      <p class="article-lede">Four sections, organized by what things
+      <p class="article-lede">Sections organized by what things
       <em>mean</em> rather than where they come from: what you have open, the
-      places you browse, the pull requests you're reviewing, and where you've
-      been.</p>
+      places you keep, the places you browse, the pull requests and issues
+      that involve you, and where you've been.</p>
 
       <h2 id="open-files">Open Files</h2>
       <p>The working set: every document you've explicitly opened — from
@@ -107,6 +107,27 @@
       <p>Any Open Files row that lives inside an open Location gets
       <strong>Reveal in Location</strong> in its right-click menu — the jump
       back from "what I'm reading" to "where it lives."</p>
+
+      <h2 id="pinned">Pinned</h2>
+      <p>The folders and files you keep coming back to, above Locations
+      the way Finder keeps Favorites above everything else. Right-click
+      a folder or file in any tree and choose <strong>Pin…</strong>: a
+      folder becomes its own root with its own tree, a file becomes a
+      bookmark row that previews on click, and the new entry lands at
+      the bottom of the section already in rename. A Location root
+      gets <strong>Pin</strong> (it moves here) and a pinned root gets
+      <strong>Unpin</strong> (it moves to the bottom of Locations,
+      keeping its name).</p>
+      <p><strong>Renaming</strong> works the Finder way: choose
+      <strong>Rename…</strong> or press Return on the selected row, type,
+      and Return, clicking anywhere else, or moving on commits; Escape
+      cancels; an emptied field goes back to the real name. A renamed
+      entry shows its true path in small text beneath the name, and so
+      does any pair of roots that share a name, so two folders called
+      <code>docs</code> never look alike. Pinned entries are a
+      preference, not part of the session: they come back at every
+      launch whatever <a href="../settings/#restore-session">Reopen
+      previous session</a> says.</p>
 
       <h2 id="locations">Locations</h2>
       <p>Browsable roots, wherever they live. Two kinds share the section,
@@ -151,10 +172,30 @@
       <p>Each opened PR is a group: the overview row (status icon + changed
       Markdown count), then its changed Markdown files — a comment bubble
       with a count marks files with unresolved review threads. Below your
-      opened PRs, <strong>Review Requests</strong> collects PRs waiting on
-      your review, with an unread count that stays visible even collapsed
-      (hideable in Settings, and filterable to Markdown-touching PRs
-      only).</p>
+      opened PRs come the pull requests that <em>involve</em> you, in
+      buckets: <strong>Review Requests</strong>, <strong>Created</strong>,
+      <strong>Assigned</strong>, and <strong>Participating</strong> (you
+      commented, reviewed, or were mentioned). Empty buckets stay hidden,
+      drafts say <em>· draft</em>, and a row spells out why it's there
+      (<em>· assigned</em>, <em>· mentioned</em>) when the bucket alone
+      doesn't. Every bucket loads the 30 most recently updated and ends in
+      <strong>Show more…</strong>. Unread counts stay visible on collapsed
+      headers; the whole thing is optional in
+      <a href="../settings/#review-requests">Settings</a>, and filterable
+      to Markdown-touching PRs.</p>
+      <p><strong>Follow a repository</strong> to see everything open in it,
+      newest first: <strong>Follow Repository…</strong> in the section
+      header offers the repositories you already have open, or takes
+      <code>owner/repo</code> typed in. A followed repository is its own
+      group with its own unread rule — right-click it for
+      <strong>Everything</strong>, <strong>Only Mine</strong>, or
+      <strong>None</strong>, and for <strong>Unfollow</strong>. Any single
+      PR or issue row can override that rule from its own right-click
+      menu.</p>
+      <p>Prefer one list? <a href="../settings/#github-grouping">Group
+      GitHub work by</a> <em>Involvement</em> merges this section and
+      Issues into one <strong>GitHub</strong> section, buckets mixing both
+      kinds with a glyph per row.</p>
       <p>Status icons on PR rows:</p>
       <table>
         <tr><th>Status</th><th>Icon</th></tr>
@@ -167,6 +208,17 @@
       <p>Per-file markers inside a PR: <strong>+</strong> circle (green) for
       added, <strong>−</strong> circle (red) for removed, <strong>→</strong>
       circle for renamed, pencil circle for modified.</p>
+
+      <h2 id="issues">Issues</h2>
+      <p>The same idea for issues — <strong>Created</strong>,
+      <strong>Assigned</strong>, <strong>Participating</strong>, and the
+      followed repositories' issues — because the doc you're asked to
+      review is often an issue, not a pull request. Click one and it opens
+      as a document: the rendered body, its labels, the comment timeline
+      with reactions, and a composer at the end. Comment, react, and edit
+      or delete your own comments without leaving the app. An open issue
+      sits at the top of the section as a single row, goes into Recents
+      and ⌘K Open Quickly, and comes back with the session.</p>
 
       <h2 id="recents">Recents</h2>
       <p>Recently opened files, folders, and pull requests that aren't
@@ -194,10 +246,14 @@
           as a small trailing mark: this local folder is a checkout of one)</td></tr>
         <tr><td>Branch glyph + name</td><td>The branch chip — click for branches and worktrees</td></tr>
         <tr><td>Pull-request arrows</td><td>A pull request</td></tr>
-        <tr><td>Tray</td><td>Review Requests — PRs awaiting your review</td></tr>
+<tr><td>Circle with a dot</td><td>An issue</td></tr>
+<tr><td>Tray · pencil circle · person circle · two bubbles</td><td>The
+buckets: Review Requests · Created · Assigned · Participating</td></tr>
+<tr><td>Small path beneath a name</td><td>A pinned or renamed root's
+real location (also shown when two roots share a name)</td></tr>
         <tr><td>Speech bubble + count</td><td>On a PR file: unresolved review comments. On an Open
           Files row: <a href="../experimental/margin-notes/">margin notes</a> still in the document</td></tr>
-        <tr><td>Colored dot (left edge)</td><td>An unread review request</td></tr>
+        <tr><td>Colored dot (left edge)</td><td>An unread pull request or issue</td></tr>
         <tr><td>✕ in a circle (on hover)</td><td>Remove from sidebar / dismiss preview</td></tr>
       </table>
       <p class="table-note">The branch glyph appears only on actual git refs

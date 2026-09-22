@@ -92,7 +92,13 @@
         authorship: one avatar per run of blocks, hover for the commit,
         click through for line history. GitHub's blame API where the file
         lives on GitHub, plain <code>git blame</code> otherwise.</li>
-        <li><strong>Reading comfort</strong> — themes, content width, line
+        <li><strong>Pinned places</strong> — the folders and files you
+return to, kept above Locations with names of your own choosing and
+their real paths beneath (<a href="../sidebar/#pinned">sidebar</a>).
+Pins always come back; the rest of the session reopens only if you
+<a href="../settings/#restore-session">ask</a>, and a crash offers it
+back instead of losing it.</li>
+<li><strong>Reading comfort</strong> — themes, content width, line
         numbers (<a href="../settings/">Settings</a>), browser-style zoom,
         light/dark, full screen, and reading positions remembered per
         document.</li>
@@ -146,9 +152,20 @@
         repos use the credentials PRs already use, and nothing fetched ever
         touches disk.</li>
         <li><strong>Branches and worktrees</strong> — local checkouts wear a
-        branch chip; its menu opens worktrees as their own Locations and
-        reads other branches remotely. Local always beats remote when a
-        worktree already has the branch.</li>
+branch chip; its menu opens worktrees as their own Locations and
+reads other branches remotely. Local always beats remote when a
+worktree already has the branch.</li>
+<li><strong>The pull requests and issues that involve you</strong> —
+review requests, the ones you created, the ones you're assigned, the
+ones you're part of, plus whole repositories you follow, in the
+<a href="../sidebar/#pull-requests">sidebar</a> with unread marks.
+Issues open as documents: rendered body, labels, the comment timeline
+with reactions, and a composer.</li>
+<li><strong>Copy GitHub Link</strong> — the github.com URL for any
+local document or folder in a checkout, at the current branch or as
+a permalink. When a file isn't on GitHub, the item says why
+(ignored, not committed yet, not pushed yet) instead of copying a
+link that 404s.</li>
       </ul>
 
       <h2 id="editing">Editing and committing</h2>
