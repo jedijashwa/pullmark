@@ -8,6 +8,16 @@ Versions are dated from 2026.9.3 on: year, month, and which release of that
 month it is (0.45.0 and 0.45.1 were September 2026's first two). Earlier
 releases used 0.x version numbers.
 
+## Unreleased
+
+- More of PullMark follows the app language. Error messages (an
+  unrecognized pull request address, a review that couldn't be
+  submitted, a failed export), the update banner's progress and
+  failure reasons, the History panel's titles and notes, the line
+  labels on pending review comments, the Keyboard settings footer,
+  and several empty states and placeholders showed English in every
+  language. They're translated now.
+
 ## 2026.9.4 - 2026-09-23
 
 - Documents no longer open as a blank page after PullMark has been
