@@ -20,6 +20,21 @@ while a run is live, and don't CLICK INTO them (that activates the
 instance and routes your input inside); occluding them with other
 windows and hovering for tooltips are both fine.
 
+Stay on the desktop the capture windows are on. macOS stops drawing
+windows on a Space nobody is looking at, so switching Spaces or putting
+another app into full screen makes every capture fail (a window-id
+capture of an undrawn window writes no file). Using other apps on the
+SAME desktop is safe: on macOS 27, with Chrome, a chat app, a password
+manager and System Settings taking turns in front for two and a half
+minutes, a backgrounded capture window stayed pixel-identical to itself
+and to the same window truly frontmost with its sidebar focused
+(2026-09-23). `-pm.captureChrome` forces that "sidebar focused" look,
+so a capture shows the accent-colored selection a real click produces.
+
+Hardware note: on 8-way parallel runs this Mac's load reached 13, and
+`--lang all` has failed in bulk. When in doubt, run one language at a
+time (`generate.sh all --appearance both --lang <code>`, eight times).
+
 Every capture is machine-verified before it counts: blankcheck.swift
 (content-region stddev — WebKit under eightfold load sometimes hasn't
 painted) and lightcheck.swift (colored traffic lights — a capture can
