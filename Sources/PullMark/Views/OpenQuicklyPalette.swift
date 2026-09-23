@@ -242,7 +242,7 @@ struct OpenQuicklyPalette: View {
             return [QuickItem(
                 id: "direct:repo:\(owner)/\(repo)@\(ref ?? "")",
                 title: String(localized: "Browse \(owner)/\(repo)"),
-                subtitle: ref.map { "GitHub repo @ \($0)" } ?? "GitHub repo",
+                subtitle: ref.map { String(localized: "GitHub repo @ \($0)") } ?? String(localized: "GitHub repo"),
                 icon: "book.closed",
                 action: {
                     Task { await state.openRemoteRepo(owner: owner, repo: repo, refName: ref) }

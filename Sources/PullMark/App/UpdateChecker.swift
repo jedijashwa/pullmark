@@ -285,7 +285,7 @@ enum BrewUpdate {
         process.standardOutput = FileHandle.nullDevice
         process.standardError = stderr
         do { try process.run() } catch {
-            return "Could not run brew: \(error.localizedDescription)"
+            return String(localized: "Could not run brew: \(error.localizedDescription)")
         }
         let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
@@ -295,7 +295,7 @@ enum BrewUpdate {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .last(where: { !$0.isEmpty })
         return lastLine.map { String($0.prefix(120)) }
-            ?? "brew exited with status \(process.terminationStatus)"
+            ?? String(localized: "brew exited with status \(Int(process.terminationStatus))")
     }
 }
 
@@ -543,7 +543,7 @@ final class UpdateChecker: ObservableObject {
 
     private func runBrewUpgrade(brewPath: String, cask: String) {
         guard !isUpdating else { return }
-        updateRun = .updating("Updating…")
+        updateRun = .updating(String(localized: "Updating…"))
         let expected = availableVersion
         let appPath = BrewUpdate.relaunchAppPath(bundlePath: Bundle.main.bundlePath)
         Task.detached(priority: .userInitiated) { [weak self] in
@@ -554,8 +554,7 @@ final class UpdateChecker: ObservableObject {
             if failure == nil, let expected,
                let installed = BrewUpdate.installedVersion(at: appPath),
                SemVer.compare(installed, expected) != .orderedSame {
-                failure = "Homebrew delivered \(installed), not \(expected) — "
-                    + "run brew update && brew upgrade --cask \(cask), or use the release page."
+                failure = String(localized: "Homebrew delivered \(installed), not \(expected) — run brew update && brew upgrade --cask \(cask), or use the release page.")
             }
             guard let self else { return }
             await MainActor.run {
@@ -581,7 +580,7 @@ final class UpdateChecker: ObservableObject {
             openReleasePage()  // release has no zip asset: nothing to install
             return
         }
-        updateRun = .updating("Downloading…")
+        updateRun = .updating(String(localized: "Downloading…"))
         let targetPath = Bundle.main.bundlePath
         Task { [weak self] in
             await self?.performSelfUpdate(zipURL: zipURL, targetPath: targetPath)
@@ -603,23 +602,23 @@ final class UpdateChecker: ObservableObject {
             request.cachePolicy = .reloadIgnoringLocalCacheData
             let (downloaded, response) = try await session.download(for: request)
             if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                fail("download failed (HTTP \(http.statusCode))")
+                fail(String(localized: "download failed (HTTP \(http.statusCode))"))
                 return
             }
             let zipFile = workDir.appendingPathComponent("PullMark.zip")
             try fm.moveItem(at: downloaded, to: zipFile)
 
-            updateRun = .updating("Verifying…")
+            updateRun = .updating(String(localized: "Verifying…"))
             let unpackDir = workDir.appendingPathComponent("unpacked", isDirectory: true)
             let verified: Result<String, MessageError> =
                 await Task.detached(priority: .userInitiated) {
                     let unpack = SelfUpdate.run(SelfUpdate.unpackCommand(
                         zipPath: zipFile.path, destination: unpackDir.path))
                     guard unpack.status == 0 else {
-                        return .failure(MessageError(message: "could not unpack the downloaded archive"))
+                        return .failure(MessageError(message: String(localized: "could not unpack the downloaded archive")))
                     }
                     guard let app = SelfUpdate.findApp(in: unpackDir) else {
-                        return .failure(MessageError(message: "the downloaded archive contains no app"))
+                        return .failure(MessageError(message: String(localized: "the downloaded archive contains no app")))
                     }
                     if let reason = SelfUpdate.verify(appPath: app.path, runner: SelfUpdate.run) {
                         return .failure(MessageError(message: reason))
@@ -632,7 +631,7 @@ final class UpdateChecker: ObservableObject {
             case .success(let path): newAppPath = path
             }
 
-            updateRun = .updating("Installing…")
+            updateRun = .updating(String(localized: "Installing…"))
             try await Task.detached(priority: .userInitiated) {
                 try SelfUpdate.install(newApp: URL(fileURLWithPath: newAppPath),
                                        over: URL(fileURLWithPath: targetPath))
@@ -717,7 +716,7 @@ final class UpdateChecker: ObservableObject {
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw MessageError(message: "GitHub returned HTTP \(http.statusCode).")
+            throw MessageError(message: String(localized: "GitHub returned HTTP \(http.statusCode)."))
         }
         return try JSONDecoder().decode(T.self, from: data)
     }

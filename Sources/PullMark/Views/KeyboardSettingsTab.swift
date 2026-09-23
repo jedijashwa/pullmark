@@ -225,7 +225,7 @@ struct KeyboardSettingsTab: View {
         if recording == action {
             // Echo modifiers as they go down: without this the control sits
             // inert while the user holds ⌃⌥⇧ and looks broken.
-            Text(liveModifiers.map { $0.display + "…" } ?? "Press keys…")
+            Text(liveModifiers.map { $0.display + "…" } ?? String(localized: "Press keys…"))
                 .font(.body.monospaced())
                 .foregroundStyle(.secondary)
         } else if let combo = shortcuts.combo(for: action) {

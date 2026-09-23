@@ -479,7 +479,7 @@ struct ReleaseNotesSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(showingAll ? "PullMark Release Notes" : title)
+                Text(showingAll ? String(localized: "PullMark Release Notes") : title)
                     .font(.headline)
                 Spacer()
                 if fullHistory != nil, !showingAll {

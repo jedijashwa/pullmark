@@ -466,7 +466,7 @@ final class WebViewProxy: ObservableObject {
     /// continuous page, since WebKit's createPDF does not paginate.
     func pdfData(completion: @escaping (Result<Data, Error>) -> Void) {
         guard let webView else {
-            completion(.failure(MessageError(message: "No rendered document to export.")))
+            completion(.failure(MessageError(message: String(localized: "No rendered document to export."))))
             return
         }
         // Export at actual size regardless of the window's zoom — a zoomed

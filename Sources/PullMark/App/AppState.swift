@@ -2350,8 +2350,7 @@ final class AppState: ObservableObject {
     func addPR(_ input: String, select: Bool = true) async throws {
         restoreOffer = false
         guard let ref = PullRequestRef.parse(input) else {
-            throw MessageError(message: "Could not parse a pull request from “\(input)”. "
-                + "Expected something like https://github.com/owner/repo/pull/123 or owner/repo#123.")
+            throw MessageError(message: String(localized: "Could not parse a pull request from “\(input)”. Expected something like https://github.com/owner/repo/pull/123 or owner/repo#123."))
         }
         if let existing = prSessions.first(where: { $0.ref == ref }) {
             if select { selection = .prOverview(existing.id) }
@@ -2619,7 +2618,7 @@ final class AppState: ObservableObject {
     /// the moment the session actually touches the network.
     func ensureRemoteSHA(sessionID: String) async throws -> String {
         guard let session = remoteSession(sessionID) else {
-            throw MessageError(message: "That repository is no longer open.")
+            throw MessageError(message: String(localized: "That repository is no longer open."))
         }
         if let sha = session.commitSHA { return sha }
         let sha = try await client.commitSHA(session.ref, atRef: session.displayRef)
@@ -3265,12 +3264,13 @@ final class AppState: ObservableObject {
         // — mid-upload comments must never read as "could not be uploaded".
         await syncPendingComments(sessionID: sessionID)
         guard var session = prSessions.first(where: { $0.id == sessionID }) else {
-            throw MessageError(message: "The PR session is no longer available.")
+            throw MessageError(message: String(localized: "The PR session is no longer available."))
         }
         guard session.queuedComments.isEmpty else {
             let count = session.queuedComments.count
-            throw MessageError(message: "\(count) comment\(count == 1 ? "" : "s") could not be "
-                + "uploaded to GitHub, so the review was not submitted. Retry when you're back online.")
+            throw MessageError(message: count == 1
+                ? String(localized: "1 comment could not be uploaded to GitHub, so the review was not submitted. Retry when you're back online.")
+                : String(localized: "\(count) comments could not be uploaded to GitHub, so the review was not submitted. Retry when you're back online."))
         }
         // Adoption unknown (e.g. identity resolution failed): a pending
         // review the app cannot see may exist, and the create path would
@@ -3278,8 +3278,7 @@ final class AppState: ObservableObject {
         if session.pendingReview == nil, !adoptionKnown.contains(sessionID) {
             guard await adoptPendingReview(sessionID: sessionID),
                   let refreshed = prSessions.first(where: { $0.id == sessionID }) else {
-                throw MessageError(message: "Could not check GitHub for an existing pending review, "
-                    + "so the review was not submitted. Check your connection and try again.")
+                throw MessageError(message: String(localized: "Could not check GitHub for an existing pending review, so the review was not submitted. Check your connection and try again."))
             }
             session = refreshed
         }

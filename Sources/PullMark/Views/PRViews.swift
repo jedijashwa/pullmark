@@ -633,7 +633,7 @@ struct PRFileView: View {
                                                 : CommentableLines.payload(patch: file.patch),
                                             reviewPending: reviewPending)
         case .sourceDiff:
-            let patch = file.patch ?? "No textual diff available for this file."
+            let patch = file.patch ?? String(localized: "No textual diff available for this file.")
             return HTMLBuilder.patchPage(
                 patch: patch,
                 title: path,

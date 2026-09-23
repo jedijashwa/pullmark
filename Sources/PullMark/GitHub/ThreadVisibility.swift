@@ -88,10 +88,16 @@ struct PendingPayload: Encodable, Equatable {
         lineStart = comment.lineStart
         lineEnd = comment.lineEnd
         side = comment.side
-        let which = comment.side == "LEFT" ? "old" : "new"
-        lineLabel = comment.lineStart == comment.lineEnd
-            ? "Line \(comment.lineEnd) (\(which))"
-            : "Lines \(comment.lineStart)–\(comment.lineEnd) (\(which))"
+        // Whole phrases per side, the keys ReviewThreads' labels use:
+        // "old"/"new" spliced in as fragments stayed English.
+        let old = comment.side == "LEFT"
+        if comment.lineStart == comment.lineEnd {
+            lineLabel = old ? String(localized: "Line \(comment.lineEnd) (old)")
+                : String(localized: "Line \(comment.lineEnd) (new)")
+        } else {
+            lineLabel = old ? String(localized: "Lines \(comment.lineStart)–\(comment.lineEnd) (old)")
+                : String(localized: "Lines \(comment.lineStart)–\(comment.lineEnd) (new)")
+        }
         body = comment.body
         self.uploaded = uploaded
     }

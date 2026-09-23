@@ -34,7 +34,7 @@ struct BlameHistorySheet: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(data?.title ?? "History")
+                Text(data?.title ?? String(localized: "History"))
                     .font(.headline)
                 if let subtitle = data?.subtitle {
                     Text(subtitle)
@@ -63,7 +63,7 @@ struct BlameHistorySheet: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let data {
             if data.entries.isEmpty {
-                Text(data.note ?? "No commits found.")
+                Text(data.note ?? String(localized: "No commits found."))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(20)
@@ -122,13 +122,13 @@ struct BlameHistorySheet: View {
                         }
                     }
                     .font(.callout)
-                    Text(entry.headline.isEmpty ? "(no commit message)" : entry.headline)
+                    Text(entry.headline.isEmpty ? String(localized: "(no commit message)") : entry.headline)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 Spacer()
-                Text(copiedSHA == entry.sha ? "copied" : entry.shortSHA)
+                Text(copiedSHA == entry.sha ? String(localized: "copied") : entry.shortSHA)
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
             }

@@ -686,8 +686,9 @@ private struct SidebarFileRow: View {
             }
         }
         .overlay(isPreview ? DoubleClickCatcher { state.pinFile(at: file.url) } : nil)
-        .help(PathAbbreviator.abbreviate(file.url.path)
-            + (isPreview ? " — previewing; double-click to keep open" : ""))
+        .help(isPreview
+            ? String(localized: "\(PathAbbreviator.abbreviate(file.url.path)) — previewing; double-click to keep open")
+            : PathAbbreviator.abbreviate(file.url.path))
         .contextMenu {
             if isPreview {
                 Button("Keep Open") { state.pinFile(at: file.url) }
@@ -1011,7 +1012,7 @@ private struct FolderRootGroup: View {
         for worktree in git.worktrees {
             let path = worktree.path
             let isHere = path == git.toplevel
-            item((worktree.branch ?? "detached") + " — " + PathAbbreviator.abbreviate(path),
+            item((worktree.branch ?? String(localized: "detached")) + " — " + PathAbbreviator.abbreviate(path),
                  checked: isHere, in: menu) {
                 if !isHere { state.add(url: URL(fileURLWithPath: path)) }
             }
@@ -1160,7 +1161,7 @@ private struct FolderRootGroup: View {
                 if git.worktrees.count > 1 {
                     Menu("Open Worktree") {
                         ForEach(git.worktrees, id: \.path) { worktree in
-                            Button((worktree.branch ?? "detached") + " — "
+                            Button((worktree.branch ?? String(localized: "detached")) + " — "
                                 + PathAbbreviator.abbreviate(worktree.path)) {
                                 state.add(url: URL(fileURLWithPath: worktree.path))
                             }
@@ -2113,9 +2114,10 @@ struct DetailView: View {
             Text("@ \(session.displayRef)")
                 .font(.system(size: 13 * factor))
                 .foregroundStyle(.secondary)
-            Text(count.map { $0 == 1 ? "1 Markdown file — pick one from the sidebar"
-                    : "\($0) Markdown files — pick one from the sidebar" }
-                ?? "Browse Repo Files in the sidebar to see what's here")
+            Text(count.map { fileCount in
+                    fileCount == 1 ? String(localized: "1 Markdown file — pick one from the sidebar")
+                        : String(localized: "\(fileCount) Markdown files — pick one from the sidebar") }
+                ?? String(localized: "Browse Repo Files in the sidebar to see what's here"))
                 .font(.system(size: 13 * factor))
                 .foregroundStyle(.secondary)
         }
@@ -2149,6 +2151,9 @@ private struct ImagesFolderSheet: View {
     let root: URL
     @State private var folder = ""
 
+    /// The placeholder's example is a path, not prose — it stays as typed.
+    private static let examplePath = "images"
+
     private var detected: String? {
         state.folders.first { $0.rootURL == root }.flatMap { state.detectedImagesFolder(for: $0) }
     }
@@ -2160,7 +2165,7 @@ private struct ImagesFolderSheet: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            TextField(detected ?? "images", text: $folder)
+            TextField(detected ?? Self.examplePath, text: $folder)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(save)
             if let detected {

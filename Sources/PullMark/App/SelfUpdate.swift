@@ -73,19 +73,19 @@ enum SelfUpdate {
                        expectedTeamID: String = SelfUpdate.expectedTeamID,
                        runner: (SelfUpdateCommand) -> SelfUpdateCommandResult) -> String? {
         guard runner(verifyCommand(appPath: appPath)).status == 0 else {
-            return "the download's code signature is invalid"
+            return String(localized: "the download's code signature is invalid")
         }
         let info = runner(infoCommand(appPath: appPath))
         let details = info.stderr + "\n" + info.stdout
         guard info.status == 0,
               let team = teamIdentifier(fromCodesignInfo: details) else {
-            return "could not read the download's signing identity"
+            return String(localized: "could not read the download's signing identity")
         }
         guard team == expectedTeamID else {
-            return "the download is signed by an unexpected team (\(team))"
+            return String(localized: "the download is signed by an unexpected team (\(team))")
         }
         guard runner(notarizationCommand(appPath: appPath)).status == 0 else {
-            return "Gatekeeper rejected the download (notarization check failed)"
+            return String(localized: "Gatekeeper rejected the download (notarization check failed)")
         }
         return nil
     }

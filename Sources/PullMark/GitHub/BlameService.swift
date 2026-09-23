@@ -85,9 +85,9 @@ enum BlameService {
                                                             prSHAs: Set(prSHAs))
         }
         return HistoryPanelData(
-            title: "File history",
+            title: String(localized: "File history"),
             subtitle: (path as NSString).lastPathComponent,
-            note: "GitHub has no line-level history — showing the latest commits that touched this file.",
+            note: String(localized: "GitHub has no line-level history — showing the latest commits that touched this file."),
             entries: entries,
             baseStart: baseStart)
     }
@@ -121,19 +121,19 @@ enum BlameService {
         let entries = HistoryBuilder.entries(from: commits, viewer: viewer)
         let file = fileURL.lastPathComponent
         if info.lineCommits != nil {
-            return HistoryPanelData(title: "Line history",
-                                    subtitle: "\(file) — lines \(lineStart)–\(lineEnd)",
+            return HistoryPanelData(title: String(localized: "Line history"),
+                                    subtitle: String(localized: "\(file) — lines \(lineStart)–\(lineEnd)"),
                                     note: nil, entries: entries)
         }
         if info.fileCommits != nil {
             return HistoryPanelData(
-                title: "File history",
+                title: String(localized: "File history"),
                 subtitle: file,
-                note: "Line-level history was unavailable for lines \(lineStart)–\(lineEnd) — showing commits that touched the whole file.",
+                note: String(localized: "Line-level history was unavailable for lines \(lineStart)–\(lineEnd) — showing commits that touched the whole file."),
                 entries: entries)
         }
-        return HistoryPanelData(title: "History", subtitle: file,
-                                note: "History unavailable — the file may not be tracked by git.",
+        return HistoryPanelData(title: String(localized: "History"), subtitle: file,
+                                note: String(localized: "History unavailable — the file may not be tracked by git."),
                                 entries: [])
     }
 }

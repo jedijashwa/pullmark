@@ -239,7 +239,7 @@ struct GeneralSettingsTab: View {
                                 .resizable()
                                 .frame(width: 19, height: 19)
                         }
-                        Text(defaultApp.currentHandlerName ?? "No app is set")
+                        Text(defaultApp.currentHandlerName ?? String(localized: "No app is set"))
                         if defaultApp.isPullMarkDefault {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)

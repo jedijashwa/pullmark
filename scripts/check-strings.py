@@ -100,7 +100,8 @@ INT_EXPR = re.compile(
     r"|[\w.]*[cC]ount [-+] \d+|index [-+] \d+|line [-+] \d+"
     r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status|failing|done|total|unread|badge"
     r"|line(?:Start|End)"
-    r"|[\w.]+\.(?:minutes|words|number|status|line|originalLine)"
+    r"|[\w.]+\.(?:minutes|words|number|status|statusCode|line|lineStart|lineEnd|originalLine)"
+    r"|Int\([\w.]+\)"
     r"|\w+\[[01]\]|mapped\[[01]\]"
     r"|session\.markdownFiles\.count"
     r")$")
@@ -140,6 +141,125 @@ def swift_literal_to_key(body, flag_interpolated=None, where=""):
     return key
 
 
+# A call argument that isn't a bare literal can still carry one: as an
+# operand of ?: or ??, or joined with +. SwiftUI resolves such an
+# argument as a LocalizedStringKey only when EVERY operand is a literal
+# (`Text(flag ? "On" : "Off")` localizes). One String-typed operand —
+# a variable, a closure, String(localized:) — types the whole expression
+# as String, and the literal renders verbatim in every language
+# (`Text(title ?? "History")`); so does any + concatenation. Verified
+# against SwiftUI's Text storage when this check was added.
+OPERATOR = re.compile(r"\s(\?\?|\?|:|\+)\s")
+
+
+def matching_close(s, start):
+    """Index of the bracket closing s[start], skipping string literals."""
+    depth = 0
+    i = start
+    while i < len(s):
+        c = s[i]
+        if c == '"':
+            _, i = scan_swift_literal(s, i)
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return len(s)
+
+
+def first_argument(s, start):
+    """Text from s[start] to the call's first top-level ',' or its
+    closing ')'."""
+    depth = 0
+    i = start
+    while i < len(s):
+        c = s[i]
+        if c == '"':
+            _, i = scan_swift_literal(s, i)
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                return s[start:i]
+            depth -= 1
+        elif c == "," and depth == 0:
+            return s[start:i]
+        i += 1
+    return s[start:]
+
+
+def top_level_operators(expr):
+    """(index, operator, end) for each ?:, ?? and + at bracket depth 0."""
+    ops = []
+    depth = 0
+    i = 0
+    while i < len(expr):
+        c = expr[i]
+        if c == '"':
+            _, i = scan_swift_literal(expr, i)
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif depth == 0 and c.isspace():
+            m = OPERATOR.match(expr, i)
+            if m:
+                ops.append((i, m.group(1), m.end()))
+                i = m.end()
+                continue
+        i += 1
+    return ops
+
+
+def operand_leaves(expr):
+    """The operands an argument's value can come from, and whether a +
+    concatenation is involved. A ternary's condition isn't an operand."""
+    e = expr.strip()
+    while e.startswith("(") and matching_close(e, 0) == len(e) - 1:
+        e = e[1:-1].strip()
+    ops = top_level_operators(e)
+    for n, (i, op, end) in enumerate(ops):
+        if op != "?":
+            continue
+        nested = 0
+        for j, op2, end2 in ops[n + 1:]:
+            if op2 == "?":
+                nested += 1
+            elif op2 == ":":
+                if nested == 0:
+                    a, ca = operand_leaves(e[end:j])
+                    b, cb = operand_leaves(e[end2:])
+                    return a + b, ca or cb
+                nested -= 1
+        break
+    for kind in ("??", "+"):
+        cuts = [(i, end) for i, op, end in ops if op == kind]
+        if cuts:
+            leaves, concat = [], kind == "+"
+            last = 0
+            for i, end in cuts + [(len(e), len(e))]:
+                sub, c = operand_leaves(e[last:i])
+                leaves += sub
+                concat = concat or c
+                last = end
+            return leaves, concat
+    return [e], False
+
+
+def is_literal(expr):
+    return expr.startswith('"') and scan_swift_literal(expr, 0)[1] == len(expr)
+
+
+def has_words(key):
+    return re.search(r"[A-Za-z]", re.sub(r"%(?:lld|llu|ld|lu|@|d|u|f)", "", key))
+
+
 def collect_swift_keys():
     keys = {}
     interpolated = set()
@@ -155,6 +275,29 @@ def collect_swift_keys():
         rel = str(path.relative_to(ROOT))
         for m in starts.finditer(s):
             i = m.end()
+            line_start = s.rfind("\n", 0, m.start()) + 1
+            if "//" in s[line_start:m.start()]:
+                continue  # a comment quoting code
+            if i < len(s) and s[i] != '"' and not m.group(0).startswith(
+                    ("String(", "NSLocalizedString(")):
+                leaves, concat = operand_leaves(first_argument(s, i))
+                literals = [leaf for leaf in leaves if is_literal(leaf)]
+                worded = [leaf for leaf in literals
+                          if has_words(swift_literal_to_key(leaf[1:-1]))]
+                if not worded:
+                    continue
+                if concat or len(literals) < len(leaves):
+                    line = s.count("\n", 0, m.start()) + 1
+                    for leaf in worded:
+                        problem(f"{rel}:{line}: {leaf} renders verbatim (a String "
+                                f"operand or + makes the argument a String) — "
+                                f"wrap it in String(localized:)")
+                    continue
+                for leaf in literals:
+                    key = swift_literal_to_key(leaf[1:-1], interpolated, rel)
+                    if has_words(key):
+                        keys.setdefault(key, rel)
+                continue
             if i >= len(s) or s[i] != '"':
                 continue
             inner, _ = scan_swift_literal(s, i)
@@ -163,8 +306,13 @@ def collect_swift_keys():
                 continue  # PageStrings' dynamic lookup call
             # Localizable content only: a key must contain letters beyond
             # its specifiers (bare "%lld"/"+%lld" badges aren't language).
-            if re.search(r"[A-Za-z]", re.sub(r"%(?:lld|llu|ld|lu|@|d|u|f)", "", key)):
+            if has_words(key):
                 keys.setdefault(key, rel)
+        # Errors surface in alerts and banners; a raw literal stays English.
+        for m in re.finditer(r'MessageError\(message:\s*"', s):
+            line = s.count("\n", 0, m.start()) + 1
+            problem(f"{rel}:{line}: MessageError message is a raw literal — "
+                    f"use String(localized:)")
     return keys, interpolated
 
 
