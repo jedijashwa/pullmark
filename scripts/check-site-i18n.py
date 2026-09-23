@@ -18,12 +18,16 @@ so every invariant the localized site depends on is asserted here:
   * app screenshots are served in the page's own language: localized
     pages from /img/<code>/, English from /img/ — and every referenced
     image file exists on disk (a bad path silently 404s to alt text)
+  * every app screenshot <img>'s width/height is its PNG's size at 2x
+    — the browser reserves the box from those before a lazy image
+    loads, so stale ones make the page jump (--fix-dims rewrites them)
   * sitemap.xml covers exactly the shipped URL set
 
 Exit code 0 = clean; 1 = problems (each printed on its own line).
 """
 
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -86,6 +90,45 @@ def variant_url(code, base):
     return ORIGIN + base if code == "en" else f"{ORIGIN}/{LOCALES[code]}{base}"
 
 
+def png_points(path):
+    """A 2x capture's size in CSS pixels, from the PNG's IHDR chunk."""
+    with open(path, "rb") as f:
+        head = f.read(24)
+    width, height = struct.unpack(">II", head[16:24])
+    return width // 2, height // 2
+
+
+# An app screenshot <img> with its intrinsic-size attributes. The
+# English home page links img/… relative to itself; the rest are rooted.
+SHOT_IMG = re.compile(r'(<img src="(?:https://pullmark\.app)?(/?img/[A-Za-z0-9._/\-]*app-[A-Za-z0-9\-]+\.png)'
+                      r'(?:\?v=\d+)?"\s+)width="(\d+)" height="(\d+)"')
+
+
+def shot_file(page, src):
+    return ROOT / src.lstrip("/") if src.startswith("/") else page.parent / src
+
+
+def fix_dims():
+    fixed = 0
+    for path in sorted(ROOT.rglob("*.html")):
+        s = path.read_text(encoding="utf-8")
+        def resize(m):
+            nonlocal fixed
+            file = shot_file(path, m.group(2))
+            if not file.exists():
+                return m.group(0)
+            w, h = png_points(file)
+            if (str(w), str(h)) == (m.group(3), m.group(4)):
+                return m.group(0)
+            fixed += 1
+            return f'{m.group(1)}width="{w}" height="{h}"'
+        new = SHOT_IMG.sub(resize, s)
+        if new != s:
+            path.write_text(new, encoding="utf-8")
+    print(f"screenshot dimensions: {fixed} <img> tag(s) rewritten")
+    return 0
+
+
 def check_page(code, base):
     url = variant_url(code, base)
     rel = url.replace(ORIGIN, "") or "/"
@@ -144,6 +187,15 @@ def check_page(code, base):
         if name.startswith("app-") and ref != f"{img_dir}{name}":
             problem(f"{rel}: app screenshot {ref} must be {img_dir}{name}")
 
+    for m in SHOT_IMG.finditer(s):
+        file = shot_file(path, m.group(2))
+        if not file.exists():
+            problem(f"{rel}: referenced image missing on disk: {m.group(2)}")
+        elif png_points(file) != (int(m.group(3)), int(m.group(4))):
+            w, h = png_points(file)
+            problem(f"{rel}: {m.group(2)} is {w}x{h} at 2x but the <img> says "
+                    f"{m.group(3)}x{m.group(4)} (re-run with --fix-dims)")
+
     if code != "en":
         # Locale pages must not fetch assets relative to the locale dir.
         for attr, value in re.findall(r'(src|href)="([^"]+)"', s):
@@ -197,6 +249,8 @@ def restamp_redirect():
 def main():
     if "--fix-redirect" in sys.argv:
         return restamp_redirect()
+    if "--fix-dims" in sys.argv:
+        return fix_dims()
     for base in BASES:
         for code in ["en", *LOCALES]:
             check_page(code, base)
