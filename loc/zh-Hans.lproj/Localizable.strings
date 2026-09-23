@@ -842,3 +842,32 @@
 "Keep My Version" = "保留我的版本";
 "Use the Version on Disk" = "使用磁盘上的版本";
 "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "另一个应用或代理存储了此文件的较新版本。保留你的版本以替换它，或使用磁盘上的版本并放弃上次存储以来的编辑。";
+
+// VoiceOver labels, hints and values (.accessibilityLabel/Hint/Value)
+"%@ content width" = "栏宽：%@";
+"%@ experimental feature" = "实验性功能（%@）";
+"%@ shortcut" = "“%@”的快捷键";
+"%@ shortcut. %@" = "“%@”的快捷键。%@";
+"%@ team, review requested" = "%@ 团队，已请求审查";
+"%@ theme" = "%@ 主题";
+"%@, awaiting review" = "%@，等待审查";
+"1 unread" = "1 条未读";
+"%lld unread" = "%lld 条未读";
+"1 item" = "1 项";
+"1 word, about 1 minute read" = "1 字，约需阅读 1 分钟";
+"%lld words, about 1 minute read" = "%lld 字，约需阅读 1 分钟";
+"%lld words, about %lld minute read" = "%lld 字，约需阅读 %lld 分钟";
+"Branch: %@" = "分支：%@";
+"Check again for updates" = "再次检查更新";
+"Copy %@" = "拷贝 %@";
+"Copied %@" = "已拷贝 %@";
+"Discard comment, %@ %@" = "丢弃评论，%@ %@";
+"line %lld (new)" = "第 %lld 行（新）";
+"line %lld (old)" = "第 %lld 行（旧）";
+"lines %lld–%lld (new)" = "第 %lld–%lld 行（新）";
+"lines %lld–%lld (old)" = "第 %lld–%lld 行（旧）";
+"Document from GitHub: %@/%@ at %@, %@" = "来自 GitHub 的文档：%@/%@（%@），%@";
+"GitHub doesn’t allow approving your own pull request or requesting changes on it." = "GitHub 不允许批准你自己的拉取请求，也不允许对它请求更改。";
+"Press Return, then type the new key combination. Delete removes it, Escape cancels." = "按 Return，然后按下新的组合键。按删除键可移除，按 Escape 取消。";
+"Restore the default shortcut for %@" = "将“%@”的快捷键恢复为默认";
+"Uncommitted changes" = "未提交的更改";

@@ -847,3 +847,32 @@
 "Keep My Version" = "Meine Version behalten";
 "Use the Version on Disk" = "Version auf dem Datenträger verwenden";
 "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "Eine andere App oder ein Agent hat eine neuere Version dieser Datei gesichert. Behalte deine, um sie zu ersetzen, oder verwende die Version auf dem Datenträger und verwirf deine Änderungen seit dem letzten Sichern.";
+
+// VoiceOver labels, hints and values (.accessibilityLabel/Hint/Value)
+"%@ content width" = "Inhaltsbreite %@";
+"%@ experimental feature" = "Experimentelles Feature (%@)";
+"%@ shortcut" = "Kürzel für „%@“";
+"%@ shortcut. %@" = "Kürzel für „%@“. %@";
+"%@ team, review requested" = "Team %@, Review angefragt";
+"%@ theme" = "Theme %@";
+"%@, awaiting review" = "%@, Review ausstehend";
+"1 unread" = "1 ungelesen";
+"%lld unread" = "%lld ungelesen";
+"1 item" = "1 Eintrag";
+"1 word, about 1 minute read" = "1 Wort, etwa 1 Minute Lesezeit";
+"%lld words, about 1 minute read" = "%lld Wörter, etwa 1 Minute Lesezeit";
+"%lld words, about %lld minute read" = "%lld Wörter, etwa %lld Minuten Lesezeit";
+"Branch: %@" = "Branch: %@";
+"Check again for updates" = "Erneut nach Updates suchen";
+"Copy %@" = "%@ kopieren";
+"Copied %@" = "%@ kopiert";
+"Discard comment, %@ %@" = "Kommentar verwerfen, %@ %@";
+"line %lld (new)" = "Zeile %lld (neu)";
+"line %lld (old)" = "Zeile %lld (alt)";
+"lines %lld–%lld (new)" = "Zeilen %lld–%lld (neu)";
+"lines %lld–%lld (old)" = "Zeilen %lld–%lld (alt)";
+"Document from GitHub: %@/%@ at %@, %@" = "Dokument von GitHub: %@/%@ auf %@, %@";
+"GitHub doesn’t allow approving your own pull request or requesting changes on it." = "GitHub erlaubt nicht, deinen eigenen Pull Request zu genehmigen oder Änderungen daran anzufordern.";
+"Press Return, then type the new key combination. Delete removes it, Escape cancels." = "Drück Return und tipp dann die neue Tastenkombination. Löschen entfernt sie, Escape bricht ab.";
+"Restore the default shortcut for %@" = "Standardkürzel für „%@“ wiederherstellen";
+"Uncommitted changes" = "Nicht committete Änderungen";

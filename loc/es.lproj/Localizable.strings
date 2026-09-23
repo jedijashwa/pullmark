@@ -843,3 +843,32 @@
 "Keep My Version" = "Conservar mi versión";
 "Use the Version on Disk" = "Usar la versión del disco";
 "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "Otra app o un agente guardó una versión más reciente de este archivo. Conserva la tuya para reemplazarla, o usa la versión del disco y descarta tus cambios desde el último guardado.";
+
+// VoiceOver labels, hints and values (.accessibilityLabel/Hint/Value)
+"%@ content width" = "Ancho del contenido %@";
+"%@ experimental feature" = "Función experimental (%@)";
+"%@ shortcut" = "Atajo para “%@”";
+"%@ shortcut. %@" = "Atajo para “%@”. %@";
+"%@ team, review requested" = "Equipo %@, revisión solicitada";
+"%@ theme" = "Tema %@";
+"%@, awaiting review" = "%@, revisión pendiente";
+"1 unread" = "1 sin leer";
+"%lld unread" = "%lld sin leer";
+"1 item" = "1 elemento";
+"1 word, about 1 minute read" = "1 palabra, alrededor de 1 minuto de lectura";
+"%lld words, about 1 minute read" = "%lld palabras, alrededor de 1 minuto de lectura";
+"%lld words, about %lld minute read" = "%lld palabras, alrededor de %lld minutos de lectura";
+"Branch: %@" = "Rama: %@";
+"Check again for updates" = "Volver a buscar actualizaciones";
+"Copy %@" = "Copiar %@";
+"Copied %@" = "%@ copiado";
+"Discard comment, %@ %@" = "Descartar comentario, %@ %@";
+"line %lld (new)" = "línea %lld (nueva)";
+"line %lld (old)" = "línea %lld (antigua)";
+"lines %lld–%lld (new)" = "líneas %lld–%lld (nuevas)";
+"lines %lld–%lld (old)" = "líneas %lld–%lld (antiguas)";
+"Document from GitHub: %@/%@ at %@, %@" = "Documento de GitHub: %@/%@ en %@, %@";
+"GitHub doesn’t allow approving your own pull request or requesting changes on it." = "GitHub no permite aprobar tu propio pull request ni solicitar cambios en él.";
+"Press Return, then type the new key combination. Delete removes it, Escape cancels." = "Pulsa Retorno y luego teclea la combinación de teclas nueva. Eliminar la quita, Esc cancela.";
+"Restore the default shortcut for %@" = "Restablecer el atajo por defecto de “%@”";
+"Uncommitted changes" = "Cambios sin commit";

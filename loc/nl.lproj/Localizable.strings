@@ -842,3 +842,32 @@
 "Keep My Version" = "Mijn versie behouden";
 "Use the Version on Disk" = "Versie op schijf gebruiken";
 "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "Een andere app of een agent heeft een nieuwere versie van dit bestand bewaard. Behoud de jouwe om die te vervangen, of gebruik de versie op schijf en verwerp je wijzigingen sinds de laatste keer bewaren.";
+
+// VoiceOver labels, hints and values (.accessibilityLabel/Hint/Value)
+"%@ content width" = "Tekstbreedte %@";
+"%@ experimental feature" = "Experimentele functie (%@)";
+"%@ shortcut" = "Sneltoets voor “%@”";
+"%@ shortcut. %@" = "Sneltoets voor “%@”. %@";
+"%@ team, review requested" = "Team %@, review gevraagd";
+"%@ theme" = "Thema %@";
+"%@, awaiting review" = "%@, wacht op review";
+"1 unread" = "1 ongelezen";
+"%lld unread" = "%lld ongelezen";
+"1 item" = "1 item";
+"1 word, about 1 minute read" = "1 woord, ongeveer 1 minuut leestijd";
+"%lld words, about 1 minute read" = "%lld woorden, ongeveer 1 minuut leestijd";
+"%lld words, about %lld minute read" = "%lld woorden, ongeveer %lld minuten leestijd";
+"Branch: %@" = "Branch: %@";
+"Check again for updates" = "Zoek opnieuw naar updates";
+"Copy %@" = "Kopieer %@";
+"Copied %@" = "%@ gekopieerd";
+"Discard comment, %@ %@" = "Verwijder comment, %@ %@";
+"line %lld (new)" = "regel %lld (nieuw)";
+"line %lld (old)" = "regel %lld (oud)";
+"lines %lld–%lld (new)" = "regels %lld–%lld (nieuw)";
+"lines %lld–%lld (old)" = "regels %lld–%lld (oud)";
+"Document from GitHub: %@/%@ at %@, %@" = "Document van GitHub: %@/%@ op %@, %@";
+"GitHub doesn’t allow approving your own pull request or requesting changes on it." = "GitHub staat niet toe dat je je eigen pull request goedkeurt of er wijzigingen op vraagt.";
+"Press Return, then type the new key combination. Delete removes it, Escape cancels." = "Druk op Return en typ dan de nieuwe toetscombinatie. Verwijder wist die, Escape annuleert.";
+"Restore the default shortcut for %@" = "Herstel de standaardsneltoets voor “%@”";
+"Uncommitted changes" = "Niet-gecommitte wijzigingen";

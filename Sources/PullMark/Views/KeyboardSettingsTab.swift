@@ -175,11 +175,13 @@ struct KeyboardSettingsTab: View {
         .modifier(RowKeys(onRecord: { startRecording(action) },
                           onClear: { clearBinding(for: action) }))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(action.title) shortcut"
-            + (action.scopeNote.map { ", \($0.lowercased())" } ?? ""))
-        .accessibilityValue(shortcuts.combo(for: action)?.spoken ?? "None")
-        .accessibilityHint("Press Return, then type the new key combination. "
-            + "Delete removes it, Escape cancels.")
+        // A sentence break before the scope note, not a lowercased
+        // clause: lowercasing a whole translation breaks German nouns.
+        .accessibilityLabel(action.scopeNote.map {
+            String(localized: "\(action.title) shortcut. \($0)")
+        } ?? String(localized: "\(action.title) shortcut"))
+        .accessibilityValue(shortcuts.combo(for: action)?.spoken ?? String(localized: "None"))
+        .accessibilityHint("Press Return, then type the new key combination. Delete removes it, Escape cancels.")
     }
 
     private func recorder(for action: ShortcutAction) -> some View {

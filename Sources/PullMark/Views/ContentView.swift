@@ -673,13 +673,15 @@ private struct SidebarFileRow: View {
                 // still carry notes, at a glance. Live — the count watcher
                 // sees an agent deleting notes as it addresses them.
                 if let count = state.marginNoteCounts[file.url.path], count > 0 {
+                    let notes = count == 1 ? String(localized: "1 margin note")
+                        : String(localized: "\(count) margin notes")
                     Spacer(minLength: 2)
                     Label("\(count)", systemImage: "bubble.left")
                         .font(fonts.caption)
                         .foregroundStyle(.secondary)
                         .labelStyle(.titleAndIcon)
-                        .help(count == 1 ? String(localized: "1 margin note") : String(localized: "\(count) margin notes"))
-                        .accessibilityLabel("\(count) margin note\(count == 1 ? "" : "s")")
+                        .help(notes)
+                        .accessibilityLabel(notes)
                 }
             }
         }
@@ -1441,7 +1443,8 @@ private struct CollapsibleSection<Content: View>: View {
                     // Header content ignores the rows' trailing inset —
                     // unpadded, the count hugs the sidebar's edge.
                     .padding(.trailing, 10)
-                    .accessibilityLabel("\(badge) unread")
+                    .accessibilityLabel(badge == 1 ? String(localized: "1 unread")
+                        : String(localized: "\(badge) unread"))
             }
         }
         .contentShape(Rectangle())
@@ -1694,14 +1697,15 @@ private struct PRNodeView: View {
                 }
                 .font(fonts.row)
                 if let count = commentCounts[filePath] {
+                    let comments = count == 1 ? String(localized: "1 unresolved review comment")
+                        : String(localized: "\(count) unresolved review comments")
                     Spacer(minLength: 2)
                     Label("\(count)", systemImage: "bubble.left")
                         .font(fonts.caption)
                         .foregroundStyle(.secondary)
                         .labelStyle(.titleAndIcon)
-                        .help(count == 1 ? String(localized: "1 unresolved review comment")
-                            : String(localized: "\(count) unresolved review comments"))
-                        .accessibilityLabel("\(count) unresolved review comment\(count == 1 ? "" : "s")")
+                        .help(comments)
+                        .accessibilityLabel(comments)
                 }
             }
             .tag(SidebarSelection.prFile(session.id, filePath))

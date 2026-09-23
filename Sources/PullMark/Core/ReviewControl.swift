@@ -64,7 +64,7 @@ enum ReviewControl {
 
     /// One shared inline reason for both disabled options.
     static let ownPRRestrictionReason =
-        "GitHub doesn’t allow approving your own pull request or requesting changes on it."
+        String(localized: "GitHub doesn’t allow approving your own pull request or requesting changes on it.")
 
     /// How much of the first hidden row stays visible when the list
     /// overflows: a resting clip that ends on a clean card edge reads as

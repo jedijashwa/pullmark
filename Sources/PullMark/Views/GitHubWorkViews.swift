@@ -159,14 +159,16 @@ struct WorkGroup: View {
                         .font(fonts.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel(String(localized: "\(items.count) items"))
+                        .accessibilityLabel(items.count == 1 ? String(localized: "1 item")
+                            : String(localized: "\(items.count) items"))
                 } else if unread > 0 {
                     Spacer(minLength: 2)
                     Text("\(unread)")
                         .font(fonts.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                        .accessibilityLabel("\(unread) unread")
+                        .accessibilityLabel(unread == 1 ? String(localized: "1 unread")
+                            : String(localized: "\(unread) unread"))
                 }
             }
             if let headerMenu {

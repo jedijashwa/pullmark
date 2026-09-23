@@ -220,11 +220,16 @@ struct PendingComment: Identifiable, Equatable, Codable {
     // GitHubClient.pendingReviewComments and the REST-shape regression
     // fixture in PendingReviewTests.
 
+    /// Whole phrases per side: "old"/"new" spliced in as English
+    /// fragments stayed English in every language.
     var lineDescription: String {
-        let which = side == "LEFT" ? "old" : "new"
-        return lineStart == lineEnd
-            ? "line \(lineEnd) (\(which))"
-            : "lines \(lineStart)–\(lineEnd) (\(which))"
+        let old = side == "LEFT"
+        if lineStart == lineEnd {
+            return old ? String(localized: "line \(lineEnd) (old)")
+                : String(localized: "line \(lineEnd) (new)")
+        }
+        return old ? String(localized: "lines \(lineStart)–\(lineEnd) (old)")
+            : String(localized: "lines \(lineStart)–\(lineEnd) (new)")
     }
 }
 

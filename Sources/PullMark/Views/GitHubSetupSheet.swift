@@ -144,7 +144,7 @@ struct GitHubSetupSheet: View {
             // Two visually identical Copy buttons per step — VoiceOver
             // needs to say which command each one takes.
             .accessibilityLabel(copiedCommand == command
-                ? "Copied \(command)" : "Copy \(command)")
+                ? String(localized: "Copied \(command)") : String(localized: "Copy \(command)"))
             .help("Copy \(command) to the clipboard")
         }
     }

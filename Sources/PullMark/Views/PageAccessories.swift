@@ -271,7 +271,18 @@ struct DocumentStatsPill: View {
             .padding([.leading, .vertical], 10)
             .padding(.trailing, 26)
             .allowsHitTesting(false)
-            .accessibilityLabel("\(stats.words) words, about \(stats.minutes) minute read")
+            .accessibilityLabel(spokenStats)
+    }
+
+    /// Whole sentences per case so each language can inflect "word" and
+    /// "minute". app.js clamps minutes to at least 1, and one word never
+    /// takes more than a minute.
+    private var spokenStats: String {
+        if stats.minutes == 1 {
+            return stats.words == 1 ? String(localized: "1 word, about 1 minute read")
+                : String(localized: "\(stats.words) words, about 1 minute read")
+        }
+        return String(localized: "\(stats.words) words, about \(stats.minutes) minute read")
     }
 }
 

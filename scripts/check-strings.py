@@ -98,8 +98,9 @@ INT_EXPR = re.compile(
     r"^(?:"
     r"[\w.]*[cC]ount|overflow|minutes|hours|days|line|number|original|index|passed|skipped"
     r"|[\w.]*[cC]ount [-+] \d+|index [-+] \d+|line [-+] \d+"
-    r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status|failing|done|total"
-    r"|[\w.]+\.(?:minutes|number|status|line|originalLine)"
+    r"|\w+ - [\w.]*[cC]ount|hidden|md|other|status|failing|done|total|unread|badge"
+    r"|line(?:Start|End)"
+    r"|[\w.]+\.(?:minutes|words|number|status|line|originalLine)"
     r"|\w+\[[01]\]|mapped\[[01]\]"
     r"|session\.markdownFiles\.count"
     r")$")
@@ -142,9 +143,13 @@ def swift_literal_to_key(body, flag_interpolated=None, where=""):
 def collect_swift_keys():
     keys = {}
     interpolated = set()
+    # .accessibilityLabel/Hint/Value("…") take a LocalizedStringKey too:
+    # VoiceOver speaks English in every language when their keys are
+    # missing, and nothing on screen shows it.
     starts = re.compile(
         r"(?:\b" + SWIFTUI_CALLS + r"\(|\.help\(|\.alert\(|\.confirmationDialog\(|"
-        r"\.navigationTitle\(|String\(localized:|NSLocalizedString\()\s*")
+        r"\.navigationTitle\(|\.accessibility(?:Label|Hint|Value)\(|"
+        r"String\(localized:|NSLocalizedString\()\s*")
     for path in sorted(SOURCES.rglob("*.swift")):
         s = path.read_text(encoding="utf-8")
         rel = str(path.relative_to(ROOT))

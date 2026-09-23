@@ -841,3 +841,32 @@
 "Keep My Version" = "Manter minha versão";
 "Use the Version on Disk" = "Usar a versão do disco";
 "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "Outro app ou um agente salvou uma versão mais recente deste arquivo. Mantenha a sua para substituí-la, ou use a versão do disco e descarte suas edições desde o último salvamento.";
+
+// VoiceOver labels, hints and values (.accessibilityLabel/Hint/Value)
+"%@ content width" = "Largura do conteúdo %@";
+"%@ experimental feature" = "Recurso experimental (%@)";
+"%@ shortcut" = "Atalho para “%@”";
+"%@ shortcut. %@" = "Atalho para “%@”. %@";
+"%@ team, review requested" = "Equipe %@, revisão solicitada";
+"%@ theme" = "Tema %@";
+"%@, awaiting review" = "%@, aguardando revisão";
+"1 unread" = "1 não lido";
+"%lld unread" = "%lld não lidos";
+"1 item" = "1 item";
+"1 word, about 1 minute read" = "1 palavra, cerca de 1 minuto de leitura";
+"%lld words, about 1 minute read" = "%lld palavras, cerca de 1 minuto de leitura";
+"%lld words, about %lld minute read" = "%lld palavras, cerca de %lld minutos de leitura";
+"Branch: %@" = "Branch: %@";
+"Check again for updates" = "Buscar atualizações de novo";
+"Copy %@" = "Copiar %@";
+"Copied %@" = "%@ copiado";
+"Discard comment, %@ %@" = "Descartar comentário, %@ %@";
+"line %lld (new)" = "linha %lld (nova)";
+"line %lld (old)" = "linha %lld (antiga)";
+"lines %lld–%lld (new)" = "linhas %lld–%lld (novas)";
+"lines %lld–%lld (old)" = "linhas %lld–%lld (antigas)";
+"Document from GitHub: %@/%@ at %@, %@" = "Documento do GitHub: %@/%@ em %@, %@";
+"GitHub doesn’t allow approving your own pull request or requesting changes on it." = "O GitHub não permite aprovar seu próprio pull request nem solicitar alterações nele.";
+"Press Return, then type the new key combination. Delete removes it, Escape cancels." = "Pressione Return e depois digite a nova combinação de teclas. Apagar a remove, Escape cancela.";
+"Restore the default shortcut for %@" = "Restaurar o atalho padrão de “%@”";
+"Uncommitted changes" = "Alterações não commitadas";

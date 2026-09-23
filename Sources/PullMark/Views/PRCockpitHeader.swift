@@ -301,7 +301,9 @@ private struct ReviewerStrip: View {
                     // The strip's whole point — who approved, who
                     // blocked — must reach VoiceOver, not just color.
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(reviewer.login), \(reviewer.approved ? "approved" : "requested changes")")
+                    .accessibilityLabel(reviewer.approved
+                        ? String(localized: "\(reviewer.login) approved")
+                        : String(localized: "\(reviewer.login) requested changes"))
             }
             ForEach(shownRequests) { request in
                 if request.isTeam {
