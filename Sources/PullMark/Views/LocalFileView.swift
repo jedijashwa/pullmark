@@ -80,6 +80,19 @@ struct LocalFileView: View {
     /// Rich-editor text waiting on the unsaved-changes prompt (manual
     /// save mode, leaving edit mode with changes).
     @State private var unsavedRichText: String?
+    /// Editor text a save refused because the file changed on disk while
+    /// the rich editor was open; the conflict prompt decides its fate.
+    @State private var richSaveConflict: String?
+    /// Leaving edit mode is waiting on the conflict prompt: a choice
+    /// finishes the exit, Cancel stays in the editor.
+    @State private var richConflictLeaving = false
+    /// Cancel on the conflict prompt: autosaves keep refusing, silently,
+    /// until the user leaves edit mode — then it asks again.
+    @State private var richConflictSnoozed = false
+    /// The edits "Use the Version on Disk" threw away. The page can still
+    /// post exactly this text afterwards (its commit hook as edit mode
+    /// ends), and that save must not bring them back.
+    @State private var richDiscardedText: String?
     /// The text the open rich editor was mounted from. While it is set the
     /// page renders from it, not from `currentText`: every autosave
     /// updates `currentText`, and a page rebuilt from the new text is a
@@ -254,7 +267,11 @@ struct LocalFileView: View {
         .alert(String(localized: "Save changes to \(file.url.lastPathComponent)?"),
                isPresented: Binding(get: { unsavedRichText != nil }, set: { if !$0 { unsavedRichText = nil } })) {
             Button(String(localized: "Save")) {
-                if let text = unsavedRichText { handleRichEditorSave(text) }
+                if let text = unsavedRichText, !saveRichEditorText(text) {
+                    unsavedRichText = nil
+                    richConflictLeaving = true
+                    return
+                }
                 unsavedRichText = nil
                 finishSetEditMode(false)
             }
@@ -265,6 +282,14 @@ struct LocalFileView: View {
             Button(String(localized: "Cancel"), role: .cancel) { unsavedRichText = nil }
         } message: {
             Text(String(localized: "Your edits haven't been saved. You can save them now or discard them."))
+        }
+        .alert(String(localized: "\(file.url.lastPathComponent) changed on disk while you were editing"),
+               isPresented: Binding(get: { richSaveConflict != nil }, set: { if !$0 { richSaveConflict = nil } })) {
+            Button(String(localized: "Keep My Version")) { keepRichEditorVersion() }
+            Button(String(localized: "Use the Version on Disk"), role: .destructive) { useRichEditorDiskVersion() }
+            Button(String(localized: "Cancel"), role: .cancel) { cancelRichSaveConflict() }
+        } message: {
+            Text(String(localized: "Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save."))
         }
         .sheet(item: $noteIntroRequest) { request in
             MarginNotesIntroSheet(
@@ -510,7 +535,13 @@ struct LocalFileView: View {
                         unsavedRichText = text
                         return
                     }
-                    if let text { handleRichEditorSave(text) }
+                    // A refused save (the file changed underneath) keeps
+                    // the editor open until the conflict prompt is answered.
+                    richConflictSnoozed = false
+                    if let text, !saveRichEditorText(text) {
+                        richConflictLeaving = true
+                        return
+                    }
                     finishSetEditMode(newValue)
                 }
             }
@@ -543,6 +574,9 @@ struct LocalFileView: View {
                     richEditorSource = newValue && richEditorEnabled ? currentText : nil
                     if newValue {
                         sessionSnapshotTaken = false
+                        richConflictSnoozed = false
+                        richConflictLeaving = false
+                        richDiscardedText = nil
                         // From a scrolled position, auto-reveal the block
                         // the reader is on — the first-block default would
                         // drag them to the top (the revealed editor's
@@ -585,13 +619,36 @@ struct LocalFileView: View {
     /// never touches the file. `currentText` follows immediately — the
     /// editor holds reloads off (editingState), so nothing else would.
     private func handleRichEditorSave(_ text: String) {
-        guard compare == nil, !state.sourceViewVisible else { return }
+        saveRichEditorText(text)
+    }
+
+    /// Returns false only when the save was refused because the file
+    /// changed on disk (the conflict prompt is then on its way, or
+    /// snoozed); a write error is reported and counts as handled.
+    @discardableResult
+    private func saveRichEditorText(_ text: String) -> Bool {
+        guard compare == nil, !state.sourceViewVisible else { return true }
+        if let discarded = richDiscardedText, text == discarded { return true }
         state.pinPreviewIfNeeded(url: file.url)
         var effective = text
         if currentText.contains("\r\n") {
             effective = effective.replacingOccurrences(of: "\n", with: "\r\n")
         }
-        guard effective != currentText else { return }
+        guard effective != currentText else { return true }
+        // Optimistic concurrency, the whole-document form of the block
+        // editor's seed check: `currentText` is what this editor last read
+        // or wrote, and file-watcher reloads are held off while it is open,
+        // so a disk copy that differs was written by someone else (an
+        // agent, another editor, a checkout). Writing now would silently
+        // overwrite their change — stop and ask instead. Autosaves that
+        // arrive while the prompt is up just refresh the pending text.
+        if let onDisk = try? String(contentsOf: file.url, encoding: .utf8), onDisk != currentText {
+            if richConflictSnoozed { return false }
+            // Async: this can run from another alert's button (the manual-
+            // save prompt), and a second alert must wait for that one to go.
+            DispatchQueue.main.async { richSaveConflict = text }
+            return false
+        }
         do {
             if !sessionSnapshotTaken {
                 EditHistory.snapshot(file.url)
@@ -602,6 +659,47 @@ struct LocalFileView: View {
         } catch {
             state.lastError = String(localized: "Couldn't save \(file.url.lastPathComponent): \(error.localizedDescription)")
         }
+        return true
+    }
+
+    /// Conflict prompt: replace the newer file with the editor's text.
+    private func keepRichEditorVersion() {
+        guard let text = richSaveConflict else { return }
+        richSaveConflict = nil
+        richConflictSnoozed = false
+        // Adopt the disk copy as the baseline (its line endings too) so the
+        // guard sees an ordinary edit, then save over it. Changed yet again
+        // in between? Then the prompt simply comes back.
+        if let onDisk = try? String(contentsOf: file.url, encoding: .utf8) { currentText = onDisk }
+        if saveRichEditorText(text) { finishLeavingAfterConflict() }
+    }
+
+    /// Conflict prompt: drop the editor's unsaved edits and continue from
+    /// the newer file — remounting the editor on it when still editing.
+    private func useRichEditorDiskVersion() {
+        richDiscardedText = richSaveConflict
+        richSaveConflict = nil
+        richConflictSnoozed = false
+        if let onDisk = try? String(contentsOf: file.url, encoding: .utf8) { currentText = onDisk }
+        if richConflictLeaving {
+            finishLeavingAfterConflict()
+        } else if editMode && richEditorEnabled {
+            richEditorSource = currentText
+        }
+    }
+
+    /// Conflict prompt: not now. The editor stays open with the edits in
+    /// it; leaving edit mode asks again.
+    private func cancelRichSaveConflict() {
+        richSaveConflict = nil
+        richConflictLeaving = false
+        if editSaveMode != "manual" { richConflictSnoozed = true }
+    }
+
+    private func finishLeavingAfterConflict() {
+        guard richConflictLeaving else { return }
+        richConflictLeaving = false
+        finishSetEditMode(false)
     }
 
     // MARK: Images (spec: rich-editor §9)

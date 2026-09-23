@@ -833,3 +833,9 @@
 "Pasted and dropped images are saved here, relative to %@. Leave it empty to use the folder this Location's documents already reference." = "Les images collées ou déposées sont enregistrées ici, par rapport à %@. Laissez vide pour utiliser le dossier que les documents de cet emplacement référencent déjà.";
 "Detected: %@" = "Détecté : %@";
 "Couldn't save the image: %@" = "Impossible d’enregistrer l’image : %@";
+
+// Rich editor save conflict (spec: rich-editor)
+"%@ changed on disk while you were editing" = "%@ a été modifié sur le disque pendant que vous le modifiiez";
+"Keep My Version" = "Garder ma version";
+"Use the Version on Disk" = "Utiliser la version sur le disque";
+"Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "Une autre app ou un agent a enregistré une version plus récente de ce fichier. Gardez la vôtre pour la remplacer, ou utilisez la version sur le disque et abandonnez vos modifications depuis le dernier enregistrement.";

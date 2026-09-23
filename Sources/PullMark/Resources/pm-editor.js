@@ -1026,21 +1026,25 @@
     return tables.goToNextCell(1)(v.state, dispatch);
   }
   var pendingSave = null;
-  function requestSave(immediate) {
+  function requestSave(immediate, force) {
     if (pendingSave) { clearTimeout(pendingSave); pendingSave = null; }
-    if (immediate) { postSave(); return; }
+    if (immediate) { postSave(force); return; }
     pendingSave = setTimeout(postSave, 600);
   }
   var lastSaved = null;
-  function postSave() {
+  // `force` skips the unchanged-text shortcut: ⌘S always asks, because
+  // the app can refuse a save (the file changed on disk) and a posted
+  // text is not necessarily a saved one. The app ignores text that
+  // matches the file, so a forced post of saved text is free.
+  function postSave(force) {
     pendingSave = null;
     var text = assemble(editorView.state.doc);
-    if (text === lastSaved) { return; }
+    if (!force && text === lastSaved) { return; }
     lastSaved = text;
     window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge
       && window.webkit.messageHandlers.bridge.postMessage({ type: "richEditorSave", text: text });
   }
-  function saveCommand() { requestSave(true); return true; }
+  function saveCommand() { requestSave(true, true); return true; }
 
   // Enter inside a task item makes another task item; elsewhere a plain
   // item (splitListItem copies no attributes on its own).

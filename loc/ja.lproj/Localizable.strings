@@ -836,3 +836,9 @@
 "Pasted and dropped images are saved here, relative to %@. Leave it empty to use the folder this Location's documents already reference." = "ペーストまたはドロップした画像は、%@ を基準にここへ保存されます。空のままにすると、この場所の書類がすでに参照しているフォルダを使います。";
 "Detected: %@" = "検出: %@";
 "Couldn't save the image: %@" = "画像を保存できませんでした: %@";
+
+// Rich editor save conflict (spec: rich-editor)
+"%@ changed on disk while you were editing" = "編集中に %@ がディスク上で変更されました";
+"Keep My Version" = "自分のバージョンを残す";
+"Use the Version on Disk" = "ディスク上のバージョンを使う";
+"Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "別のアプリまたはエージェントがこのファイルの新しいバージョンを保存しました。自分のバージョンを残して置き換えるか、ディスク上のバージョンを使って最後の保存以降の編集を破棄してください。";

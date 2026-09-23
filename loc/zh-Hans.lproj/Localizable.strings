@@ -836,3 +836,9 @@
 "Pasted and dropped images are saved here, relative to %@. Leave it empty to use the folder this Location's documents already reference." = "粘贴或拖入的图片会保存在这里（相对于 %@）。留空则使用此位置的文稿已引用的文件夹。";
 "Detected: %@" = "已检测到：%@";
 "Couldn't save the image: %@" = "无法保存图片：%@";
+
+// Rich editor save conflict (spec: rich-editor)
+"%@ changed on disk while you were editing" = "你编辑时，%@ 已在磁盘上被更改";
+"Keep My Version" = "保留我的版本";
+"Use the Version on Disk" = "使用磁盘上的版本";
+"Another app or an agent saved a newer version of this file. Keep yours to replace it, or use the version on disk and discard your edits since the last save." = "另一个应用或代理存储了此文件的较新版本。保留你的版本以替换它，或使用磁盘上的版本并放弃上次存储以来的编辑。";

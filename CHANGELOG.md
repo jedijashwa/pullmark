@@ -6,6 +6,12 @@ section current as features land.
 
 ## Unreleased
 
+- The rich editor (alpha) no longer overwrites a file that changed on
+  disk while you were editing it. If another app or an agent saves the
+  file first, PullMark asks before saving: keep your version, or use
+  the version on disk and discard your edits since the last save.
+  Cancel keeps you editing, and PullMark asks again when you leave
+  edit mode.
 - Settings › Appearance is laid out like the other tabs, in grouped
   sections: the Light/Dark/System control sits in its own row, the
   explanations under each section are readable, the theme previews no
