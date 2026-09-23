@@ -23,9 +23,13 @@ BIN_DIR ?= $(shell [ -w /opt/homebrew/bin ] && echo /opt/homebrew/bin || echo /u
 # bundles honor .lproj lookup — symlinking loc/ beside the binary gives
 # debug builds live localization (launch with -AppleLanguages "(de)" etc;
 # the '("xx")' quoted form silently suppresses the main window). Symlinks,
-# not copies: .strings edits apply on the next launch.
+# not copies: .strings edits apply on the next launch. English has no
+# loc/ folder (its keys ARE the text), and a bare executable has no
+# Info.plist development region, so without an empty en.lproj an
+# English-preferring Mac gets the first language Foundation finds (German).
 define LINK_LPROJ
 	@for d in loc/*.lproj; do ln -sfh "$(CURDIR)/$$d" ".build/debug/$$(basename $$d)"; done
+	@mkdir -p .build/debug/en.lproj
 endef
 
 build:
