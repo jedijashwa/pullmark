@@ -4,7 +4,7 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
-## Unreleased
+## 0.45.1 - 2026-09-23
 
 - The rich editor (alpha) no longer overwrites a file that changed on
   disk while you were editing it. If another app or an agent saves the
