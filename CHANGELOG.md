@@ -4,6 +4,13 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Update Now installs even when GitHub hasn't finished listing a new
+  release's downloads. Right after a release, GitHub can report it with
+  no files for a while, and the updater used to fall back to opening
+  the release page instead of installing.
+
 ## 0.45.1 - 2026-09-23
 
 - The rich editor (alpha) no longer overwrites a file that changed on
