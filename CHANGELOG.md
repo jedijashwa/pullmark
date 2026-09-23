@@ -10,6 +10,9 @@ releases used 0.x version numbers.
 
 ## Unreleased
 
+- PullMark's version numbers are now dates: year, month, and which
+  release of that month it is. 2026.9.3 is September 2026's third
+  release, after 0.45.0 and 0.45.1.
 - Update Now installs even when GitHub hasn't finished listing a new
   release's downloads. Right after a release, GitHub can report it with
   no files for a while, and the updater used to fall back to opening
