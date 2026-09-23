@@ -8,7 +8,7 @@ Versions are dated from 2026.9.3 on: year, month, and which release of that
 month it is (0.45.0 and 0.45.1 were September 2026's first two). Earlier
 releases used 0.x version numbers.
 
-## Unreleased
+## 2026.9.5 - 2026-09-23
 
 - More of PullMark follows the app language. Error messages (an
   unrecognized pull request address, a review that couldn't be
