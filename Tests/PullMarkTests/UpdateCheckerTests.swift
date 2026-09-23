@@ -359,6 +359,17 @@ import Testing
         #expect(empty.zipAssetURL == nil)
     }
 
+    @Test func dateVersionsOrderAfterSemverAndByNumericMonth() {
+        // From 2026.9.3 on, versions are year.month.count. Every installed
+        // updater compares component-wise, so the switch reads as newer.
+        #expect(SemVer.isNewer("2026.9.3", than: "0.45.1"))
+        #expect(SemVer.isNewer("v2026.9.3", than: "v0.45.1"))
+        // Months and counts compare as numbers, not text.
+        #expect(SemVer.isNewer("2026.10.1", than: "2026.9.12"))
+        #expect(SemVer.isNewer("2026.9.10", than: "2026.9.9"))
+        #expect(SemVer.isNewer("2027.1.1", than: "2026.12.4"))
+    }
+
     @Test func zipAssetURLFallsBackToTheConventionalArchiveWhenGitHubListsNoAssets() {
         // GitHub's release object can list no assets for a while after
         // they upload; the archive's URL is conventional, so use it.

@@ -4,6 +4,10 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+Versions are dated from 2026.9.3 on: year, month, and which release of that
+month it is (0.45.0 and 0.45.1 were September 2026's first two). Earlier
+releases used 0.x version numbers.
+
 ## Unreleased
 
 - Update Now installs even when GitHub hasn't finished listing a new

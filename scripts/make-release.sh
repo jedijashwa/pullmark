@@ -1,8 +1,17 @@
 #!/bin/bash
 # Cuts a signed, notarized release and updates the Homebrew cask.
 #
-#   ./scripts/make-release.sh 0.1.2
-#   ./scripts/make-release.sh --print-notes 0.1.1   # dry run: print a version's notes
+#   ./scripts/make-release.sh "$(./scripts/make-release.sh --next-version)"
+#   ./scripts/make-release.sh 2026.9.1
+#   ./scripts/make-release.sh --next-version        # print the next version
+#   ./scripts/make-release.sh --check-version 2026.9.1  # run only the version guards
+#   ./scripts/make-release.sh --print-notes 0.45.1  # dry run: print a version's notes
+#
+# Versions are year.month.count from 2026.9.1 on (0.x semver before it): the
+# year, the month, and which release of that month this is, counting from 1.
+# --next-version derives it from today's date and the tags on origin; the
+# release itself always takes the version explicitly, so a re-run after a
+# partial failure ships the SAME version instead of counting up again.
 #
 # Release notes come from the "## <version>" section of CHANGELOG.md. If that
 # section doesn't exist yet, "## Unreleased" is renamed to it (dated today) and
@@ -27,6 +36,69 @@ extract_notes() {
   ' "$CHANGELOG"
 }
 
+# The next year.month.count for today: one more than the releases this month
+# so far — the highest count among this month's year.month.count tags, or
+# the number of release tags of ANY scheme dated this month, whichever is
+# larger (the month the scheme started, September 2026, counts 0.45.0 and
+# 0.45.1, so its first date version is 2026.9.3). Release tags are
+# lightweight and sit on the changelog-cut commit, whose date is the
+# release day.
+next_version() {
+  local prefix="$(date +%Y).$((10#$(date +%m)))"
+  local month="$(date +%Y-%m)"
+  git fetch -q --tags origin 2>/dev/null || true
+  local last dated
+  last=$(git tag -l "v${prefix}.*" \
+         | sed -n "s/^v${prefix//./\\.}\.\([1-9][0-9]*\)\$/\1/p" | sort -n | tail -1)
+  dated=$(git for-each-ref --format='%(creatordate:format:%Y-%m)' 'refs/tags/v*' | grep -c "^${month}\$" || true)
+  last=${last:-0}
+  (( dated > last )) && last=$dated
+  echo "${prefix}.$(( last + 1 ))"
+}
+
+# Refuses anything but the next year.month.count: well-formed, exactly
+# --next-version (or already cut in the changelog — a re-run that straddles
+# midnight at a month's end), not yet tagged, and newer than every release
+# so far. Runs before anything is touched.
+validate_version() {
+  local version="$1"
+  if [[ "$version" == *-* ]]; then
+    echo "error: ${version} looks like a prerelease — the beta channel is retired; releases are stable-only" >&2
+    return 1
+  fi
+  if ! [[ "$version" =~ ^20[0-9]{2}\.([1-9]|1[0-2])\.[1-9][0-9]*$ ]]; then
+    echo "error: ${version} isn't year.month.count (no zero padding) — the next one is $(next_version)" >&2
+    return 1
+  fi
+  local next
+  next=$(next_version)
+  if [ "$version" != "$next" ] && ! grep -qE "^## ${version}([[:space:]]|\$)" "$CHANGELOG"; then
+    echo "error: ${version} isn't the next release — that's ${next} (this month's next count)" >&2
+    return 1
+  fi
+  if [ -n "$(git ls-remote --tags origin "refs/tags/v${version}")" ]; then
+    echo "error: v${version} is already released — the next one is $(next_version)" >&2
+    return 1
+  fi
+  local latest
+  latest=$(git ls-remote --tags origin 'v*' | sed -n 's#.*refs/tags/v\([0-9.]*\)$#\1#p' | sort -V | tail -1)
+  if [ -n "$latest" ] && [ "$(printf '%s\n%s\n' "$latest" "$version" | sort -V | tail -1)" != "$version" ]; then
+    echo "error: ${version} isn't newer than the latest release (${latest}) — the next one is $(next_version)" >&2
+    return 1
+  fi
+}
+
+if [ "${1:-}" = "--next-version" ]; then
+  next_version
+  exit 0
+fi
+
+if [ "${1:-}" = "--check-version" ]; then
+  validate_version "${2:?usage: make-release.sh --check-version <version>}"
+  echo "${2} is a valid next release"
+  exit 0
+fi
+
 if [ "${1:-}" = "--print-notes" ]; then
   extract_notes "${2:?usage: make-release.sh --print-notes <version>}"
   exit 0
@@ -37,10 +109,7 @@ IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Josh Riesenbach (35F47G5Y6D
 PROFILE="${NOTARY_PROFILE:-pullmark-notary}"
 TAP="${TAP_REPO:-jedijashwa/homebrew-tap}"
 
-if [[ "$VERSION" == *-* ]]; then
-  echo "error: ${VERSION} looks like a prerelease — the beta channel is retired; releases are stable-only" >&2
-  exit 1
-fi
+validate_version "$VERSION" || exit 1
 
 # No explicit section for this version yet: promote "## Unreleased" and commit
 # so the released notes are pinned in history.

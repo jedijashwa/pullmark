@@ -25,14 +25,14 @@ Runbook (in order, verifying each step):
    paths) → commit → push. Then `gh pr create` (issue-linked features
    say "Closes #N" in the body) → `gh pr merge <N> --rebase
    --delete-branch` → `git checkout main && git pull`.
-3. `./scripts/make-release.sh X.Y.Z` — builds, signs, notarizes,
+3. `./scripts/make-release.sh <version>` — builds, signs, notarizes,
    staples, uploads the DMG/zip to a GitHub release, and bumps the
    Homebrew cask. Notarization must report Accepted; on any failure,
    check for partial artifacts (stray mounts, tags, releases) before
    retrying — the script is safe to re-run from a clean state. The
    script pushes main itself before tagging (the tag must land on the
    changelog-cut commit, not the remote's stale head).
-4. `./scripts/verify-release.sh X.Y.Z` — one pass over every
+4. `./scripts/verify-release.sh <version>` — one pass over every
    mechanical check: tag placement (must be the changelog-cut commit),
    release state/assets/notes, cask version+sha, the fetched artifact's
    version/notarization/staple, DMG staple, Launch Services strays,
@@ -61,8 +61,13 @@ Runbook (in order, verifying each step):
    pages deploy site --project-name=pullmark --branch=main
    --commit-dirty=true`.
 
-Versioning: features bump the minor, fixes bump the patch — follow the
-changelog's own history when unsure.
+Versioning: year.month.count from 2026.9.3 on (0.x semver before it) —
+the Nth release of that month, counting every release in it. Take the
+version from `./scripts/make-release.sh --next-version` and pass it
+explicitly; the script refuses anything else unless that version's
+changelog section is already cut (a re-run), so a retry after a partial
+failure reuses the same version. Check a version without releasing with
+`--check-version`.
 
 Report each step's outcome plainly, including the release URL and the
 cask version transition. If anything failed, say exactly what state the

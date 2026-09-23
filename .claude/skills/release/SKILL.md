@@ -15,14 +15,15 @@ screenshot review, failure recovery) needs the context this session
 already holds. Follow `.claude/agents/release-manager.md` as the
 runbook; the two scripts do the mechanical work:
 
-- `./scripts/make-release.sh X.Y.Z` — the build/sign/notarize/publish
+- `./scripts/make-release.sh <version>` — the build/sign/notarize/publish
   pipeline. Run it in the background (notarization waits on Apple)
   and keep working until it reports.
-- `./scripts/verify-release.sh X.Y.Z` — every mechanical
+- `./scripts/verify-release.sh <version>` — every mechanical
   post-release check as one PASS/FAIL table. Read the table, not the
   world: only a FAIL row warrants investigation.
 
-Features bump the minor, fixes the patch. Dispatch the
+Versions are year.month.count: get the next one from
+`./scripts/make-release.sh --next-version` and pass it explicitly. Dispatch the
 release-manager agent (no model downgrade — recovery takes judgment)
 only if the human asks for the release to run hands-off in the
 background.
