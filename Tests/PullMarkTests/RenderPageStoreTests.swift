@@ -93,4 +93,80 @@ import Testing
         _ = try #require(store.writePage("<p>math</p>"))
         #expect(mirrored("vendor/katex/fonts/KaTeX_Main.woff2") == "font")
     }
+
+    // MARK: - Janitor
+
+    private var root: URL { base.appendingPathComponent("root", isDirectory: true) }
+
+    /// What every process shared before each got its own directory.
+    private let flatLayout = ["app.js", "app.css", "pm-extensions.js", "pm-editor.js",
+                              "vendor/marked.min.js", "page-OLD.html"]
+
+    private func plant(_ paths: [String]) throws {
+        for path in paths {
+            let url = root.appendingPathComponent(path)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                    withIntermediateDirectories: true)
+            try "x".write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+
+    private func exists(_ path: String) -> Bool {
+        FileManager.default.fileExists(atPath: root.appendingPathComponent(path).path)
+    }
+
+    @Test func janitorRemovesOnlyExitedProcessesDirectories() throws {
+        defer { try? FileManager.default.removeItem(at: base) }
+        try plant(["101/app.js", "101/page-A.html", "102/app.js", "102/vendor/marked.min.js"])
+
+        RenderPageStore.removeLeftovers(in: root, otherInstances: [101], isRunning: { $0 == 101 })
+        #expect(exists("101/app.js"))
+        #expect(exists("101/page-A.html"))
+        #expect(!exists("102"))
+    }
+
+    @Test func janitorRemovesTheSharedLayoutOnceNothingCanBeLoadingIt() throws {
+        defer { try? FileManager.default.removeItem(at: base) }
+        try plant(flatLayout + ["101/app.js"])
+
+        RenderPageStore.removeLeftovers(in: root, otherInstances: [101], isRunning: { $0 == 101 })
+        for path in flatLayout {
+            #expect(!exists(path), "\(path) was left behind")
+        }
+        #expect(!exists("vendor"))
+        #expect(exists("101/app.js"))
+    }
+
+    /// A running instance with no directory may be a build from before
+    /// the split — the installed app, until it updates — whose open
+    /// windows and next page still load from the flat layout.
+    @Test func janitorKeepsTheSharedLayoutWhileAnOlderBuildMayUseIt() throws {
+        defer { try? FileManager.default.removeItem(at: base) }
+        try plant(flatLayout + ["101/app.js", "103/app.js"])
+
+        RenderPageStore.removeLeftovers(in: root, otherInstances: [101, 202],
+                                        isRunning: { $0 == 101 || $0 == 202 })
+        for path in flatLayout {
+            #expect(exists(path), "\(path) was removed while an older build may use it")
+        }
+        #expect(!exists("103"))
+    }
+
+    /// Only canonical positive pids name a process directory; anything
+    /// else at the top level is flat-layout debris. (kill(0, 0) and
+    /// kill(-n, 0) probe process groups, so they must never be asked.)
+    @Test func janitorTreatsNonPidNamesAsFlatLayout() throws {
+        defer { try? FileManager.default.removeItem(at: base) }
+        try plant(["0/app.js", "-5/app.js", "0101/app.js", "notes/app.js"])
+
+        var probed: [pid_t] = []
+        RenderPageStore.removeLeftovers(in: root, otherInstances: [], isRunning: {
+            probed.append($0)
+            return true
+        })
+        #expect(probed.isEmpty)
+        for entry in ["0", "-5", "0101", "notes"] {
+            #expect(!exists(entry), "\(entry) was kept")
+        }
+    }
 }
