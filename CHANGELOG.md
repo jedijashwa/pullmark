@@ -14,6 +14,13 @@ releases used 0.x version numbers.
   release's downloads. Right after a release, GitHub can report it with
   no files for a while, and the updater used to fall back to opening
   the release page instead of installing.
+- VoiceOver labels now follow the app language. Sidebar unread counts,
+  the branch chip, comment counts, the reviewer strip, the Keyboard
+  settings rows, the reading-time pill and other spoken labels were
+  read in English whatever language PullMark ran in; they now use the
+  same translations as the rest of the app. The line numbers on pending
+  review comments, and the note that you can't approve your own pull
+  request, are translated too.
 
 ## 0.45.1 - 2026-09-23
 
