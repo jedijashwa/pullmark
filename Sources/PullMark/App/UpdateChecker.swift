@@ -117,8 +117,21 @@ struct UpdateRelease: Decodable, Equatable {
 
     /// Download URL of the release's `.zip` asset (the notarized app
     /// archive) — what the in-place self-updater installs.
+    ///
+    /// An EMPTY asset list falls back to the archive's conventional URL
+    /// (make-release.sh always uploads PullMark-<version>.zip): GitHub's
+    /// release object can lag its own uploads — 0.45.1 listed no assets
+    /// for over half an hour while every file downloaded — and without
+    /// this the updater just opens the release page. A wrong guess 404s
+    /// into that same fallback, and the signature check guards whatever
+    /// is installed. A list with files but no zip means no zip.
     var zipAssetURL: String? {
-        assets?.first { $0.name.lowercased().hasSuffix(".zip") }?.browserDownloadUrl
+        if let assets, !assets.isEmpty {
+            return assets.first { $0.name.lowercased().hasSuffix(".zip") }?.browserDownloadUrl
+        }
+        guard htmlUrl.hasPrefix("https://github.com/"), htmlUrl.contains("/releases/tag/") else { return nil }
+        return htmlUrl.replacingOccurrences(of: "/releases/tag/", with: "/releases/download/")
+            + "/PullMark-\(SemVer.normalized(tagName)).zip"
     }
 
     /// Full releases newer than `stored`, up to and including `current`,

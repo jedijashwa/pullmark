@@ -359,6 +359,25 @@ import Testing
         #expect(empty.zipAssetURL == nil)
     }
 
+    @Test func zipAssetURLFallsBackToTheConventionalArchiveWhenGitHubListsNoAssets() {
+        // GitHub's release object can list no assets for a while after
+        // they upload; the archive's URL is conventional, so use it.
+        let lagging = UpdateRelease(
+            tagName: "v0.45.1", body: nil,
+            htmlUrl: "https://github.com/jedijashwa/pullmark/releases/tag/v0.45.1",
+            prerelease: false, draft: false, assets: [])
+        #expect(lagging.zipAssetURL ==
+            "https://github.com/jedijashwa/pullmark/releases/download/v0.45.1/PullMark-0.45.1.zip")
+        // Files listed but no zip among them: genuinely no archive.
+        let dmgOnly = UpdateRelease(
+            tagName: "v0.45.1", body: nil,
+            htmlUrl: "https://github.com/jedijashwa/pullmark/releases/tag/v0.45.1",
+            prerelease: false, draft: false,
+            assets: [UpdateAsset(name: "PullMark-0.45.1.dmg",
+                                 browserDownloadUrl: "https://example.com/d.dmg")])
+        #expect(dmgOnly.zipAssetURL == nil)
+    }
+
     @Test func betweenSelectsRangeNewestFirst() {
         func release(_ tag: String, prerelease: Bool = false) -> UpdateRelease {
             UpdateRelease(tagName: tag, body: "notes for \(tag)",
