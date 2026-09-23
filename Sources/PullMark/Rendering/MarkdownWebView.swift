@@ -378,17 +378,17 @@ struct MarkdownWebView: NSViewRepresentable {
         proxy?.exportRemoteContext = remoteContext
         if context.coordinator.lastHTML != html {
             context.coordinator.lastHTML = html
-            RenderPageStore.removePage(context.coordinator.lastPageURL)
-            if let pageURL = RenderPageStore.writePage(html) {
+            RenderPageStore.shared.removePage(context.coordinator.lastPageURL)
+            if let pageURL = RenderPageStore.shared.writePage(html) {
                 context.coordinator.lastPageURL = pageURL
-                webView.loadFileURL(pageURL, allowingReadAccessTo: RenderPageStore.directory)
+                webView.loadFileURL(pageURL, allowingReadAccessTo: RenderPageStore.shared.directory)
             }
         }
     }
 
     static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "bridge")
-        RenderPageStore.removePage(coordinator.lastPageURL)
+        RenderPageStore.shared.removePage(coordinator.lastPageURL)
     }
 
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {

@@ -8,6 +8,15 @@ Versions are dated from 2026.9.3 on: year, month, and which release of that
 month it is (0.45.0 and 0.45.1 were September 2026's first two). Earlier
 releases used 0.x version numbers.
 
+## Unreleased
+
+- Documents no longer open as a blank page after PullMark has been
+  running for a few days. macOS clears old files out of its temporary
+  folder, and after about three days that included the files PullMark
+  draws pages with — every document opened from then on stayed blank
+  until you quit and reopened the app. PullMark now puts them back
+  whenever they go missing.
+
 ## 2026.9.3 - 2026-09-23
 
 - PullMark's version numbers are now dates: year, month, and which
