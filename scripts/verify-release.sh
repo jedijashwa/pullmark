@@ -66,7 +66,12 @@ LATEST=$(gh api "repos/${REPO}/releases/latest" --jq '.tag_name')
 [ "$LATEST" = "$TAG" ]
 check "release-is-latest" $? "latest=$LATEST"
 
-ASSETS=$(printf '%s' "$RELEASE_JSON" | jq -r '.assets[].name' | sort | tr '\n' ' ')
+# From the release's own /assets endpoint, not the release object: the
+# object's embedded asset list can lag the upload by many minutes (0.45.1
+# showed [] while all three files already downloaded), a false FAIL.
+RELEASE_ID=$(printf '%s' "$RELEASE_JSON" | jq -r '.id // empty')
+ASSETS=$(gh api "repos/${REPO}/releases/${RELEASE_ID}/assets" --jq '.[].name' 2>/dev/null \
+  | sort | tr '\n' ' ')
 [ "$ASSETS" = "PullMark-${VERSION}.dmg PullMark-${VERSION}.zip PullMark.dmg " ]
 check "assets" $? "$ASSETS"
 
@@ -126,7 +131,10 @@ else
 fi
 
 # ---- The DMG is a separate notarization — validate its staple too.
-gh release download "$TAG" -p "PullMark-${VERSION}.dmg" -D "$SCRATCH" 2>/dev/null
+# By its download URL — `gh release download` reads the same lagging
+# asset list as above and finds nothing to fetch.
+curl -sfL -o "$SCRATCH/PullMark-${VERSION}.dmg" \
+  "https://github.com/${REPO}/releases/download/${TAG}/PullMark-${VERSION}.dmg"
 xcrun stapler validate "$SCRATCH/PullMark-${VERSION}.dmg" >/dev/null 2>&1
 check "dmg-stapled" $? "stapler validate (dmg)"
 
