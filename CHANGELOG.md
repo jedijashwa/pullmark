@@ -17,9 +17,6 @@ releases used 0.x version numbers.
   labels on pending review comments, the Keyboard settings footer,
   and several empty states and placeholders showed English in every
   language. They're translated now.
-- Running a second copy of PullMark, such as another version, no longer
-  leaves documents in the first one blank or broken until you relaunch
-  it. Each copy now keeps its own rendering files.
 
 ## 2026.9.4 - 2026-09-23
 
