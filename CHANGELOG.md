@@ -4,6 +4,17 @@ Notable user-facing changes to PullMark. Release notes for GitHub releases are
 extracted from this file by `scripts/make-release.sh` — keep the `## Unreleased`
 section current as features land.
 
+## Unreleased
+
+- Settings › Appearance is laid out like the other tabs, in grouped
+  sections: the Light/Dark/System control sits in its own row, the
+  explanations under each section are readable, the theme previews no
+  longer cut off their last line, and the selected theme, width, or
+  line-number option is marked with a ring, the way Safari and System
+  Settings mark theirs. Every option card can be chosen from the
+  keyboard. The Keyboard tab's bottom bar sits on the same grid as its
+  rows, and unassigned shortcuts no longer look disabled.
+
 ## 0.45.0 - 2026-09-22
 
 - **Pull requests and issues that involve you.** The sidebar's single

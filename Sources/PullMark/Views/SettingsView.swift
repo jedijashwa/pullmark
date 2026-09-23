@@ -20,7 +20,7 @@ struct SettingsView: View {
                 .tabItem { Label("Keyboard", systemImage: "keyboard") }
                 .tag("keyboard")
             ExperimentalSettingsTab()
-                .tabItem { Label("Experimental", systemImage: "testtube.2") }
+                .tabItem { Label("Experimental", systemImage: ExperimentalLevel.symbol) }
                 .tag("experimental")
         }
         .frame(width: 680)
@@ -357,6 +357,14 @@ struct GeneralSettingsTab: View {
 enum ExperimentalLevel {
     case alpha, beta
 
+    /// The Experimental tab's glyph. `flask` is an outline like the
+    /// other tabs' glyphs; `testtube.2`'s solid liquid read as a dark
+    /// blob beside them. SF Symbols 5, so macOS 14 and later.
+    static var symbol: String {
+        if #available(macOS 14, *) { return "flask" }
+        return "testtube.2"
+    }
+
     var label: String {
         switch self {
         case .alpha: return "ALPHA"
@@ -478,7 +486,7 @@ struct ExperimentalSettingsTab: View {
     private func emptyState(_ title: String, detail: String) -> some View {
         Section {
             VStack(spacing: 8) {
-                Image(systemName: "testtube.2")
+                Image(systemName: ExperimentalLevel.symbol)
                     .font(.system(size: 28))
                     .foregroundStyle(.tertiary)
                 Text(title)
@@ -608,28 +616,26 @@ struct ThemeSettingsTab: View {
 
     var body: some View {
         ScrollViewReader { scroll in
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Appearance")
-                    .font(.headline)
-                    .settingAnchor("appearance-mode")
+        // A grouped Form like every other tab (and System Settings): the
+        // sections sit in cards on the same grid, captions become
+        // footers the form styles legibly, and the stock segmented
+        // control takes its row's trailing edge instead of floating in
+        // a hand-sized frame.
+        Form {
+            Section {
                 Picker("Appearance", selection: $appearanceRaw) {
                     ForEach(Appearance.allCases) { appearance in
                         Text(appearance.label).tag(appearance.rawValue)
                     }
                 }
                 .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: 340)
+                .settingAnchor("appearance-mode")
+            } footer: {
                 Text("Light, Dark, or match the system — the window and every rendered page follow, and each theme brings its own light and dark looks.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Theme")
-                    .font(.headline)
-                    .padding(.top, 10)
-                    .settingAnchor("theme")
-                HStack(alignment: .top, spacing: 16) {
+            }
+
+            Section {
+                HStack(alignment: .top, spacing: 14) {
                     ForEach(Theme.allCases) { theme in
                         ThemePreviewCard(
                             title: theme.label,
@@ -641,12 +647,10 @@ struct ThemeSettingsTab: View {
                         }
                     }
                 }
+                .settingAnchor("theme")
                 if !customNames.isEmpty {
-                    Text("Custom themes")
-                        .font(.headline)
-                        .padding(.top, 4)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 16)],
-                              alignment: .leading, spacing: 16) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 3),
+                              alignment: .leading, spacing: 14) {
                         ForEach(customNames, id: \.self) { name in
                             ThemePreviewCard(
                                 title: name,
@@ -660,55 +664,90 @@ struct ThemeSettingsTab: View {
                         }
                     }
                 }
-                HStack(spacing: 10) {
-                    Button("Open Themes Folder") {
-                        NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
+                LabeledContent("Custom themes") {
+                    HStack(spacing: 8) {
+                        Button("Open Themes Folder") {
+                            NSWorkspace.shared.open(CustomThemes.ensureDirectoryExists())
+                        }
+                        Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
                     }
-                    Button("Refresh") { customNames = CustomThemes.availableThemeNames() }
                 }
-                .padding(.top, 2)
+            } header: {
+                Text("Theme")
+            } footer: {
                 Text("Themes restyle rendered Markdown and diffs, and follow the Light/Dark appearance. Drop .css files into the Themes folder to add your own — they apply on top of the GitHub look. Quick Look previews follow your theme too (custom themes fall back to their GitHub base there).")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Content width")
-                    .font(.headline)
-                    .padding(.top, 10)
-                    .settingAnchor("content-width")
-                HStack(alignment: .top, spacing: 16) {
+            }
+
+            Section {
+                HStack(alignment: .top, spacing: 14) {
                     ForEach(ContentWidth.allCases) { width in
                         WidthPreviewCard(width: width, selected: contentWidthRaw == width.rawValue) {
                             contentWidthRaw = width.rawValue
                         }
                     }
                 }
+                .settingAnchor("content-width")
+            } header: {
+                Text("Content width")
+            } footer: {
                 Text("How far text may stretch before it wraps. Standard keeps the classic book-like measure; Wide fits more on screen and still caps the line length; Full Width gives the document the whole window — handy in full screen. Applies everywhere, live, and plays with any theme.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Line numbers")
-                    .font(.headline)
-                    .padding(.top, 10)
-                    .settingAnchor("line-numbers")
-                HStack(alignment: .top, spacing: 16) {
+            }
+
+            Section {
+                HStack(alignment: .top, spacing: 14) {
                     LineNumberPreviewCard(showNumbers: false, selected: !lineNumbersOn) {
                         lineNumbersOn = false
                     }
                     LineNumberPreviewCard(showNumbers: true, selected: lineNumbersOn) {
                         lineNumbersOn = true
                     }
+                    // Keeps these two cards the width of the three-card
+                    // rows above, so the tab reads as one grid.
+                    Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
                 }
+                .settingAnchor("line-numbers")
+            } header: {
+                Text("Line numbers")
+            } footer: {
                 Text("Each block's starting source line, in the margin of rendered documents and diffs — hover a number for the block's full range. Rendered text wraps freely, so numbering is per block, not per visual line. The raw source view always shows its own line numbers.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(20)
         }
+        .formStyle(.grouped)
         .frame(height: 620)
         .consumesSettingAnchors(Self.anchors, proxy: scroll)
         }
         .onAppear { customNames = CustomThemes.availableThemeNames() }
+    }
+}
+
+private extension View {
+    /// Wraps a whole card in a plain Button: keyboard focus and a
+    /// pressed state for free, where a tap gesture had neither.
+    func button(action: @escaping () -> Void) -> some View {
+        Button(action: action) { self }.buttonStyle(.plain)
+    }
+}
+
+/// Selection for the Appearance tab's picture cards, the way Safari's Tab
+/// layout picker and System Settings' Appearance picker draw it: the
+/// thumbnail keeps its hairline border in both states, and the selected
+/// one gets an accent ring with a small gap around it — no badge.
+private struct SelectionRing: ViewModifier {
+    let selected: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+            .overlay(
+                RoundedRectangle(cornerRadius: 9)
+                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+            )
+            .padding(3)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color.accentColor, lineWidth: 3)
+                    .opacity(selected ? 1 : 0)
+            )
     }
 }
 
@@ -754,23 +793,9 @@ struct WidthPreviewCard: View {
                 }
                 .frame(width: 176 * measure, alignment: .leading)
             }
-            .frame(width: 200, height: 108)
-            .clipShape(RoundedRectangle(cornerRadius: 9))
-            .overlay(
-                RoundedRectangle(cornerRadius: 9)
-                    .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor),
-                                  lineWidth: selected ? 2.5 : 1)
-            )
-            .overlay(alignment: .bottomTrailing) {
-                if selected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(Color.white, Color.accentColor)
-                        .background(Circle().fill(.white).padding(2))
-                        .padding(7)
-                }
-            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 108)
+            .modifier(SelectionRing(selected: selected))
             .padding(.bottom, 4)
             Text(width.label)
                 .font(.callout.weight(selected ? .semibold : .medium))
@@ -780,13 +805,12 @@ struct WidthPreviewCard: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: 200)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
-        .onTapGesture(perform: select)
+        .button(action: select)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(width.label) content width")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-        .accessibilityAction(.default, select)
     }
 }
 
@@ -830,23 +854,9 @@ struct LineNumberPreviewCard: View {
                     }
                 }
             }
-            .frame(width: 200, height: 108)
-            .clipShape(RoundedRectangle(cornerRadius: 9))
-            .overlay(
-                RoundedRectangle(cornerRadius: 9)
-                    .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor),
-                                  lineWidth: selected ? 2.5 : 1)
-            )
-            .overlay(alignment: .bottomTrailing) {
-                if selected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(Color.white, Color.accentColor)
-                        .background(Circle().fill(.white).padding(2))
-                        .padding(7)
-                }
-            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 108)
+            .modifier(SelectionRing(selected: selected))
             .padding(.bottom, 4)
             Text(showNumbers ? String(localized: "Shown") : String(localized: "Hidden"))
                 .font(.callout.weight(selected ? .semibold : .medium))
@@ -856,13 +866,12 @@ struct LineNumberPreviewCard: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: 200)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
-        .onTapGesture(perform: select)
+        .button(action: select)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(showNumbers ? Text("Line numbers shown") : Text("Line numbers hidden"))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-        .accessibilityAction(.default, select)
     }
 }
 
@@ -890,7 +899,7 @@ struct ThemePreviewCard: View {
             oldText: nil, lineStart: 4, lineEnd: 6, side: "RIGHT"),
         DiffSegmentPayload(
             kind: "added",
-            text: "This paragraph was added in the pull request.",
+            text: "Added in this pull request.",
             oldText: nil, lineStart: 7, lineEnd: 7, side: "RIGHT"),
     ]
 
@@ -906,23 +915,9 @@ struct ThemePreviewCard: View {
     var body: some View {
         VStack(spacing: 6) {
             MarkdownWebView(html: previewHTML, interactive: false)
-                .frame(width: 200, height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 9))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9)
-                        .strokeBorder(selected ? Color.accentColor : Color(nsColor: .separatorColor),
-                                      lineWidth: selected ? 2.5 : 1)
-                )
-                .overlay(alignment: .bottomTrailing) {
-                    if selected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 18))
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(Color.white, Color.accentColor)
-                            .background(Circle().fill(.white).padding(2))
-                            .padding(7)
-                    }
-                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 152)
+                .modifier(SelectionRing(selected: selected))
                 .padding(.bottom, 4)
             Text(title)
                 .font(.callout.weight(selected ? .semibold : .medium))
@@ -932,13 +927,12 @@ struct ThemePreviewCard: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: 200)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
-        .onTapGesture(perform: select)
+        .button(action: select)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title) theme")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-        .accessibilityAction(.default, select)
     }
 }
 

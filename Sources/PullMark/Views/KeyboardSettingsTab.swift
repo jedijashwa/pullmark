@@ -18,8 +18,7 @@ struct KeyboardSettingsTab: View {
     @FocusState private var focusedRow: ShortcutAction?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Form {
+        withFooterBar(Form {
                 Section {
                     // Spelled out, not glyphs: ⌫ and ⎋ are unrecognizable
                     // to plenty of people in running prose.
@@ -47,25 +46,9 @@ struct KeyboardSettingsTab: View {
                     Text("Built-In Keys")
                 } footer: {
                     Text("These keys are fixed and can't be changed.")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                 }
             }
-            .formStyle(.grouped)
-
-            HStack {
-                Text(recording == nil
-                     ? "\(ShortcutAction.allCases.count) actions"
-                     : "Recording — press the new shortcut.")
-                    .font(.callout)
-                    .foregroundStyle(recording == nil ? .secondary : .primary)
-                Spacer()
-                Button("Restore Defaults…") { confirmingReset = true }
-                    .disabled(!shortcuts.anyCustomized)
-            }
-            .padding(12)
-            .background(.bar)
-        }
+            .formStyle(.grouped))
         .frame(height: 560)
         .onDisappear { stopRecording() }
         // A local monitor swallows every key in the process — never leave
@@ -126,6 +109,43 @@ struct KeyboardSettingsTab: View {
     }
 
     // MARK: - Rows
+
+    /// The action count and Restore Defaults, on the rows' grid.
+    private var footerBar: some View {
+        HStack {
+            Text(recording == nil
+                 ? "\(ShortcutAction.allCases.count) actions"
+                 : "Recording — press the new shortcut.")
+                .font(.callout)
+                .foregroundStyle(recording == nil ? .secondary : .primary)
+            Spacer()
+            Button("Restore Defaults…") { confirmingReset = true }
+                .disabled(!shortcuts.anyCustomized)
+        }
+        .padding(.horizontal, 30)
+        .padding(.vertical, 10)
+    }
+
+    /// macOS 26 and later: a safe-area bar, so the list scrolls under it
+    /// and the system draws the scroll-edge effect (Liquid Glass's
+    /// replacement for a hard divider). Earlier systems keep a bar
+    /// material strip. The compiler check keeps older SDKs (CI) building.
+    @ViewBuilder
+    private func withFooterBar<Content: View>(_ content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(macOS 26, *) {
+            // Hard, not the default soft edge: the soft blur left ghosts of
+            // row subtitles showing through under this short status line.
+            content
+                .safeAreaBar(edge: .bottom, spacing: 0) { footerBar }
+                .scrollEdgeEffectStyle(.hard, for: .bottom)
+        } else {
+            content.safeAreaInset(edge: .bottom, spacing: 0) { footerBar.background(.bar) }
+        }
+        #else
+        content.safeAreaInset(edge: .bottom, spacing: 0) { footerBar.background(.bar) }
+        #endif
+    }
 
     @ViewBuilder
     private func row(for action: ShortcutAction) -> some View {
@@ -210,8 +230,10 @@ struct KeyboardSettingsTab: View {
             Text(combo.display)
                 .font(.body.monospaced())
         } else {
+            // Secondary, not tertiary: tertiary read as a disabled
+            // control, and an unassigned row is fully usable.
             Text("None")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
     }
 
