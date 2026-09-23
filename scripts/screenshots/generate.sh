@@ -140,15 +140,17 @@ launch() { # $1 = appearance, $2 = window x, $3 = window y, $4 = scene
 # The folder Location is in place when the sidebar shows TWO plain
 # meridian-docs headings (folder + demo remote repo). Root rows read
 # `meridian-docs, Branch: main` to accessibility since the branch chip
-# joined the row's label, so the pattern accepts a comma or the closing
-# quote right after the name — either way the "meridian-docs #128" PR
-# row is excluded. Folder names are fixture data, so this is
-# locale-proof.
+# joined the row's label, so the pattern accepts a list separator or the
+# closing quote right after the name — either way the "meridian-docs
+# #128" PR row is excluded. The separator is the LOCALE's (SwiftUI joins
+# label parts with it): `,` in most languages, `、` in Chinese and
+# Japanese, `，` as a fallback — a bare comma never matched under
+# --lang zh-Hans, so every scene timed out there.
 location_present() {
   for _ in {1..8}; do
     local count
     count=$(swift $DRIVE/ax.swift $APP_PID list 10 2>/dev/null \
-      | grep -Ec 'AXHeading "meridian-docs(,|")') || count=0
+      | grep -Ec 'AXHeading "meridian-docs([,、，]|")') || count=0
     (( count >= 2 )) && return 0
     sleep 0.8
   done
