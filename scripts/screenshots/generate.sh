@@ -259,8 +259,13 @@ if (( failures > 0 )) && [[ -z ${PM_GEN_FIXUP:-} ]]; then
       en) retry_lang="" ;; zh) retry_lang=zh-Hans ;; pt) retry_lang=pt-BR ;;
       *) retry_lang=$code ;;
     esac
+    # An array, not ${retry_lang:+--lang "$retry_lang"}: zsh doesn't split
+    # unquoted expansions, so that form passed "--lang es" as ONE word
+    # and every non-English retry died on "unknown argument".
+    lang_args=()
+    [[ -n $retry_lang ]] && lang_args=(--lang "$retry_lang")
     if ! PM_GEN_FIXUP=1 "$0" "$retry_scene" --appearance "$retry_mode" \
-         ${retry_lang:+--lang "$retry_lang"}; then
+         "${lang_args[@]}"; then
       failures=$((failures + 1))
     fi
   done
